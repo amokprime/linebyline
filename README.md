@@ -79,7 +79,7 @@ Any human web developers willing to review vibe code are welcome🧡. Or even Py
 See TEST_CASES.md for a checklist of everything that's supposed to work.
 
 ### In progress
-- CREDITS.md, LIMITATIONS.md, TEST_CASES.md
+- TEST_CASES.md
 - Public repo with GitHub code scanning
 - GitHub Page
 
