@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LineByLine – Theme Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&family=Ubuntu+Mono:wght@400;700&family=Cantarell:wght@400;700&family=Noto+Sans:wght@400;500;700&family=Noto+Sans+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+/* ── Page chrome ── */
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#1a1a1a;font-family:'Noto Sans',system-ui,sans-serif;color:#eee;min-height:100vh;padding:24px;}
+
+h1{font-size:18px;font-weight:500;color:#aaa;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px;}
+
+#theme-picker{display:flex;gap:8px;align-items:center;margin-bottom:28px;flex-wrap:wrap;}
+#theme-picker label{font-size:13px;color:#888;}
+.t-btn{padding:7px 16px;border-radius:6px;border:1px solid #444;background:#2a2a2a;color:#ccc;font-size:13px;cursor:pointer;transition:all 0.15s;}
+.t-btn:hover{background:#333;color:#fff;border-color:#666;}
+.t-btn.active{color:#fff;border-color:var(--ab);}
+#t-ubuntu.active{background:#3b1200;border-color:#e95420;--ab:#e95420;}
+#t-debian.active{background:#00204a;border-color:#3584e4;--ab:#3584e4;}
+#t-breeze-light.active{background:#1a3040;border-color:#3daee9;--ab:#3daee9;}
+#t-breeze-dark.active{background:#1b2a36;border-color:#3daee9;--ab:#3daee9;}
+
+/* ── Shared frame ── */
+.frame{display:flex;height:540px;border-radius:8px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.07);}
+
+/* ───────────────────────────────────────────────
+   THEME VARS — applied to .frame[data-theme="X"]
+──────────────────────────────────────────────── */
+
+/* Ubuntu / Yaru */
+.frame[data-theme="ubuntu"]{
+  --bg:#fbf8f5;
+  --surface:#ffffff;
+  --border:#d8d0c8;
+  --border-mid:#c8bdb2;
+  --text:#2c2826;
+  --text-muted:#6d5f56;
+  --text-faint:#9e8f86;
+  --accent:#e95420;
+  --accent-bg:#fde8e0;
+  --accent-border:#e95420;
+  --warn-bg:#fff8e1;
+  --warn-border:#f4a100;
+  --warn-text:#7a4f00;
+  --active-bg:#fde8e0;
+  --active-text:#b33f16;
+  --active-ts:#e95420;
+  --header-bg:#3b1200;
+  --header-text:#f5ddd4;
+  --header-border:#5a1d00;
+  --header-btn-bg:rgba(255,255,255,0.10);
+  --header-btn-border:rgba(255,255,255,0.18);
+  --header-btn-text:#f5ddd4;
+  --font-ui:'Ubuntu',system-ui,sans-serif;
+  --font-mono:'Ubuntu Mono',monospace;
+  --term-bg:#300a24;
+  --term-fg:#eeeeec;
+  --term-cursor:#ffffff;
+  --term-sel:#555753;
+  --radius:4px;
+}
+/* Debian / GNOME Adwaita */
+.frame[data-theme="debian"]{
+  --bg:#f6f5f4;
+  --surface:#ffffff;
+  --border:#e0ddd8;
+  --border-mid:#ccc8c2;
+  --text:#211d17;
+  --text-muted:#6b6660;
+  --text-faint:#9e9990;
+  --accent:#3584e4;
+  --accent-bg:#ddeeff;
+  --accent-border:#3584e4;
+  --warn-bg:#fff3cd;
+  --warn-border:#e5a50a;
+  --warn-text:#7b4800;
+  --active-bg:#ddeeff;
+  --active-text:#1a5fb4;
+  --active-ts:#3584e4;
+  --header-bg:#f6f5f4;
+  --header-text:#211d17;
+  --header-border:#ddd9d3;
+  --header-btn-bg:#eeebe7;
+  --header-btn-border:#d4d0cb;
+  --header-btn-text:#211d17;
+  --font-ui:'Cantarell',system-ui,sans-serif;
+  --font-mono:'Noto Sans Mono','Ubuntu Mono',monospace;
+  --term-bg:#171421;
+  --term-fg:#d0cfcc;
+  --term-cursor:#d0cfcc;
+  --term-sel:#44415a;
+  --radius:8px;
+}
+/* KDE Breeze Light */
+.frame[data-theme="breeze-light"]{
+  --bg:#eff0f1;
+  --surface:#ffffff;
+  --border:#bdc3c7;
+  --border-mid:#a0a8b0;
+  --text:#232629;
+  --text-muted:#707880;
+  --text-faint:#9ba2aa;
+  --accent:#3daee9;
+  --accent-bg:#e3f4fd;
+  --accent-border:#3daee9;
+  --warn-bg:#fdf3d0;
+  --warn-border:#f67400;
+  --warn-text:#704000;
+  --active-bg:#e3f4fd;
+  --active-text:#1b6b9e;
+  --active-ts:#3daee9;
+  --header-bg:#eff0f1;
+  --header-text:#232629;
+  --header-border:#bdc3c7;
+  --header-btn-bg:#e0e2e4;
+  --header-btn-border:#bdc3c7;
+  --header-btn-text:#232629;
+  --font-ui:'Noto Sans',system-ui,sans-serif;
+  --font-mono:'Noto Sans Mono',monospace;
+  --term-bg:#31363b;
+  --term-fg:#fcfcfc;
+  --term-cursor:#fcfcfc;
+  --term-sel:#3daee9;
+  --radius:3px;
+}
+/* KDE Breeze Dark */
+.frame[data-theme="breeze-dark"]{
+  --bg:#232629;
+  --surface:#2a2e32;
+  --border:#31363b;
+  --border-mid:#414a52;
+  --text:#eff0f1;
+  --text-muted:#a0a8b0;
+  --text-faint:#6d7a84;
+  --accent:#3daee9;
+  --accent-bg:#0e2d3d;
+  --accent-border:#1f6b9e;
+  --warn-bg:#2d2000;
+  --warn-border:#f67400;
+  --warn-text:#fca130;
+  --active-bg:#0e2d3d;
+  --active-text:#3daee9;
+  --active-ts:#62c7f0;
+  --header-bg:#1b1e20;
+  --header-text:#eff0f1;
+  --header-border:#0d0f10;
+  --header-btn-bg:#31363b;
+  --header-btn-border:#414a52;
+  --header-btn-text:#eff0f1;
+  --font-ui:'Noto Sans',system-ui,sans-serif;
+  --font-mono:'Noto Sans Mono',monospace;
+  --term-bg:#1b1e20;
+  --term-fg:#fcfcfc;
+  --term-cursor:#fcfcfc;
+  --term-sel:#3daee9;
+  --radius:3px;
+}
+
+/* ── App layout ── */
+.frame{font-family:var(--font-ui);font-size:13.5px;color:var(--text);background:var(--bg);}
+
+/* Menu bar */
+.mb{height:38px;background:var(--header-bg);border-bottom:1px solid var(--header-border);display:flex;align-items:center;padding:0 8px;gap:4px;flex-shrink:0;position:absolute;top:0;left:0;right:0;z-index:10;}
+.mb-b{height:27px;padding:0 10px;border:1px solid var(--header-btn-border);border-radius:var(--radius);background:var(--header-btn-bg);color:var(--header-btn-text);font-family:var(--font-ui);font-size:12.5px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;}
+.mb-b.act{background:var(--accent);border-color:var(--accent);color:#fff;}
+.mb-sep{width:1px;height:16px;background:var(--header-btn-border);margin:0 2px;opacity:0.5;}
+.mb-icon{width:27px;padding:0;justify-content:center;}
+.mb-title{font-family:var(--font-ui);font-size:12.5px;font-weight:600;color:var(--header-text);margin-left:4px;letter-spacing:0.01em;}
+.mb-right{margin-left:auto;display:flex;gap:4px;align-items:center;}
+
+/* Main layout */
+.app-body{display:flex;flex:1;overflow:hidden;margin-top:38px;height:calc(100% - 38px);}
+
+/* Left panel */
+.lp{width:260px;min-width:260px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;padding:8px;gap:5px;overflow-y:auto;flex-shrink:0;}
+.sec-lbl{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:0.07em;text-transform:uppercase;margin-bottom:1px;}
+.audio-box{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);padding:8px;display:flex;flex-direction:column;gap:3px;}
+.song-title{font-size:13px;font-weight:600;color:var(--text);}
+.song-artist{font-size:11.5px;color:var(--text-muted);}
+.prog-track{height:4px;background:var(--border);border-radius:2px;margin:3px 0;position:relative;}
+.prog-fill{height:4px;background:var(--accent);border-radius:2px;width:38%;}
+.time-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);font-family:var(--font-mono);}
+.ctrl-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.ctrl-cell{display:flex;justify-content:space-between;align-items:center;padding:3px 5px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);font-size:11.5px;cursor:pointer;}
+.ctrl-cell:hover{background:var(--border);}
+.ctrl-cell.accent-cell{grid-column:span 2;background:var(--active-bg);border-color:var(--accent-border);color:var(--active-text);}
+.ctrl-cell.warn-cell{grid-column:span 1;background:var(--warn-bg);border-color:var(--warn-border);color:var(--warn-text);}
+.kbd{font-family:var(--font-mono);font-size:10px;background:var(--border-mid);border-radius:2px;padding:1px 3px;color:var(--text-muted);}
+.accent-cell .kbd{background:rgba(61,174,233,0.15);color:var(--active-ts);}
+.warn-cell .kbd{background:rgba(246,116,0,0.12);color:var(--warn-text);}
+
+/* Ubuntu-specific kbd overrides (dark header = orange kbd in accent) */
+.frame[data-theme="ubuntu"] .accent-cell .kbd{background:rgba(233,84,32,0.15);color:#b33f16;}
+.frame[data-theme="debian"] .accent-cell .kbd{background:rgba(53,132,228,0.15);color:#1a5fb4;}
+
+/* Editor */
+.editor{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.field-header{display:flex;align-items:center;height:34px;padding:0 8px;gap:4px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;justify-content:space-between;}
+.fh-lbl{font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:0.07em;text-transform:uppercase;}
+.fh-btn{height:26px;padding:0 8px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;cursor:pointer;font-size:12px;color:var(--text);}
+.lyric-area{flex:1;overflow:hidden;padding:4px 0;font-family:var(--font-mono);font-size:13px;line-height:1.75;}
+.lrc-line{padding:1px 10px;white-space:nowrap;color:var(--text);}
+.lrc-line .ts{color:var(--text-faint);}
+.lrc-line.active{background:var(--active-bg);color:var(--active-text);font-weight:600;}
+.lrc-line.active .ts{color:var(--active-ts);}
+.lrc-line.selected{background:var(--accent-bg);outline:1px solid var(--accent-border);outline-offset:-1px;color:var(--active-text);}
+.lrc-line.end-ts{color:var(--text-faint);font-style:italic;}
+
+/* Terminal-style secondary field */
+.sec-field{width:260px;min-width:260px;border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;}
+.sec-body{flex:1;background:var(--term-bg);font-family:var(--font-mono);font-size:12.5px;line-height:1.7;padding:6px 10px;overflow:hidden;color:var(--term-fg);}
+.sec-line{white-space:nowrap;}
+.sec-line.active-sec{background:rgba(255,255,255,0.10);}
+.cursor-blink{display:inline-block;width:8px;height:14px;background:var(--term-cursor);opacity:0.85;vertical-align:text-bottom;margin-left:1px;animation:blink 1.1s step-end infinite;}
+@keyframes blink{0%,100%{opacity:0.85;}50%{opacity:0;}}
+.sec-ts{color:var(--term-fg);opacity:0.38;margin-right:3px;}
+.sec-paren{color:#8ae234;}
+.frame[data-theme="ubuntu"] .sec-paren{color:#8ae234;}
+.frame[data-theme="debian"] .sec-paren{color:#4e9a06;}
+.frame[data-theme="breeze-light"] .sec-paren{color:#11d116;}
+.frame[data-theme="breeze-dark"] .sec-paren{color:#1cd116;}
+
+/* Scrollbars — themed */
+.lyric-area::-webkit-scrollbar,.sec-body::-webkit-scrollbar{width:6px;}
+.lyric-area::-webkit-scrollbar-track{background:transparent;}
+.lyric-area::-webkit-scrollbar-thumb{background:var(--border-mid);border-radius:3px;}
+.sec-body::-webkit-scrollbar-track{background:var(--term-bg);}
+.sec-body::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2);border-radius:3px;}
+
+/* Frame container */
+.frame-wrap{position:relative;border-radius:8px;overflow:hidden;}
+.frame{position:relative;width:900px;flex-shrink:0;}
+
+/* Layout within frame */
+.frame-inner{display:flex;flex-direction:column;height:100%;}
+.frame-body{display:flex;flex:1;overflow:hidden;}
+
+/* Theme label badge */
+.theme-badge{position:absolute;bottom:10px;right:12px;font-size:10.5px;font-weight:600;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase;opacity:0.65;font-family:var(--font-ui);}
+
+/* Notes area at bottom */
+.notes{margin-top:28px;display:flex;flex-direction:column;gap:10px;}
+.note{font-size:12.5px;color:#666;line-height:1.6;}
+.note strong{color:#aaa;}
+.note code{font-family:'Ubuntu Mono',monospace;font-size:11.5px;background:#222;padding:1px 5px;border-radius:3px;color:#88c0d0;}
+</style>
+</head>
+<body>
+<h1>LineByLine — Theme Mockups</h1>
+
+<div id="theme-picker">
+  <label>Preview:</label>
+  <button class="t-btn active" id="t-ubuntu" onclick="setTheme('ubuntu',this)">Ubuntu (Yaru)</button>
+  <button class="t-btn" id="t-debian" onclick="setTheme('debian',this)">Debian (GNOME Adwaita)</button>
+  <button class="t-btn" id="t-breeze-light" onclick="setTheme('breeze-light',this)">KDE Breeze Light</button>
+  <button class="t-btn" id="t-breeze-dark" onclick="setTheme('breeze-dark',this)">KDE Breeze Dark</button>
+</div>
+
+<div class="frame-wrap">
+<div class="frame" id="main-frame" data-theme="ubuntu">
+  <div class="frame-inner">
+    <!-- Menu bar -->
+    <div class="mb">
+      <span class="mb-title">LineByLine</span>
+      <div class="mb-sep"></div>
+      <button class="mb-b">Open</button>
+      <div class="mb-sep"></div>
+      <button class="mb-b mb-icon">↩</button>
+      <button class="mb-b mb-icon">↪</button>
+      <div class="mb-sep"></div>
+      <button class="mb-b">Add field</button>
+      <button class="mb-b">Remove field</button>
+      <button class="mb-b act">Merge fields</button>
+      <div class="mb-right">
+        <button class="mb-b mb-icon">🌗</button>
+        <button class="mb-b mb-icon">⚙</button>
+      </div>
+    </div>
+
+    <!-- Body -->
+    <div class="frame-body">
+      <!-- Left panel -->
+      <div class="lp">
+        <div class="sec-lbl">Now playing</div>
+        <div class="audio-box">
+          <div class="song-title">怪物 (Monster)</div>
+          <div class="song-artist">YOASOBI</div>
+          <div class="prog-track"><div class="prog-fill"></div></div>
+          <div class="time-row"><span>1:24</span><span>4:13</span></div>
+          <div style="display:flex;align-items:center;gap:5px;margin-top:2px;">
+            <span style="font-size:11px;color:var(--text-muted)">−600 ms</span>
+            <button class="mb-b" style="height:22px;font-size:10px;padding:0 5px;">Sync file</button>
+            <span style="font-size:11px;color:var(--text-muted);margin-left:auto;">1.00×</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:5px;margin-top:1px;">
+            <span style="font-size:13px;color:var(--text-muted)">🔊</span>
+            <div style="flex:1;height:4px;background:var(--border);border-radius:2px;position:relative;">
+              <div style="width:78%;height:4px;background:var(--accent);border-radius:2px;"></div>
+            </div>
+            <span style="font-size:11px;color:var(--text-faint)">78%</span>
+          </div>
+        </div>
+        <div class="sec-lbl" style="margin-top:4px">Controls</div>
+        <div class="ctrl-grid">
+          <div class="ctrl-cell accent-cell"><span>Offset seek</span><span class="kbd">`</span></div>
+          <div class="ctrl-cell warn-cell"><span>Typing mode</span><span class="kbd">Tab</span></div>
+          <div class="ctrl-cell"><span>Play/pause</span><span class="kbd">Spc</span></div>
+          <div class="ctrl-cell"><span>Sync line</span><span class="kbd">W</span></div>
+          <div class="ctrl-cell"><span>Prev line</span><span class="kbd">Q</span></div>
+          <div class="ctrl-cell"><span>Next line</span><span class="kbd">E</span></div>
+          <div class="ctrl-cell"><span>Replay only</span><span class="kbd">R</span></div>
+          <div class="ctrl-cell"><span>End line</span><span class="kbd">T</span></div>
+          <div class="ctrl-cell"><span>−100ms time</span><span class="kbd">Z</span></div>
+          <div class="ctrl-cell"><span>+100ms time</span><span class="kbd">V</span></div>
+          <div class="ctrl-cell"><span>−200ms time</span><span class="kbd">A</span></div>
+          <div class="ctrl-cell"><span>+200ms time</span><span class="kbd">F</span></div>
+        </div>
+      </div>
+
+      <!-- Editor -->
+      <div class="editor">
+        <div class="field-header">
+          <span class="fh-lbl">Main</span>
+        </div>
+        <div class="lyric-area">
+          <div class="lrc-line"><span style="color:var(--text-faint);font-size:12px;">[ti: 怪物 (Monster)]</span></div>
+          <div class="lrc-line"><span style="color:var(--text-faint);font-size:12px;">[ar: YOASOBI]</span></div>
+          <div class="lrc-line" style="height:8px;">&nbsp;</div>
+          <div class="lrc-line"><span class="ts">[00:16.48]</span>本当の声を聞かせてよ</div>
+          <div class="lrc-line"><span class="ts">[00:20.52]</span>嘘をついてまで守るものって何ですか</div>
+          <div class="lrc-line active"><span class="ts">[00:27.10]</span>ねえ、君は何がしたい</div>
+          <div class="lrc-line selected"><span class="ts">[00:31.80]</span>何がほしい、何が嫌いで</div>
+          <div class="lrc-line"><span class="ts">[00:35.42]</span>何を愛して何を愛せないの</div>
+          <div class="lrc-line"><span class="ts">[00:42.00]</span>世界があなたを嫌いでも</div>
+          <div class="lrc-line"><span class="ts">[00:45.66]</span>私だけはあなたの味方でいたい</div>
+          <div class="lrc-line"><span class="ts">[00:52.10]</span>だから本当の声を聞かせてよ</div>
+          <div class="lrc-line end-ts"><span class="ts">[00:58.40]</span></div>
+          <div class="lrc-line" style="height:8px;">&nbsp;</div>
+          <div class="lrc-line"><span class="ts">[01:02.14]</span>その仮面の下の素顔を</div>
+          <div class="lrc-line"><span class="ts">[01:05.88]</span>見せてみせてみせてみせて</div>
+        </div>
+      </div>
+
+      <!-- Secondary (terminal-styled) -->
+      <div class="sec-field">
+        <div class="field-header">
+          <button class="fh-btn">Add lyrics</button>
+          <span class="fh-lbl">Secondary 1</span>
+          <label style="display:flex;align-items:center;gap:4px;font-size:11.5px;color:var(--text-muted);cursor:pointer;">
+            <input type="checkbox" checked style="width:12px;height:12px;accent-color:var(--accent);">
+            Parenthesize
+          </label>
+        </div>
+        <div class="sec-body">
+          <div class="sec-line"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(Let me hear your real voice)</span></div>
+          <div class="sec-line"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(What is it that you protect by lying?)</span></div>
+          <div class="sec-line sec-active" style="background:rgba(255,255,255,0.07)"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(Hey, what is it that you want to do)</span></div>
+          <div class="sec-line"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(What do you want, what do you hate)</span></div>
+          <div class="sec-line"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(What do you love and what can't you love)</span></div>
+          <div class="sec-line"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(Even if the world hates you)</span></div>
+          <div class="sec-line"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(I want to be the one on your side)</span></div>
+          <div class="sec-line"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(So please let me hear your real voice)</span></div>
+          <div class="sec-line" style="height:22px;"></div>
+          <div class="sec-line"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(The true face beneath that mask)</span></div>
+          <div class="sec-line"><span class="sec-ts">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="sec-paren">(Show it show it show it show it)</span><span class="cursor-blink"></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="theme-badge" id="theme-badge">Ubuntu · Yaru + Ubuntu Terminal</div>
+</div>
+</div>
+
+<div class="notes">
+  <div class="note">
+    <strong>UI elements</strong> use the theme's native widget colors and font. <strong>Text fields</strong> (Secondary panel) use the corresponding terminal's default color scheme and monospace font.
+  </div>
+  <div class="note">
+    <strong>Ubuntu:</strong> Yaru UI — <code>#e95420</code> accent, dark headerbar <code>#3b1200</code>, Ubuntu font · Terminal — <code>#300a24</code> bg / <code>#eeeeec</code> fg, Ubuntu Mono
+  </div>
+  <div class="note">
+    <strong>Debian / GNOME:</strong> Adwaita UI — <code>#3584e4</code> accent, light headerbar, Cantarell font · Terminal — <code>#171421</code> bg / <code>#d0cfcc</code> fg, Noto Mono
+  </div>
+  <div class="note">
+    <strong>Breeze Light:</strong> KDE UI — <code>#3daee9</code> accent, flat light frame, Noto Sans · Konsole — <code>#31363b</code> bg / <code>#fcfcfc</code> fg, Noto Mono
+  </div>
+  <div class="note">
+    <strong>Breeze Dark:</strong> KDE UI — dark <code>#1b1e20</code> header, <code>#232629</code> window, Noto Sans · Konsole — <code>#1b1e20</code> bg / <code>#fcfcfc</code> fg, Noto Mono
+  </div>
+</div>
+
+<script>
+const BADGES={
+  'ubuntu':'Ubuntu · Yaru + Ubuntu Terminal',
+  'debian':'Debian / GNOME · Adwaita + GNOME Terminal',
+  'breeze-light':'KDE Breeze Light + Konsole Breeze',
+  'breeze-dark':'KDE Breeze Dark + Konsole Breeze Dark',
+};
+function setTheme(name, btn){
+  document.getElementById('main-frame').dataset.theme=name;
+  document.getElementById('theme-badge').textContent=BADGES[name];
+  document.querySelectorAll('.t-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

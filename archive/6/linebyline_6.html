@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LineByLine</title>
+<style>
+:root{
+  --bg:#f5f4f0;--surface:#ffffff;--border:#d8d6cf;--border-mid:#c4c2ba;
+  --text:#1a1917;--text-muted:#7a7870;--text-faint:#a8a69f;
+  --accent:#2c5f8a;--accent-bg:#e8f0f7;--accent-border:#a8c4dc;
+  --warn-bg:#fef9e7;--warn-border:#f0d060;--warn-text:#7a5c00;
+  --active-bg:#dbeafe;--active-text:#1e3a5f;--active-ts:#4a7fa8;
+  --font-mono:'Courier New',Courier,monospace;--radius:5px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;font-size:13px;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;}
+#menu-bar{display:flex;align-items:center;height:36px;background:var(--surface);border-bottom:1px solid var(--border);padding:0 8px;gap:4px;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;}
+.mb-btn{height:26px;padding:0 10px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);font-size:12px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;flex-shrink:0;}
+.mb-btn:hover{background:var(--bg);}
+.mb-btn.icon{width:30px;padding:0;justify-content:center;font-size:15px;}
+.mb-btn.accent{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-border);}
+.mb-btn.accent:hover{background:#d4e6f3;}
+.mb-btn.accent:disabled{opacity:0.4;cursor:default;}
+.mb-sep{width:1px;height:16px;background:var(--border);margin:0 2px;flex-shrink:0;}
+#main{display:flex;flex:1;overflow:hidden;min-height:0;}
+#left-panel{width:224px;min-width:224px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;padding:8px;gap:6px;overflow-y:auto;flex-shrink:0;}
+.section-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:2px;}
+#audio-box{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);padding:8px;display:flex;flex-direction:column;gap:4px;}
+#song-title{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#song-artist{font-size:11px;color:var(--text-muted);}
+#progress-wrap{height:4px;background:var(--border);border-radius:2px;margin:2px 0;cursor:pointer;}
+#progress-fill{height:4px;background:var(--accent);border-radius:2px;width:0%;pointer-events:none;}
+#time-row{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);}
+#seek-row{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text-muted);margin-top:2px;}
+/* Hide number input spinners */
+#seek-offset{width:56px;height:22px;font-size:11px;font-family:var(--font-mono);text-align:right;padding:0 4px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);-moz-appearance:textfield;}
+#seek-offset::-webkit-inner-spin-button,#seek-offset::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+.seek-tick{width:20px;height:22px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;cursor:pointer;color:var(--text);font-size:13px;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
+.seek-tick:hover{background:var(--border);}
+.lrc-line.selected{background:#c7ddf5;color:var(--active-text);}
+.lrc-line.selected .ts{color:var(--active-ts);}
+.lrc-line.active.selected{background:var(--active-bg);}
+.hk-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;}
+.hk-cell{display:flex;justify-content:space-between;align-items:center;padding:3px 5px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);font-size:11px;cursor:pointer;}
+.hk-cell:hover{background:var(--border-mid);}
+.hk-cell.mode{grid-column:span 2;background:var(--accent-bg);border-color:var(--accent-border);color:var(--active-text);cursor:pointer;}
+.hk-cell.mode:hover{background:#d4e6f3;}
+.hk-key{font-family:var(--font-mono);font-size:10px;background:var(--border-mid);border-radius:3px;padding:1px 4px;color:var(--text-muted);}
+.hk-cell.mode .hk-key{background:rgba(44,95,138,0.2);color:var(--accent);}
+#editor-wrapper{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
+#editor-scroll{flex:1;overflow-x:auto;overflow-y:hidden;display:flex;}
+#editor-area{display:flex;min-width:100%;height:100%;}
+.field-col{display:flex;flex-direction:column;flex:1;min-width:260px;border-right:1px solid var(--border);}
+.field-col:last-child{border-right:none;}
+.field-header{display:flex;align-items:center;height:34px;padding:0 8px;gap:4px;background:var(--surface);border-bottom:1px solid var(--border);flex-shrink:0;}
+.field-header-label{font-size:11px;font-weight:600;color:var(--text-muted);letter-spacing:0.04em;text-transform:uppercase;}
+.fh-btn{height:26px;padding:0 8px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;color:var(--text);white-space:nowrap;margin-left:auto;}
+.fh-btn:hover{background:var(--bg);}
+.warn-bar{font-size:11px;padding:3px 8px;background:var(--warn-bg);border-bottom:1px solid var(--warn-border);color:var(--warn-text);display:none;flex-shrink:0;}
+.warn-bar.visible{display:block;}
+.lyric-scroll{flex:1;overflow-y:auto;overflow-x:hidden;user-select:text;}
+.lyric-area{font-family:var(--font-mono);font-size:12px;line-height:1.75;padding:4px 0;min-height:100%;}
+.lrc-line{padding:1px 8px;white-space:nowrap;cursor:pointer;}
+.lrc-line:hover{background:var(--bg);}
+.lrc-line.active{background:var(--active-bg);color:var(--active-text);}
+.lrc-line .ts{color:var(--text-faint);margin-right:2px;}
+.lrc-line.active .ts{color:var(--active-ts);}
+.lrc-line.end-ts{color:var(--text-faint);font-style:italic;}
+#main-textarea{flex:1;font-family:var(--font-mono);font-size:12px;line-height:1.75;padding:4px 8px;border:none;outline:none;resize:none;background:var(--surface);color:var(--text);overflow-y:auto;white-space:pre;display:none;tab-size:4;}
+#main-textarea.visible{display:block;}
+#settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:100;align-items:center;justify-content:center;}
+#settings-overlay.open{display:flex;}
+#settings-win{width:520px;max-height:88vh;background:var(--surface);border:1px solid var(--border-mid);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,0.18);}
+#settings-title-bar{display:flex;align-items:center;height:34px;padding:0 12px;background:var(--bg);border-bottom:1px solid var(--border);flex-shrink:0;}
+#settings-title-bar span{font-size:12px;font-weight:600;}
+#settings-close{margin-left:auto;width:22px;height:22px;border-radius:50%;border:1px solid var(--border-mid);background:transparent;cursor:pointer;font-size:11px;display:flex;align-items:center;justify-content:center;}
+#settings-body{overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:14px;flex:1;}
+.s-sec-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;border-bottom:1px solid var(--border);padding-bottom:4px;margin-bottom:4px;}
+.s-check{display:flex;align-items:center;gap:8px;font-size:12px;height:26px;cursor:pointer;}
+.s-check input{width:14px;height:14px;cursor:pointer;accent-color:var(--accent);}
+.s-row{display:flex;align-items:center;gap:8px;height:28px;font-size:12px;}
+.s-row label{min-width:180px;}
+.s-num{width:64px;height:26px;font-size:12px;font-family:var(--font-mono);text-align:right;padding:0 6px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);}
+.s-unit{font-size:12px;color:var(--text-muted);}
+.s-meta{width:100%;height:88px;font-size:12px;font-family:var(--font-mono);padding:6px 8px;line-height:1.6;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);resize:none;}
+.hk-row{display:flex;align-items:center;gap:8px;height:28px;font-size:12px;margin-bottom:2px;}
+.hk-row label{flex:1;}
+.hk-capture{width:110px;height:26px;font-size:12px;font-family:var(--font-mono);text-align:center;padding:0 6px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);cursor:pointer;outline:none;}
+.hk-capture:focus{border-color:var(--accent);background:var(--accent-bg);color:var(--accent);}
+#settings-footer{display:flex;justify-content:flex-end;align-items:center;gap:6px;height:42px;padding:0 14px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0;}
+.s-btn{height:26px;padding:0 14px;font-size:12px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);cursor:pointer;}
+.s-btn:hover{background:var(--border);}
+.s-btn.primary{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-border);}
+.s-btn.primary:hover{background:#d4e6f3;}
+#confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;align-items:center;justify-content:center;}
+#confirm-overlay.open{display:flex;}
+#confirm-box{background:var(--surface);border:1px solid var(--border-mid);border-radius:8px;padding:20px 24px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,0.18);}
+#confirm-msg{font-size:13px;margin-bottom:16px;}
+#confirm-btns{display:flex;justify-content:flex-end;gap:8px;}
+</style>
+</head>
+<body>
+<div id="menu-bar">
+  <button class="mb-btn" id="btn-import">+ Import</button>
+  <button class="mb-btn" id="btn-export">Export</button>
+  <button class="mb-btn" id="btn-new">New</button>
+  <div class="mb-sep"></div>
+  <button class="mb-btn icon" id="btn-undo" title="Undo (Ctrl+Z)">↩</button>
+  <button class="mb-btn icon" id="btn-redo" title="Redo (Ctrl+Y)">↪</button>
+  <div class="mb-sep"></div>
+  <button class="mb-btn" id="btn-parens" title="Toggle () on selected lines (main field)">Add ( )</button>
+  <button class="mb-btn" id="btn-select-all" title="Select all lyric lines">Select all</button>
+  <button class="mb-btn" id="btn-add-sec" title="Add secondary field (Ctrl+=)">Add field</button>
+  <button class="mb-btn" id="btn-remove-sec" title="Remove last secondary field (Ctrl+-)">Remove field</button>
+  <button class="mb-btn accent" id="merge-btn" disabled>Merge fields</button>
+  <div class="mb-sep"></div>
+  <button class="mb-btn icon" id="btn-settings" title="Settings (Ctrl+,)">⚙</button>
+</div>
+<div id="main">
+  <div id="left-panel">
+    <div class="section-label">Now playing</div>
+    <div id="audio-box">
+      <div id="song-title">Unknown Title</div>
+      <div id="song-artist">Unknown Artist</div>
+      <div id="progress-wrap"><div id="progress-fill"></div></div>
+      <div id="time-row"><span id="time-pos">0:00</span><span id="time-dur">0:00</span></div>
+      <div style="font-size:10px;color:var(--text-faint);margin-top:2px;">Seek offset</div>
+      <div id="seek-row">
+        <input id="seek-offset" type="number" value="0">
+        <span>ms</span>
+        <button class="seek-tick" id="seek-tick-back" title="Decrease seek offset (1)">◀</button>
+        <button class="seek-tick" id="seek-tick-fwd" title="Increase seek offset (2)">▶</button>
+      </div>
+    </div>
+    <div class="section-label" style="margin-top:4px">Controls</div>
+    <div class="hk-grid" id="hk-grid"></div>
+  </div>
+  <div id="editor-wrapper">
+    <div id="editor-scroll">
+      <div id="editor-area">
+        <div class="field-col" id="main-col">
+          <div class="field-header">
+            <span class="field-header-label">Main</span>
+          </div>
+          <div class="warn-bar" id="main-warn"></div>
+          <div class="lyric-scroll" id="main-scroll"><div class="lyric-area" id="main-lines"></div></div>
+          <textarea id="main-textarea" spellcheck="false"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="settings-overlay">
+  <div id="settings-win">
+    <div id="settings-title-bar"><span>Settings</span><button id="settings-close">✕</button></div>
+    <div id="settings-body">
+      <div>
+        <div class="s-sec-label">Auto-strip from lyrics on import</div>
+        <label class="s-check"><input type="checkbox" id="s-strip-headers"> Headers</label>
+        <label class="s-check"><input type="checkbox" id="s-strip-meta"> Metadata</label>
+      </div>
+      <div>
+        <div class="s-sec-label">Timestamp intervals</div>
+        <div class="s-row"><label>Seek offset tick</label><input class="s-num" id="s-seek-tick" type="number" value="1000"><span class="s-unit">ms</span></div>
+        <div class="s-row"><label>Tiny</label><input class="s-num" id="s-tiny" type="number" value="100"><span class="s-unit">ms</span></div>
+        <div class="s-row"><label>Small</label><input class="s-num" id="s-small" type="number" value="200"><span class="s-unit">ms</span></div>
+        <div class="s-row"><label>Medium</label><input class="s-num" id="s-medium" type="number" value="400"><span class="s-unit">ms</span></div>
+        <div class="s-row"><label>Large</label><input class="s-num" id="s-large" type="number" value="1000"><span class="s-unit">ms</span></div>
+      </div>
+      <div>
+        <div class="s-sec-label">Default metadata tags</div>
+        <textarea class="s-meta" id="s-default-meta"></textarea>
+      </div>
+      <div>
+        <div class="s-sec-label">Hotkeys</div>
+        <div id="hk-settings-rows"></div>
+      </div>
+    </div>
+    <div id="settings-footer">
+      <button class="s-btn" id="s-cancel">Cancel</button>
+      <button class="s-btn primary" id="s-save">Save</button>
+    </div>
+  </div>
+</div>
+<div id="confirm-overlay">
+  <div id="confirm-box">
+    <div id="confirm-msg"></div>
+    <div id="confirm-btns">
+      <button class="s-btn" id="confirm-no">Cancel</button>
+      <button class="s-btn primary" id="confirm-yes">OK</button>
+    </div>
+  </div>
+</div>
+<input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none">
+<script>
+'use strict';
+// ── Config ───────────────────────────────────────────────────────────────────
+const RAND_ID='contributor'+Math.floor(1000+Math.random()*9000);
+// Single trailing newline; blank line between meta and lyrics added on import/paste in code
+const DEFAULT_META='[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: Genius, GeniusLyricsCopier, LineByLine]\n[by: '+RAND_ID+']\n';
+const DEFAULT_CFG={
+  tiny_ms:100,small_ms:200,medium_ms:400,large_ms:1000,
+  seek_offset:0,seek_offset_tick:1000,
+  strip_headers:true,strip_metadata:true,default_meta:DEFAULT_META,
+  hotkeys:{
+    toggle_mode:'Tab',play_pause:'Space',sync:'W',end_line:'R',
+    prev_line:'Q',next_line:'E',
+    seek_offset_back:'1',seek_offset_fwd:'2',
+    ts_back_tiny:'Z',ts_fwd_tiny:'V',
+    ts_back_small:'A',ts_fwd_small:'F',
+    ts_back_medium:'S',ts_fwd_medium:'D',
+    ts_back_large:'X',ts_fwd_large:'C',
+    clear_sel:'Escape',
+    mute:'F1',vol_down:'F2',vol_up:'F3',
+    add_field:'Ctrl+=',remove_field:'Ctrl+-',
+    import:'Ctrl+O',export:'Ctrl+P',new:'Ctrl+M',settings:'Ctrl+,',
+    undo:'Ctrl+Z',redo:'Ctrl+Y',
+  }
+};
+const HK_LABELS={
+  toggle_mode:'Toggle mode',play_pause:'Play',
+  sync:'Sync line',end_line:'End line',
+  prev_line:'Previous line',next_line:'Next line',
+  seek_offset_back:'Seek offset ◀',seek_offset_fwd:'Seek offset ▶',
+  ts_back_tiny:'Rewind timestamp by a tiny interval',
+  ts_fwd_tiny:'Forward timestamp by a tiny interval',
+  ts_back_small:'Rewind timestamp by a small interval',
+  ts_fwd_small:'Forward timestamp by a small interval',
+  ts_back_medium:'Rewind timestamp by a medium interval',
+  ts_fwd_medium:'Forward timestamp by a medium interval',
+  ts_back_large:'Rewind timestamp by a large interval',
+  ts_fwd_large:'Forward timestamp by a large interval',
+  clear_sel:'Clear',
+  mute:'Mute',vol_down:'Volume down',vol_up:'Volume up',
+  add_field:'Add field',remove_field:'Remove field',
+  import:'Import',export:'Export',new:'New file',
+  settings:'Settings',undo:'Undo',redo:'Redo',
+};
+function loadCfg(){
+  try{
+    const s=localStorage.getItem('lbl_cfg');
+    if(!s)return JSON.parse(JSON.stringify(DEFAULT_CFG));
+    const d=JSON.parse(s),c=JSON.parse(JSON.stringify(DEFAULT_CFG));
+    Object.assign(c,d);c.hotkeys=Object.assign({},DEFAULT_CFG.hotkeys,d.hotkeys||{});return c;
+  }catch(e){return JSON.parse(JSON.stringify(DEFAULT_CFG));}
+}
+function saveCfg(){localStorage.setItem('lbl_cfg',JSON.stringify(cfg));}
+let cfg=loadCfg();
+
+// ── State ────────────────────────────────────────────────────────────────────
+let hotkeyMode=true,playing=false,audioEl=null,secondaryCols=[];
+let undoStack=[],redoStack=[];
+let suppressScrollSync=false,activeLine=-1,selectedLines=new Set();
+
+// ── Persistence ──────────────────────────────────────────────────────────────
+function loadAutosave(){
+  try{
+    const s=localStorage.getItem('lbl_autosave');
+    _setTA(s?JSON.parse(s).main||cfg.default_meta:cfg.default_meta);
+  }catch(e){_setTA(cfg.default_meta);}
+  renderMainLines();checkLineCounts();updateTitleFromText();
+}
+function doAutosave(){localStorage.setItem('lbl_autosave',JSON.stringify({main:getTA()}));}
+function getTA(){return document.getElementById('main-textarea').value;}
+function _setTA(t){document.getElementById('main-textarea').value=t;}
+
+// Discrete actions push undo; typing mode uses browser native undo
+function pushUndo(prev){undoStack.push(prev);if(undoStack.length>200)undoStack.shift();redoStack=[];}
+function doUndo(){
+  if(!hotkeyMode){document.execCommand('undo');return;}
+  if(!undoStack.length)return;
+  redoStack.push(getTA());_setTA(undoStack.pop());
+  renderMainLines();checkLineCounts();updateTitleFromText();doAutosave();
+}
+function doRedo(){
+  if(!hotkeyMode){document.execCommand('redo');return;}
+  if(!redoStack.length)return;
+  undoStack.push(getTA());_setTA(redoStack.pop());
+  renderMainLines();checkLineCounts();updateTitleFromText();doAutosave();
+}
+function setMainText(t){
+  pushUndo(getTA());
+  _setTA(t);renderMainLines();checkLineCounts();updateTitleFromText();doAutosave();
+}
+
+// ── Mode switching ───────────────────────────────────────────────────────────
+function applyMode(){
+  const scroll=document.getElementById('main-scroll'),ta=document.getElementById('main-textarea');
+  if(hotkeyMode){
+    // Measure scroll position from textarea before hiding it
+    const lineH=ta.scrollHeight/Math.max(1,getTA().split('\n').length);
+    const topLine=Math.round(ta.scrollTop/lineH);
+    scroll.style.display='';ta.classList.remove('visible');
+    renderMainLines();
+    // After render, scroll rendered view to same line
+    requestAnimationFrame(()=>{
+      const elems=document.querySelectorAll('#main-lines .lrc-line');
+      if(elems[topLine])elems[topLine].scrollIntoView({block:'start'});
+    });
+  }else{
+    // Find char offset of first non-meta line to set cursor there
+    const taLines=getTA().split('\n');
+    let firstLyricChar=0,charCount=0;
+    for(let i=0;i<taLines.length;i++){
+      if(!META_RE.test(taLines[i])&&taLines[i].trim()!==''){firstLyricChar=charCount;break;}
+      charCount+=taLines[i].length+1;
+    }
+    // Also capture rendered scroll ratio as fallback
+    const scroll_h=document.getElementById('main-scroll').scrollHeight-document.getElementById('main-scroll').clientHeight;
+    const ratio=scroll_h>0?document.getElementById('main-scroll').scrollTop/scroll_h:0;
+    scroll.style.display='none';ta.classList.add('visible');
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      // If we have a meaningful scroll position use ratio, else jump to first lyric
+      if(ratio>0.01){const ta_h=ta.scrollHeight-ta.clientHeight;ta.scrollTop=ratio*ta_h;}
+      else{ta.setSelectionRange(firstLyricChar,firstLyricChar);ta.scrollTop=0;}
+      ta.focus();
+    }));
+  }
+  rebuildHkPanel();
+}
+
+// Typing mode: live sync on input, no undo push
+document.getElementById('main-textarea').addEventListener('input',()=>{
+  renderMainLines();checkLineCounts();updateTitleFromText();doAutosave();
+});
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const TS_RE=/^\[(\d{2}):(\d{2})\.(\d{2})\]/,META_RE=/^\[[a-zA-Z]+:/;
+function tsToMs(l){const m=TS_RE.exec(l);if(!m)return null;return +m[1]*60000+ +m[2]*1000+ +m[3]*10;}
+function msToTs(ms){ms=Math.max(0,ms);const min=Math.floor(ms/60000),sec=Math.floor((ms%60000)/1000),cent=Math.floor((ms%1000)/10);return`[${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(cent).padStart(2,'0')}]`;}
+function isEndTs(l){return TS_RE.test(l)&&l.replace(TS_RE,'').trim()==='';}
+function isHeader(l){return l.startsWith('[')&&!META_RE.test(l)&&!TS_RE.test(l);}
+function replaceTs(l,ms){return TS_RE.test(l)?msToTs(ms)+l.slice(10):msToTs(ms)+' '+l;}
+function getSeekOffset(){return parseInt(document.getElementById('seek-offset').value)||0;}
+function stripSecLine(l){return l.replace(TS_RE,'').replace(/^ /,'');}
+function cleanPaste(text){
+  let lines=text.split('\n');
+  if(cfg.strip_headers)lines=lines.filter(l=>!isHeader(l));
+  if(cfg.strip_metadata)lines=lines.filter(l=>!META_RE.test(l));
+  return lines.join('\n');
+}
+
+// ── Render ───────────────────────────────────────────────────────────────────
+function renderMainLines(){
+  const lines=getTA().split('\n'),container=document.getElementById('main-lines');
+  container.innerHTML='';
+  lines.forEach((line,i)=>{
+    const div=document.createElement('div');
+    div.className='lrc-line';div.dataset.idx=i;
+    if(isEndTs(line))div.classList.add('end-ts');
+    if(i===activeLine)div.classList.add('active');
+    if(selectedLines.has(i))div.classList.add('selected');
+    const ms=tsToMs(line);
+    if(ms!==null){
+      const ts=document.createElement('span');ts.className='ts';ts.textContent=line.slice(0,10);div.appendChild(ts);
+      const rest=document.createElement('span');rest.textContent=line.slice(10);div.appendChild(rest);
+    }else if(line.trim()===''){
+      div.innerHTML='&nbsp;';div.style.cursor='default';
+    }else{div.textContent=line;}
+    div.addEventListener('mousedown',e=>{
+      if(e.button===0){
+        e.preventDefault();
+        const isMeta=META_RE.test(line);
+        if(e.shiftKey&&activeLine>=0&&!isMeta){
+          const lo=Math.min(activeLine,i),hi=Math.max(activeLine,i);
+          for(let j=lo;j<=hi;j++){if(!META_RE.test(lines[j]))selectedLines.add(j);}
+          activeLine=i;renderMainLines();
+        }else if(e.ctrlKey&&!isMeta){
+          if(selectedLines.has(i))selectedLines.delete(i);else selectedLines.add(i);
+          activeLine=i;renderMainLines();
+        }else if(!isMeta||!hotkeyMode){
+          // Plain click: set active, clear selection, seek
+          selectedLines.clear();activeLine=i;
+          const ms=tsToMs(line);
+          if(ms!==null&&audioEl){
+            audioEl.currentTime=Math.max(0,ms+getSeekOffset())/1000;
+            if(!playing){audioEl.play();playing=true;updatePlayBtn();}
+          }
+          renderMainLines();scrollToActive();
+        }
+      }
+    });
+    div.addEventListener('contextmenu',e=>e.preventDefault());
+    container.appendChild(div);
+  });
+}
+
+function selectAllLyricLines(){
+  selectedLines.clear();
+  getTA().split('\n').forEach((l,i)=>{if(!META_RE.test(l)&&l.trim()!=='')selectedLines.add(i);});
+  renderMainLines();
+}
+function clearSelection(){selectedLines.clear();renderMainLines();}
+function scrollToActive(){const el=document.querySelector('#main-lines .lrc-line.active');if(el)el.scrollIntoView({block:'nearest'});}
+
+// ── Paste into rendered view ─────────────────────────────────────────────────
+document.getElementById('main-lines').addEventListener('paste',e=>{
+  e.preventDefault();
+  const raw=e.clipboardData.getData('text/plain');if(!raw)return;
+  const cleaned=cleanPaste(raw);
+  // Ensure exactly one blank line between existing metadata block and new content
+  const existing=getTA().trimEnd();
+  setMainText(existing+'\n\n'+cleaned.trimStart());
+});
+
+// ── Audio ────────────────────────────────────────────────────────────────────
+function setupAudio(file){
+  if(audioEl){audioEl.pause();audioEl.src='';}
+  audioEl=new Audio();audioEl.src=URL.createObjectURL(file);
+  audioEl.addEventListener('timeupdate',onTimeUpdate);
+  audioEl.addEventListener('ended',()=>{playing=false;updatePlayBtn();});
+  audioEl.addEventListener('loadedmetadata',()=>{document.getElementById('time-dur').textContent=fmtTime(audioEl.duration);});
+  document.getElementById('song-title').textContent=file.name.replace(/\.[^.]+$/,'')||'Unknown Title';
+}
+function onTimeUpdate(){
+  const pos=audioEl.currentTime,dur=audioEl.duration||0;
+  document.getElementById('time-pos').textContent=fmtTime(pos);
+  document.getElementById('progress-fill').style.width=dur?(pos/dur*100)+'%':'0%';
+  updateActiveLineFromTime(pos*1000);
+}
+function updateActiveLineFromTime(posMs){
+  // Only auto-advance active line; never overwrite a user-set selection or active during arrow nav
+  const lines=getTA().split('\n');let best=-1;
+  for(let i=0;i<lines.length;i++){const ms=tsToMs(lines[i]);if(ms!==null&&ms<=posMs)best=i;}
+  if(best!==activeLine){activeLine=best;renderMainLines();scrollToActive();syncSecScroll();}
+}
+function fmtTime(s){s=Math.floor(s);return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
+function togglePlay(){if(!audioEl)return;if(playing){audioEl.pause();playing=false;}else{audioEl.play();playing=true;}updatePlayBtn();}
+function updatePlayBtn(){rebuildHkPanel();}
+function currentMs(){return audioEl?audioEl.currentTime*1000:0;}
+function autoPlay(){if(audioEl&&!playing){audioEl.play();playing=true;updatePlayBtn();}}
+function seekToMs(ms){
+  if(!audioEl)return;
+  audioEl.currentTime=Math.max(0,ms+getSeekOffset())/1000;
+  autoPlay();
+}
+function seekPrevLine(){
+  const lines=getTA().split('\n');
+  for(let i=activeLine-1;i>=0;i--){const ms=tsToMs(lines[i]);if(ms!==null){seekToMs(ms);return;}}
+}
+function seekNextLine(){
+  const lines=getTA().split('\n');
+  for(let i=activeLine+1;i<lines.length;i++){const ms=tsToMs(lines[i]);if(ms!==null){seekToMs(ms);return;}}
+}
+
+document.getElementById('progress-wrap').addEventListener('click',e=>{
+  if(!audioEl||!audioEl.duration)return;
+  const r=e.currentTarget.getBoundingClientRect();audioEl.currentTime=((e.clientX-r.left)/r.width)*audioEl.duration;
+});
+document.getElementById('seek-tick-back').addEventListener('click',()=>tickSeekOffset(-1));
+document.getElementById('seek-tick-fwd').addEventListener('click',()=>tickSeekOffset(1));
+function tickSeekOffset(dir){
+  const el=document.getElementById('seek-offset');
+  el.value=(parseInt(el.value)||0)+dir*cfg.seek_offset_tick;
+  cfg.seek_offset=parseInt(el.value);saveCfg();
+}
+document.getElementById('seek-offset').addEventListener('change',()=>{
+  cfg.seek_offset=parseInt(document.getElementById('seek-offset').value)||0;saveCfg();
+});
+
+// ── Sync / timestamp ─────────────────────────────────────────────────────────
+function syncLine(){
+  const ms=currentMs(),lines=getTA().split('\n');
+  if(activeLine<0||activeLine>=lines.length)return;
+  lines[activeLine]=replaceTs(lines[activeLine],ms);setMainText(lines.join('\n'));
+}
+function insertEndLine(){
+  const ms=currentMs(),lines=getTA().split('\n');
+  const idx=activeLine>=0?activeLine+1:lines.length;
+  lines.splice(idx,0,msToTs(ms));setMainText(lines.join('\n'));
+  activeLine=idx;renderMainLines();scrollToActive();
+}
+function adjustTs(delta){
+  const lines=getTA().split('\n');
+  const targets=selectedLines.size>0?[...selectedLines]:[activeLine];
+  let changed=false;
+  targets.forEach(i=>{
+    if(i<0||i>=lines.length)return;
+    const ms=tsToMs(lines[i]);if(ms===null)return;
+    lines[i]=replaceTs(lines[i],ms+delta);changed=true;
+  });
+  if(changed)setMainText(lines.join('\n'));
+}
+function toggleParens(){
+  const lines=getTA().split('\n');
+  const targets=selectedLines.size>0?[...selectedLines]:[activeLine];
+  if(!targets.length||targets[0]<0)return;
+  let changed=false;
+  targets.forEach(i=>{
+    if(i<0||i>=lines.length)return;
+    const line=lines[i],ms=tsToMs(line);
+    if(ms!==null){
+      const pfx=line.slice(0,10),rest=line.slice(10).replace(/^ /,'');
+      lines[i]=pfx+' '+(rest.startsWith('(')&&rest.endsWith(')')?rest.slice(1,-1):'('+rest+')');
+    }else{
+      const t=line.trim();if(!t)return;
+      lines[i]=t.startsWith('(')&&t.endsWith(')')?t.slice(1,-1):'('+t+')';
+    }
+    changed=true;
+  });
+  if(changed)setMainText(lines.join('\n'));
+}
+
+// ── Secondary fields ─────────────────────────────────────────────────────────
+function addSecondary(){
+  const idx=secondaryCols.length+1,col=document.createElement('div');col.className='field-col';
+  const hdr=document.createElement('div');hdr.className='field-header';
+  const lbl=document.createElement('span');lbl.className='field-header-label';lbl.textContent=`Secondary ${idx}`;
+  const parenBtn=document.createElement('button');parenBtn.className='fh-btn';parenBtn.textContent='Add ( )';
+  const wb=document.createElement('div');wb.className='warn-bar';
+  const scrollEl=document.createElement('div');scrollEl.className='lyric-scroll';
+  const le=document.createElement('div');le.className='lyric-area';le.contentEditable='true';le.spellcheck=false;le.style.outline='none';le.style.userSelect='text';
+  le.addEventListener('paste',e=>{
+    e.preventDefault();
+    let lines=e.clipboardData.getData('text/plain').split('\n');
+    // Always strip ts, meta, headers from secondary paste
+    lines=lines.map(l=>stripSecLine(l)).filter(l=>!META_RE.test(l)&&!isHeader(l));
+    document.execCommand('insertText',false,lines.join('\n'));
+    checkLineCounts();updateMergeBtn();
+  });
+  le.addEventListener('input',()=>{checkLineCounts();updateMergeBtn();});
+  parenBtn.addEventListener('click',()=>{
+    const lines=le.innerText.split('\n');
+    le.innerText=lines.map(l=>{const t=l.trim();if(!t)return l;return t.startsWith('(')&&t.endsWith(')')?t.slice(1,-1):'('+t+')'}).join('\n');
+    checkLineCounts();updateMergeBtn();
+  });
+  hdr.appendChild(lbl);hdr.appendChild(parenBtn);col.appendChild(hdr);col.appendChild(wb);
+  scrollEl.appendChild(le);col.appendChild(scrollEl);
+  scrollEl.addEventListener('scroll',()=>syncScrollFrom(scrollEl));
+  document.getElementById('editor-area').appendChild(col);
+  secondaryCols.push({col,scrollEl,linesEl:le,warnBar:wb});
+  checkLineCounts();updateMergeBtn();
+}
+function removeSecondary(){if(!secondaryCols.length)return;const{col}=secondaryCols.pop();col.remove();checkLineCounts();updateMergeBtn();}
+function getSecLines(le){return le.innerText.split('\n').filter(l=>l.trim());}
+function syncScrollFrom(src){
+  if(suppressScrollSync)return;suppressScrollSync=true;
+  const h=src.scrollHeight-src.clientHeight,ratio=h>0?src.scrollTop/h:0;
+  [document.getElementById('main-scroll'),...secondaryCols.map(c=>c.scrollEl)].filter(el=>el!==src).forEach(el=>{el.scrollTop=ratio*(el.scrollHeight-el.clientHeight);});
+  suppressScrollSync=false;
+}
+function syncSecScroll(){syncScrollFrom(document.getElementById('main-scroll'));}
+document.getElementById('main-scroll').addEventListener('scroll',function(){syncScrollFrom(this);});
+
+// ── Line counts / merge ──────────────────────────────────────────────────────
+function getMainLyricLines(){return getTA().split('\n').filter(l=>l.trim()&&!META_RE.test(l));}
+function checkLineCounts(){
+  const n=getMainLyricLines().length;
+  secondaryCols.forEach(({linesEl,warnBar})=>{
+    const sn=getSecLines(linesEl).length;
+    if(sn&&sn!==n){warnBar.textContent=`\u26a0 Line count mismatch (${sn} vs ${n})`;warnBar.classList.add('visible');}
+    else warnBar.classList.remove('visible');
+  });
+}
+function updateMergeBtn(){
+  const n=getMainLyricLines().length;
+  const ok=secondaryCols.some(c=>getSecLines(c.linesEl).length>0)&&
+    secondaryCols.every(c=>{const sn=getSecLines(c.linesEl).length;return sn===0||sn===n;});
+  document.getElementById('merge-btn').disabled=!ok;
+}
+function mergeTranslations(){
+  const mainLines=getTA().split('\n');
+  const tsLines=mainLines.map((l,i)=>[i,tsToMs(l)]).filter(([,ms])=>ms!==null);
+  if(!tsLines.length){alert('No timestamps in main field.');return;}
+  const secData=secondaryCols.map(({linesEl})=>({lines:getSecLines(linesEl)})).filter(d=>d.lines.length>0);
+  if(!secData.length)return;
+  const lastLine=mainLines[tsLines[tsLines.length-1][0]];
+  if(!isEndTs(lastLine)&&!confirm('No trailing end timestamp found. Final secondary lines may not display correctly. Continue?'))return;
+  const contentTs=tsLines.filter(([i])=>!isEndTs(mainLines[i]));
+  const result=[...mainLines];
+  for(let ci=contentTs.length-1;ci>=0;ci--){
+    const[lineIdx]=contentTs[ci];
+    let nextMs=null;for(const[i,ms]of tsLines){if(i>lineIdx){nextMs=ms;break;}}
+    if(nextMs===null)continue;
+    const ins=[];
+    secData.forEach(({lines})=>{if(ci<lines.length)ins.push(lines[ci]);});
+    const n=ins.length;
+    result.splice(lineIdx+1,0,...ins.map((t,j)=>`${msToTs(nextMs-(n-j)*10)} ${t}`));
+  }
+  setMainText(result.join('\n'));
+}
+
+// ── Title from text ──────────────────────────────────────────────────────────
+function updateTitleFromText(){
+  const text=getTA();
+  const ti=(text.match(/^\[ti:\s*(.+)\]/m)||[])[1],ar=(text.match(/^\[ar:\s*(.+)\]/m)||[])[1];
+  document.getElementById('song-title').textContent=(ti&&ti.trim()&&ti.trim()!=='Unknown')?ti.trim():'Unknown Title';
+  document.getElementById('song-artist').textContent=(ar&&ar.trim()&&ar.trim()!=='Unknown')?ar.trim():'Unknown Artist';
+}
+
+// ── Import ───────────────────────────────────────────────────────────────────
+document.getElementById('btn-import').addEventListener('click',()=>{document.getElementById('file-picker').value='';document.getElementById('file-picker').click();});
+document.getElementById('file-picker').addEventListener('change',e=>{
+  const files=Array.from(e.target.files);if(!files.length)return;
+  const audioExts=/\.(mp3|flac|ogg|wav|m4a|aac|opus)$/i,lrcExts=/\.(lrc|txt)$/i;
+  const af=files.find(f=>audioExts.test(f.name)),lf=files.find(f=>lrcExts.test(f.name));
+  if(af)setupAudio(af);
+  if(lf){
+    const reader=new FileReader();
+    reader.onload=ev=>{
+      let lines=ev.target.result.split('\n');
+      if(cfg.strip_headers)lines=lines.filter(l=>!isHeader(l));
+      if(cfg.strip_metadata)lines=lines.filter(l=>!META_RE.test(l));
+      // Append with one blank line separator
+      const existing=getTA().trimEnd(),imported=lines.join('\n').trimStart();
+      setMainText(existing+'\n\n'+imported);
+    };
+    reader.readAsText(lf,'utf-8');
+  }
+});
+
+// ── Export ───────────────────────────────────────────────────────────────────
+document.getElementById('btn-export').addEventListener('click',doExport);
+function doExport(){
+  const text=getTA(),ti=text.match(/^\[ti:\s*(.+)\]/m),raw=ti?ti[1].trim():'';
+  const fname=(raw&&raw!=='Unknown'?raw:'lyrics')+'.lrc';
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));a.download=fname;a.click();
+}
+
+// ── New ──────────────────────────────────────────────────────────────────────
+document.getElementById('btn-new').addEventListener('click',()=>{
+  confirm2('Clear all fields and start over?',()=>{
+    _setTA(cfg.default_meta);undoStack=[];redoStack=[];
+    renderMainLines();checkLineCounts();updateTitleFromText();doAutosave();
+    secondaryCols.slice().reverse().forEach(()=>removeSecondary());
+    if(audioEl){audioEl.pause();audioEl.src='';audioEl=null;}
+    playing=false;updatePlayBtn();activeLine=-1;selectedLines.clear();
+    document.getElementById('song-title').textContent='Unknown Title';
+    document.getElementById('song-artist').textContent='Unknown Artist';
+    document.getElementById('time-pos').textContent='0:00';
+    document.getElementById('time-dur').textContent='0:00';
+    document.getElementById('progress-fill').style.width='0%';
+  });
+});
+
+// ── Controls panel ────────────────────────────────────────────────────────────
+const CTRL_ACTIONS={
+  toggle_mode:()=>{hotkeyMode=!hotkeyMode;applyMode();},
+  play_pause:()=>togglePlay(),
+  sync:()=>syncLine(),
+  end_line:()=>insertEndLine(),
+  prev_line:()=>seekPrevLine(),
+  next_line:()=>seekNextLine(),
+  seek_offset_back:()=>tickSeekOffset(-1),
+  seek_offset_fwd:()=>tickSeekOffset(1),
+  clear_sel:()=>{selectedLines.clear();renderMainLines();},
+  ts_back_tiny:()=>adjustTs(-cfg.tiny_ms),
+  ts_fwd_tiny:()=>adjustTs(cfg.tiny_ms),
+  ts_back_small:()=>adjustTs(-cfg.small_ms),
+  ts_fwd_small:()=>adjustTs(cfg.small_ms),
+  ts_back_medium:()=>adjustTs(-cfg.medium_ms),
+  ts_fwd_medium:()=>adjustTs(cfg.medium_ms),
+  ts_back_large:()=>adjustTs(-cfg.large_ms),
+  ts_fwd_large:()=>adjustTs(cfg.large_ms),
+  mute:()=>{if(audioEl)audioEl.muted=!audioEl.muted;},
+  vol_down:()=>{if(audioEl)audioEl.volume=Math.max(0,audioEl.volume-0.1);},
+  vol_up:()=>{if(audioEl)audioEl.volume=Math.min(1,audioEl.volume+0.1);},
+};
+// Keys that only work in hotkey mode (gray out in typing mode)
+const HOTKEY_ONLY=new Set(['sync','end_line','prev_line','next_line','clear_sel',
+  'ts_back_tiny','ts_fwd_tiny','ts_back_small','ts_fwd_small',
+  'ts_back_medium','ts_fwd_medium','ts_back_large','ts_fwd_large']);
+function rebuildHkPanel(){
+  const grid=document.getElementById('hk-grid');grid.innerHTML='';
+  const hk=cfg.hotkeys,{tiny_ms:tn,small_ms:sm,medium_ms:med,large_ms:lg}=cfg;
+  [['toggle_mode',hotkeyMode?'Hotkey mode':'Typing mode',true],
+   ['play_pause','Play',false],['sync','Sync line',false],
+   ['prev_line','Prev line',false],['end_line','End line',false],
+   ['next_line','Next line',false],['clear_sel','Clear',false],
+   ['ts_back_tiny',`\u2212${tn}ms`,false],['ts_fwd_tiny',`+${tn}ms`,false],
+   ['ts_back_small',`\u2212${sm}ms`,false],['ts_fwd_small',`+${sm}ms`,false],
+   ['ts_back_medium',`\u2212${med}ms`,false],['ts_fwd_medium',`+${med}ms`,false],
+   ['ts_back_large',`\u2212${lg}ms`,false],['ts_fwd_large',`+${lg}ms`,false],
+   ['seek_offset_back','Offset ◀',false],['seek_offset_fwd','Offset ▶',false],
+   ['mute','Mute',false],['vol_down','Vol −',false],['vol_up','Vol +',false],
+  ].forEach(([key,label,isMode])=>{
+    const cell=document.createElement('div');cell.className='hk-cell'+(isMode?' mode':'');
+    cell.title=HK_LABELS[key]||label;
+    const dimmed=!hotkeyMode&&HOTKEY_ONLY.has(key);
+    if(dimmed)cell.style.opacity='0.35';
+    cell.innerHTML=`<span>${label}</span><span class="hk-key">${hk[key]==='Escape'?'Esc':hk[key]}</span>`;
+    cell.addEventListener('click',()=>{if(!dimmed&&CTRL_ACTIONS[key])CTRL_ACTIONS[key]();});
+    grid.appendChild(cell);
+  });
+}
+
+// ── Settings ─────────────────────────────────────────────────────────────────
+function openSettings(){
+  document.getElementById('s-strip-headers').checked=cfg.strip_headers;
+  document.getElementById('s-strip-meta').checked=cfg.strip_metadata;
+  document.getElementById('s-seek-tick').value=cfg.seek_offset_tick;
+  document.getElementById('s-tiny').value=cfg.tiny_ms;
+  document.getElementById('s-small').value=cfg.small_ms;
+  document.getElementById('s-medium').value=cfg.medium_ms;
+  document.getElementById('s-large').value=cfg.large_ms;
+  // Show default_meta exactly as stored — user controls newlines directly
+  document.getElementById('s-default-meta').value=cfg.default_meta;
+  buildHkRows();document.getElementById('settings-overlay').classList.add('open');
+}
+function closeSettings(){document.getElementById('settings-overlay').classList.remove('open');}
+function buildHkRows(){
+  const c=document.getElementById('hk-settings-rows');c.innerHTML='';
+  Object.entries(HK_LABELS).forEach(([key,label])=>{
+    const row=document.createElement('div');row.className='hk-row';
+    const lbl=document.createElement('label');lbl.textContent=label;
+    const inp=document.createElement('input');inp.className='hk-capture';inp.dataset.hkKey=key;
+    const stored=cfg.hotkeys[key]||'';
+    inp.value=stored==='Escape'?'Esc':stored;
+    inp.readOnly=true;
+    inp.addEventListener('focus',()=>{inp.value='';});
+    inp.addEventListener('keydown',e=>{
+      e.preventDefault();const parts=[];
+      if(e.ctrlKey)parts.push('Ctrl');if(e.shiftKey)parts.push('Shift');if(e.altKey)parts.push('Alt');
+      const k=e.key;
+      if(!['Control','Shift','Alt','Meta'].includes(k)){
+        const disp=k==='Escape'?'Esc':k===' '?'Space':k.length===1?k.toUpperCase():k;
+        parts.push(disp);
+      }
+      if(parts.length)inp.value=parts.join('+');
+    });
+    row.appendChild(lbl);row.appendChild(inp);c.appendChild(row);
+  });
+}
+document.getElementById('s-save').addEventListener('click',()=>{
+  cfg.strip_headers=document.getElementById('s-strip-headers').checked;
+  cfg.strip_metadata=document.getElementById('s-strip-meta').checked;
+  cfg.seek_offset_tick=+document.getElementById('s-seek-tick').value||1000;
+  cfg.tiny_ms=+document.getElementById('s-tiny').value||100;
+  cfg.small_ms=+document.getElementById('s-small').value||200;
+  cfg.medium_ms=+document.getElementById('s-medium').value||400;
+  cfg.large_ms=+document.getElementById('s-large').value||1000;
+  // Save default_meta exactly as typed — newlines are the user's responsibility
+  cfg.default_meta=document.getElementById('s-default-meta').value;
+  document.querySelectorAll('.hk-capture').forEach(inp=>{
+    if(inp.value){
+      // Normalize Esc display back to Escape for storage
+      cfg.hotkeys[inp.dataset.hkKey]=inp.value==='Esc'?'Escape':inp.value;
+    }
+  });
+  saveCfg();rebuildHkPanel();closeSettings();
+});
+document.getElementById('s-cancel').addEventListener('click',closeSettings);
+document.getElementById('settings-close').addEventListener('click',closeSettings);
+document.getElementById('btn-settings').addEventListener('click',openSettings);
+
+// ── Confirm dialog ───────────────────────────────────────────────────────────
+function confirm2(msg,onYes){
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-overlay').classList.add('open');
+  document.getElementById('confirm-yes').onclick=()=>{document.getElementById('confirm-overlay').classList.remove('open');onYes();};
+  document.getElementById('confirm-no').onclick=()=>{document.getElementById('confirm-overlay').classList.remove('open');};
+  requestAnimationFrame(()=>document.getElementById('confirm-yes').focus());
+}
+
+// ── Keyboard ─────────────────────────────────────────────────────────────────
+function keyStr(e){
+  const p=[];if(e.ctrlKey)p.push('Ctrl');if(e.shiftKey)p.push('Shift');if(e.altKey)p.push('Alt');
+  const k=e.key;if(!['Control','Shift','Alt','Meta'].includes(k))p.push(k===' '?'Space':k.length===1?k.toUpperCase():k);
+  return p.join('+');
+}
+// Normalize stored hotkey value for comparison (Esc stored as Escape, compare as Escape)
+function hkMatch(ks,stored){return ks===stored||(stored==='Escape'&&ks==='Escape');}
+
+document.addEventListener('keydown',e=>{
+  if(document.getElementById('settings-overlay').classList.contains('open'))return;
+  const ks=keyStr(e),hk=cfg.hotkeys;
+  if(hkMatch(ks,hk.import)){e.preventDefault();document.getElementById('btn-import').click();return;}
+  if(hkMatch(ks,hk.export)){e.preventDefault();doExport();return;}
+  if(hkMatch(ks,hk.new)){e.preventDefault();document.getElementById('btn-new').click();return;}
+  if(hkMatch(ks,hk.settings)){e.preventDefault();openSettings();return;}
+  if(hkMatch(ks,hk.undo)){e.preventDefault();doUndo();return;}
+  if(hkMatch(ks,hk.redo)){e.preventDefault();doRedo();return;}
+  if(hkMatch(ks,hk.add_field)){e.preventDefault();addSecondary();return;}
+  if(hkMatch(ks,hk.remove_field)){e.preventDefault();removeSecondary();return;}
+  if(hkMatch(ks,hk.toggle_mode)){e.preventDefault();hotkeyMode=!hotkeyMode;applyMode();return;}
+  // Media hotkeys active regardless of mode
+  if(hkMatch(ks,hk.mute)){e.preventDefault();CTRL_ACTIONS.mute();return;}
+  if(hkMatch(ks,hk.vol_down)){e.preventDefault();CTRL_ACTIONS.vol_down();return;}
+  if(hkMatch(ks,hk.vol_up)){e.preventDefault();CTRL_ACTIONS.vol_up();return;}
+  // Seek offset hotkeys active regardless of mode
+  if(hkMatch(ks,hk.seek_offset_back)){e.preventDefault();tickSeekOffset(-1);return;}
+  if(hkMatch(ks,hk.seek_offset_fwd)){e.preventDefault();tickSeekOffset(1);return;}
+  if(!hotkeyMode)return;
+
+  // Esc/clear always works in hotkey mode
+  if(e.key==='Escape'||hkMatch(ks,hk.clear_sel)){e.preventDefault();selectedLines.clear();renderMainLines();return;}
+
+  // Arrow keys: navigate lines, skipping metadata in hotkey mode
+  const allLines=getTA().split('\n');
+  const lineCount=allLines.length;
+  if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+    e.preventDefault();
+    const dir=e.key==='ArrowUp'?-1:1;
+    // Find next non-meta line in direction
+    let next=(activeLine<0?0:activeLine);
+    let candidate=next+dir;
+    while(candidate>=0&&candidate<lineCount){
+      if(!META_RE.test(allLines[candidate]))break;
+      candidate+=dir;
+    }
+    if(candidate<0||candidate>=lineCount)candidate=next; // no valid target, stay
+    next=Math.max(0,Math.min(lineCount-1,candidate));
+    if(e.shiftKey){
+      if(selectedLines.size===0&&activeLine>=0)selectedLines.add(activeLine);
+      selectedLines.add(next);activeLine=next;
+    }else if(e.ctrlKey){
+      activeLine=next;
+    }else{
+      selectedLines.clear();activeLine=next;
+    }
+    renderMainLines();scrollToActive();return;
+  }
+
+  // Enter: seek to active line (same as clicking it)
+  if(e.key==='Enter'&&activeLine>=0){
+    e.preventDefault();
+    const ms=tsToMs(getTA().split('\n')[activeLine]);
+    if(ms!==null&&audioEl){
+      audioEl.currentTime=Math.max(0,ms+getSeekOffset())/1000;
+      if(!playing){audioEl.play();playing=true;updatePlayBtn();}
+    }
+    return;
+  }
+
+  const actions={
+    [hk.play_pause]:()=>togglePlay(),
+    [hk.sync]:()=>syncLine(),
+    [hk.end_line]:()=>insertEndLine(),
+    [hk.prev_line]:()=>seekPrevLine(),
+    [hk.next_line]:()=>seekNextLine(),
+    [hk.ts_back_tiny]:()=>adjustTs(-cfg.tiny_ms),
+    [hk.ts_fwd_tiny]:()=>adjustTs(cfg.tiny_ms),
+    [hk.ts_back_small]:()=>adjustTs(-cfg.small_ms),
+    [hk.ts_fwd_small]:()=>adjustTs(cfg.small_ms),
+    [hk.ts_back_medium]:()=>adjustTs(-cfg.medium_ms),
+    [hk.ts_fwd_medium]:()=>adjustTs(cfg.medium_ms),
+    [hk.ts_back_large]:()=>adjustTs(-cfg.large_ms),
+    [hk.ts_fwd_large]:()=>adjustTs(cfg.large_ms),
+  };
+  if(actions[ks]){e.preventDefault();actions[ks]();}
+});
+
+// ── Button wiring ─────────────────────────────────────────────────────────────
+document.getElementById('btn-undo').addEventListener('click',doUndo);
+document.getElementById('btn-redo').addEventListener('click',doRedo);
+document.getElementById('btn-add-sec').addEventListener('click',addSecondary);
+document.getElementById('btn-remove-sec').addEventListener('click',removeSecondary);
+document.getElementById('merge-btn').addEventListener('click',mergeTranslations);
+document.getElementById('btn-select-all').addEventListener('click',selectAllLyricLines);
+document.getElementById('btn-parens').addEventListener('click',toggleParens);
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadAutosave();document.getElementById('seek-offset').value=cfg.seek_offset;rebuildHkPanel();applyMode();
+</script>
+</body>
+</html>

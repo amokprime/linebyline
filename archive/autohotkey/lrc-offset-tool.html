@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LRC Offset Tool</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #ffffff;
+    --bg2: #f5f5f3;
+    --bg3: #ebebea;
+    --text: #1a1a18;
+    --text2: #6b6b68;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --accent: #185fa5;
+    --accent-bg: #e6f1fb;
+    --accent-text: #0c447c;
+    --success-bg: #eaf3de;
+    --success-text: #3b6d11;
+    --danger-bg: #fcebeb;
+    --danger-text: #a32d2d;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --mono: 'Cascadia Code', 'Fira Mono', 'Consolas', monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1c;
+      --bg2: #2a2a28;
+      --bg3: #343432;
+      --text: #e8e8e4;
+      --text2: #9a9a96;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+      --accent: #378add;
+      --accent-bg: #0c2a42;
+      --accent-text: #85b7eb;
+      --success-bg: #1a2e0a;
+      --success-text: #97c459;
+      --danger-bg: #2e0f0f;
+      --danger-text: #f09595;
+    }
+  }
+
+  body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: var(--bg2);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem;
+  }
+
+  .card {
+    background: var(--bg);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem 2rem;
+    width: 100%;
+    max-width: 700px;
+  }
+
+  h1 {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 1.75rem;
+  }
+
+  h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 6px;
+  }
+
+  .section { margin-bottom: 1.25rem; }
+
+  textarea {
+    width: 100%;
+    font-family: var(--mono);
+    font-size: 13px;
+    background: var(--bg2);
+    color: var(--text);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    resize: vertical;
+    line-height: 1.6;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  textarea:focus { border-color: var(--border2); }
+  textarea[readonly] { opacity: 0.85; }
+
+  .row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--text2);
+  }
+
+  input[type=number] {
+    width: 110px;
+    background: var(--bg2);
+    color: var(--text);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  input[type=number]:focus { border-color: var(--border2); }
+
+  button {
+    background: transparent;
+    color: var(--text);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.12s, transform 0.08s;
+  }
+
+  button:hover { background: var(--bg2); }
+  button:active { transform: scale(0.98); }
+
+  button.primary {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    border-color: transparent;
+    font-weight: 500;
+  }
+
+  button.primary:hover { filter: brightness(0.95); }
+
+  .badge {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: var(--radius);
+  }
+
+  .badge.info  { background: var(--accent-bg);   color: var(--accent-text); }
+  .badge.ok    { background: var(--success-bg);  color: var(--success-text); }
+  .badge.err   { background: var(--danger-bg);   color: var(--danger-text); }
+
+  .divider {
+    border: none;
+    border-top: 0.5px solid var(--border);
+    margin: 1.5rem 0;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>LRC offset tool</h1>
+  <p class="subtitle">Mass-shift lyric timestamps without relying on the <code>[offset:]</code> tag</p>
+
+  <div class="section">
+    <h3>Input LRC</h3>
+    <textarea id="input" rows="10" placeholder="[00:12.34] Paste your LRC lyrics here
+[00:15.00] Each line with a timestamp
+[offset:xxxx] tags will be stripped automatically"></textarea>
+  </div>
+
+  <div class="row">
+    <label for="offsetMs" style="font-size:13px; color:var(--text2);">Offset (ms)</label>
+    <input type="number" id="offsetMs" value="0" step="100" />
+    <span class="hint">Positive = shift later &nbsp;·&nbsp; Negative = shift earlier</span>
+  </div>
+
+  <div class="row">
+    <button class="primary" onclick="applyOffset()">Apply offset</button>
+    <button onclick="clearAll()">Clear</button>
+    <span id="status"></span>
+  </div>
+
+  <hr class="divider">
+
+  <div class="section">
+    <h3>Output LRC</h3>
+    <textarea id="output" rows="10" readonly placeholder="Adjusted output will appear here..."></textarea>
+  </div>
+
+  <div class="row">
+    <button onclick="copyOutput()">Copy to clipboard</button>
+    <button onclick="downloadOutput()">Download .lrc</button>
+    <span id="copyStatus"></span>
+  </div>
+</div>
+
+<script>
+function parseMsFromTag(tag) {
+  const m = tag.match(/\[(\d+):(\d{2})\.(\d{2,3})\]/);
+  if (!m) return null;
+  const mins = parseInt(m[1]);
+  const secs = parseInt(m[2]);
+  const ms = m[3].length === 2 ? parseInt(m[3]) * 10 : parseInt(m[3]);
+  return mins * 60000 + secs * 1000 + ms;
+}
+
+function formatTag(ms) {
+  if (ms < 0) ms = 0;
+  const mins = Math.floor(ms / 60000);
+  const secs = Math.floor((ms % 60000) / 1000);
+  const centis = Math.round((ms % 1000) / 10);
+  return `[${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}.${String(centis).padStart(2,'0')}]`;
+}
+
+function applyOffset() {
+  const raw = document.getElementById('input').value;
+  const offset = parseInt(document.getElementById('offsetMs').value) || 0;
+  const status = document.getElementById('status');
+
+  if (!raw.trim()) {
+    status.innerHTML = '<span class="badge err">No input</span>';
+    return;
+  }
+
+  const lines = raw.split('\n');
+  let changed = 0, skipped = 0;
+  const tagRe = /\[(\d+):(\d{2})\.(\d{2,3})\]/g;
+  const offsetTagRe = /\[offset:[^\]]*\]/gi;
+
+  const out = lines.map(line => {
+    line = line.replace(offsetTagRe, '').trim();
+    if (!line) return line;
+
+    let didReplace = false;
+    const replaced = line.replace(tagRe, (match) => {
+      const ms = parseMsFromTag(match);
+      if (ms === null) return match;
+      changed++;
+      didReplace = true;
+      return formatTag(ms + offset);
+    });
+
+    if (!didReplace) skipped++;
+    return replaced;
+  });
+
+  document.getElementById('output').value = out.join('\n');
+  status.innerHTML =
+    `<span class="badge ok">${changed} timestamp${changed !== 1 ? 's' : ''} adjusted</span>` +
+    (skipped ? ` <span class="badge info">${skipped} other line${skipped !== 1 ? 's' : ''}</span>` : '');
+}
+
+function copyOutput() {
+  const val = document.getElementById('output').value;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    const s = document.getElementById('copyStatus');
+    s.innerHTML = '<span class="badge ok">Copied</span>';
+    setTimeout(() => s.innerHTML = '', 2000);
+  });
+}
+
+function downloadOutput() {
+  const val = document.getElementById('output').value;
+  if (!val) return;
+  const blob = new Blob([val], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'adjusted.lrc';
+  a.click();
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').value = '';
+  document.getElementById('status').innerHTML = '';
+  document.getElementById('copyStatus').innerHTML = '';
+  document.getElementById('offsetMs').value = 0;
+}
+</script>
+</body>
+</html>

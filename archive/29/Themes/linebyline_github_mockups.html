@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LineByLine — GitHub Theme Mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#1a1a2e;font-family:'Segoe UI',system-ui,sans-serif;padding:40px 24px;display:flex;flex-direction:column;gap:48px;align-items:center;}
+h1{color:#aaa;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;text-align:center;margin-bottom:-24px;}
+
+/* ── Shared app chrome ── */
+.mock{width:900px;border-radius:8px;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.5);}
+.mock-label{font-size:11px;letter-spacing:0.08em;text-transform:uppercase;text-align:right;padding:6px 12px;font-family:'Roboto Mono',monospace;}
+.menu-bar{display:flex;align-items:center;height:38px;padding:0 8px;gap:4px;border-bottom:1px solid;}
+.mb-btn{height:27px;padding:0 10px;border-radius:5px;border:1px solid;font-size:12.5px;cursor:default;white-space:nowrap;display:flex;align-items:center;background:transparent;}
+.mb-btn.accent{font-size:12px;}
+.mb-sep{width:1px;height:16px;margin:0 2px;}
+.select-mock{height:27px;font-size:11.5px;border-radius:5px;border:1px solid;padding:0 6px;background:transparent;}
+.size-wrap{display:flex;align-items:center;}
+.size-inp{width:28px;height:27px;font-size:11.5px;text-align:center;border:1px solid;border-radius:5px 0 0 5px;background:transparent;}
+.size-spin{display:flex;flex-direction:column;width:15px;height:27px;border:1px solid;border-left:none;border-radius:0 5px 5px 0;overflow:hidden;background:transparent;}
+.size-tick{flex:1;border:none;background:transparent;font-size:8px;display:flex;align-items:center;justify-content:center;}
+.icon-btn{width:32px;height:27px;border:1px solid;border-radius:5px;display:flex;align-items:center;justify-content:center;background:transparent;font-size:14px;cursor:default;}
+.main-row{display:flex;height:480px;}
+.left-panel{width:290px;min-width:290px;border-right:1px solid;padding:8px;display:flex;flex-direction:column;gap:6px;overflow:hidden;}
+.sec-label{font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;margin-bottom:2px;}
+.audio-box{border:1px solid;border-radius:5px;padding:8px;display:flex;flex-direction:column;gap:4px;}
+.song-title{font-size:12.5px;font-weight:600;}
+.song-artist{font-size:11.5px;}
+.progress-wrap{height:4px;border-radius:2px;margin:2px 0;}
+.progress-fill{height:4px;border-radius:2px;width:35%;}
+.time-row{display:flex;justify-content:space-between;font-size:11.5px;}
+.seek-row{display:flex;align-items:center;gap:4px;font-size:11.5px;margin-top:2px;}
+.seek-inp{width:48px;height:22px;font-size:11px;font-family:'Roboto Mono',monospace;text-align:right;padding:0 4px;border:1px solid;border-radius:4px;background:transparent;}
+.arr-btn{width:20px;height:22px;border:1px solid;border-radius:4px;background:transparent;display:flex;align-items:center;justify-content:center;font-size:11px;}
+.sync-btn{height:22px;font-size:10.5px;border:1px solid;border-radius:4px;background:transparent;padding:0 5px;display:flex;align-items:center;}
+.vol-row{display:flex;align-items:center;gap:5px;margin-top:2px;}
+.vol-icon{font-size:13px;}
+.vol-bar{flex:1;height:3px;border-radius:2px;position:relative;}
+.vol-fill{height:3px;border-radius:2px;width:78%;}
+.vol-pct{font-size:10.5px;min-width:30px;text-align:right;}
+.hk-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-top:2px;}
+.hk-cell{display:flex;justify-content:space-between;align-items:center;padding:3px 5px;border:1px solid;border-radius:5px;font-size:11.5px;}
+.hk-cell.mode{grid-column:span 2;border-radius:5px;}
+.hk-key{font-family:'Roboto Mono',monospace;font-size:10px;border-radius:3px;padding:1px 4px;}
+.editor-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.field-header{display:flex;align-items:center;height:36px;padding:0 8px;border-bottom:1px solid;flex-shrink:0;}
+.field-header-label{font-size:11.5px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;}
+
+/* Terminal panel — Roboto Mono */
+.lyric-area{flex:1;font-family:'Roboto Mono',monospace;font-size:13px;line-height:1.75;padding:4px 8px;overflow-y:auto;}
+.lrc-line{padding:1px 0;white-space:nowrap;}
+.lrc-line.active{font-weight:500;}
+.ts{margin-right:3px;}
+
+/* ── GITHUB LIGHT ── */
+.gh-light{--bg:#f6f8fa;--surface:#ffffff;--border:#d0d7de;--border-mid:#b8bec6;
+  --text:#24292f;--text-muted:#656d76;--text-faint:#9198a1;
+  --accent:#0969da;--accent-bg:#ddf4ff;--accent-border:#54aeff;
+  --warn-bg:#fff8c5;--warn-border:#d4a72c;--warn-text:#7d4e00;
+  --active-bg:#ddf4ff;--active-text:#0550ae;--active-ts:#0969da;
+  --term-bg:#1e1e1e;--term-text:#d4d4d4;--term-ts:#6a9955;--term-active-bg:#264f78;--term-active-text:#d4d4d4;
+  background:var(--surface);color:var(--text);}
+
+/* ── GITHUB DARK ── */
+.gh-dark{--bg:#161b22;--surface:#0d1117;--border:#30363d;--border-mid:#484f58;
+  --text:#e6edf3;--text-muted:#848d97;--text-faint:#6e7681;
+  --accent:#58a6ff;--accent-bg:#121d2f;--accent-border:#1f6feb;
+  --warn-bg:#2d2207;--warn-border:#9e6a03;--warn-text:#e3b341;
+  --active-bg:#121d2f;--active-text:#58a6ff;--active-ts:#79c0ff;
+  --term-bg:#0a0a0a;--term-text:#cdd9e5;--term-ts:#6bc46d;--term-active-bg:#1b3a5c;--term-active-text:#cdd9e5;
+  background:var(--surface);color:var(--text);}
+
+.gh-light .menu-bar,.gh-dark .menu-bar{background:var(--surface);border-color:var(--border);}
+.gh-light .mb-btn,.gh-dark .mb-btn{border-color:var(--border-mid);color:var(--text);}
+.gh-light .mb-btn.accent,.gh-dark .mb-btn.accent{background:var(--accent-bg);color:var(--accent);border-color:var(--accent-border);}
+.gh-light .mb-btn.disabled,.gh-dark .mb-btn.disabled{opacity:0.4;color:var(--text-muted);border-color:var(--border-mid);background:transparent;}
+.gh-light .mb-sep,.gh-dark .mb-sep{background:var(--border);}
+.gh-light .select-mock,.gh-dark .select-mock{border-color:var(--border-mid);color:var(--text);background:var(--surface);}
+.gh-light .size-inp,.gh-dark .size-inp{border-color:var(--border-mid);color:var(--text);}
+.gh-light .size-spin,.gh-dark .size-spin{border-color:var(--border-mid);color:var(--text);}
+.gh-light .size-tick,.gh-dark .size-tick{color:var(--text);}
+.gh-light .icon-btn,.gh-dark .icon-btn{border-color:var(--border-mid);color:var(--text);}
+.gh-light .left-panel,.gh-dark .left-panel{background:var(--surface);border-color:var(--border);}
+.gh-light .sec-label,.gh-dark .sec-label{color:var(--text-muted);}
+.gh-light .audio-box,.gh-dark .audio-box{border-color:var(--border);background:var(--bg);}
+.gh-light .song-artist,.gh-dark .song-artist{color:var(--text-muted);}
+.gh-light .progress-wrap,.gh-dark .progress-wrap{background:var(--border);}
+.gh-light .progress-fill,.gh-dark .progress-fill{background:var(--accent);}
+.gh-light .time-row,.gh-dark .time-row{color:var(--text-muted);}
+.gh-light .seek-row,.gh-dark .seek-row{color:var(--text-muted);}
+.gh-light .seek-inp,.gh-dark .seek-inp{border-color:var(--border-mid);color:var(--text);}
+.gh-light .arr-btn,.gh-dark .arr-btn{border-color:var(--border-mid);color:var(--text);}
+.gh-light .sync-btn,.gh-dark .sync-btn{border-color:var(--border-mid);color:var(--text);background:var(--bg);}
+.gh-light .vol-icon,.gh-dark .vol-icon{color:var(--text-muted);}
+.gh-light .vol-bar,.gh-dark .vol-bar{background:var(--border);}
+.gh-light .vol-fill,.gh-dark .vol-fill{background:var(--accent);}
+.gh-light .vol-pct,.gh-dark .vol-pct{color:var(--text-faint);}
+.gh-light .hk-cell,.gh-dark .hk-cell{border-color:var(--border);background:var(--bg);color:var(--text);}
+.gh-light .hk-cell.mode,.gh-dark .hk-cell.mode{background:var(--accent-bg);border-color:var(--accent-border);color:var(--active-text);}
+.gh-light .hk-key,.gh-dark .hk-key{background:var(--border-mid);color:var(--text-muted);}
+.gh-light .hk-cell.mode .hk-key{background:rgba(9,105,218,0.15);color:var(--accent);}
+.gh-dark .hk-cell.mode .hk-key{background:rgba(88,166,255,0.15);color:var(--accent);}
+.gh-light .editor-wrap,.gh-dark .editor-wrap{background:var(--surface);}
+.gh-light .field-header,.gh-dark .field-header{background:var(--surface);border-color:var(--border);}
+.gh-light .field-header-label,.gh-dark .field-header-label{color:var(--text-muted);}
+
+/* Terminal area always dark regardless of app theme */
+.gh-light .lyric-area,.gh-dark .lyric-area{background:var(--term-bg);color:var(--term-text);}
+.gh-light .lrc-line .ts,.gh-dark .lrc-line .ts{color:var(--term-ts);}
+.gh-light .lrc-line.active,.gh-dark .lrc-line.active{background:var(--term-active-bg);color:var(--term-active-text);}
+.gh-light .lrc-line.active .ts,.gh-dark .lrc-line.active .ts{color:var(--term-ts);}
+
+.mock-label.gh-light-label{background:#f6f8fa;color:#656d76;border-top:1px solid #d0d7de;}
+.mock-label.gh-dark-label{background:#161b22;color:#848d97;border-top:1px solid #30363d;}
+</style>
+</head>
+<body>
+<h1>LineByLine — GitHub Theme Mockups · Roboto Mono</h1>
+
+<!-- ══ GITHUB LIGHT ══ -->
+<div class="mock">
+  <div class="gh-light">
+    <div class="menu-bar">
+      <div class="mb-btn">Open</div>
+      <div class="mb-sep"></div>
+      <div class="mb-btn" style="width:31px;padding:0;justify-content:center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      </div>
+      <div class="mb-btn" style="width:31px;padding:0;justify-content:center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+      </div>
+      <div class="mb-sep"></div>
+      <div class="select-mock">System Sans</div>
+      <div class="size-wrap">
+        <div class="size-inp">14</div>
+        <div class="size-spin"><div class="size-tick">▲</div><div class="size-tick">▼</div></div>
+      </div>
+      <div class="mb-sep"></div>
+      <div class="mb-btn">Add field</div>
+      <div class="mb-btn">Remove field</div>
+      <div class="mb-btn accent disabled">Merge fields</div>
+      <div class="mb-sep"></div>
+      <div class="icon-btn">🌙</div>
+      <div class="icon-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+    </div>
+    <div class="main-row">
+      <div class="left-panel">
+        <div class="sec-label">Now playing</div>
+        <div class="audio-box">
+          <div class="song-title">怪物 (Monster)</div>
+          <div class="song-artist">YOASOBI</div>
+          <div class="progress-wrap"><div class="progress-fill"></div></div>
+          <div class="time-row"><span>1:24</span><span>4:13</span></div>
+          <div class="seek-row">
+            <div class="seek-inp" style="font-family:'Roboto Mono',monospace;">−600</div>
+            <span>ms</span>
+            <div class="arr-btn">◀</div><div class="arr-btn">▶</div>
+            <div class="sync-btn">Sync file <span style="font-family:'Roboto Mono',monospace;font-size:9.5px;background:var(--border-mid);border-radius:3px;padding:1px 3px;margin-left:3px;">Ctrl+`</span></div>
+          </div>
+          <div class="seek-row" style="margin-top:0">
+            <div class="seek-inp" style="font-family:'Roboto Mono',monospace;">1.00</div>
+            <span>×</span>
+            <div class="arr-btn">−</div><div class="arr-btn">+</div>
+          </div>
+          <div class="vol-row">
+            <span class="vol-icon">🔊</span>
+            <div class="vol-bar"><div class="vol-fill"></div></div>
+            <span class="vol-pct">78%</span>
+          </div>
+        </div>
+        <div class="sec-label" style="margin-top:4px;">Controls</div>
+        <div class="hk-grid">
+          <div class="hk-cell mode" style="grid-column:span 1;">Typing mode <span class="hk-key">Tab</span></div>
+          <div class="hk-cell mode" style="grid-column:span 1;">Play/pause <span class="hk-key">Spc</span></div>
+          <div class="hk-cell">Sync line <span class="hk-key">W</span></div>
+          <div class="hk-cell">Prev line <span class="hk-key">Q</span></div>
+          <div class="hk-cell">Next line <span class="hk-key">E</span></div>
+          <div class="hk-cell">End line <span class="hk-key">T</span></div>
+          <div class="hk-cell">Replay only <span class="hk-key">R</span></div>
+          <div class="hk-cell">−100ms time <span class="hk-key">Z</span></div>
+          <div class="hk-cell">+100ms time <span class="hk-key">V</span></div>
+          <div class="hk-cell">−200ms time <span class="hk-key">A</span></div>
+          <div class="hk-cell">+200ms time <span class="hk-key">F</span></div>
+        </div>
+      </div>
+      <div class="editor-wrap">
+        <div class="field-header"><span class="field-header-label">Main</span></div>
+        <div class="lyric-area">
+          <div class="lrc-line"><span class="ts">[00:16.48]</span>本当の声を聞かせてよ</div>
+          <div class="lrc-line"><span class="ts">[00:20.52]</span>嘘をついてまで守るものって何ですか</div>
+          <div class="lrc-line active"><span class="ts">[00:27.10]</span>ねえ、君は何がしたい</div>
+          <div class="lrc-line"><span class="ts">[00:31.80]</span>何がほしい、何が嫌いで</div>
+          <div class="lrc-line"><span class="ts">[00:35.42]</span>何を愛して何を愛せないの</div>
+          <div class="lrc-line"><span class="ts">[00:42.00]</span>世界があなたを嫌いでも</div>
+          <div class="lrc-line"><span class="ts">[00:45.66]</span>私だけはあなたの味方でいたい</div>
+          <div class="lrc-line"><span class="ts">[00:52.10]</span>だから本当の声を聞かせてよ</div>
+          <div class="lrc-line" style="color:var(--term-ts);font-style:italic;">[00:58.40]</div>
+          <div class="lrc-line"><span class="ts">[01:02.14]</span>その仮面の下の素顔を</div>
+          <div class="lrc-line"><span class="ts">[01:05.88]</span>見せてみせてみせてみせて</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mock-label gh-light-label">GITHUB LIGHT · ROBOTO MONO TERMINAL · TYPING MODE</div>
+</div>
+
+<!-- ══ GITHUB DARK ══ -->
+<div class="mock">
+  <div class="gh-dark">
+    <div class="menu-bar">
+      <div class="mb-btn">Open</div>
+      <div class="mb-sep"></div>
+      <div class="mb-btn" style="width:31px;padding:0;justify-content:center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      </div>
+      <div class="mb-btn" style="width:31px;padding:0;justify-content:center;">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+      </div>
+      <div class="mb-sep"></div>
+      <div class="select-mock">System Sans</div>
+      <div class="size-wrap">
+        <div class="size-inp">14</div>
+        <div class="size-spin"><div class="size-tick">▲</div><div class="size-tick">▼</div></div>
+      </div>
+      <div class="mb-sep"></div>
+      <div class="mb-btn">Add field</div>
+      <div class="mb-btn">Remove field</div>
+      <div class="mb-btn accent disabled">Merge fields</div>
+      <div class="mb-sep"></div>
+      <div class="icon-btn">☀️</div>
+      <div class="icon-btn">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+      </div>
+    </div>
+    <div class="main-row">
+      <div class="left-panel">
+        <div class="sec-label">Now playing</div>
+        <div class="audio-box">
+          <div class="song-title">怪物 (Monster)</div>
+          <div class="song-artist">YOASOBI</div>
+          <div class="progress-wrap"><div class="progress-fill"></div></div>
+          <div class="time-row"><span>1:24</span><span>4:13</span></div>
+          <div class="seek-row">
+            <div class="seek-inp">−600</div>
+            <span>ms</span>
+            <div class="arr-btn">◀</div><div class="arr-btn">▶</div>
+            <div class="sync-btn">Sync file <span style="font-family:'Roboto Mono',monospace;font-size:9.5px;background:var(--border-mid);border-radius:3px;padding:1px 3px;margin-left:3px;">Ctrl+`</span></div>
+          </div>
+          <div class="seek-row" style="margin-top:0">
+            <div class="seek-inp">1.00</div>
+            <span>×</span>
+            <div class="arr-btn">−</div><div class="arr-btn">+</div>
+          </div>
+          <div class="vol-row">
+            <span class="vol-icon">🔊</span>
+            <div class="vol-bar"><div class="vol-fill"></div></div>
+            <span class="vol-pct">78%</span>
+          </div>
+        </div>
+        <div class="sec-label" style="margin-top:4px;">Controls</div>
+        <div class="hk-grid">
+          <div class="hk-cell mode" style="grid-column:span 1;">Typing mode <span class="hk-key">Tab</span></div>
+          <div class="hk-cell mode" style="grid-column:span 1;">Play/pause <span class="hk-key">Spc</span></div>
+          <div class="hk-cell">Sync line <span class="hk-key">W</span></div>
+          <div class="hk-cell">Prev line <span class="hk-key">Q</span></div>
+          <div class="hk-cell">Next line <span class="hk-key">E</span></div>
+          <div class="hk-cell">End line <span class="hk-key">T</span></div>
+          <div class="hk-cell">Replay only <span class="hk-key">R</span></div>
+          <div class="hk-cell">−100ms time <span class="hk-key">Z</span></div>
+          <div class="hk-cell">+100ms time <span class="hk-key">V</span></div>
+          <div class="hk-cell">−200ms time <span class="hk-key">A</span></div>
+          <div class="hk-cell">+200ms time <span class="hk-key">F</span></div>
+        </div>
+      </div>
+      <div class="editor-wrap">
+        <div class="field-header"><span class="field-header-label">Main</span></div>
+        <div class="lyric-area">
+          <div class="lrc-line"><span class="ts">[00:16.48]</span>本当の声を聞かせてよ</div>
+          <div class="lrc-line"><span class="ts">[00:20.52]</span>嘘をついてまで守るものって何ですか</div>
+          <div class="lrc-line active"><span class="ts">[00:27.10]</span>ねえ、君は何がしたい</div>
+          <div class="lrc-line"><span class="ts">[00:31.80]</span>何がほしい、何が嫌いで</div>
+          <div class="lrc-line"><span class="ts">[00:35.42]</span>何を愛して何を愛せないの</div>
+          <div class="lrc-line"><span class="ts">[00:42.00]</span>世界があなたを嫌いでも</div>
+          <div class="lrc-line"><span class="ts">[00:45.66]</span>私だけはあなたの味方でいたい</div>
+          <div class="lrc-line"><span class="ts">[00:52.10]</span>だから本当の声を聞かせてよ</div>
+          <div class="lrc-line" style="color:var(--term-ts);font-style:italic;">[00:58.40]</div>
+          <div class="lrc-line"><span class="ts">[01:02.14]</span>その仮面の下の素顔を</div>
+          <div class="lrc-line"><span class="ts">[01:05.88]</span>見せてみせてみせてみせて</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="mock-label gh-dark-label">GITHUB DARK · ROBOTO MONO TERMINAL · TYPING MODE</div>
+</div>
+
+</body>
+</html>
