@@ -30,7 +30,6 @@ LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are require
 - Optional triggers for more frequent replays
 	- Play every line with the seek offset
 	- Batch offset all timestamps by the seek offset
-	- Jump to the end of lines with `Shift+Space`
 	- Replay after every sync or offset to check timing
 
 **Lyrics and metadata extraction**
@@ -72,14 +71,15 @@ The current method used in LineByLine:
 
 
 ### Getting started
-Visit this repo's GitHub Page or download the latest [Release](https://github.com/honeypotfields/linebyline/releases). Also see the HELP.md file or the "?" button in the app.
+Visit this repo's GitHub Page or download the latest [Release](https://github.com/honeypotfields/linebyline/releases). Also see the [HELP](https://github.com/honeypotfields/linebyline/blob/main/HELP.md) file or the "?" button in the app.
 
 ### Contributing
-Any human web developers willing to review vibe code are welcome🧡. Or even Python developers! This was originally going to be a Python app [archive/0_abandoned](https://github.com/honeypotfields/linebyline/tree/main/archive/0_abandoned). There are advantages to a real desktop program (LIMITATIONS.md); the problem is figuring out dependencies.
-See TEST_CASES.md for a checklist of everything that's supposed to work.
+Any human web developers willing to review vibe code are welcome🧡. Or even Python developers! This was originally going to be a Python app [archive/0_abandoned](https://github.com/honeypotfields/linebyline/tree/main/archive/0_abandoned). There are [advantages](https://github.com/honeypotfields/linebyline/blob/main/LIMITATIONS.md) to a real desktop program; the problem is figuring out dependencies.
+
+If you are also vibe coding and want to reproduce my Claude project setup, see [claude_instructions](https://github.com/honeypotfields/linebyline/tree/main/archive/claude_instructions) and add [TEST_CASES.md](https://github.com/honeypotfields/linebyline/blob/main/TEST_CASES.md) and the latest app version to project files. To save tokens on my free account I prompt in large batches (2-4 output turns' worth) since Claude has to read the whole app file every time anyway. Very small features and refinements may be merged into a beta branch until there's a lot of them. If everything passes and GitHub code scanning doesn't raise alarms, I'll merge into main.
 
 ### In progress
-- TEST_CASES.md
+- [TEST_CASES.md](https://github.com/honeypotfields/linebyline/blob/main/TEST_CASES.md) and add regression question to bug reporting template
 - Public repo with GitHub code scanning
 - GitHub Page
 

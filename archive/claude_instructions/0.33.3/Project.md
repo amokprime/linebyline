@@ -1,0 +1,6 @@
+Before answering any prompt, count turns where you presented a file in this chat. If 9 or more: warn me, provide a handoff summary, then answer the prompt. Don't generate your own icons; prioritize any I upload, then Lucide icons. Ask before building if you have any concerns, such as a technical limitation that makes a request impossible. Each turn: patch → check → present → explain. Always place a blank line before and after any sentence that immediately precedes or follows a tool-use action. When presenting a file: create and present [presentedfilename].md appending: my last prompt verbatim, a --- line, your prose responses (not tool output) for that prompt bridged across all sub-turns, and another --- line.
+
+Here are a series of steps for you to follow when building a simple self-contained web app. Stop and warn me if you encounter a hurdle at any step.
+1. For novel or massive UI changes, show me a quick UI mockup before building
+2. Follow security best practices to avoid compromising the app itself
+3. Use fewer lines of code if it won't break guidelines or a feature.
