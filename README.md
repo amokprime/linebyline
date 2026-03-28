@@ -80,11 +80,6 @@ Any human web developers willing to review vibe code are welcome🧡. Or even Py
 
 If you are also vibe coding and want to reproduce my Claude project setup, see latest [claude_instructions](https://github.com/honeypotfields/linebyline/tree/main/archive/claude_instructions) (including skills), add the latest app version to project files, and share your prompts & Claude output as I have. I would prefer people went ahead and vibe coded their own forks for merging this way rather than adding a feature request for my free account.
 
-### In progress
-- [TEST_CASES.md](https://github.com/honeypotfields/linebyline/blob/main/TEST_CASES.md) and add regression question to bug reporting template
-- Public repo with GitHub code scanning
-- GitHub Page
-
 ### Maybe someday
 - PyAutoGUI scripts to detect regressions before merging Claude code
 - Python port with more supported hotkeys
