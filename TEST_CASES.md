@@ -1,4 +1,4 @@
-### Assumptions
+## Assumptions
 - App version is 0.33.2 or 0.33.3
 - Default settings
 - LibreWolf or Firefox with uBlock Origin and ✅Enable ResistFingerprinting
@@ -9,7 +9,7 @@
 - ❌ means a checkbox is unchecked
 - 📝 means an editable Settings (non-lyrics) text field
 
-#### Opening files
+### Opening files
 - [ ] `Ctrl+O` hotkey opens file picker
 - [ ] `Middle click` hotkey opens file picker
 - [ ] 📂button clicked opens file picker
@@ -22,33 +22,33 @@
 - [ ] Lyrics are reset for main field when new .lrc file is added
 - [ ] Lyrics are reset for secondary field when new .lrc file is added
 
-#### Saving files
+### Saving files
 - [ ] `Ctrl+,` hotkey opens save file picker
 - [ ] 💾button clicked opens save file picker
 - [ ] .lrc files are shown in the file picker
 - [ ] Closing tab with `Ctrl+Q`, `Ctrl+W`, `Middle click`, or clicking the top-right corner X button or reloading with `F5` or the refresh button should open a warning and snap the cursor to Leave Page
 
-#### Undo
+### Undo
 - [ ] Works in main field in Typing mode
 - [ ] Works in secondary field in Typing mode
 - [ ] Works in secondary field in Hotkey mode
 
-#### Redo
+### Redo
 - [ ] Works in main field in Typing mode
 - [ ] Works in secondary field in Typing mode
 - [ ] Works in secondary field in Hotkey mode
 
-#### Font
+### Font
 - [ ] Contains known fonts System Sans and System Serif
 - [ ] Font type and size affects text in main and secondary fields
 - [ ] Font size can be adjusted
 
-#### Theme
+### Theme
 - [ ] Theme is toggled light → dark and dark → light with `Ctrl+.` hotkey
 - [ ] Theme is toggled light → dark with 🌙button
 - [ ] Button icon is inverted:🌙 in light mode and ☀️in dark mode
 
-#### Help
+### Help
 - [ ] Opens with `Ctrl+/` hotkey
 - [ ] Opens with "?" button
 - [ ] Closes with `Esc`
@@ -57,8 +57,8 @@
 - [ ] Scrolling to bottom and back to top works
 - [ ] Contents match [HELP.md](https://github.com/honeypotfields/linebyline/blob/main/HELP.md)
 
-#### Settings
-##### Operation
+### Settings
+#### Operation
 - [ ] Opens with `Ctrl+,` hotkey
 - [ ] Opens with ⚙️ button
 - [ ] Searching for hotkeys by name (focus search field with `Tab`) works
@@ -75,7 +75,7 @@
 - [ ] Remapping hotkeys to restricted hotkey brings up warning
 - [ ] All Settings persist when reloading or restarting browser
 
-##### Auto strip
+#### Auto strip
 - [ ] ✅Metadata and On .lrc file import: replaces metadata with defaults when importing lyrics
 - [ ] ✅Metadata and On lyrics paste: replaces metadata with defaults when pasting lyrics
 - [ ] ❌Metadata: only falls back to defaults when missing
@@ -83,7 +83,7 @@
 - [ ] ✅Sections and On lyrics paste: removes Genius stanza sections when pasting lyrics
 - [ ] ❌Sections: does not remove Genius stanza sections
 
-##### Instant replay
+#### Instant replay
 - [ ] ✅Moving to previous line: plays with configured Seek offset instead of navigating when using `Q`, `E`, `Up`, and `Down` keys
 - [ ] ✅Moving to next line: plays with configured Seek offset instead of navigating when using `Q`, `E`, `Up`, and `Down` keys
 - [ ] ✅Resuming currently playing line: replays with configured Seek offset instead of resuming when unpausing with `Space`
@@ -92,7 +92,7 @@
 - [ ] ✅Syncing line: replays with configured Seek offset instead of continuing to play
 - [ ] ✅Adjusting timestamp: replays with configured Seek offset instead of continuing to play
 
-##### Intervals
+#### Intervals
 - [ ] 📝Tiny is adjustable, updates in Controls, and changes timestamp by configured amount
 - [ ] 📝Small is adjustable, updates in Controls, and changes timestamp by configured amount
 - [ ] 📝Medium is adjustable, updates in Controls, and changes timestamp by configured amount
@@ -102,10 +102,10 @@
 - [ ] 📝Volume increment is adjustable and applies when scrolling over volume slider
 - [ ] 📝Undo window is adjustable and buckets changes made within configured window
 
-##### Default metadata tags
+#### Default metadata tags
 - [ ] Changes apply to metadata fields when reloading or restarting browser
 
-##### Playback
+#### Playback
 - [ ] Play/pause is triggered by `Space` in Hotkey mode
 - [ ] Reduce speed is triggered by `Ctrl+1`
 - [ ] Increase speed is triggered by `Ctrl+2`
@@ -113,7 +113,7 @@
 - [ ] Seek back is triggered by `Ctrl+A`
 - [ ] Seek forward is triggered by `Ctrl+D`
 
-##### Sync
+#### Sync
 - [ ] Toggle offset mode is triggered by `` ` ``
 - [ ] Sync file is triggered by ``Ctrl+` ``
 - [ ] Sync line start is triggered by `W` in Hotkey mode
@@ -122,7 +122,7 @@
 - [ ] Next line is triggered by `E` in Hotkey mode
 - [ ] Replay only is triggered by `R` in Hotkey mode
 
-##### Adjustments
+#### Adjustments
 - [ ] Back tiny amount is triggered by `Z` in Hotkey mode
 - [ ] Forward tiny amount is triggered by `V` in Hotkey mode
 - [ ] Back small amount is triggered by `A` in Hotkey mode
@@ -132,20 +132,20 @@
 - [ ] Back large amount is triggered by `X` in Hotkey mode
 - [ ] Forward large amount is triggered by `C` in Hotkey mode
 
-##### Text
+#### Text
 - [ ] Toggle mode is triggered by `Tab`
 - [ ] Add field is triggered by `Ctrl+4`
 - [ ] Hide field is triggered by `Ctrl+5
 - [ ] Merge fields is triggered by `Ctrl+6
 
-#### Main field
+### Main field
 - [ ] Timestamps but not metadata fields are visible in Hotkey mode
 - [ ] Newlines between stanzas are visible in Hotkey mode
 - [ ] Lyrics appear at about the same position onscreen when toggling Hotkey/Typing mode
 - [ ] Lyrics can be pasted in either Hotkey or Typing mode when the field is focused and extract lyrics and metadata from Genius correctly
 - [ ] `(` and `[` autocomplete the second half like `()` and `[]` in Typing mode
 
-#### Now playing
+### Now playing
 - [ ] Unknown Artist updates when `[ar: ]` metadata is added from Genius extraction in either Hotkey or Typing mode, or manually typed or pasted in Typing mode
 - [ ] Song seeks by any amount when seek slider is dragged with mouse and live updates time
 - [ ] Song seeks by configured seek interval when `Ctrl+A` or `Ctrl+D` are used
@@ -154,7 +154,7 @@
 - [ ] Speed control is adjustable and reset button works when clicked
 - [ ] Volume button toggles mute
 
-#### Controls
+### Controls
 - [ ] Offset time button toggles to Offset seek and back
 - [ ] Hotkey mode button toggles to Offset seek and back
 - [ ] Play/pause button works in Hotkey mode
@@ -180,7 +180,7 @@
 - [ ] -400ms seek button works in Offset seek mode
 - [ ] -1000ms seek button works in Offset seek mode
 
-#### Secondary fields
+### Secondary fields
 - [ ] Add field is triggered by clicking button
 - [ ] Hide field is triggered by clicking button
 - [ ] Merge fields is triggered by clicking button
