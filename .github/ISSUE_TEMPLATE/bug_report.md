@@ -6,8 +6,8 @@ labels: bug
 assignees: honeypotfields
 
 ---
-**Is this already in [TODO](https://github.com/honeypotfields/linebyline/issues/1)?**
-Yes/No; if Yes explain additional insights
+**Is this already in [TODO](https://github.com/honeypotfields/linebyline/issues/1) or [LIMITATIONS](https://github.com/honeypotfields/linebyline/blob/main/LIMITATIONS.md)?**
+Yes/No; even if Yes explain additional insights
 
 **Environment if not matching Assumptions in [TEST_CASES.md](https://github.com/honeypotfields/linebyline/blob/main/TEST_CASES.md):**
 Other environments may not be tested by me and mobile is not officially supported at all.

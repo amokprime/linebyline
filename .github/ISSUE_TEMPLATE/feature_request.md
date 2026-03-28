@@ -6,8 +6,8 @@ labels: enhancement
 assignees: ''
 
 ---
-**Is this already in [TODO](https://github.com/honeypotfields/linebyline/issues/1)?**
-Yes/No; if Yes explain additional insights
+**Is this already in [TODO](https://github.com/honeypotfields/linebyline/issues/1) or [LIMITATIONS](https://github.com/honeypotfields/linebyline/blob/main/LIMITATIONS.md)?**
+Yes/No; even if Yes explain additional insights
 
 **What is the feature and what problem does this address?**
 
