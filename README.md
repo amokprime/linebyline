@@ -74,6 +74,8 @@ The current method used in LineByLine:
 Visit this repo's GitHub Page or download the latest [Release](https://github.com/honeypotfields/linebyline/releases). Also see the [HELP](https://github.com/honeypotfields/linebyline/blob/main/HELP.md) file or the "?" button in the app.
 
 ### Contributing
+See my [TODO](https://github.com/honeypotfields/linebyline/issues/1) for the most recent list of things I am already working on.
+
 Any human web developers willing to review vibe code are welcome🧡. Or even Python developers! This was originally going to be a [Python](https://github.com/honeypotfields/linebyline/tree/main/archive/0_abandoned) app. There are [advantages](https://github.com/honeypotfields/linebyline/blob/main/LIMITATIONS.md) to a real desktop program; the problem is figuring out dependencies.
 
 If you are also vibe coding and want to reproduce my Claude project setup, see latest [claude_instructions](https://github.com/honeypotfields/linebyline/tree/main/archive/claude_instructions) (including skills), add the latest app version to project files, and share your prompts & Claude output as I have. I would prefer people went ahead and vibe coded their own forks for merging this way rather than adding a feature request for my free account.

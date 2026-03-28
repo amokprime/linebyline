@@ -1,7 +1,9 @@
 ### Assumptions
+- App version is 0.33.2 or 0.33.3
 - Default settings
 - LibreWolf or Firefox with uBlock Origin and ✅Enable ResistFingerprinting
 - Not in Incognito mode
+- OS is Windows 11
 - "Can be adjusted" or "adjustable" for a number field includes both arrow buttons and selecting the number, editing to a specific value, and pressing Enter
 - ✅ means a checkbox is checked
 - ❌ means a checkbox is unchecked
