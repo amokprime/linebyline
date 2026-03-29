@@ -84,8 +84,8 @@
 - [ ] ❌Sections: does not remove Genius stanza sections
 
 #### Instant replay
-- [ ] ✅Moving to previous line: plays with configured Seek offset instead of navigating when using `Q`, `E`, `Up`, and `Down` keys
-- [ ] ✅Moving to next line: plays with configured Seek offset instead of navigating when using `Q`, `E`, `Up`, and `Down` keys
+- [ ] ✅Moving to previous line: plays with configured Seek offset instead of navigating when using `Q`, `E`, `ArrowUp`, and `ArrowDown` keys
+- [ ] ✅Moving to next line: plays with configured Seek offset instead of navigating when using `Q`, `E`, `Up`, and `ArrowDown` keys
 - [ ] ✅Resuming currently playing line: replays with configured Seek offset instead of resuming when unpausing with `Space`
 - [ ] ✅Playing another line: plays with configured Seek offset instead of from start when clicking another line
 - [ ] ✅Adjusting seek offset: replays with configured Seek offset instead of continuing to play
@@ -138,6 +138,7 @@
 - [ ] Add field is triggered by `Ctrl+4`
 - [ ] Hide field is triggered by `Ctrl+5
 - [ ] Merge fields is triggered by `Ctrl+6
+- [ ] Mark as translation is triggered by `Ctrl+ArrowLeft` and works in both Typing and Hotkey modes
 
 ### Main field
 - [ ] Timestamps but not metadata fields are visible in Hotkey mode
@@ -145,6 +146,9 @@
 - [ ] Lyrics appear at about the same position onscreen when toggling Hotkey/Typing mode
 - [ ] Lyrics can be pasted in either Hotkey or Typing mode when the field is focused and extract lyrics and metadata from Genius correctly
 - [ ] `(` and `[` autocomplete the second half like `()` and `[]` in Typing mode
+- [ ] `(` typed at the beginning of a line autocompletes a `)` at the end of that line
+- [ ] `(` typed while lines are selected wraps them in `( )` instead of replacing them
+- [ ] "( )" checkbox wraps lines marked as translations with `Ctrl+ArrowLeft` when checked and not otherwise, in both Hotkey mode and Typing mode
 
 ### Now playing
 - [ ] Unknown Artist updates when `[ar: ]` metadata is added from Genius extraction in either Hotkey or Typing mode, or manually typed or pasted in Typing mode

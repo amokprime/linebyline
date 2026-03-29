@@ -1,11 +1,11 @@
-**These apply to the .html app as of version 0.33.2**
+**These apply to the .html app as of version 0.34.0**
 - No direct filesystem access due to browser security restrictions
 	- Can't read audio file metadata tags
 	- Audio file doesn't persist if page is reloaded
 	- Can't live edit .lrc file in place, must work with a copy in localStorage or sessionStorage and save it manually elsewhere
 - No system media keys - cannot even assign volume up or down hotkeys as workarounds, only mute
 - Cursor is positioned one line too high in **Typing mode** on startup. Worked around by pasting in lyrics in **Hotkey mode** first which adds the expected newline, or changing ⚙️**Default metadata tags** to not include a newline.
-- Many hotkey restrictions (copied from [v0.33.2](https://github.com/honeypotfields/linebyline/blob/main/archive/33/linebyline_33_2.html)):
+- Many hotkey restrictions (copied from [v0.34.0](https://github.com/honeypotfields/linebyline/blob/main/archive/semantic/0.34.0/linebyline-0.34.0.html)). The Esc key is planned to be added in v0.34.1.
 ```
 // ── Restricted hotkey rules ──────────────────────────────────────────────────
 // Keys blocked for ALL remappable hotkeys (browser-reserved or destructive)

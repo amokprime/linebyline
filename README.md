@@ -39,7 +39,7 @@ LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are require
 - Preserve existing populated metadata fields
 - Configure default metadata fields as a fallback
 
-**Merging translations**
+**Adding translations**
 
 How I used to add translations:
 - Translations are parenthesized inline and wrap if the viewer is too narrow.
@@ -52,7 +52,7 @@ How I used to add translations:
 [00:07.00]
 
 
-The current method used in LineByLine:
+How LineByLine merges translations:
 - Translations go on their line so every line is a sane length and alignment
 - Music players highlight the 0.01s duration translations for a split second or not at all
 
@@ -70,6 +70,23 @@ The current method used in LineByLine:
 
 [00:07.00]
 
+Sometimes songs intersperse other languages for dramatic effect. Mark translations for such lines individually with `Ctrl+Left`:
+
+[00:05.00] **Hello, how are you?**
+
+[00:06.00] **Comment t'appelles-tu ?**
+
+**What is your name?** *Select this line and send Ctrl+Left*
+
+[00:07.00]
+
+[00:05.00] **Hello, how are you?**
+
+[00:06.00] **Comment t'appelles-tu ?**
+
+[00:06.99] (What is your name?)
+
+[00:07.00]
 
 ### Getting started
 Visit this repo's GitHub Page or download the latest [Release](https://github.com/honeypotfields/linebyline/releases). Also see the [HELP](https://github.com/honeypotfields/linebyline/blob/main/HELP.md) file or the "?" button in the app.
