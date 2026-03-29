@@ -25,12 +25,13 @@ LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are require
 - See LIMITATIONS.md for known browser restrictions.
 
 **Enhanced LRCGET-style replay**
-
-- LineByLine can jump to the start of a line with a configurable seek offset (default `R` key). The default is -600ms before to give you more reaction time. Adjustable by the same keys that normally offset timestamps by toggling Offset time → Offset sync mode with the Backtick key.
+- LineByLine can jump to the start (`R`) or end (`Shift+R`) of a line with a seek offset
+	- The default is -600ms before to give you more reaction time. 
+	- Toggle Offset time → Offset sync mode with the Backtick key to adjust seek offset with the same keys that offset timestamps
 - Optional triggers for more frequent replays
 	- Play every line with the seek offset
 	- Batch offset all timestamps by the seek offset
-	- Replay after every sync or offset to check timing
+	- Replay after every timestamp sync or seek offset adjustment to check timing
 
 **Lyrics and metadata extraction**
 - Get song title from filename (prioritizing audio file then .lrc file)
@@ -76,12 +77,12 @@ Visit this repo's GitHub Page or download the latest [Release](https://github.co
 ### Contributing
 See my [TODO](https://github.com/honeypotfields/linebyline/issues/1) for the most recent list of things I am already working on.
 
-Any human web developers willing to review vibe code are welcome🧡. Or even Python developers! This was originally going to be a [Python](https://github.com/honeypotfields/linebyline/tree/main/archive/0_abandoned) app. There are [advantages](https://github.com/honeypotfields/linebyline/blob/main/LIMITATIONS.md) to a real desktop program; the problem is figuring out dependencies.
+Any human web developers willing to review vibe code are welcome🧡. Or even Python developers! This was originally going to be a [Python](https://github.com/honeypotfields/linebyline/tree/main/archive/pre-semantic/0_abandoned) app. There are [advantages](https://github.com/honeypotfields/linebyline/blob/main/LIMITATIONS.md) to a real desktop program; the problem is figuring out dependencies.
 
-If you are also vibe coding and want to reproduce my Claude project setup, see latest [claude_instructions](https://github.com/honeypotfields/linebyline/tree/main/archive/claude_instructions) (including skills), add the latest app version to project files, and share your prompts & Claude output as I have. I would prefer people went ahead and vibe coded their own forks for merging this way rather than adding a feature request for my free account.
+If you are also vibe coding and want to reproduce my Claude project setup, see latest [claude_instructions](https://github.com/honeypotfields/linebyline/tree/main/archive/claude_instructions) (including skills), add the latest app version to project files, and share your prompts & Claude output as I have. I would prefer people went ahead and vibe coded their own forks for merging this way. After the recent usage limits, a single version (off peak hours, on a weekend) blows through an entire 5-hour window on a free account!
 
 ### Maybe someday
-- PyAutoGUI scripts to detect regressions before merging Claude code
+- PyAutoGUI scripts to detect regressions before committing Claude code
 - Python port with more supported hotkeys
 
 ### Not planned for now

@@ -1,7 +1,6 @@
 ## Assumptions
-- App version is 0.33.2 or 0.33.3
-- Default settings
-- LibreWolf or Firefox with uBlock Origin and ✅Enable ResistFingerprinting
+- Version is 0.33.3+ with default settings
+- LibreWolf with uBlock Origin and ✅Enable ResistFingerprinting
 - Not in Incognito mode
 - OS is Windows 11
 - "Can be adjusted" or "adjustable" for a number field includes both arrow buttons and selecting the number, editing to a specific value, and pressing Enter
@@ -14,6 +13,7 @@
 - [ ] `Middle click` hotkey opens file picker
 - [ ] 📂button clicked opens file picker
 - [ ] Audio and .lrc file can be added together
+- [ ] Audio and .lrc file can be added separately
 - [ ] Title is extracted from audio and .lrc file added together
 - [ ] Title is extracted from audio filename added first and not overridden by lyrics filename
 - [ ] Title is extracted from lyrics filename added first
@@ -31,15 +31,15 @@
 ### Undo
 - [ ] Works in main field in Typing mode
 - [ ] Works in secondary field in Typing mode
-- [ ] Works in secondary field in Hotkey mode
+- [ ] Works in secondary field in Hotkey mode and does not trigger Hotkey mode exclusive hotkeys
 
 ### Redo
 - [ ] Works in main field in Typing mode
 - [ ] Works in secondary field in Typing mode
-- [ ] Works in secondary field in Hotkey mode
+- [ ] Works in secondary field in Hotkey mode and does not trigger Hotkey mode exclusive hotkeys
 
 ### Font
-- [ ] Contains known fonts System Sans and System Serif
+- [ ] Both fonts (System Sans and System Serif) affect text in main and secondary fields
 - [ ] Font type and size affects text in main and secondary fields
 - [ ] Font size can be adjusted
 
@@ -67,13 +67,13 @@
 - [ ] Settings window closes with `Esc`
 - [ ] Settings window closes when clicking outside window
 - [ ] Scrolling to bottom and back to top works
-- [ ] All hotkeys are remappable
 - [ ] Clicking a hotkey to remap it highlights its field blue with a "..." and an X button that allows clearing the hotkey
+- [ ] All hotkeys are remappable (i.e. to NumPadMinus) and Default button appears
 - [ ] Clicking outside blue-highlighted "..." field or pressing Esc cancels remapping
 - [ ] Each hotkey's Default button appears when remapped or cleared
 - [ ] Reset defaults button works for all settings in the Settings window
-- [ ] Remapping hotkeys to restricted hotkey brings up warning
-- [ ] All Settings persist when reloading or restarting browser
+- [ ] Remapping hotkeys to restricted hotkey brings up warning and shows Default button
+- [ ] All Settings changes persist when reloading browser
 
 #### Auto strip
 - [ ] ✅Metadata and On .lrc file import: replaces metadata with defaults when importing lyrics
@@ -121,6 +121,7 @@
 - [ ] Previous line is triggered by `Q` in Hotkey mode
 - [ ] Next line is triggered by `E` in Hotkey mode
 - [ ] Replay only is triggered by `R` in Hotkey mode
+- [ ] Replay end is triggered by `Shift+R` in Hotkey mode
 
 #### Adjustments
 - [ ] Back tiny amount is triggered by `Z` in Hotkey mode
@@ -149,10 +150,11 @@
 - [ ] Unknown Artist updates when `[ar: ]` metadata is added from Genius extraction in either Hotkey or Typing mode, or manually typed or pasted in Typing mode
 - [ ] Song seeks by any amount when seek slider is dragged with mouse and live updates time
 - [ ] Song seeks by configured seek interval when `Ctrl+A` or `Ctrl+D` are used
-- [ ] Seek offset field is adjustable and offsets seek when `R` is pressed
+- [ ] Seek offset field is adjustable and offsets seek when `R` or `Shift+R` are pressed
 - [ ] Sync file button batch adjusts timestamps when clicked in Offset seek mode
 - [ ] Speed control is adjustable and reset button works when clicked
 - [ ] Volume button toggles mute
+- [ ] Hardcoded `Ctrl+M` hotkey toggles mute
 
 ### Controls
 - [ ] Offset time button toggles to Offset seek and back
