@@ -70,7 +70,7 @@ How LineByLine merges translations:
 
 [00:07.00]
 
-Sometimes songs intersperse other languages for dramatic effect. Mark translations for such lines individually with `Ctrl+Left`:
+Sometimes songs intersperse other languages for dramatic effect. Mark translations for such lines individually with `Ctrl+ArrowLeft`:
 
 [00:05.00] **Hello, how are you?**
 
@@ -100,6 +100,7 @@ If you are also vibe coding and want to reproduce my Claude project setup, see l
 
 ### Maybe someday
 - PyAutoGUI scripts to detect regressions before committing Claude code
+- Make nicer UI in Penpot
 - Python port with more supported hotkeys
 
 ### Not planned for now

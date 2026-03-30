@@ -138,7 +138,7 @@
 - [ ] Add field is triggered by `Ctrl+4`
 - [ ] Hide field is triggered by `Ctrl+5
 - [ ] Merge fields is triggered by `Ctrl+6
-- [ ] Mark as translation is triggered by `Ctrl+ArrowLeft` and works in both Typing and Hotkey modes
+- [ ] Mark line as translation is triggered by `Ctrl+ArrowLeft` and works in both Typing and Hotkey modes
 
 ### Main field
 - [ ] Timestamps but not metadata fields are visible in Hotkey mode
