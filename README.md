@@ -5,7 +5,7 @@ Design and documentation are by me and reviewed with 🤖Claude Sonnet 4.6.
 Chat history and older versions are in /archive. AHK scripts are by me.
 The actual app is 🚨🌈VIBECODED🌈🚨 — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️
 ### About
-**LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to LRCLIB:
+**LineByLine is an opinionated app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to LRCLIB:
 1. Find original lyrics on Genius or LRCLIB
 2. Extract clean lyrics from Genius with GeniusLyricCopier
 3. Strip sections with https://www.lrcgenerator.com/
@@ -87,14 +87,11 @@ Visit this repo's GitHub Page or download the latest [Release](https://github.co
 ### Contributing
 See my [TODO](https://github.com/honeypotfields/linebyline/issues/1) for the most recent list of things I am already working on.
 
-Any human web developers willing to review vibe code are welcome🧡. Or even Python developers! This was originally going to be a [Python](https://github.com/honeypotfields/linebyline/tree/main/archive/pre-semantic/0_abandoned) app. There are [advantages](https://github.com/honeypotfields/linebyline/blob/main/LIMITATIONS.md) to a real desktop program; the problem is figuring out dependencies.
-
-If you are also vibe coding and want to reproduce my Claude project setup, see latest [claude_instructions](https://github.com/honeypotfields/linebyline/tree/main/archive/claude_instructions) (including skills), add the latest app version to project files, and share your prompts & Claude output as I have. I would prefer people went ahead and vibe coded their own forks for merging this way. After the recent usage limits, a single version (off peak hours, on a weekend) blows through an entire 5-hour window on a free account!
+Any human developers willing to review vibe code are welcome🧡. If you are also vibe coding and want to reproduce my Claude project setup, see latest [claude_instructions](https://github.com/honeypotfields/linebyline/tree/main/archive/claude_instructions) (including skills), add the latest app version to project files, and share your prompts & Claude output as I have. I would prefer people went ahead and vibe coded their own forks for merging this way. After the recent usage limits, a single version (off peak hours, on a weekend) blows through an entire 5-hour window on a free account!
 
 ### Maybe someday
-- Playwright to automate QA tests
-- Nicer UI from Penpot
-- Python port with desktop powers like more supported hotkeys and live editing lyrics
+- Some way of automating QA tests
+- Nicer UI
 
 ### Not planned for now
 - AI transcription - beyond the scope of a single-file .html web app
