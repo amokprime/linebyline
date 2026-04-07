@@ -358,7 +358,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:1rem;background:var(-
       <h2>Settings⚙️</h2>
       <ul>
         <li>Default Settings hotkey (<code>Ctrl+,</code>)</li>
-        <li>Changes apply immediately and persist to browser localStorage</li>
+        <li>Changes apply immediately and persist to browser <code>localStorage</code></li>
         <li>Search for a setting by name (<code>Tab</code>)</li>
         <li>Keyboard button (<code>Tab</code>) searches by hotkey; send a new hotkey in-place for a new search</li>
         <li>Reset hotkey search or clear selected hotkey fields (<code>Esc</code>, <code>Backspace</code>, <code>Del</code>)</li>
@@ -368,7 +368,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:1rem;background:var(-
       <h2>Working with lyric files</h2>
       <ul>
         <li>📂Open song and lyrics separately or together (<code>Middle Click</code>, <code>Ctrl+O</code>)</li>
-        <li>💾Save results as external <code>.lrc</code> file (<code>Ctrl+;</code>)</li>
+        <li>💾Save results as external <code>.lrc</code> file (<code>Ctrl+;</code>) with name of current <code>[ti: ]</code> tag</li>
         <li>Paste song Genius page into the <strong>Main</strong> field or a <strong>Secondary</strong> field to extract clean lyrics</li>
         <li>Toggle <strong>Typing mode</strong> (<code>Tab</code>) to edit lyrics and metadata
           <ul>
@@ -379,12 +379,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:1rem;background:var(-
           </ul>
         </li>
         <li>Opening another song or <code>.lrc</code> file overwrites the existing one (pasting appends)</li>
-        <li>Reloading or closing the tab resets song and lyrics from browser sessionStorage</li>
+        <li>Reloading or closing the tab resets song and lyrics from browser <code>sessionStorage</code></li>
       </ul>
       <h2>Playback controls</h2>
       <ul>
-        <li><strong>Seek increment</strong> (default 5s) by scrolling over the seek bar or using <code>Ctrl+A</code> or <code>Ctrl+D</code></li>
-        <li>Trigger <strong>Instant Replay</strong> with <code>R</code> (start), <code>Shift+R</code> (end), or configurable triggers
+        <li><strong>Seek increment</strong> (default 5s) by scrolling over the seek bar, using <code>Ctrl+A</code> or <code>Ctrl+D</code>, or clicking the left/right media buttons</li>
+        <li>Play/pause with <code>Space</code> in <strong>Hotkey mode</strong> or <code>Ctrl+Space</code> in any mode</li>
+        <li>⚙️📝<strong>Speed ratio</strong> (<code>Ctrl+1</code>, <code>Ctrl+1</code>, <code>Ctrl+3</code>, up/down arrows) multiplies against current speed</li>
+        <li><strong>Instant Replay</strong> with <code>R</code> (start), <code>Shift+R</code> (end), or configurable triggers
           <ul>
             <li>Seek the start (<code>Click</code>, <code>Spacebar</code>) of a line
               <ul>
@@ -392,12 +394,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:1rem;background:var(-
                 <li>⚙️✅Playing another line</li>
               </ul>
             </li>
-            <li><strong>Seek offset</strong> (default -600ms) gives you more time to react</li>
+            <li><strong>Seek offset</strong> (up/down arrows) gives you more time to react</li>
             <li>In <strong>Offset seek</strong> toggle mode (<code>`</code>), Controls adjust <strong>Seek offset</strong> instead of timestamps</li>
           </ul>
         </li>
         <li><strong>Sync file</strong> (<code>Ctrl+`</code>) adjusts all timestamps by the current <strong>Seek offset</strong></li>
-        <li>⚙️📝<strong>Speed ratio</strong> (<code>Ctrl+1</code>, <code>Ctrl+1</code>, <code>Ctrl+3</code>) multiplies against current speed</li>
         <li>Scrolling over volume bar changes it by an interval (⚙️📝<strong>Volume increment</strong>)</li>
       </ul>
       <h2>Syncing lyrics</h2>
@@ -422,7 +423,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;font-size:1rem;background:var(-
           </ul>
         </li>
       </ul>
-      <h2>Merging translations</h2>
+      <h2>Adding translations</h2>
       <ul>
         <li><strong>Add</strong>/<strong>Hide</strong>/<strong>Merge</strong> fields (<code>Ctrl+4</code>, <code>Ctrl+5</code>, <code>Ctrl+6</code>)
           <ul>

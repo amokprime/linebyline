@@ -43,50 +43,43 @@ LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are require
 
 How I used to add translations:
 - Translations are parenthesized inline and wrap if the viewer is too narrow.
-- Every line gets highlighted
+- Every line gets highlighted (marked here with `**`)
 
-[00:05.00] **Hello, how are you? (Hola, ¿cómo estás?) (Bonjour, comment ça va ?)**
-
-[00:06.00] **What is your name? (¿Cómo te llamas?) (Comment t'appelles-tu ?)**
-
-[00:07.00]
-
+```
+[00:00.00] **I wish I could identify that smell (J'aimerais pouvoir identifier cette odeur) (Ojalá pudiera identificar ese olor)**
+[00:03.06] **That smell (Cette odeur) (Ese olor)**
+[00:06.35]
+```
 
 How LineByLine merges translations:
 - Translations go on their line so every line is a sane length and alignment
 - Music players highlight the 0.01s duration translations for a split second or not at all
 
-[00:05.00] **Hello, how are you?**
-
-[00:05.89] (Hola, ¿cómo estás?)
-
-[00:05.99] (Bonjour, comment ça va ?)
-
-[00:06.00] **What is your name?**
-
-[00:06.89] (¿Cómo te llamas?)
-
-[00:06.99] (Comment t'appelles-tu ?)
-
-[00:07.00]
+```
+[00:00.00] **I wish I could identify that smell**
+[00:03.04] (J'aimerais pouvoir identifier cette odeur)
+[00:03.05] (Ojalá pudiera identificar ese olor)
+[00:03.06] **That smell**
+[00:06.33] (Cette odeur)
+[00:06.34] (Ese olor)
+[00:06.35]
+```
 
 Sometimes songs intersperse other languages for dramatic effect. Mark translations for such lines individually with `Ctrl+ArrowLeft`:
 
-[00:05.00] **Hello, how are you?**
-
-[00:06.00] **Comment t'appelles-tu ?**
-
-**What is your name?** *Select this line and send Ctrl+Left*
-
-[00:07.00]
-
-[00:05.00] **Hello, how are you?**
-
-[00:06.00] **Comment t'appelles-tu ?**
-
-[00:06.99] (What is your name?)
-
-[00:07.00]
+```
+[00:00.00] **I wish I could identify that smell**
+[00:03.06] **That smell**
+[00:06.35] **Cela perturbe ma concentration**
+It disturbs my concentration #Before
+[00:08.08]
+---
+[00:00.00] **I wish I could identify that smell**
+[00:03.06] **That smell**
+[00:06.35] **Cela perturbe ma concentration**
+[00:08.07] (It disturbs my concentration) #After
+[00:08.08]
+```
 
 ### Getting started
 Visit this repo's GitHub Page or download the latest [Release](https://github.com/honeypotfields/linebyline/releases). Also see the [HELP](https://github.com/honeypotfields/linebyline/blob/main/HELP.md) file or the "?" button in the app.
@@ -99,9 +92,9 @@ Any human web developers willing to review vibe code are welcome🧡. Or even Py
 If you are also vibe coding and want to reproduce my Claude project setup, see latest [claude_instructions](https://github.com/honeypotfields/linebyline/tree/main/archive/claude_instructions) (including skills), add the latest app version to project files, and share your prompts & Claude output as I have. I would prefer people went ahead and vibe coded their own forks for merging this way. After the recent usage limits, a single version (off peak hours, on a weekend) blows through an entire 5-hour window on a free account!
 
 ### Maybe someday
-- Scripts to automate QA tests
+- Playwright to automate QA tests
 - Nicer UI from Penpot
-- Python port with more supported hotkeys
+- Python port with desktop powers like more supported hotkeys and live editing lyrics
 
 ### Not planned for now
 - AI transcription - beyond the scope of a single-file .html web app

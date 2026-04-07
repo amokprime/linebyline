@@ -1,9 +1,10 @@
 ## Assumptions
-- Version is 0.33.3+ with default settings
+- Version is 0.34.4+ with default settings
 - LibreWolf with uBlock Origin and ✅Enable ResistFingerprinting
 - Not in Incognito mode
 - OS is Windows 11
 - "Can be adjusted" or "adjustable" for a number field includes both arrow buttons and selecting the number, editing to a specific value, and pressing Enter
+- Audio is listened to for playback tests to ensure the controls are actually working and not just updating the GUI
 - ✅ means a checkbox is checked
 - ❌ means a checkbox is unchecked
 - 📝 means an editable Settings (non-lyrics) text field
@@ -18,15 +19,17 @@
 - [ ] Title is extracted from audio filename added first and not overridden by lyrics filename
 - [ ] Title is extracted from lyrics filename added first
 - [ ] Title extraction updates both metadata field and Now Playing panel
-- [ ] Audio is reset when new audio file is added
-- [ ] Lyrics are reset for main field when new .lrc file is added
-- [ ] Lyrics are reset for secondary field when new .lrc file is added
+- [ ] Audio is replaced when new audio file is added
+- [ ] Lyrics are replaced for main field when new .lrc file is added
+- [ ] Lyrics are replaced for secondary field when new .lrc file is added
 
 ### Saving files
-- [ ] `Ctrl+,` hotkey opens save file picker
+- [ ] `Ctrl+;` hotkey opens save file picker
 - [ ] 💾button clicked opens save file picker
 - [ ] .lrc files are shown in the file picker
 - [ ] Closing tab with `Ctrl+Q`, `Ctrl+W`, `Middle click`, or clicking the top-right corner X button or reloading with `F5` or the refresh button should open a warning and snap the cursor to Leave Page
+- [ ] Lyrics file saves as the name of the metadata title in the `[ti: ]` field
+- [ ] Saved lyrics contents match Typing mode window contents
 
 ### Undo
 - [ ] Works in main field in Typing mode
@@ -69,11 +72,11 @@
 - [ ] Scrolling to bottom and back to top works
 - [ ] Clicking a hotkey to remap it highlights its field blue with a "..." and an X button that allows clearing the hotkey
 - [ ] All hotkeys are remappable (i.e. to NumPadMinus) and Default button appears
-- [ ] Clicking outside blue-highlighted "..." field or pressing Esc cancels remapping
+- [ ] Clicking outside blue-highlighted "..." field or pressing Esc cancels remapping and does not assign Esc as a hotkey
 - [ ] Each hotkey's Default button appears when remapped or cleared
 - [ ] Reset defaults button works for all settings in the Settings window
-- [ ] Remapping hotkeys to restricted hotkey brings up warning and shows Default button
-- [ ] All Settings changes persist when reloading browser
+- [ ] Remapping hotkeys to restricted hotkey (i.e. to Ctrl+R) brings up warning and shows Default button
+- [ ] Settings changes persist (i.e. adjust Seek increment) when reloading browser
 
 #### Auto strip
 - [ ] ✅Metadata and On .lrc file import: replaces metadata with defaults when importing lyrics
@@ -84,8 +87,8 @@
 - [ ] ❌Sections: does not remove Genius stanza sections
 
 #### Instant replay
-- [ ] ✅Moving to previous line: plays with configured Seek offset instead of navigating when using `Q`, `E`, `ArrowUp`, and `ArrowDown` keys
-- [ ] ✅Moving to next line: plays with configured Seek offset instead of navigating when using `Q`, `E`, `Up`, and `ArrowDown` keys
+- [ ] ✅Moving to previous line: plays with configured Seek offset instead of navigating when using `Q` and `E` keys
+- [ ] ✅Moving to next line: plays with configured Seek offset instead of navigating when using `Q` and `E` keys
 - [ ] ✅Resuming currently playing line: replays with configured Seek offset instead of resuming when unpausing with `Space`
 - [ ] ✅Playing another line: plays with configured Seek offset instead of from start when clicking another line
 - [ ] ✅Adjusting seek offset: replays with configured Seek offset instead of continuing to play
@@ -100,13 +103,14 @@
 - [ ] 📝Seek increment is adjustable and changes seek interval by configured amount
 - [ ] 📝Default Speed ratio is adjustable and applied to -/+ speed changes in Controls
 - [ ] 📝Volume increment is adjustable and applies when scrolling over volume slider
-- [ ] 📝Undo window is adjustable and buckets changes made within configured window
+- [ ] 📝Undo window is adjustable and buckets changes made within configured window (i.e. 1ms)
+- [ ] Selecting any single value in a field, pressing Backspace, and pressing Enter reverts to last value and does not show a blank field
 
 #### Default metadata tags
 - [ ] Changes apply to metadata fields when reloading or restarting browser
 
 #### Playback
-- [ ] Play/pause is triggered by `Space` in Hotkey mode
+- [ ] Play/pause is triggered by `Space` in Hotkey mode and `Ctrl+Space` in any mode
 - [ ] Reduce speed is triggered by `Ctrl+1`
 - [ ] Increase speed is triggered by `Ctrl+2`
 - [ ] Reset speed is triggered by `Ctrl+3`
@@ -156,7 +160,7 @@
 - [ ] Song seeks by configured seek interval when `Ctrl+A` or `Ctrl+D` are used
 - [ ] Seek offset field is adjustable and offsets seek when `R` or `Shift+R` are pressed
 - [ ] Sync file button batch adjusts timestamps when clicked in Offset seek mode
-- [ ] Speed control is adjustable and reset button works when clicked
+- [ ] Speed control is adjustable
 - [ ] Volume button toggles mute
 - [ ] Hardcoded `Ctrl+M` hotkey toggles mute
 
