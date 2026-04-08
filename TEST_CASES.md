@@ -166,7 +166,7 @@
 
 ### Controls
 - [ ] Offset time button toggles to Offset seek and back
-- [ ] Hotkey mode button toggles to Offset seek and back
+- [ ] Hotkey mode button toggles to Typing mode and back
 - [ ] Play/pause button works in Hotkey mode
 - [ ] Previous line button works in Hotkey mode
 - [ ] Replay only button works in Hotkey mode
