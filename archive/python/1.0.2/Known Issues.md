@@ -1,0 +1,10 @@
+- Control buttons are all showing `<span style="Font-size:11` instead of their labels
+- Spinner boxes in main window are adjusting by 1 instead of their set intervals
+- Open folder icon in secondary field actually affects main field
+- Settings Intervals spinners still horizontal instead of vertical boxes
+- Dark mode checkboxes still look like blue squares
+- Lyrics in light mode are black font which is hard to read
+- `Ctrl+` overlay is literally a separate area instead of in the Sync file button
+- Font fields need to be moved back to original spot in .html
+- Play and back/forward and spinner box icons need to be replaced
+- Overall UI probably needs Python native overhaul to look less ugly
