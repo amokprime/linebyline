@@ -1,4 +1,4 @@
-Icons ("undo", "redo", "list-checks" recolored for LineByLine logo, "play", "skip-backward", "skip-forward") from [Lucide Icons](https://lucide.dev/) — MIT license
+Icons ("undo", "redo", "list-checks" recolored for LineByLine logo, "play", "skip-backward", "skip-forward", "bug") from [Lucide Icons](https://lucide.dev/) — MIT license
 
 "list-checks" recolored with an online SVG editor
 
