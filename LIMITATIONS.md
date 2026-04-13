@@ -9,7 +9,7 @@
 browsers intentionally block programmatic `focus()` calls that aren't triggered by user interaction, as an anti-fingerprinting and anti-annoyance measure. This applies in both standard Firefox and ResistFingerprinting mode. The only reliable approaches would be an explicit click-to-activate overlay (intrusive) or making the whole app a PWA installed to the OS (out of scope).
 ```
 - Cursor is positioned one line too high in **Typing mode** on startup. Worked around by pasting in lyrics in **Hotkey mode** first which adds the expected newline, or changing ⚙️**Default metadata tags** to not include a newline.
-- Many hotkey restrictions (copied from [v0.34.1](https://github.com/honeypotfields/linebyline/blob/main/archive/semantic/0.34.1/linebyline-0.34.1.html))
+- Many hotkey restrictions (copied from [/docs/linebyline.html](https://github.com/honeypotfields/linebyline/blob/main/docs/linebyline.html))
 ```
 // ── Restricted hotkey rules ──────────────────────────────────────────────────
 // Keys blocked for ALL remappable hotkeys (browser-reserved or destructive)

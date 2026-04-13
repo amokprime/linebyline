@@ -81,7 +81,7 @@ It disturbs my concentration #Before
 ```
 
 ### Getting started
-Visit the app's GitHub Page or download from the [Releases](https://github.com/amokprime/linebyline/releases) page or [/app/linebyline.html](https://github.com/amokprime/linebyline/tree/main/app/linebyline.html). Also see the [HELP](https://github.com/amokprime/linebyline/blob/main/HELP.md) file (linked to with the "?" button in the app).
+Visit the app's GitHub Page or download from the [Releases](https://github.com/amokprime/linebyline/releases) page or [/docs/linebyline.html](https://github.com/amokprime/linebyline/tree/main/docs/linebyline.html). Also see the [HELP](https://github.com/amokprime/linebyline/blob/main/HELP.md) file (linked to with the "?" button in the app).
 
 ### Contributing
 [This](https://share.note.sx/9wimmaly) Obsidian Share Note has the most recent list of things planned for the next version.
@@ -93,8 +93,8 @@ If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login
 2. Add the latest app version to project files and enable memory if using claude.ai
 3. Draft Prompt.md in Obsidian if you have a lot of requests and might fatfinger `Enter`.
 4. PR Claude's output .html file and Chat.md in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning: Patches=+0.00.1, Minor (features that fit well into existing app)=+0.01.0, Major (refactors that break existing app)=+1.00.0. If Claude doesn't update the output file version you can just rename the app's filename and the title element: `<title>LineByLine 0.34.7</title>`.
-Starting with version 0.34.7, *all* releases come with [QA test](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) results. It's a manual checklist and I may put it off by:
-- Committing minor changes to their own subfolders in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) without releasing until several versions later
+Starting with version 0.34.7, releases come with [QA test](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) results. It's a manual checklist and I may put it off by:
+- Pushing minor changes to their own subfolders in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) without releasing until several versions later
 - Noting minor bugs caught by QA tests as [Known Issues](https://share.note.sx/9wimmaly) rather than patching right away (and immediately obligating a retest for bugs introduced by the patch)
 
 ### Maybe someday
