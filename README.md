@@ -1,7 +1,7 @@
 # LineByLine
 
 ### AI Disclosure
-I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo, featuring 🤖Claude Sonnet 4.6 — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️. Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive).
+I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo, featuring 🤖Claude Sonnet 4.6 — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️. Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive); Opengrep scans in [/tests/security](https://github.com/amokprime/linebyline/tree/main/tests/security).
 Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
 ### About
 **LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to LRCLIB:
@@ -21,7 +21,7 @@ LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are require
 - Timestamps can be offset forwards or backwards by four different configurable amounts with eight different single-letter hotkeys
 - Use `Tab` to toggle between Hotkey mode → Typing mode
 - Remap almost every hotkey in Settings. All Settings persist in browser `localStorage`
-- See LIMITATIONS.md for known browser restrictions
+- See [LIMITATIONS.md](https://github.com/amokprime/linebyline/tree/main/LIMITATIONS.md) for known browser restrictions
 
 **Enhanced LRCGET-style replay**
 - LineByLine can jump to the start (`R`) or end (`Shift+R`) of a line with a seek offset
@@ -84,16 +84,16 @@ It disturbs my concentration #Before
 Visit the app's GitHub Page or download from the [Releases](https://github.com/amokprime/linebyline/releases) page or [/app/linebyline.html](https://github.com/amokprime/linebyline/tree/main/app/linebyline.html). Also see the [HELP](https://github.com/amokprime/linebyline/blob/main/HELP.md) file (linked to with the "?" button in the app).
 
 ### Contributing
-This [Share Note](https://share.note.sx/9wimmaly) has the most recent list of things planned for the next version.
+[This](https://share.note.sx/9wimmaly) Obsidian Share Note has the most recent list of things planned for the next version.
 
-Any human developers willing to review vibe code are welcome🧡. 
+Any human developers willing to review vibe code are welcome🧡.
 
 If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login) Projects and request many small changes in one prompt (drafted in [Obsidian](https://obsidian.md/)). Steps to reproduce a typical workflow:
 1. Add latest [claude_instructions](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions) (including skills)
 2. Add the latest app version to project files and enable memory if using claude.ai
 3. Draft Prompt.md in Obsidian if you have a lot of requests and might fatfinger `Enter`.
-4. PR Claude's output .html file and Chat.md in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning: Patches=+0.00.1, Minor (features that fit well into existing app)=+0.01.0, Major (refactors that break existing app)=+1.00.0. If Claude doesn't update the output file version you can just rename the app's filename and the title element: `<title>LineByLine 0.34.7</title>`. 
-Starting with version 0.34.7, *all* releases come with [QA test](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) results. It's manual and annoying and I may put it off by: 
+4. PR Claude's output .html file and Chat.md in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning: Patches=+0.00.1, Minor (features that fit well into existing app)=+0.01.0, Major (refactors that break existing app)=+1.00.0. If Claude doesn't update the output file version you can just rename the app's filename and the title element: `<title>LineByLine 0.34.7</title>`.
+Starting with version 0.34.7, *all* releases come with [QA test](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) results. It's a manual checklist and I may put it off by:
 - Committing minor changes to their own subfolders in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) without releasing until several versions later
 - Noting minor bugs caught by QA tests as Known Issues rather than patching right away (and immediately obligating a retest for bugs introduced by the patch)
 
