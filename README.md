@@ -1,8 +1,8 @@
 # LineByLine
 
 ### AI Disclosure
-I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo, featuring 🤖Claude Sonnet 4.6 — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️. Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive); Opengrep scans in [/tests/security](https://github.com/amokprime/linebyline/tree/main/tests/security).
-Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
+I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo, featuring 🤖Claude Sonnet 4.6 — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️. 
+Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). Opengrep security scans of this repo are pushed with Sonnet commentary to the semantic subfolder associated with a release, starting with 0.34.7. Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
 ### About
 **LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to LRCLIB:
 1. Find original lyrics from Genius or LRCLIB, or DuckDuckGo if really obscure
@@ -95,7 +95,7 @@ If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login
 4. PR Claude's output .html file and Chat.md in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning: Patches=+0.00.1, Minor (features that fit well into existing app)=+0.01.0, Major (refactors that break existing app)=+1.00.0. If Claude doesn't update the output file version you can just rename the app's filename and the title element: `<title>LineByLine 0.34.7</title>`.
 Starting with version 0.34.7, *all* releases come with [QA test](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) results. It's a manual checklist and I may put it off by:
 - Committing minor changes to their own subfolders in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) without releasing until several versions later
-- Noting minor bugs caught by QA tests as Known Issues rather than patching right away (and immediately obligating a retest for bugs introduced by the patch)
+- Noting minor bugs caught by QA tests as [Known Issues](https://share.note.sx/9wimmaly) rather than patching right away (and immediately obligating a retest for bugs introduced by the patch)
 
 ### Maybe someday
 - Cross-platform automated QA tests that recognize browser elements (i.e. Playwright)

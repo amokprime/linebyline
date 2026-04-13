@@ -3,7 +3,7 @@
 - LibreWolf with uBlock Origin and ✅Enable ResistFingerprinting
 - Not in Incognito mode
 - OS is Windows 11
-- The `html.security.audit.missing-integrity.missing-integrity` warning is a false positive; see [/tests/security/0_abandoned-0.34.7/Semgrep.md](https://github.com/amokprime/linebyline/tree/main/tests/security/0_abandoned-0.34.7/Semgrep.md) 
+- The `html.security.audit.missing-integrity.missing-integrity` warning is a false positive; see [/archive/semantic/0.34.7/Semgrep.md](https://github.com/amokprime/linebyline/tree/main/archive/semantic/0.34.7/Semgrep.md) 
 - "Can be adjusted" or "adjustable" for a number field includes both arrow buttons and selecting the number, editing to a specific value, and pressing Enter
 - If unspecified, test all possible control methods (hotkey press, button click, etc.)
 - Audio is listened to for playback tests to ensure the controls are actually working and not just updating the GUI
