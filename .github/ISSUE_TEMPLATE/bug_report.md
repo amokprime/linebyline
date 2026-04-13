@@ -3,22 +3,22 @@ name: Bug report
 about: Help me track down what broke
 title: "[BUG] "
 labels: bug
-assignees: honeypotfields
+assignees: ''
 
 ---
-**Is this already in [TODO](https://github.com/honeypotfields/linebyline/issues/1) or [LIMITATIONS](https://github.com/honeypotfields/linebyline/blob/main/LIMITATIONS.md)?**
-Yes/No; even if Yes explain additional insights
 
-**Environment if not matching Assumptions in [TEST_CASES.md](https://github.com/honeypotfields/linebyline/blob/main/TEST_CASES.md):**
-Other environments may not be tested by me and mobile is not officially supported at all.
+**Operating system if not Windows 11**
+Mobile is not officially supported for now.
 
-**Does this involve regressions (breaking of things that used to work)?**
-Use Ctrl+F in TEST_CASES.md or ask an AI whether your problem is covered by any of those cases
+**Is this a [known issue](https://share.note.sx/9wimmaly) or [limitation](https://github.com/amokprime/linebyline/blob/main/LIMITATIONS.md)?**
+Yes/No
 
-**Describe any unwanted behaviors not covered by known test cases**
-This may be used to update TEST_CASES.md
+**Is this a regression (breaking of things that worked in a previous version)?**
+Use Ctrl+F in CHECKLIST.md or ask an AI whether your problem is covered by any of those cases
 
-**Steps to reproduce if not self-explanatory**
+**Describe any unwanted behaviors not covered by the checklist**
+
+**Steps to reproduce if not fully explained by title**
 
 **Screenshots or recordings**
 If applicable, add screenshots or recordings (i.e. Meta+Shift+S) to help explain your problem.

@@ -6,14 +6,21 @@ labels: enhancement
 assignees: ''
 
 ---
-**Is this already in [TODO](https://github.com/honeypotfields/linebyline/issues/1) or [LIMITATIONS](https://github.com/honeypotfields/linebyline/blob/main/LIMITATIONS.md)?**
-Yes/No; even if Yes explain additional insights
 
-**What is the feature and what problem does this address?**
+**Operating system if not Windows 11**
+Mobile is not officially supported for now.
 
-**What workarounds have you tried, and why are they inadequate?**
+**Does this address a [known issue](https://share.note.sx/9wimmaly) or [limitation](https://github.com/amokprime/linebyline/blob/main/LIMITATIONS.md)?**
+Yes/No; explain if Yes
 
-**Do you have a UI mockup, experimental app file, or fork you want to merge?**
+**Does this address a novel problem not documented as a known issue or documentation?**
+Yes/No; explain if Yes
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+**How does the feature improve upon workarounds to the problem?**
+
+**Name of fork you want to merge for this**
+
+**Describe any attachments not in a pull request or fully explained by filename**
+UI mockups, .html app file, legal media files, etc.
+
+**Any other supporting information**
