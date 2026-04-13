@@ -1,4 +1,4 @@
-**These apply to the .html app as of version 0.34.1**
+**These apply to the .html app as of version 0.34.7**
 - No direct filesystem access due to browser security restrictions
 	- Can't read audio file metadata tags
 	- Audio file doesn't persist if page is reloaded
@@ -20,7 +20,16 @@ const RESTRICTED_ALL=new Set([
   'Ctrl+R','Ctrl+F','Ctrl+Q','Ctrl+W','Ctrl+L',
   'Ctrl+T','Ctrl+N','Ctrl+P','Ctrl+H','Ctrl+J','Ctrl+U',
   'Ctrl+B','Ctrl+G',
-  'Ctrl+Shift+I','Ctrl+Shift+J','Ctrl+Shift+C',
+  'Ctrl+Z','Ctrl+Y','Ctrl+X','Ctrl+C','Ctrl+V','Ctrl+E','Ctrl+K',
+  'Ctrl+Shift+I','Ctrl+Shift+J','Ctrl+Shift+C','Ctrl+Shift+K','Ctrl+Shift+N',
+  'Ctrl+Shift+O','Ctrl+Shift+P','Ctrl+Shift+T','Ctrl+Shift+W','Ctrl+Shift+Delete',
+  // All Meta (Cmd on Mac) combos
+  'Meta+A','Meta+B','Meta+C','Meta+D','Meta+E','Meta+F','Meta+G','Meta+H','Meta+I','Meta+J',
+  'Meta+K','Meta+L','Meta+M','Meta+N','Meta+O','Meta+P','Meta+Q','Meta+R','Meta+S','Meta+T',
+  'Meta+U','Meta+V','Meta+W','Meta+X','Meta+Y','Meta+Z',
+  'Meta+0','Meta+1','Meta+2','Meta+3','Meta+4','Meta+5','Meta+6','Meta+7','Meta+8','Meta+9',
+  'Meta+Left','Meta+Right','Meta+Up','Meta+Down',
+  'Meta+Shift+I','Meta+Shift+J','Meta+Shift+C',
   // All Alt combos (fingerprinting-resistant browsers remap many; blanket block)
   'Alt+A','Alt+B','Alt+C','Alt+D','Alt+E','Alt+F','Alt+G','Alt+H','Alt+I','Alt+J',
   'Alt+K','Alt+L','Alt+M','Alt+N','Alt+O','Alt+P','Alt+Q','Alt+R','Alt+S','Alt+T',
@@ -33,7 +42,4 @@ const RESTRICTED_ALL=new Set([
   // All F-keys
   'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
 ]);
-
-// Keys that only allow non-alphanumeric/Space (for toggle_mode and offset_mode_toggle)
-const ALPHA_NUM_SPACE_RE=/^(([A-Z]|[0-9]|Space)$|Shift\+[A-Z0-9]$)/;
 ```

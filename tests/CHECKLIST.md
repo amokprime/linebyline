@@ -1,13 +1,20 @@
 ## Assumptions
-- Version is 0.34.4+ with default settings
+- Version is 0.34.7 with default settings
 - LibreWolf with uBlock Origin and ✅Enable ResistFingerprinting
 - Not in Incognito mode
 - OS is Windows 11
 - "Can be adjusted" or "adjustable" for a number field includes both arrow buttons and selecting the number, editing to a specific value, and pressing Enter
+- If unspecified, test all possible control methods (hotkey press, button click, etc.)
 - Audio is listened to for playback tests to ensure the controls are actually working and not just updating the GUI
+- Music files are provided in [/tests/music](https://github.com/amokprime/linebyline/tree/main/tests/music)
+- To test Genius lyrics extraction, one might visit a song's webpage and `Ctrl+A` → `Ctrl+C` → `Ctrl_V` to a text file manually (to reduce repeat requests). Not provided due to legal concerns.
 - ✅ means a checkbox is checked
 - ❌ means a checkbox is unchecked
 - 📝 means an editable Settings (non-lyrics) text field
+
+### Elements
+- [ ] Each main window button tints gray on hover
+- [ ] Each main window button shows feedback on click (darker tint and downward nudge)
 
 ### Opening files
 - [ ] `Ctrl+O` hotkey opens file picker
@@ -15,9 +22,13 @@
 - [ ] 📂button clicked opens file picker
 - [ ] Audio and .lrc file can be added together
 - [ ] Audio and .lrc file can be added separately
+- [ ] Adding lyrics from file or paste can be undone
+- [ ] Adding lyrics from file or paste can be redone
+- [ ] Adding lyrics also appends a final trailing timestamp if none exists (set to song duration)
 - [ ] Title is extracted from audio and .lrc file added together
 - [ ] Title is extracted from audio filename added first and not overridden by lyrics filename
 - [ ] Title is extracted from lyrics filename added first
+- [ ] Title matches same case as filename (i.e. no title case → lower case)
 - [ ] Title extraction updates both metadata field and Now Playing panel
 - [ ] Audio is replaced when new audio file is added
 - [ ] Lyrics are replaced for main field when new .lrc file is added
@@ -27,68 +38,56 @@
 - [ ] `Ctrl+;` hotkey opens save file picker
 - [ ] 💾button clicked opens save file picker
 - [ ] .lrc files are shown in the file picker
-- [ ] Closing tab with `Ctrl+Q`, `Ctrl+W`, `Middle click`, or clicking the top-right corner X button or reloading with `F5` or the refresh button should open a warning and snap the cursor to Leave Page
+- [ ] Closing tab with `Ctrl+Q`, `Ctrl+W`, `Alt+F4`, `Middle click` on browser tab, or clicking the top-right corner X button or tab X button or reloading with `F5` or the refresh button should open a warning and snap the cursor to Leave Page
 - [ ] Lyrics file saves as the name of the metadata title in the `[ti: ]` field
 - [ ] Saved lyrics contents match Typing mode window contents
 
-### Undo
-- [ ] Works in main field in Typing mode
-- [ ] Works in secondary field in Typing mode
-- [ ] Works in secondary field in Hotkey mode and does not trigger Hotkey mode exclusive hotkeys
+### Undo and redo
+- [ ] Undo (i.e. type letter "a") in main field in Typing mode
+- [ ] Undo in secondary field in Typing mode
+- [ ] Undo in secondary field in Hotkey mode and does not trigger Hotkey mode exclusive hotkeys
+- [ ] Redo in main field in Typing mode
+- [ ] Redo in secondary field in Typing mode
+- [ ] Redo in secondary field in Hotkey mode and does not trigger Hotkey mode exclusive hotkeys
 
-### Redo
-- [ ] Works in main field in Typing mode
-- [ ] Works in secondary field in Typing mode
-- [ ] Works in secondary field in Hotkey mode and does not trigger Hotkey mode exclusive hotkeys
-
-### Font
+### Font and theme
 - [ ] Both fonts (System Sans and System Serif) affect text in main and secondary fields
 - [ ] Font type and size affects text in main and secondary fields
 - [ ] Font size can be adjusted
-
-### Theme
 - [ ] Theme is toggled light → dark and dark → light with `Ctrl+.` hotkey
 - [ ] Theme is toggled light → dark with 🌙button
-- [ ] Button icon is inverted:🌙 in light mode and ☀️in dark mode
+- [ ] Theme button icon is inverted:🌙 in light mode and ☀️in dark mode
 
-### Help
-- [ ] Opens with `Ctrl+/` hotkey
-- [ ] Opens with "?" button
-- [ ] Closes with `Esc`
-- [ ] Closes when clicking outside window
-- [ ] Appears under Settings if opened first and over if opened second
-- [ ] Scrolling to bottom and back to top works
-- [ ] Contents match [HELP.md](https://github.com/honeypotfields/linebyline/blob/main/HELP.md)
+### Help and Issues
+- [ ] Preview HELP.md [URL](https://github.com/amokprime/linebyline/blob/main/HELP.md) on "?" button hover and Issues [URL](https://github.com/amokprime/linebyline/issues) on bug button hover
+- [ ] Open HELP.md with "?" button click
+- [ ] Open HELP.md with `Ctrl+/` hotkey
+- [ ] Open Issues with bug button click
+- [ ] Open Issues with `Ctrl+'` hotkey
 
 ### Settings
 #### Operation
 - [ ] Opens with `Ctrl+,` hotkey
 - [ ] Opens with ⚙️ button
-- [ ] Searching for hotkeys by name (focus search field with `Tab`) works
-- [ ] Searching for hotkeys by hotkey using ⌨️ button or `Tab` in search field works
+- [ ] Search field focuses when Settings window opened
+- [ ] Searching for hotkeys by name (i.e. "Small") works
+- [ ] Searching for hotkeys by hotkey (i.e. "Space") using ⌨️ button or `Tab` in search field works
+- [ ] Searching for another hotkey by hotkey (i.e. "X") immediately refreshes results
 - [ ] Pressing `Esc`, `Backspace`, or `Del` when searching by hotkey switches back to searching by name
 - [ ] Settings window closes with `Esc`
 - [ ] Settings window closes when clicking outside window
 - [ ] Scrolling to bottom and back to top works
 - [ ] Clicking a hotkey to remap it highlights its field blue with a "..." and an X button that allows clearing the hotkey
-- [ ] All hotkeys are remappable (i.e. to NumPadMinus) and Default button appears
+- [ ] All hotkeys are remappable (i.e. to NumPadMinus) and Default button appears and works
 - [ ] Clicking outside blue-highlighted "..." field or pressing Esc cancels remapping and does not assign Esc as a hotkey
-- [ ] Each hotkey's Default button appears when remapped or cleared
+- [ ] Each hotkey's Default button appears when cleared
 - [ ] Reset defaults button works for all settings in the Settings window
-- [ ] Remapping hotkeys to restricted hotkey (i.e. to Ctrl+R) brings up warning and shows Default button
+- [ ] Remapping hotkeys to a restricted hotkey (i.e. to Ctrl+R) brings up warning and shows Default button
 - [ ] Settings changes persist (i.e. adjust Seek increment) when reloading browser
 
-#### Auto strip
-- [ ] ✅Metadata and On .lrc file import: replaces metadata with defaults when importing lyrics
-- [ ] ✅Metadata and On lyrics paste: replaces metadata with defaults when pasting lyrics
-- [ ] ❌Metadata: only falls back to defaults when missing
-- [ ] ✅Sections and On .lrc file import: removes Genius stanza sections when importing lyrics
-- [ ] ✅Sections and On lyrics paste: removes Genius stanza sections when pasting lyrics
-- [ ] ❌Sections: does not remove Genius stanza sections
-
 #### Instant replay
-- [ ] ✅Moving to previous line: plays with configured Seek offset instead of navigating when using `Q` and `E` keys
-- [ ] ✅Moving to next line: plays with configured Seek offset instead of navigating when using `Q` and `E` keys
+- [ ] ✅Moving to previous line: plays with configured Seek offset when navigating with `Q` and `E` keys
+- [ ] ✅Moving to next line: plays with configured Seek offset when navigating with `Q` and `E` keys
 - [ ] ✅Resuming currently playing line: replays with configured Seek offset instead of resuming when unpausing with `Space`
 - [ ] ✅Playing another line: plays with configured Seek offset instead of from start when clicking another line
 - [ ] ✅Adjusting seek offset: replays with configured Seek offset instead of continuing to play
@@ -110,39 +109,45 @@
 - [ ] Changes apply to metadata fields when reloading or restarting browser
 
 #### Playback
-- [ ] Play/pause is triggered by `Space` in Hotkey mode and `Ctrl+Space` in any mode
-- [ ] Reduce speed is triggered by `Ctrl+1`
-- [ ] Increase speed is triggered by `Ctrl+2`
-- [ ] Reset speed is triggered by `Ctrl+3`
-- [ ] Seek back is triggered by `Ctrl+A`
-- [ ] Seek forward is triggered by `Ctrl+D`
+- [ ] Play/pause with `Space` in Hotkey mode and `Ctrl+Space` in any mode
+- [ ] Reduce speed with `Ctrl+1`
+- [ ] Increase speed with `Ctrl+2`
+- [ ] Reset speed with `Ctrl+3`
+- [ ] Seek back with `ArrowLeft` in Hotkey mode
+- [ ] Seek back with `Ctrl+A` in any mode
+- [ ] Seek forward with `ArrowRight` in Hotkey mode
+- [ ] Seek forward with `Ctrl+D`in any mode
 
 #### Sync
-- [ ] Toggle offset mode is triggered by `` ` ``
-- [ ] Sync file is triggered by ``Ctrl+` ``
-- [ ] Sync line start is triggered by `W` in Hotkey mode
-- [ ] Sync line end is triggered by `T` in Hotkey mode
-- [ ] Previous line is triggered by `Q` in Hotkey mode
-- [ ] Next line is triggered by `E` in Hotkey mode
-- [ ] Replay only is triggered by `R` in Hotkey mode
-- [ ] Replay end is triggered by `Shift+R` in Hotkey mode
+- [ ] Toggle offset mode with `` ` ``
+- [ ] Sync file with ``Ctrl+` ``
+- [ ] Sync line start with `W` in Hotkey mode
+- [ ] Sync line end with `T` in Hotkey mode
+- [ ] Navigate to previous line with `Q` in Hotkey mode
+- [ ] Navigate to previous line with `ArrowUp` in any mode
+- [ ] Navigate to next line with `E` in Hotkey mode
+- [ ] Navigate to next line with `ArrowDown` in any mode
+- [ ] Navigation skips lines with no lyrics text
+- [ ] Replay only with `R` in Hotkey mode
+- [ ] Replay end with `Shift+R` in Hotkey mode
 
 #### Adjustments
-- [ ] Back tiny amount is triggered by `Z` in Hotkey mode
-- [ ] Forward tiny amount is triggered by `V` in Hotkey mode
-- [ ] Back small amount is triggered by `A` in Hotkey mode
-- [ ] Forward small amount is triggered by `F` in Hotkey mode
-- [ ] Back medium amount is triggered by `S` in Hotkey mode
-- [ ] Forward medium amount is triggered by `D` in Hotkey mode
-- [ ] Back large amount is triggered by `X` in Hotkey mode
-- [ ] Forward large amount is triggered by `C` in Hotkey mode
+- [ ] Back tiny amount with `Z` in Hotkey mode
+- [ ] Forward tiny amount with `V` in Hotkey mode
+- [ ] Back small amount with `A` in Hotkey mode
+- [ ] Forward small amount with `F` in Hotkey mode
+- [ ] Back medium amount with `S` in Hotkey mode
+- [ ] Forward medium amount with `D` in Hotkey mode
+- [ ] Back large amount with `X` in Hotkey mode
+- [ ] Forward large amount with `C` in Hotkey mode
 
 #### Text
-- [ ] Toggle mode is triggered by `Tab`
-- [ ] Add field is triggered by `Ctrl+4`
-- [ ] Hide field is triggered by `Ctrl+5
-- [ ] Merge fields is triggered by `Ctrl+6
-- [ ] Mark line as translation is triggered by `Ctrl+ArrowLeft` and works in both Typing and Hotkey modes
+- [ ] Toggle mode with `Tab`
+- [ ] Add field with `Ctrl+4`
+- [ ] Hide field with `Ctrl+5
+- [ ] Merge fields with `Ctrl+6
+- [ ] Mark line as translation with `Ctrl+ArrowLeft` and works in both Typing and Hotkey modes
+- [ ] Mark line as translation can be undone and redone
 
 ### Main field
 - [ ] Timestamps but not metadata fields are visible in Hotkey mode
@@ -167,7 +172,7 @@
 ### Controls
 - [ ] Offset time button toggles to Offset seek and back
 - [ ] Hotkey mode button toggles to Typing mode and back
-- [ ] Play/pause button works in Hotkey mode
+- [ ] Play/pause button works in any mode
 - [ ] Previous line button works in Hotkey mode
 - [ ] Replay only button works in Hotkey mode
 - [ ] Sync line button works in Hotkey mode
@@ -191,14 +196,17 @@
 - [ ] -1000ms seek button works in Offset seek mode
 
 ### Secondary fields
-- [ ] Add field is triggered by clicking button
-- [ ] Hide field is triggered by clicking button
-- [ ] Merge fields is triggered by clicking button
+- [ ] Add field with clicking button
+- [ ] Hide field with clicking button
+- [ ] Merge fields with clicking button
 - [ ] .lrc file picker opens with the 📂button or `Middle click` while cursor is hovered over secondary field
 - [ ] Lyrics paste extract Genius metadata and lyrics
-- [ ] Auto strip settings are followed
 - [ ] Warning appears when main and secondary fields have different amounts of lyrics
 - [ ] Newlines and the final end timestamp are not counted as lyric lines
-- [ ] Merge fields button is grayed out when lyric lines don't match or the main field lacks timestamps or a final end timestamp
+- [ ] Merge fields button is grayed out when lyric lines don't match
+- [ ] Merge fields button is grayed out when the main field lacks any timestamps
+- [ ] Merge fields button is grayed out when the main field lacks a final end timestamp
+- [ ] Unsaved work warning is not bypassed by skipping merge fields and reloading page
+- [ ] Merge fields button is grayed out on app startup if skipped
 - [ ] Merging fields produces expected timestamp pattern in repo README
 - [ ] Merging fields can be undone and redone
