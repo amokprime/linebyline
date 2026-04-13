@@ -85,7 +85,9 @@ Visit the app's GitHub Page or download from the [Releases](https://github.com/a
 
 ### Contributing
 This [Share Note](https://share.note.sx/9wimmaly) has the most recent list of things planned for the next version.
+
 Any human developers willing to review vibe code are welcome🧡. 
+
 If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login) Projects and request many small changes in one prompt (drafted in [Obsidian](https://obsidian.md/)). Steps to reproduce a typical workflow:
 1. Add latest [claude_instructions](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions) (including skills)
 2. Add the latest app version to project files and enable memory if using claude.ai
