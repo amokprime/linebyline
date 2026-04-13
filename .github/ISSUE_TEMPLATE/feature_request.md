@@ -10,6 +10,9 @@ assignees: ''
 **Operating system if not Windows 11**
 Mobile is not officially supported for now.
 
+**What version of the app is this for?**
+Only semantic [versions](https://github.com/amokprime/linebyline/blob/main/SECURITY.md) are officially supported.
+
 **Does this address a [known issue](https://share.note.sx/9wimmaly) or [limitation](https://github.com/amokprime/linebyline/blob/main/LIMITATIONS.md)?**
 Yes/No; explain if Yes
 
@@ -18,9 +21,12 @@ Yes/No; explain if Yes
 
 **How does the feature improve upon workarounds to the problem?**
 
+
 **Name of fork you want to merge for this**
+
 
 **Describe any attachments not in a pull request or fully explained by filename**
 UI mockups, .html app file, legal media files, etc.
 
 **Any other supporting information**
+
