@@ -14,15 +14,8 @@
 - 📝 means an editable Settings (non-lyrics) text field
 
 ### Security
-- [ ] Opengrep is up to date; Windows CMD check:
-``` cmd
-for /f "tokens=*" %v in ('opengrep --version') do @for /f "tokens=*" %r in ('curl -s https://api.github.com/repos/opengrep/opengrep/releases/latest ^| findstr "tag_name"') do @echo Installed: %v & echo Latest: %r
-```
-- [ ] Opengrep scan with provided `.semgrepignore` in repo root finds nothing new: 
-```
-opengrep scan --config auto --taint-intrafile --exclude-rule html.security.audit.missing-integrity.missing-integrity
-```
-- [ ] Mozilla Observatory finds nothing new for app GitHub Page: https://developer.mozilla.org/en-US/observatory
+- [ ] Before merging PR: CodeQL finds nothing concerning
+- [ ] After merging PR: Mozilla Observatory finds nothing new for app GitHub Page: https://developer.mozilla.org/en-US/observatory
 
 ### Elements
 - [ ] Each main window button tints gray on hover
