@@ -2,7 +2,7 @@
 
 ### AI Disclosure
 I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo, featuring 🤖Claude Sonnet 4.6 — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️.
-Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). Opengrep security scans of this repo are pushed with Sonnet commentary to the semantic subfolder associated with a release, starting with 0.34.7. Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
+Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). Positive security scans of this repo from CodeQL, Opengrep, etc. are pushed with Sonnet commentary to the semantic subfolder associated with a release, starting with 0.34.7. Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
 ### About
 **LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to LRCLIB:
 1. Find original lyrics from Genius or LRCLIB, or DuckDuckGo if really obscure
