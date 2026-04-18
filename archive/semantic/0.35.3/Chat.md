@@ -25,4 +25,4 @@ Refinement — cursor advance after Ctrl+ArrowLeft: After a successful split, `m
 
 ---
 
-Just realized Claude didn't actually add Ctrl+M to restricted two versions ago so I added it manually before Ctrl+N.
+Just realized I forgot to tell Claude to add Ctrl+M to restricted in the redo of 0.35.2 so I added it manually before Ctrl+N.
