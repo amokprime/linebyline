@@ -4,12 +4,12 @@
 
 Version
 Minor
-Bugs
 
+Bugs
 * Line count mismatch warning has no popup which allows a user to ignore the warning and press `Ctrl+6` unlimited times
 * The collapse panel icon was again vertically centered on the bar like 0.34.8. Keep the bar - but also keep the icon at the same height as when the panel was expanded
-Changes
 
+Changes
 * Main field "↩" checkbox to the right of the "( )" checkbox but left-aligned
    * Helps users migrate from inline style translations to merged style translations. Since translations in the same lyrics as main language are niche to begin with, uncheck ↩ by default
    * When checked and `Ctrl+ArrowLeft` is used

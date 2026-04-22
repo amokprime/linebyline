@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LineByLine 0.34.7</title>
+<title>LineByLine 0.35.6</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000000' height='24' width='24'/%3E%3Cpath d='m13,5l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,12l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,19l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m3,17l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m3,7l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 /* ── Themes ── */
@@ -25,7 +25,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:14.3px;}
-body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;user-select:none;}
+body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:var(--text);height:100vh;height:100dvh;display:flex;flex-direction:column;overflow:hidden;user-select:none;}
 #menu-bar{display:flex;align-items:center;height:39.6px;background:var(--surface);border-bottom:1px solid var(--border);padding:0 8.8px;gap:4.4px;flex-shrink:0;flex-wrap:nowrap;overflow-x:auto;}
 .mb-btn{height:28.6px;padding:0 11px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);font-size:13.2px;cursor:pointer;white-space:nowrap;display:flex;align-items:center;flex-shrink:0;}
 .mb-btn:hover{background:var(--bg);}
@@ -49,7 +49,14 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 #btn-theme:hover,#btn-settings:hover,#btn-import:hover,#btn-save:hover,#btn-help:hover,#btn-issues:hover{background:var(--bg);}
 #btn-theme:active,#btn-settings:active,#btn-import:active,#btn-save:active,#btn-help:active,#btn-issues:active{filter:brightness(0.88);transform:translateY(1px);}
 #main{display:flex;flex:1;overflow:hidden;min-height:0;}
-#left-panel{width:310px;min-width:310px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;padding:8.8px;gap:6.6px;overflow-y:auto;flex-shrink:0;}
+#left-panel{width:310px;min-width:310px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;padding:8.8px;gap:6.6px;overflow-y:auto;flex-shrink:0;transition:width 0.2s,min-width 0.2s,padding 0.2s;}
+#left-panel.collapsed{width:0;min-width:0;padding:0;overflow:hidden;}
+#left-panel-header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+#btn-collapse-panel{width:24px;height:24px;border:none;background:transparent;cursor:pointer;color:var(--text-muted);padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:var(--radius);}
+#btn-collapse-panel:hover{background:var(--border);color:var(--text);}
+#btn-expand-panel{display:none;width:28px;height:100%;border:none;background:var(--surface);border-right:1px solid var(--border);cursor:pointer;color:var(--text-muted);padding:13px 0 0 0;align-items:flex-start;justify-content:center;flex-shrink:0;}
+#btn-expand-panel:hover{background:var(--bg);color:var(--text);}
+#btn-expand-panel.visible{display:flex;}
 .section-label{font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:2px;}
 #audio-box{border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);padding:8.8px;display:flex;flex-direction:column;gap:4.4px;}
 #song-title{font-size:13.2px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
@@ -215,7 +222,10 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 </div>
 <div id="main">
   <div id="left-panel">
-    <div class="section-label">Now playing</div>
+    <div id="left-panel-header">
+      <div class="section-label" style="margin:0">Now playing</div>
+      <button id="btn-collapse-panel" title="Collapse panel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
+    </div>
     <div id="audio-box">
       <div id="song-title">Unknown Title</div>
       <div id="song-artist">Unknown Artist</div>
@@ -261,6 +271,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
     <div class="section-label" style="margin-top:4px">Controls</div>
     <div class="hk-grid" id="hk-grid"></div>
   </div>
+  <button id="btn-expand-panel" title="Expand panel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
   <div id="editor-wrapper">
     <div id="editor-scroll">
       <div id="editor-area">
@@ -268,6 +279,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
           <div class="field-header" style="justify-content:flex-start;">
             <span class="field-header-label">Main</span>
             <label id="main-paren-label" style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;white-space:nowrap;color:var(--text-muted);" title="Wrap marked translations in parentheses"><input type="checkbox" id="main-paren-check" checked style="width:13px;height:13px;cursor:pointer;accent-color:var(--accent);">( )</label>
+            <label id="main-split-label" style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;white-space:nowrap;color:var(--text-muted);" title="Split trailing parenthesized groups to new translation lines on Ctrl+ArrowLeft"><input type="checkbox" id="main-split-check" style="width:13px;height:13px;cursor:pointer;accent-color:var(--accent);">↩</label>
           </div>
           <div class="warn-bar" id="main-warn"></div>
           <div class="lyric-scroll" id="main-scroll"><div class="lyric-area" id="main-lines"></div></div>
@@ -327,7 +339,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 <input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none">
 <script>
 'use strict';
-// SECTIONS: Config~331 | Hotkey rules~396 | Theme~487 | Font~500 | Tooltips~515 | State~544 | Persistence~559 | Undo/redo~597 | Mode switching~615 | Auto mode~674 | Helpers~677 [LRC parse~678 | Paste/meta~698 | Genius~749 | Render/UI~846] | Audio~928 | Sync/timestamp~1112 | Secondary~1190 | Line counts~1298 | Title~1366 | Import~1374 | Controls~1486 | Settings~1578 | Settings search~1643 | Confirm~1965 | Keyboard~1967 [Key norm~1968 | Main textarea KD~1976 | Overlay utils~2035 | Global KD~2037] | Unload~2154 | Button wiring~2160 | Init~2177
+// SECTIONS: Config~343 | Hotkey rules~408 | Theme~502 | Font~515 | Tooltips~530 | State~559 | Persistence~574 | Undo/redo~612 | Mode switching~630 | Auto mode~689 | Helpers~692 [LRC parse~693 | Paste/meta~712 | Genius~768 | Render/UI~865] | Audio~947 | Sync/timestamp~1131 | Secondary~1323 | Line counts~1431 | Title~1511 | Import~1519 | Controls~1631 | Settings~1723 | Settings search~1788 | Confirm~2115 | Keyboard~2117 [Key norm~2118 | Main textarea KD~2126 | Overlay utils~2185 | Global KD~2187] | Unload~2325 | Button wiring~2331 | Init~2364
 // ── Config ───────────────────────────────────────────────────────────────────
 const DEFAULT_META='[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n';
 const DEFAULT_CFG={
@@ -338,20 +350,20 @@ const DEFAULT_CFG={
   replay_after_offset:false,replay_after_sync:false,replay_after_ts:false,
   undo_debounce_ms:150,
   hotkeys:{
-    toggle_mode:'Tab',play_pause:'Space',play_pause_alt:'Ctrl+Space',sync:'W',end_line:'T',
+    toggle_mode:'`',play_pause:'Space',play_pause_alt:'Ctrl+Space',sync:'W',end_line:'T',
     prev_line:'Q',next_line:'E',
     ts_back_tiny:'Z',ts_fwd_tiny:'V',
     ts_back_small:'A',ts_fwd_small:'F',
     ts_back_medium:'S',ts_fwd_medium:'D',
     ts_back_large:'X',ts_fwd_large:'C',
     clear_sel:'Escape',
-    offset_mode_toggle:'`',sync_file:'Ctrl+`',
+    offset_mode_toggle:'Shift+~',sync_file:'Ctrl+I',
     add_field:'Ctrl+4',remove_field:'Ctrl+5',merge_fields:'Ctrl+6',
     replay_line:'Enter',replay_only:'R',replay_end:'Shift+R',
     open:'Ctrl+O',settings:'Ctrl+,',
     undo:'Ctrl+Z',redo:'Ctrl+Y',
     speed_down:'Ctrl+1',speed_up:'Ctrl+2',speed_reset:'Ctrl+3',
-    seek_back:'Ctrl+A',seek_fwd:'Ctrl+D',
+    seek_back:'Ctrl+9',seek_fwd:'Ctrl+0',
     save:'Ctrl+;',help:'Ctrl+/',theme_toggle:'Ctrl+.',
     mark_translation:'Ctrl+ArrowLeft',
     issues:"Ctrl+'",
@@ -397,10 +409,10 @@ const HK_LABELS={
 // Keys blocked for ALL remappable hotkeys (browser-reserved or destructive)
 const RESTRICTED_ALL=new Set([
   'MouseLeft','MouseRight',
-  'Escape',
+  'Escape','Tab','Enter',
   // Ctrl combos browsers reserve
   'Ctrl+R','Ctrl+F','Ctrl+Q','Ctrl+W','Ctrl+L',
-  'Ctrl+T','Ctrl+N','Ctrl+P','Ctrl+H','Ctrl+J','Ctrl+U',
+  'Ctrl+T','Ctrl+D','Ctrl+M','Ctrl+N','Ctrl+P','Ctrl+H','Ctrl+J','Ctrl+U',
   'Ctrl+B','Ctrl+G',
   'Ctrl+Z','Ctrl+Y','Ctrl+X','Ctrl+C','Ctrl+V','Ctrl+E','Ctrl+K',
   'Ctrl+Shift+I','Ctrl+Shift+J','Ctrl+Shift+C','Ctrl+Shift+K','Ctrl+Shift+N',
@@ -460,11 +472,16 @@ function loadCfg(){
     if(d.speed_increment!==undefined&&d.speed_ratio===undefined)c.speed_ratio=1.10;
     // Migrate old hotkeys to new defaults
     if(d.hotkeys){
-      if(d.hotkeys.seek_back==='Alt+Q')c.hotkeys.seek_back='Ctrl+A';
-      if(d.hotkeys.seek_fwd==='Alt+W')c.hotkeys.seek_fwd='Ctrl+D';
+      if(d.hotkeys.seek_back==='Ctrl+A')c.hotkeys.seek_back='Ctrl+9';
+      if(d.hotkeys.seek_back==='Ctrl+S')c.hotkeys.seek_back='Ctrl+9';
+      if(d.hotkeys.seek_fwd==='Alt+W')c.hotkeys.seek_fwd='Ctrl+0';
+      if(d.hotkeys.seek_fwd==='Ctrl+D')c.hotkeys.seek_fwd='Ctrl+0';
       if(d.hotkeys.save==='Ctrl+S')c.hotkeys.save='Ctrl+;';
       if(d.hotkeys.settings==='Alt+`')c.hotkeys.settings='Ctrl+,';
       if(d.hotkeys.help==='F2')c.hotkeys.help='Ctrl+/';
+      if(d.hotkeys.toggle_mode==='Tab')c.hotkeys.toggle_mode='`';
+      if(d.hotkeys.offset_mode_toggle==='`')c.hotkeys.offset_mode_toggle='Shift+~';
+      if(d.hotkeys.sync_file==='Ctrl+`')c.hotkeys.sync_file='Ctrl+I';
       if(d.hotkeys.speed_down==='Alt+1')c.hotkeys.speed_down='Ctrl+1';
       if(d.hotkeys.speed_up==='Alt+2')c.hotkeys.speed_up='Ctrl+2';
       if(d.hotkeys.speed_reset==='Alt+3')c.hotkeys.speed_reset='Ctrl+3';
@@ -610,7 +627,7 @@ function pushSnapshot(){
 }
 function doUndo(){if(undoStack.length<2)return;redoStack.push(undoStack.pop());applySnapshot(undoStack[undoStack.length-1]);}
 function doRedo(){if(!redoStack.length)return;undoStack.push(redoStack.pop());applySnapshot(undoStack[undoStack.length-1]);}
-function setMainText(t){pushSnapshot();_setTA(t);renderMainLines();checkLineCounts();updateTitleFromText();doAutosave();}
+function setMainText(t){pushSnapshot();_setTA(t);renderMainLines();checkLineCounts();updateMergeBtn();updateTitleFromText();doAutosave();}
 
 // ── Mode switching ───────────────────────────────────────────────────────────
 function applyMode(){
@@ -645,7 +662,7 @@ function applyMode(){
 }
 
 document.getElementById('main-textarea').addEventListener('input',()=>{
-  renderMainLines();checkLineCounts();updateTitleFromText();doAutosave();
+  renderMainLines();checkLineCounts();updateMergeBtn();updateTitleFromText();doAutosave();
   if(!hotkeyMode){
     if(_pasteJustHappened){_pasteJustHappened=false;return;}
     clearTimeout(_undoDebounceTimer);
@@ -662,13 +679,13 @@ document.getElementById('main-textarea').addEventListener('paste',e=>{
   const ta=e.target,start=ta.selectionStart,end=ta.selectionEnd;
   const v=ta.value;
   const strippedCleaned=cleaned.split('\n').map(l=>l.trimEnd()).join('\n');
+  const finalCleaned=document.getElementById('main-split-check').checked?batchSplitParens(strippedCleaned):strippedCleaned;
   pushSnapshot();
   _pasteJustHappened=true;
-  ta.value=v.slice(0,start)+strippedCleaned+v.slice(end);
-  ta.setSelectionRange(start+strippedCleaned.length,start+strippedCleaned.length);
+  ta.value=v.slice(0,start)+finalCleaned+v.slice(end);
+  ta.setSelectionRange(start+finalCleaned.length,start+finalCleaned.length);
   ta.dispatchEvent(new Event('input'));
   if(geniusCleaned){markGeniusSource();extractGeniusMeta(raw);}
-  maybeAppendTrailingTs();
 });
 
 // ── Auto mode switch when secondary focused ───────────────────────────────────
@@ -682,6 +699,8 @@ function msToTs(ms){ms=Math.max(0,ms);const min=Math.floor(ms/60000),sec=Math.fl
 function isEndTs(l){return TS_RE.test(l)&&l.replace(TS_RE,'').trim()==='';}
 function isHeader(l){return l.startsWith('[')&&!META_RE.test(l)&&!TS_RE.test(l);}
 function replaceTs(l,ms){return TS_RE.test(l)?msToTs(ms)+l.slice(10):msToTs(ms)+' '+l;}
+// Truncate 3-decimal timestamps ([mm:ss.000]) to 2-decimal ([mm:ss.00]) on import
+function normalizeLrcTimestamps(text){return text.replace(/\[(\d{2}):(\d{2})\.(\d{2})\d\]/g,'[$1:$2.$3]');}
 function getSeekOffset(){return parseInt(document.getElementById('seek-offset').value)||0;}
 function stripSecLine(l){return l.replace(TS_RE,'').replace(/^ /,'');}
 function maybeAppendTrailingTs(){
@@ -694,17 +713,22 @@ function maybeAppendTrailingTs(){
 }
 // ── Paste and metadata cleaning ────────────────────────────────────────────
 function cleanPaste(text,context){
+  // Normalize 3-decimal timestamps before any processing
+  text=normalizeLrcTimestamps(text);
   // Always strip sections on paste; never strip metadata; never strip on lrc import
   let lines=text.split('\n');
   if(context==='paste')lines=lines.filter(l=>!isHeader(l));
   return lines.join('\n');
 }
 
-// Append ", LineByLine" to [re:] tag if not already present
-function ensureLineByLineInRe(text){
+// Append the configured [re:] value (from cfg) to the [re:] tag if not already present
+function ensureReTagDefault(text){
+  const defReMatch=cfg.default_meta.match(/^\[re:\s*(.*)\]/m);
+  const defReVal=defReMatch?defReMatch[1].trim():'';
+  if(!defReVal)return text;
   return text.replace(/^(\[re:\s*)(.*?)(\]\s*)$/m,(match,pre,val,post)=>{
-    if(/LineByLine/i.test(val))return match;
-    return pre+(val.trim()?val.trim()+', LineByLine':'LineByLine')+post;
+    if(val.includes(defReVal))return match;
+    return pre+(val.trim()?val.trim()+', '+defReVal:defReVal)+post;
   });
 }
 
@@ -739,7 +763,7 @@ function mergeLrcMeta(lrcText){
     merged.splice(lastMetaIdx+1,0,...extraFields);
   }
   let result=merged.filter(l=>l!==undefined).join('\n');
-  result=ensureLineByLineInRe(result);
+  result=ensureReTagDefault(result);
   return result;
 }
 
@@ -802,7 +826,7 @@ function markGeniusSource(){
   _geniusDetectedThisSession=true;
   let updated=getTA().replace(/^\[re:.*\]/m,'[re: Genius, LineByLine]');
   // Ensure LineByLine is in the re tag after replacement
-  updated=ensureLineByLineInRe(updated);
+  updated=ensureReTagDefault(updated);
   if(updated!==getTA()){_setTA(updated);renderMainLines();updateTitleFromText();}
 }
 function extractGeniusMeta(raw){
@@ -910,10 +934,10 @@ document.getElementById('main-lines').addEventListener('paste',e=>{
   const geniusCleaned=cleanGenius(raw);
   const cleaned=geniusCleaned||cleanPaste(raw,'paste');
   const cleanedTrimmed=cleaned.split('\n').map(l=>l.trimEnd()).join('\n');
+  const finalTrimmed=document.getElementById('main-split-check').checked?batchSplitParens(cleanedTrimmed):cleanedTrimmed;
   const existing=getTA().trimEnd();
-  setMainText(existing+'\n\n'+cleanedTrimmed.trimStart());
+  setMainText(existing+'\n\n'+finalTrimmed.trimStart());
   if(geniusCleaned){markGeniusSource();extractGeniusMeta(raw);}
-  maybeAppendTrailingTs();
   if(activeLine<0){
     const lines=getTA().split('\n');
     for(let i=0;i<lines.length;i++){
@@ -1110,7 +1134,9 @@ document.getElementById('vol-slider').addEventListener('wheel',e=>{
 function syncLine(){
   const ms=currentMs(),lines=getTA().split('\n');
   if(activeLine<0||activeLine>=lines.length)return;
+  const hadContentTs=lines.some((l,i)=>tsToMs(l)!==null&&!isEndTs(l)&&i!==activeLine);
   lines[activeLine]=replaceTs(lines[activeLine],ms);setMainText(lines.join('\n'));
+  if(!hadContentTs)maybeAppendTrailingTs();
   if(cfg.replay_after_sync){
     replayActiveLine(false);
   }else{
@@ -1144,44 +1170,156 @@ function adjustTs(delta){
   setMainText(lines.join('\n'));
   if(cfg.replay_after_ts){replayActiveLine(false);}
 }
+// Extract the last top-level parenthesized group from end of string, return [before, group] or null
+function _peelLastParen(s){
+  const t=s.trimEnd();
+  if(!t.endsWith(')'))return null;
+  let depth=0,i=t.length-1;
+  while(i>=0){
+    if(t[i]===')'){depth++;}
+    else if(t[i]==='('){depth--;if(depth===0){const before=t.slice(0,i).trimEnd();const group=t.slice(i);return[before,group];}}
+    i--;
+  }
+  return null;
+}
+// Batch-split trailing parenthesized groups on all non-meta lines (including timestamped).
+// Inserts peeled groups as plain lines immediately after their parent.
+function batchSplitParens(text){
+  const lines=text.split('\n');
+  const out=[];
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];
+    // Skip meta or blank lines
+    if(META_RE.test(l)||l.trim()===''){out.push(l);continue;}
+    // Strip timestamp prefix if present
+    const hasTs=TS_RE.test(l);
+    const tsPrefix=hasTs?l.slice(0,10):'';
+    let content=hasTs?l.slice(10).replace(/^ /,''):l;
+    const groups=[];
+    let peeled;
+    while((peeled=_peelLastParen(content))!==null){
+      const[before,group]=peeled;
+      groups.push(group);
+      content=before;
+    }
+    out.push(tsPrefix+(content?' '+content:content).replace(/^ /,''));
+    if(groups.length)out.push(...groups.slice().reverse());
+  }
+  return out.join('\n');
+}
 function markAsTranslation(){
   if(!hasTrailingTimestamp())return;
   const lines=getTA().split('\n');
-  let targets;
+  let targetIdx;
   if(!hotkeyMode){
-    // Typing mode: use cursor line
     const ta=document.getElementById('main-textarea');
     const pos=ta.selectionStart;
-    const before=ta.value.slice(0,pos);
-    const lineIdx=before.split('\n').length-1;
-    targets=[lineIdx];
+    targetIdx=ta.value.slice(0,pos).split('\n').length-1;
   }else{
-    // Hotkey mode: only the active line, regardless of multi-selection
-    targets=activeLine>=0?[activeLine]:[];
+    targetIdx=activeLine>=0?activeLine:-1;
   }
+  if(targetIdx<0||targetIdx>=lines.length)return;
+  if(META_RE.test(lines[targetIdx]))return;
+
+  const splitMode=document.getElementById('main-split-check').checked;
   const useParens=document.getElementById('main-paren-check').checked;
-  let changed=false;
-  targets.forEach(i=>{
-    if(i<0||i>=lines.length)return;
-    if(META_RE.test(lines[i]))return;
-    // Find next timestamped line
-    let nextMs=null;
-    for(let j=i+1;j<lines.length;j++){
-      const ms=tsToMs(lines[j]);
-      if(ms!==null){nextMs=ms;break;}
+
+  // Find next timestamped line (used by both modes)
+  function findNextMs(fromIdx){
+    for(let j=fromIdx+1;j<lines.length;j++){const ms=tsToMs(lines[j]);if(ms!==null)return ms;}
+    return null;
+  }
+
+  if(splitMode){
+    // Collect all trailing parenthesized groups by peeling from the end
+    let content=TS_RE.test(lines[targetIdx])?lines[targetIdx].slice(10).replace(/^ /,''):lines[targetIdx];
+    const ts=TS_RE.test(lines[targetIdx])?lines[targetIdx].slice(0,10):'';
+    const groups=[];
+    let peeled;
+    while((peeled=_peelLastParen(content))!==null){
+      const[before,group]=peeled;
+      groups.push(group);
+      content=before;
     }
-    if(nextMs===null)return;
-    const offsetMs=nextMs-10;
-    // Extract content (strip existing timestamp if present)
-    const content=TS_RE.test(lines[i])?lines[i].slice(10).replace(/^ /,''):lines[i];
-    let newContent=content;
-    if(useParens&&newContent.trim()&&!newContent.trim().startsWith('(')){
-      newContent='('+newContent.trim()+')';
+    if(groups.length===0){
+      // No trailing paren groups — fall through to normal mark-as-translation
+    }else{
+      // groups[0] is last (outermost), groups[last] is first (innermost from end)
+      // They should be inserted in reverse so the last-peeled ends up closest to nextMs
+      // groups is already in peel order (last group first), so insert as-is: they'll
+      // appear in document order matching the original left-to-right sequence.
+      // Rebuild parent line with remaining content
+      lines[targetIdx]=ts+(content?' '+content:content);
+      // Insert groups after targetIdx in original order (reverse of peel order)
+      const toInsert=groups.slice().reverse();
+      lines.splice(targetIdx+1,0,...toInsert);
+      // Find nextMs from the line that was previously after targetIdx (now shifted)
+      const nextMsLine=targetIdx+1+toInsert.length;
+      let nextMs=null;
+      for(let j=nextMsLine;j<lines.length;j++){const ms=tsToMs(lines[j]);if(ms!==null){nextMs=ms;break;}}
+      if(nextMs!==null){
+        // Assign timestamps: closest to nextMs first (last group = index 0 in toInsert = nextMs-10)
+        toInsert.forEach((g,k)=>{
+          const idx=targetIdx+1+k;
+          const offsetMs=nextMs-(toInsert.length-k)*10;
+          lines[idx]=msToTs(Math.max(0,offsetMs))+(g?' '+g:'');
+        });
+      }
+      setMainText(lines.join('\n'));
+      pushSnapshot();
+      // Advance to next "unprocessed" line: first line after the inserted groups
+      // that has non-paren content (or just the next lyric line if none qualifies)
+      if(hotkeyMode){
+        const updatedLines=getTA().split('\n');
+        const afterInserted=targetIdx+1+toInsert.length;
+        // Find next line with non-parenthesized lyric content, or failing that just next lyric
+        let nextUnprocessed=-1;
+        for(let j=afterInserted;j<updatedLines.length;j++){
+          const ul=updatedLines[j];
+          if(META_RE.test(ul)||ul.trim()==='')continue;
+          const ulContent=TS_RE.test(ul)?ul.slice(10).replace(/^ /,''):ul;
+          if(_peelLastParen(ulContent)!==null){nextUnprocessed=j;break;}
+          // Also accept any lyric line as fallback destination
+          if(nextUnprocessed<0)nextUnprocessed=j;
+        }
+        if(nextUnprocessed<0){
+          // No unprocessed lines ahead — just go to next lyric line
+          for(let j=afterInserted;j<updatedLines.length;j++){
+            if(!META_RE.test(updatedLines[j])&&updatedLines[j].trim()!==''){nextUnprocessed=j;break;}
+          }
+        }
+        if(nextUnprocessed>=0){
+          activeLine=nextUnprocessed;suppressAutoLine=true;
+          clearTimeout(arrowNavTimer);arrowNavTimer=setTimeout(()=>{suppressAutoLine=false;},1500);
+          renderMainLines();scrollToActive();
+        }
+      }
+      return;
     }
-    lines[i]=msToTs(offsetMs)+(newContent?' '+newContent:'');
-    changed=true;
-  });
-  if(changed){setMainText(lines.join('\n'));pushSnapshot();}
+  }
+
+  // Normal mark-as-translation
+  const nextMs=findNextMs(targetIdx);
+  if(nextMs===null)return;
+  const offsetMs=nextMs-10;
+  const content=TS_RE.test(lines[targetIdx])?lines[targetIdx].slice(10).replace(/^ /,''):lines[targetIdx];
+  let newContent=content;
+  if(useParens&&newContent.trim()&&!newContent.trim().startsWith('(')){
+    newContent='('+newContent.trim()+')';
+  }
+  lines[targetIdx]=msToTs(offsetMs)+(newContent?' '+newContent:'');
+  setMainText(lines.join('\n'));pushSnapshot();
+  // Advance to next lyric line in hotkey mode
+  if(hotkeyMode){
+    const updatedLines=getTA().split('\n');
+    for(let j=targetIdx+1;j<updatedLines.length;j++){
+      if(!META_RE.test(updatedLines[j])&&updatedLines[j].trim()!==''){
+        activeLine=j;suppressAutoLine=true;
+        clearTimeout(arrowNavTimer);arrowNavTimer=setTimeout(()=>{suppressAutoLine=false;},1500);
+        renderMainLines();scrollToActive();break;
+      }
+    }
+  }
 }
 
 // ── Secondary fields ─────────────────────────────────────────────────────────
@@ -1310,6 +1448,9 @@ function hasTrailingTimestamp(){
   }
   return false;
 }
+function allLyricLinesHaveTs(){
+  return getTA().split('\n').filter(l=>l.trim()&&!META_RE.test(l)&&!isEndTs(l)).every(l=>tsToMs(l)!==null);
+}
 function checkLineCounts(){
   _updateFieldBorders();
   const n=getMainLyricLines().length;
@@ -1320,10 +1461,12 @@ function checkLineCounts(){
   else{mainWarn.textContent='';mainWarn.classList.remove('visible');}
   if(secondaryCols.length===0&&mergeDone){mergeDone=false;}
   const missingTrailing=hasTs&&!hasTrailingTimestamp();
+  const partialTs=hasTs&&!allLyricLinesHaveTs();
   secondaryCols.forEach(({linesEl,warnBar})=>{
     const sn=getSecLines(linesEl).length;
     if(sn&&sn!==n){warnBar.textContent=`\u26a0 Line count mismatch (${sn} vs ${n})`;warnBar.classList.add('visible');}
     else if(missingTrailing){warnBar.textContent='\u26a0 Missing trailing timestamp in Main';warnBar.classList.add('visible');}
+    else if(partialTs){warnBar.textContent='\u26a0 Not all main lines have timestamps yet';warnBar.classList.add('visible');}
     else warnBar.classList.remove('visible');
   });
 }
@@ -1331,7 +1474,10 @@ function updateMergeBtn(){
   document.getElementById('btn-remove-sec').disabled=secondaryCols.length===0;
   if(mergeDone){document.getElementById('merge-btn').disabled=true;return;}
   const n=getMainLyricLines().length;
-  const ok=secondaryCols.some(c=>getSecLines(c.linesEl).length>0)&&
+  const hasTs=getTA().split('\n').some(l=>tsToMs(l)!==null&&!isEndTs(l));
+  const hasTrailing=hasTrailingTimestamp();
+  const ok=hasTs&&hasTrailing&&allLyricLinesHaveTs()&&
+    secondaryCols.some(c=>getSecLines(c.linesEl).length>0)&&
     secondaryCols.every(c=>{const sn=getSecLines(c.linesEl).length;return sn===0||sn===n;});
   document.getElementById('merge-btn').disabled=!ok;
 }
@@ -1339,8 +1485,11 @@ function mergeTranslations(){
   const mainLines=getTA().split('\n');
   const tsLines=mainLines.map((l,i)=>[i,tsToMs(l)]).filter(([,ms])=>ms!==null);
   if(!tsLines.length){alert('No timestamps in main field.');return;}
+  if(!allLyricLinesHaveTs()){alert('Not all main lyric lines have timestamps. Finish syncing before merging.');return;}
   const secData=secondaryCols.map(({linesEl})=>({lines:getSecLines(linesEl)})).filter(d=>d.lines.length>0);
   if(!secData.length)return;
+  const n=getMainLyricLines().length;
+  if(secData.some(d=>d.lines.length>0&&d.lines.length!==n)){alert('Line count mismatch between main and secondary fields. Fix counts before merging.');return;}
   const lastLine=mainLines[tsLines[tsLines.length-1][0]];
   if(!isEndTs(lastLine)&&!confirm('No trailing end timestamp found. Final secondary lines may not display correctly. Continue?'))return;
   const contentTs=tsLines.filter(([i])=>!isEndTs(mainLines[i]));
@@ -1422,7 +1571,7 @@ document.getElementById('file-picker').addEventListener('change',e=>{
   if(lrcOnly){
     const reader=new FileReader();
     reader.onload=ev=>{
-      const raw=ev.target.result;
+      const raw=normalizeLrcTimestamps(ev.target.result);
       let mergedMeta=mergeLrcMeta(raw);
       const lrcHasTi=raw.split('\n').some(l=>{const m=l.match(/^\[ti:\s*(.*)\]$/i);return m&&m[1].trim()&&m[1].trim().toLowerCase()!=='unknown';});
       // Use lrc filename as title/save stem if no [ti:] in lrc and no audio loaded
@@ -1432,9 +1581,10 @@ document.getElementById('file-picker').addEventListener('change',e=>{
       }
       if(!lastImportStem&&lfStem)lastImportStem=lfStem;
       let lines=raw.split('\n').filter(l=>!META_RE.test(l));
-      const text=mergedMeta+'\n'+lines.join('\n').trim();
+      let text=mergedMeta+'\n'+lines.join('\n').trim();
+      if(document.getElementById('main-split-check').checked)text=batchSplitParens(text);
       pushSnapshot();
-      _setTA(text);renderMainLines();checkLineCounts();updateTitleFromText();
+      _setTA(text);renderMainLines();checkLineCounts();updateMergeBtn();updateTitleFromText();
       if(activeLine<0){
         const ls=getTA().split('\n');
         for(let i=0;i<ls.length;i++){if(!META_RE.test(ls[i])&&ls[i].trim()!==''){activeLine=i;break;}}
@@ -1442,7 +1592,6 @@ document.getElementById('file-picker').addEventListener('change',e=>{
       }
       pushSnapshot();
       doAutosave(lfStem);
-      maybeAppendTrailingTs();
     };
     reader.readAsText(lf,'utf-8');return;
   }
@@ -1459,7 +1608,7 @@ document.getElementById('file-picker').addEventListener('change',e=>{
   setupAudio(af,afStem);
   const reader=new FileReader();
   reader.onload=ev=>{
-    const raw=ev.target.result;
+    const raw=normalizeLrcTimestamps(ev.target.result);
     let mergedMeta=mergeLrcMeta(raw);
     // Preserve song stem: if lrc has no [ti:], use the audio filename
     if(lastImportStem){
@@ -1467,8 +1616,9 @@ document.getElementById('file-picker').addEventListener('change',e=>{
       if(!lrcHasTi)mergedMeta=mergedMeta.replace(/^\[ti:.*\]/m,`[ti: ${lastImportStem}]`);
     }
     let lines=raw.split('\n').filter(l=>!META_RE.test(l));
-    const text=mergedMeta+'\n'+lines.join('\n').trim();
-    _setTA(text);renderMainLines();checkLineCounts();updateTitleFromText();
+    let text=mergedMeta+'\n'+lines.join('\n').trim();
+    if(document.getElementById('main-split-check').checked)text=batchSplitParens(text);
+    _setTA(text);renderMainLines();checkLineCounts();updateMergeBtn();updateTitleFromText();
     if(activeLine<0){
       const ls=getTA().split('\n');
       for(let i=0;i<ls.length;i++){if(!META_RE.test(ls[i])&&ls[i].trim()!==''){activeLine=i;break;}}
@@ -1476,7 +1626,6 @@ document.getElementById('file-picker').addEventListener('change',e=>{
     }
     undoStack=[takeSnapshot()];redoStack=[];
     doAutosave(lfStem);
-    maybeAppendTrailingTs();
   };
   reader.readAsText(lf,'utf-8');
 });
@@ -1871,6 +2020,8 @@ function buildHkRows(){
         updateClear();updateRst();
       });
       inp.addEventListener('keydown',e=>{
+        // Let Tab/Shift+Tab propagate so the Settings focus trap handles them normally
+        if(e.key==='Tab'){revertAndExit();return;}
         e.preventDefault();e.stopPropagation();
         // Backspace / Delete = clear; Escape = cancel
         if(e.key==='Backspace'||e.key==='Delete'){clearHotkey();return;}
@@ -1944,6 +2095,9 @@ document.getElementById('s-reset-defaults').addEventListener('click',()=>{
   cfg.seek_offset=d.seek_offset;cfg.seek_increment_s=d.seek_increment_s;document.getElementById('seek-offset').value=cfg.seek_offset;
   cfg.speed_ratio=d.speed_ratio;cfg.vol_increment=d.vol_increment;cfg.undo_debounce_ms=d.undo_debounce_ms;
   cfg.default_meta=d.default_meta;cfg.hotkeys=Object.assign({},d.hotkeys);
+  if(editorFont!=='system-ui,sans-serif'){editorFont='system-ui,sans-serif';localStorage.setItem('lbl_font',editorFont);}
+  if(editorSize!==14){editorSize=14;localStorage.setItem('lbl_fsize',editorSize);}
+  applyEditorFont();
   saveCfg();openSettings();rebuildHkPanel();updateDynamicTooltips();});
 document.getElementById('settings-close').addEventListener('click',closeSettings);
 document.getElementById('btn-settings').addEventListener('click',()=>openSettings());
@@ -1954,6 +2108,8 @@ document.getElementById('speed-val').addEventListener('change',()=>{
   document.getElementById('speed-val').value=currentSpeed===1?'1':currentSpeed.toFixed(2);
   if(audioEl)audioEl.playbackRate=currentSpeed;
 });
+document.getElementById('speed-val').addEventListener('keydown',e=>{if(e.key==='Enter'){e.stopPropagation();e.target.blur();}});
+document.getElementById('seek-offset').addEventListener('keydown',e=>{if(e.key==='Enter'){e.stopPropagation();e.target.blur();}});
 document.getElementById('speed-down-btn').addEventListener('click',()=>changeSpeed(-1));
 document.getElementById('speed-up-btn').addEventListener('click',()=>changeSpeed(1));
 document.getElementById('settings-overlay').addEventListener('mousedown',e=>{
@@ -2036,10 +2192,19 @@ let arrowNavTimer=null;
 document.addEventListener('keydown',e=>{
   const settingsOpen=document.getElementById('settings-overlay').classList.contains('open');
   const ks=keyStr(e),hk=cfg.hotkeys;
-  // When settings is open, Tab always goes to search field (prevents tabbing to background)
+  // Suppress key-repeat for all hotkeys (navigation keys are handled before this guard)
+  // Tab focus trap and settings toggle are exempt — they must always fire
+  const isNavKey=e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Tab';
+  // When settings is open, Tab navigates within settings-win (focus trap)
   if(settingsOpen&&e.key==='Tab'&&!e.ctrlKey&&!e.altKey){
-    const sf=document.getElementById('s-search');
-    if(document.activeElement!==sf){e.preventDefault();sf.focus();return;}
+    e.preventDefault();
+    const win=document.getElementById('settings-win');
+    const focusable=Array.from(win.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')).filter(el=>!el.disabled&&el.offsetParent!==null);
+    if(!focusable.length)return;
+    const idx=focusable.indexOf(document.activeElement);
+    const next=e.shiftKey?(idx<=0?focusable.length-1:idx-1):(idx>=focusable.length-1?0:idx+1);
+    focusable[next].focus();
+    return;
   }
   if(hkMatch(ks,hk.settings)){e.preventDefault();if(settingsOpen)closeSettings();else openSettings();return;}
   if(hk.help&&hkMatch(ks,hk.help)){e.preventDefault();openHelp();return;}
@@ -2054,6 +2219,14 @@ document.addEventListener('keydown',e=>{
     return;
   }
   if(settingsOpen)return;
+  // Suppress key-repeat for all non-navigation hotkeys
+  if(e.repeat&&!isNavKey)return;
+  // Suppress hotkey dispatch when a focusable UI element (button/input/select/a) outside
+  // the lyric area has focus — prevents e.g. Enter on a toolbar button also triggering syncLine
+  const ae=document.activeElement;
+  const inLyricArea=ae&&(ae===document.getElementById('main-textarea')||ae===document.getElementById('main-lines')||ae===document.body||ae===document.documentElement);
+  const isFocusedUI=ae&&!inLyricArea&&(ae.tagName==='BUTTON'||ae.tagName==='INPUT'||ae.tagName==='SELECT'||ae.tagName==='TEXTAREA'||ae.tagName==='A');
+  if(isFocusedUI&&!e.ctrlKey&&!e.altKey)return;
 
   if(hk.open&&hkMatch(ks,hk.open)){e.preventDefault();doImport();return;}
   if(hk.save&&hkMatch(ks,hk.save)){e.preventDefault();doSave();return;}
@@ -2176,7 +2349,22 @@ document.getElementById('font-size-inp').addEventListener('keydown',e=>{if(e.key
 document.getElementById('fs-up').addEventListener('click',()=>{editorSize=Math.min(32,editorSize+1);saveEditorFont();});
 document.getElementById('fs-down').addEventListener('click',()=>{editorSize=Math.max(8,editorSize-1);saveEditorFont();});
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Left panel collapse ───────────────────────────────────────────────────────
+let panelCollapsed=localStorage.getItem('lbl_panel_collapsed')==='1';
+function applyPanelCollapse(){
+  const panel=document.getElementById('left-panel');
+  const expandBtn=document.getElementById('btn-expand-panel');
+  panel.classList.toggle('collapsed',panelCollapsed);
+  expandBtn.classList.toggle('visible',panelCollapsed);
+  localStorage.setItem('lbl_panel_collapsed',panelCollapsed?'1':'0');
+}
+function autoCollapseIfNeeded(){
+  // Auto-collapse if panel takes >50% of window width (portrait phone)
+  if(!panelCollapsed&&window.innerWidth<640){panelCollapsed=true;applyPanelCollapse();}
+}
+document.getElementById('btn-collapse-panel').addEventListener('click',()=>{panelCollapsed=true;applyPanelCollapse();});
+document.getElementById('btn-expand-panel').addEventListener('click',()=>{panelCollapsed=false;applyPanelCollapse();});
+window.addEventListener('resize',autoCollapseIfNeeded);
 sessionStorage.removeItem('lbl_autosave');
 applyTheme();
 applyEditorFont();
@@ -2187,6 +2375,7 @@ document.getElementById('vol-slider').step=cfg.vol_increment||0.1;
 applyVolume();
 rebuildHkPanel();applyMode();
 updateDynamicTooltips();
+autoCollapseIfNeeded();applyPanelCollapse();
 </script>
 </body>
 </html>

@@ -1,17 +1,64 @@
-A few things in the skill are stale relative to 0.34.7. Here's what I see:
+I have attached chat transcripts for versions after the oldest updated skills, single-file-html-app and browser-hotkey-system. They are named the same as the html except for .md extension (matching my new project instructions). If you have no objections to that, check the transcripts  and the latest version of LineByLine (in project files) for unexpected difficulties, recurring pain points, lessons learned, or novel strategies that would be worth integrating, or stale references in any skill. Let me know if any of the chats are unclear.
 
-**`linebyline-section-index/SKILL.md` — needs updates:**
+---
 
-1. **Line count estimate** — "2270 lines" and "55k tokens" are approximate but were calibrated for an older version. The 0.34.7 file is a bit shorter (2177 lines per its SECTIONS index, down from the old 2294 range). Minor but could cause an off-by-one when sed-slicing near the end.
+Let me read the skill files and transcripts.
+Now let me read the transcripts.
+Good, I've read everything.
+Let me now compile the findings.
+Here's my full analysis across all transcripts and both skills:
 
-2. **SECTIONS index location** — The skill says "line 436" and gives a `sed -n '434,438p'` example. The 0.34.7 SECTIONS line is at approximately line 330 (immediately below `'use strict';`). The sed sample would miss it entirely if followed literally.
+---
 
-3. **Prompt-to-section map** — The **Overlay utilities** row references `_bringToFront` and `_topmostOverlay`, which were removed in 0.34.5 when the Help overlay was replaced with an `<a>` tag. The map entry should drop those references and simplify to just Settings open/close.
+**single-file-html-app skill**
 
-4. **Section list (reference)** — The `Confirm dialog` entry mentions a `showConfirm helper` which is vestigial (the section exists but is empty). The `Overlay utilities` sub-section description still mentions `_overlayZ`, `_bringToFront`, `_topmostOverlay` — all removed. Should just say `arrowNavTimer` now.
+Three things worth adding:
 
-5. **Version tag** — The reference section says "as of v0.34.1" — worth bumping to 0.34.7.
+1. **Custom spinners over native `<input type="number">`** — the 0.34.4 transcript explicitly documents this lesson (native spinners are browser-inconsistent, ignore CSS vars). Worth adding a note to the number input pattern that recommends the `fs-spinner`/`fs-tick` div pattern and suppressing native spinners on any `type="number"` field.
 
-The **`browser-hotkey-system`** and **`single-file-html-app`** skills don't appear to need changes based on what was altered in this release cycle.
+2. **External unit labels** — same transcript explicitly resolved the inline-label vs external-label question: editable fields feeding into `cfg` should always use external `<span>` labels, never inline units. Worth a brief note in the file input/form section.
 
-Want me to write a patch for the skill file with those corrections?
+3. **Double `pushSnapshot` for undo/redo completeness** — this burned you in three separate places (0.34.6 `markAsTranslation`, 0.34.7 `mergeTranslations`, 0.34.5 lrc import). The skill's undo section only mentions `pushSnapshot()` before changes. It should note that operations replacing content wholesale need a second `pushSnapshot()` after the change to put the new state on the undo stack for redo.
+
+---
+
+**browser-hotkey-system skill**
+
+Two things:
+
+1. **`Ctrl+M` hardcoded mute** — the skill's `RESTRICTED_ALL` example doesn't include `Ctrl+M`, and it caused a real bug in 0.35.2 (other hotkeys could be remapped to it). Worth adding as a noted example of a hardcoded key that must appear in `RESTRICTED_ALL` even though it's not a browser default.
+
+2. **Reset button visibility** — `updateResetVisibility` in the skill only checks `live !== def`. The app also shows the reset button when a restriction warning is active or a conflict is pending. The skill's version would hide the reset button in cases where the user needs it most.
+
+---
+
+**linebyline-section-index skill**
+
+Two updates:
+
+1. **Reference version is stale** — the section list says "as of v0.34.7" but the file is at 0.35.4 and several sections have been added or renamed (e.g. `ensureLineByLineInRe` → `ensureReTagDefault` in Paste/meta, the Confirm dialog stub still referenced).
+
+2. **Prompt-to-section map gaps** — no entry for the `batchSplitParens` / mark-as-translation split logic (Sync/timestamp + Helpers → Paste/meta), and no entry for the collapse panel button (Button wiring + Init). Low priority but worth noting.
+
+---
+
+**No action needed on:**
+- The versioning mishap in 0.34.9 — already resolved by the updated instructions.
+- The 0.35.2 redo issue (aborted session, manually patched) — one-off, no systemic lesson.
+- The trailing timestamp timing rework (0.34.9) — app-specific, not a skill pattern.
+
+Want me to draft the actual edits for any or all of these?
+
+---
+
+All
+
+---
+
+Starting with the skills I can edit directly.Now the browser-hotkey-system skill:Now the section index skill:Now copy all three back to the skills directory and present:Summary of changes per file:
+
+**single-file-html-app-SKILL.md** — Two additions: (1) double-`pushSnapshot` pattern for wholesale content replacement (before + after, not just before); (2) new "Number inputs with custom spinners" section covering the `fs-spinner`/`fs-tick` pattern, native spinner suppression CSS, external unit labels rule, and the empty-then-Enter revert pattern for `change` handlers.
+
+**browser-hotkey-system-SKILL.md** — Two changes: (1) `Ctrl+M` added to `RESTRICTED_ALL` with a note explaining why (OS-level audio mute, hardcoded in many apps); (2) `updateResetVisibility` updated to also show the reset button when a restriction warning or unresolved conflict is active.
+
+**linebyline-section-index-SKILL.md** — Three changes: (1) version reference updated from 0.34.7 to 0.35.4; (2) section list updated with renamed functions (`ensureLineByLineInRe` → `ensureReTagDefault`, `updateMergeUI` → `updateMergeBtn`/`checkLineCounts`) and newly added functions (`normalizeLrcTimestamps`, `batchSplitParens`, `markAsTranslation`, etc.); (3) two missing rows added to the prompt-to-section map (mark-as-translation/batch split, collapse/expand panel button).
