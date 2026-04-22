@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LineByLine 0.35.6</title>
+<title>LineByLine 0.35.7</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000000' height='24' width='24'/%3E%3Cpath d='m13,5l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,12l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,19l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m3,17l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m3,7l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 /* ── Themes ── */
@@ -41,7 +41,8 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 #font-size-inp{width:30px;height:28.6px;font-size:12px;font-family:inherit;text-align:center;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);-moz-appearance:textfield;}
 #font-size-inp::-webkit-inner-spin-button,#font-size-inp::-webkit-outer-spin-button{-webkit-appearance:none;}
 .fs-spinner{display:flex;flex-direction:column;width:16px;height:28.6px;border:1px solid var(--border-mid);border-radius:var(--radius);overflow:hidden;background:transparent;flex-shrink:0;}
-.fs-tick{flex:1;border:none;border-radius:0;background:transparent;cursor:pointer;color:var(--text);font-size:9px;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;}
+.fs-tick{flex:1;border:none;border-radius:0;background:transparent;cursor:pointer;color:var(--text);font-size:9px;display:flex;align-items:center;justify-content:center;padding:0;line-height:1;outline:none;}
+.fs-tick:focus-visible{box-shadow:inset 0 0 0 2px var(--accent);}
 .fs-tick:first-child{border-bottom:1px solid var(--border-mid);}
 .fs-tick:hover{background:var(--border);}
 .fs-tick:active{filter:brightness(0.88);}
@@ -333,13 +334,16 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
     </div>
     <div id="settings-footer">
       <button class="s-btn" id="s-reset-defaults">Reset defaults</button>
+      <span id="s-confirm-msg" style="display:none;font-size:13.2px;color:var(--warn-text);">Reset all settings to defaults?</span>
+      <button class="s-btn primary" id="s-confirm-yes" style="display:none;">Yes</button>
+      <button class="s-btn" id="s-confirm-no" style="display:none;">No</button>
     </div>
   </div>
 </div>
 <input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none">
 <script>
 'use strict';
-// SECTIONS: Config~343 | Hotkey rules~408 | Theme~502 | Font~515 | Tooltips~530 | State~559 | Persistence~574 | Undo/redo~612 | Mode switching~630 | Auto mode~689 | Helpers~692 [LRC parse~693 | Paste/meta~712 | Genius~768 | Render/UI~865] | Audio~947 | Sync/timestamp~1131 | Secondary~1323 | Line counts~1431 | Title~1511 | Import~1519 | Controls~1631 | Settings~1723 | Settings search~1788 | Confirm~2115 | Keyboard~2117 [Key norm~2118 | Main textarea KD~2126 | Overlay utils~2185 | Global KD~2187] | Unload~2325 | Button wiring~2331 | Init~2364
+// SECTIONS: Config~347 | Hotkey rules~416 | Theme~514 | Font~527 | Tooltips~542 | State~571 | Persistence~586 | Undo/redo~624 | Mode switching~642 | Auto mode~701 | Helpers~704 [LRC parse~705 | Paste/meta~724 | Genius~780 | Render/UI~877] | Audio~959 | Sync/timestamp~1143 | Secondary~1335 | Line counts~1443 | Title~1523 | Import~1531 | Controls~1643 | Settings~1737 | Settings search~1803 | Confirm~2129 | Keyboard~2165 [Key norm~2166 | Main textarea KD~2174 | Overlay utils~2233 | Global KD~2235] | Unload~2388 | Button wiring~2394 | Init~2411
 // ── Config ───────────────────────────────────────────────────────────────────
 const DEFAULT_META='[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n';
 const DEFAULT_CFG={
@@ -367,6 +371,8 @@ const DEFAULT_CFG={
     save:'Ctrl+;',help:'Ctrl+/',theme_toggle:'Ctrl+.',
     mark_translation:'Ctrl+ArrowLeft',
     issues:"Ctrl+'",
+    panel_toggle:'Ctrl+`',
+    reset_defaults:'Ctrl+\\',
   },
   speed_ratio:1.10,
   vol_increment:0.1,
@@ -374,7 +380,7 @@ const DEFAULT_CFG={
 
 // Subsection grouping for Settings display
 const HK_SECTIONS=[
-  {label:'Menu',keys:['open','save','undo','redo','settings','theme_toggle','help','issues']},
+  {label:'Menu',keys:['open','save','undo','redo','settings','theme_toggle','help','issues','panel_toggle','reset_defaults']},
   {label:'Playback',keys:['play_pause','play_pause_alt','speed_down','speed_up','speed_reset','seek_back','seek_fwd']},
   {label:'Sync',keys:['offset_mode_toggle','sync_file','sync','end_line','prev_line','next_line','replay_only','replay_end']},
   {label:'Adjustments',keys:['ts_back_tiny','ts_fwd_tiny','ts_back_small','ts_fwd_small','ts_back_medium','ts_fwd_medium','ts_back_large','ts_fwd_large']},
@@ -403,6 +409,8 @@ const HK_LABELS={
   seek_back:'Seek back',seek_fwd:'Seek forward',
   mark_translation:'Mark line as translation',
   issues:'Issues',
+  panel_toggle:'Toggle panel',
+  reset_defaults:'Reset defaults',
 };
 
 // ── Restricted hotkey rules ──────────────────────────────────────────────────
@@ -493,6 +501,8 @@ function loadCfg(){
     if(!c.hotkeys.replay_end)c.hotkeys.replay_end='Shift+R';
     if(!c.hotkeys.mark_translation)c.hotkeys.mark_translation='Ctrl+ArrowLeft';
     if(!c.hotkeys.issues)c.hotkeys.issues="Ctrl+'";
+    if(!c.hotkeys.panel_toggle)c.hotkeys.panel_toggle='Ctrl+`';
+    if(!c.hotkeys.reset_defaults)c.hotkeys.reset_defaults='Ctrl+\\';
     // Remove deprecated mute hotkey
     if(c.hotkeys.mute)delete c.hotkeys.mute;
     return c;
@@ -1659,6 +1669,8 @@ const CTRL_ACTIONS={
   seek_fwd:()=>doSeekFwd(),
   help:()=>window.open('https://github.com/amokprime/linebyline/blob/main/HELP.md','_blank'),
   theme_toggle:()=>cycleTheme(),
+  panel_toggle:()=>{panelCollapsed=!panelCollapsed;applyPanelCollapse(true);},
+  reset_defaults:()=>{if(!document.getElementById('settings-overlay').classList.contains('open'))openSettings();showResetConfirm();},
   mark_translation:()=>markAsTranslation(),
 };
 let currentSpeed=1.0;
@@ -1748,6 +1760,7 @@ function openSettings(){
 }
 function closeSettings(){
   document.getElementById('settings-overlay').classList.remove('open');
+  if(_resetConfirmPending)hideResetConfirm();
   // Reset search
   const inp=document.getElementById('s-search');
   if(inp){inp.value='';_sSearchHkMode=false;inp.classList.remove('hk-mode');}
@@ -1906,15 +1919,12 @@ function initSettingsSearch(){
       inp.value=ks;
       applySettingsFilter();
     }else{
+      // Let Tab/Shift+Tab propagate to the Settings focus trap
+      if(e.key==='Tab')return;
       e.stopPropagation();
       // Toggle hotkey search mode with the toggle_mode hotkey key
       const ks=keyStr(e);
       if(hkMatch(ks,cfg.hotkeys.toggle_mode)){e.preventDefault();setSearchHkMode(true);return;}
-      if(e.key==='Escape'){
-        e.preventDefault();
-        if(inp.value){inp.value='';applySettingsFilter();}
-        else{closeSettings();}
-      }
     }
   };
 }
@@ -1935,7 +1945,7 @@ function buildHkRows(){
 
       // Clear button (circular, left of label)
       const clrBtn=document.createElement('button');
-      clrBtn.className='hk-clear';clrBtn.title='Clear (Backspace / Delete)';clrBtn.textContent='✕';
+      clrBtn.className='hk-clear';clrBtn.title='Clear (Shift+Backspace)';clrBtn.textContent='✕';
 
       const lbl=document.createElement('label');lbl.textContent=labelText;
 
@@ -2020,11 +2030,24 @@ function buildHkRows(){
         updateClear();updateRst();
       });
       inp.addEventListener('keydown',e=>{
-        // Let Tab/Shift+Tab propagate so the Settings focus trap handles them normally
-        if(e.key==='Tab'){revertAndExit();return;}
+        // Let Tab/Shift+Tab reach the global focus trap (don't stopPropagation)
+        // but preventDefault here to block the browser's native tab, avoiding double navigation
+        if(e.key==='Tab'){e.preventDefault();return;}
         e.preventDefault();e.stopPropagation();
-        // Backspace / Delete = clear; Escape = cancel
-        if(e.key==='Backspace'||e.key==='Delete'){clearHotkey();return;}
+        // Shift+Backspace = clear; plain Backspace = activate Default if visible; Escape = cancel
+        if(e.key==='Backspace'&&e.shiftKey){clearHotkey();return;}
+        if(e.key==='Backspace'){if(rst.classList.contains('visible')){rst.click();}return;}
+        if(e.key==='Enter'){
+          if(rep.classList.contains('visible')){
+            // Replace: fire replace, then after buildHkRows advance to next capture by position
+            const allCaptures=()=>Array.from(document.getElementById('hk-settings-rows').querySelectorAll('.hk-capture'));
+            const curIdx=allCaptures().indexOf(inp);
+            rep.click();// triggers buildHkRows → new DOM
+            const next=allCaptures()[curIdx+1];
+            if(next)next.focus();else document.getElementById('s-search').focus();
+          }
+          return;
+        }
         if(e.key==='Escape'){revertAndExit();return;}
 
         const parts=[];
@@ -2086,19 +2109,6 @@ document.getElementById('s-replay-ts').addEventListener('change',saveSettingsNow
   document.getElementById(id).addEventListener('change',saveSettingsNow);
 });
 document.getElementById('s-default-meta').addEventListener('input',saveSettingsNow);
-document.getElementById('s-reset-defaults').addEventListener('click',()=>{
-  const d=JSON.parse(JSON.stringify(DEFAULT_CFG));
-  cfg.replay_prev_line=d.replay_prev_line;cfg.replay_next_line=d.replay_next_line;
-  cfg.replay_resume_current=d.replay_resume_current;cfg.replay_play_other=d.replay_play_other;
-  cfg.replay_after_offset=d.replay_after_offset;cfg.replay_after_sync=d.replay_after_sync;cfg.replay_after_ts=d.replay_after_ts;
-  cfg.tiny_ms=d.tiny_ms;cfg.small_ms=d.small_ms;cfg.medium_ms=d.medium_ms;cfg.large_ms=d.large_ms;
-  cfg.seek_offset=d.seek_offset;cfg.seek_increment_s=d.seek_increment_s;document.getElementById('seek-offset').value=cfg.seek_offset;
-  cfg.speed_ratio=d.speed_ratio;cfg.vol_increment=d.vol_increment;cfg.undo_debounce_ms=d.undo_debounce_ms;
-  cfg.default_meta=d.default_meta;cfg.hotkeys=Object.assign({},d.hotkeys);
-  if(editorFont!=='system-ui,sans-serif'){editorFont='system-ui,sans-serif';localStorage.setItem('lbl_font',editorFont);}
-  if(editorSize!==14){editorSize=14;localStorage.setItem('lbl_fsize',editorSize);}
-  applyEditorFont();
-  saveCfg();openSettings();rebuildHkPanel();updateDynamicTooltips();});
 document.getElementById('settings-close').addEventListener('click',closeSettings);
 document.getElementById('btn-settings').addEventListener('click',()=>openSettings());
 document.getElementById('speed-val').addEventListener('change',()=>{
@@ -2117,6 +2127,40 @@ document.getElementById('settings-overlay').addEventListener('mousedown',e=>{
 });
 
 // ── Confirm dialog ───────────────────────────────────────────────────────────
+let _resetConfirmPending=false;
+function _doResetDefaults(){
+  const d=JSON.parse(JSON.stringify(DEFAULT_CFG));
+  cfg.replay_prev_line=d.replay_prev_line;cfg.replay_next_line=d.replay_next_line;
+  cfg.replay_resume_current=d.replay_resume_current;cfg.replay_play_other=d.replay_play_other;
+  cfg.replay_after_offset=d.replay_after_offset;cfg.replay_after_sync=d.replay_after_sync;cfg.replay_after_ts=d.replay_after_ts;
+  cfg.tiny_ms=d.tiny_ms;cfg.small_ms=d.small_ms;cfg.medium_ms=d.medium_ms;cfg.large_ms=d.large_ms;
+  cfg.seek_offset=d.seek_offset;cfg.seek_increment_s=d.seek_increment_s;document.getElementById('seek-offset').value=cfg.seek_offset;
+  cfg.speed_ratio=d.speed_ratio;cfg.vol_increment=d.vol_increment;cfg.undo_debounce_ms=d.undo_debounce_ms;
+  cfg.default_meta=d.default_meta;cfg.hotkeys=Object.assign({},d.hotkeys);
+  if(editorFont!=='system-ui,sans-serif'){editorFont='system-ui,sans-serif';localStorage.setItem('lbl_font',editorFont);}
+  if(editorSize!==14){editorSize=14;localStorage.setItem('lbl_fsize',editorSize);}
+  applyEditorFont();
+  saveCfg();openSettings();rebuildHkPanel();updateDynamicTooltips();
+}
+function showResetConfirm(){
+  _resetConfirmPending=true;
+  document.getElementById('s-reset-defaults').style.display='none';
+  document.getElementById('s-confirm-msg').style.display='';
+  document.getElementById('s-confirm-yes').style.display='';
+  document.getElementById('s-confirm-no').style.display='';
+  requestAnimationFrame(()=>document.getElementById('s-confirm-yes').focus());
+}
+function hideResetConfirm(){
+  _resetConfirmPending=false;
+  document.getElementById('s-reset-defaults').style.display='';
+  document.getElementById('s-confirm-msg').style.display='none';
+  document.getElementById('s-confirm-yes').style.display='none';
+  document.getElementById('s-confirm-no').style.display='none';
+  requestAnimationFrame(()=>document.getElementById('s-search').focus());
+}
+document.getElementById('s-reset-defaults').addEventListener('click',()=>showResetConfirm());
+document.getElementById('s-confirm-yes').addEventListener('click',()=>{hideResetConfirm();_doResetDefaults();});
+document.getElementById('s-confirm-no').addEventListener('click',()=>hideResetConfirm());
 
 // ── Keyboard ─────────────────────────────────────────────────────────────────
   // ── Key normalization ──────────────────────────────────────────────────────
@@ -2199,7 +2243,7 @@ document.addEventListener('keydown',e=>{
   if(settingsOpen&&e.key==='Tab'&&!e.ctrlKey&&!e.altKey){
     e.preventDefault();
     const win=document.getElementById('settings-win');
-    const focusable=Array.from(win.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')).filter(el=>!el.disabled&&el.offsetParent!==null);
+    const focusable=Array.from(win.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')).filter(el=>!el.disabled&&el.offsetParent!==null&&!el.classList.contains('hk-clear')&&!el.classList.contains('hk-reset')&&!el.classList.contains('hk-replace')&&el.id!=='settings-close');
     if(!focusable.length)return;
     const idx=focusable.indexOf(document.activeElement);
     const next=e.shiftKey?(idx<=0?focusable.length-1:idx-1):(idx>=focusable.length-1?0:idx+1);
@@ -2210,13 +2254,28 @@ document.addEventListener('keydown',e=>{
   if(hk.help&&hkMatch(ks,hk.help)){e.preventDefault();openHelp();return;}
   if(hk.issues&&hkMatch(ks,hk.issues)){e.preventDefault();window.open('https://github.com/amokprime/linebyline/issues','_blank');return;}
   if(hk.theme_toggle&&hkMatch(ks,hk.theme_toggle)){e.preventDefault();cycleTheme();return;}
-  // Close settings on Escape — not if a hotkey capture field is focused
+  if(hk.panel_toggle&&hkMatch(ks,hk.panel_toggle)){e.preventDefault();panelCollapsed=!panelCollapsed;applyPanelCollapse(true);return;}
+  if(hk.reset_defaults&&hkMatch(ks,hk.reset_defaults)){e.preventDefault();if(!settingsOpen)openSettings();showResetConfirm();return;}
+  // Escape in Settings: staged behaviour
   if(e.key==='Escape'&&settingsOpen){
+    e.preventDefault();
+    if(_resetConfirmPending){hideResetConfirm();return;}
     const focused=document.activeElement;
     const isCapture=focused&&focused.classList.contains('hk-capture');
-    if(isCapture)return;
-    if(focused!==document.getElementById('s-search')){e.preventDefault();closeSettings();}
+    if(isCapture)return;// capture handles its own Esc
+    const srch=document.getElementById('s-search');
+    if(focused===srch){
+      if(srch.value){srch.value='';applySettingsFilter();}// step 1: clear results
+      else{srch.blur();}// step 2: defocus search
+      return;
+    }
+    closeSettings();// step 3: close
     return;
+  }
+  // Enter/Backspace confirm dialog shortcuts (when confirm is pending)
+  if(settingsOpen&&_resetConfirmPending){
+    if(e.key==='Enter'){e.preventDefault();hideResetConfirm();_doResetDefaults();return;}
+    if(e.key==='Backspace'){e.preventDefault();hideResetConfirm();return;}
   }
   if(settingsOpen)return;
   // Suppress key-repeat for all non-navigation hotkeys
@@ -2351,19 +2410,24 @@ document.getElementById('fs-down').addEventListener('click',()=>{editorSize=Math
 
 // ── Left panel collapse ───────────────────────────────────────────────────────
 let panelCollapsed=localStorage.getItem('lbl_panel_collapsed')==='1';
-function applyPanelCollapse(){
+function applyPanelCollapse(transferFocus){
   const panel=document.getElementById('left-panel');
   const expandBtn=document.getElementById('btn-expand-panel');
   panel.classList.toggle('collapsed',panelCollapsed);
   expandBtn.classList.toggle('visible',panelCollapsed);
+  if(panelCollapsed){panel.inert=true;}else{panel.inert=false;}
   localStorage.setItem('lbl_panel_collapsed',panelCollapsed?'1':'0');
+  if(transferFocus){
+    if(panelCollapsed)expandBtn.focus();
+    else document.getElementById('btn-collapse-panel').focus();
+  }
 }
 function autoCollapseIfNeeded(){
   // Auto-collapse if panel takes >50% of window width (portrait phone)
   if(!panelCollapsed&&window.innerWidth<640){panelCollapsed=true;applyPanelCollapse();}
 }
-document.getElementById('btn-collapse-panel').addEventListener('click',()=>{panelCollapsed=true;applyPanelCollapse();});
-document.getElementById('btn-expand-panel').addEventListener('click',()=>{panelCollapsed=false;applyPanelCollapse();});
+document.getElementById('btn-collapse-panel').addEventListener('click',()=>{panelCollapsed=true;applyPanelCollapse(true);});
+document.getElementById('btn-expand-panel').addEventListener('click',()=>{panelCollapsed=false;applyPanelCollapse(true);});
 window.addEventListener('resize',autoCollapseIfNeeded);
 sessionStorage.removeItem('lbl_autosave');
 applyTheme();
