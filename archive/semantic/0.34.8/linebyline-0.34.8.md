@@ -10,8 +10,8 @@ Bugs
    * The main lyrics have no timestamps (notimemerge.png). Clicking it triggers popup but does not gray it out when popup is closed (notimemergepopup.png). Deprecate the popup and instead fix the warnings under the Main/Secondary titlebars
    * The main lyrics lines don't match secondary lines either from deletion or at import time (mismatchmainmerge.png). This one is not a visual bug - merging fields is actually allowed despite the warning!
       * The only case where Merge fields is grayed out as expected is if secondary lines don't match main (mismatchsecmerge.png)
-Refinements
 
+Refinements
 * Increase reach of left panel scroll bar that appears when the screen is too small, like a phone. desktop.png shows Windows LibreWolf view. landing.jpg shows Android Chrome view; scrolldown.jpg as far down as it can go; scrollright.jpg as far right as it can go. I can't scroll all the way down and would have to rotate phone into portrait mode to show bottom Controls.
 * Add a collapse button (panel-left.svg) for the left panel in the same row as "NOW PLAYING" and right-justified (closer to "MAIN" than to "NOW PLAYING"). If possible, auto-collapse if the left panel takes up too much horizontal space (i.e. in phone portrait mode)
 
