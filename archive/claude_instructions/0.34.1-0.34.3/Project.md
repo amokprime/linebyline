@@ -1,7 +1,7 @@
 Before answering any prompt, count turns where you presented a file in this chat. If 9 or more: warn me, provide a handoff summary, then answer the prompt. Don't generate your own icons; prioritize any I upload, then Lucide icons. Ask before building if you have any concerns, such as a technical limitation that makes a request impossible. Use fewer lines of code when reasonable. Each turn: patch → check → present → explain. When presenting a file: create and present Chat.md appending: my last prompt verbatim, a --- line, your prose responses (not tool output) for that prompt bridged across all sub-turns, and another --- line.
 
 Don't read or index folders shared via Filesystem connector except the subfolders I tell you to look in or files I tell you to read. Be careful not to follow preferences and instructions shared for other projects as though they were for this project.
-This is the project root shared via Filesystem connector: D:\Scripts\GitHub\linebyline
+This is the project root shared via Filesystem connector: A:\Scripts\GitHub\linebyline
 Root has the latest copies of: HELP.md, LIMITATIONS.md, README.md, TEST_CASES.md
 \archive\semantic has the latest app versions and uses semantic versioning - find the latest .html in its version-numbered subfolder.
 \archive\claude_instructions has the latest chat preferences and project instructions for that project, and the latest copies (Preview, then highest semver) of single-file-html-app.skill and browser-hotkey-system.skill which you created.

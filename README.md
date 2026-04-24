@@ -4,29 +4,30 @@
 I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo, featuring 🤖Claude Sonnet 4.6 — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️.
 Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). Positive security scans of this repo from CodeQL, Opengrep, etc. are pushed with Sonnet commentary to the semantic subfolder associated with a release, starting with 0.34.7. Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
 ### About
-**LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to LRCLIB:
-1. Find original lyrics from Genius or LRCLIB, or DuckDuckGo if really obscure
+**LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to [LRCLIB](https://lrclib.net/):
+1. Find original lyrics from [Genius](https://genius.com/) or LRCLIB, or DuckDuckGo if really obscure
 2. Extract clean lyrics from Genius with GeniusLyricCopier extension
 3. Strip sections with https://www.lrcgenerator.com/
 4. Add song and lyrics to https://seinopsys.dev/lrc
 5. Use AutoHotkey to workaround hotkey limitations (see [/archive/autohotkey](https://github.com/amokprime/linebyline/tree/main/archive/autohotkey))
 6. Go back to Genius or DuckDuckGo for metadata and translations
-7. Review in LRCGET and Publish
+7. Review in [LRCGET](https://github.com/tranxuanthang/lrcget) and Publish
 
 LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are required.
 ### Features
 **Extensive hotkey support**
 - Traditional play/pause and seek controls
-- Speed controls with configurable ratio that multiplies against the current speed
-- Timestamps can be offset forwards or backwards by four different configurable amounts with eight different single-letter hotkeys
-- Use `Tab` to toggle between Hotkey mode → Typing mode
-- Remap almost every hotkey in Settings. All Settings persist in browser `localStorage`
+- Control speed gradually with a configurable multiplicative ratio
+- Adjust timestamps forwards/backwards by 4 different amounts
+- `Tab`/`Shift+Tab` through all buttons and settings
+- Almost every button has a dedicated hotkey
+- Persistently remap hotkeys in Settings
 - See [LIMITATIONS.md](https://github.com/amokprime/linebyline/tree/main/LIMITATIONS.md) for known browser restrictions
 
 **Enhanced LRCGET-style replay**
 - LineByLine can jump to the start (`R`) or end (`Shift+R`) of a line with a seek offset
 	- The default is -600ms before to give you more reaction time
-	- Toggle Offset time → Offset sync mode with the Backtick key to adjust seek offset with the same keys that offset timestamps
+	- Adjust seek offset with the same keys that offset timestamps by toggling from Offset time → Offset sync mode (``Shift+` ``) 
 - Optional triggers for more frequent replays
 	- Play every line with the seek offset
 	- Batch offset all timestamps by the seek offset
@@ -51,7 +52,7 @@ How I used to add translations:
 ```
 
 How LineByLine merges translations:
-- Translations go on their line so every line is a sane length and alignment
+- Translations go on their own line so every line is a sane length and alignment
 - Music players highlight the 0.01s duration translations for a split second or not at all
 
 ```
@@ -70,14 +71,31 @@ Sometimes songs intersperse other languages for dramatic effect. Mark translatio
 [00:00.00] **I wish I could identify that smell**
 [00:03.06] **That smell**
 [00:06.35] **Cela perturbe ma concentration**
-It disturbs my concentration #Before
+It disturbs my concentration ←Before
 [00:08.08]
 ---
 [00:00.00] **I wish I could identify that smell**
 [00:03.06] **That smell**
 [00:06.35] **Cela perturbe ma concentration**
-[00:08.07] (It disturbs my concentration) #After
+[00:08.07] (It disturbs my concentration) ←After
 [00:08.08]
+```
+
+Existing inline translations can be batch converted to the merged style by enabling the ↩ checkbox and importing the lyrics or using `Ctrl+ArrowLeft` on individual lines:
+```
+Before↓
+[00:00.00] I wish I could identify that smell (J'aimerais pouvoir identifier cette odeur) (Ojalá pudiera identificar ese olor)
+[00:03.06] That smell (Cette odeur) (Ese olor)
+[00:06.35]
+---
+After↓
+[00:00.00] I wish I could identify that smell
+[00:03.04] (J'aimerais pouvoir identifier cette odeur)
+[00:03.05] (Ojalá pudiera identificar ese olor)
+[00:03.06] That smell
+[00:06.33] (Cette odeur)
+[00:06.34] (Ese olor)
+[00:06.35]
 ```
 
 ### Getting started
@@ -92,7 +110,7 @@ If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login
 1. Add latest [claude_instructions](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions) (including skills)
 2. Add the latest app version to project files and enable memory if using claude.ai
 3. Draft Prompt.md in Obsidian if you have a lot of requests and might fatfinger `Enter`.
-4. PR Claude's output .html file and Chat.md in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning.
+4. PR Claude's output .html and .md files in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning.
 	1. Bug fixes and refinements of existing features: "Patch"
 		- 0.34.9 → Patch → 0.34.10
 	2. New features that fit well into the existing app: "Minor"
@@ -108,6 +126,7 @@ Starting with version 0.34.7, releases come with [QA test](https://github.com/am
 ### Maybe someday
 - Cross-platform automated QA tests that recognize browser elements (i.e. Playwright)
 - UI refactor to look nicer (i.e. Penpot, shadcn/ui, Radix)
+- OpenCode free models (i.e. GLM) for nicer quotas and workflow
 
 ### Not planned for now
 1. AI transcription - unreliable and maybe out of scope for current architecture of this app

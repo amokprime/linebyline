@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LineByLine 0.35.9</title>
+<title>LineByLine 0.35.8</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000000' height='24' width='24'/%3E%3Cpath d='m13,5l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,12l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,19l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m3,17l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m3,7l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 /* ── Themes ── */
@@ -51,7 +51,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 #btn-theme:hover,#btn-settings:hover,#btn-import:hover,#btn-save:hover,#btn-help:hover,#btn-issues:hover{background:var(--bg);}
 #btn-theme:active,#btn-settings:active,#btn-import:active,#btn-save:active,#btn-help:active,#btn-issues:active{filter:brightness(0.88);transform:translateY(1px);}
 #main{display:flex;flex:1;overflow:hidden;min-height:0;}
-#left-panel{width:fit-content;min-width:310px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;padding:8.8px;gap:6.6px;overflow-y:auto;flex-shrink:0;transition:width 0.2s,min-width 0.2s,padding 0.2s;}
+#left-panel{width:310px;min-width:310px;border-right:1px solid var(--border);background:var(--surface);display:flex;flex-direction:column;padding:8.8px;gap:6.6px;overflow-y:auto;flex-shrink:0;transition:width 0.2s,min-width 0.2s,padding 0.2s;}
 #left-panel.collapsed{width:0;min-width:0;padding:0;overflow:hidden;}
 #left-panel-header{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
 #btn-collapse-panel{width:24px;height:24px;border:none;background:transparent;cursor:pointer;color:var(--text-muted);padding:0;display:flex;align-items:center;justify-content:center;flex-shrink:0;border-radius:var(--radius);}
@@ -194,11 +194,11 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
   <button id="btn-import" title="Open (Middle click)">📂</button>
   <button id="btn-save" title="Save">💾</button>
   <div class="mb-sep"></div>
-  <button class="mb-btn icon" id="btn-undo" title="Undo" aria-label="Undo">
-    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+  <button class="mb-btn icon" id="btn-undo" title="Undo">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
   </button>
-  <button class="mb-btn icon" id="btn-redo" title="Redo" aria-label="Redo">
-    <svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
+  <button class="mb-btn icon" id="btn-redo" title="Redo">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"/></svg>
   </button>
   <div class="mb-sep"></div>
   <select id="font-select" title="Editor font">
@@ -226,7 +226,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
   <div id="left-panel">
     <div id="left-panel-header">
       <div class="section-label" style="margin:0">Now playing</div>
-      <button id="btn-collapse-panel" title="Collapse panel" aria-label="Collapse panel"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
+      <button id="btn-collapse-panel" title="Collapse panel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
     </div>
     <div id="audio-box">
       <div id="song-title">Unknown Title</div>
@@ -240,15 +240,15 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
           <button class="fs-tick" id="speed-up-btn" title="Increase speed">▲</button>
           <button class="fs-tick" id="speed-down-btn" title="Reduce speed">▼</button>
         </div>
-        <button class="media-btn" id="btn-seek-back" title="Seek back 5s (Ctrl+A)" aria-label="Seek back">
-          <svg aria-hidden="true" width="18" height="14" viewBox="0 0 18 14" fill="currentColor"><polygon points="9,0 1,7 9,14"/><rect x="10" y="0" width="4" height="14" rx="1.5"/></svg>
+        <button class="media-btn" id="btn-seek-back" title="Seek back 5s (Ctrl+A)">
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="currentColor"><polygon points="9,0 1,7 9,14"/><rect x="10" y="0" width="4" height="14" rx="1.5"/></svg>
         </button>
-        <button class="media-btn" id="btn-play-pause" title="Play/pause (Ctrl+Space)" aria-label="Play">
-          <svg aria-hidden="true" id="media-play-icon" width="11" height="13" viewBox="0 0 11 13" fill="currentColor"><polygon points="1,0 11,6.5 1,13"/></svg>
-          <svg aria-hidden="true" id="media-pause-icon" width="11" height="13" viewBox="0 0 11 13" fill="currentColor" style="display:none"><rect x="0" y="0" width="4" height="13" rx="1.5"/><rect x="7" y="0" width="4" height="13" rx="1.5"/></svg>
+        <button class="media-btn" id="btn-play-pause" title="Play/pause (Ctrl+Space)">
+          <svg id="media-play-icon" width="11" height="13" viewBox="0 0 11 13" fill="currentColor"><polygon points="1,0 11,6.5 1,13"/></svg>
+          <svg id="media-pause-icon" width="11" height="13" viewBox="0 0 11 13" fill="currentColor" style="display:none"><rect x="0" y="0" width="4" height="13" rx="1.5"/><rect x="7" y="0" width="4" height="13" rx="1.5"/></svg>
         </button>
-        <button class="media-btn" id="btn-seek-fwd" title="Seek forward 5s (Ctrl+D)" aria-label="Seek forward">
-          <svg aria-hidden="true" width="18" height="14" viewBox="0 0 18 14" fill="currentColor"><rect x="4" y="0" width="4" height="14" rx="1.5"/><polygon points="9,0 17,7 9,14"/></svg>
+        <button class="media-btn" id="btn-seek-fwd" title="Seek forward 5s (Ctrl+D)">
+          <svg width="18" height="14" viewBox="0 0 18 14" fill="currentColor"><rect x="4" y="0" width="4" height="14" rx="1.5"/><polygon points="9,0 17,7 9,14"/></svg>
         </button>
       </div>
       <div id="seek-row">
@@ -262,9 +262,9 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
         <span id="sync-file-hk"></span>
       </div>
       <div id="vol-row">
-        <button id="vol-mute-btn" title="Mute (Ctrl+M)" aria-label="Mute">
-          <svg aria-hidden="true" id="vol-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9 2.5v11l-4-3H2a1 1 0 01-1-1v-3a1 1 0 011-1h3l4-3zM12.07 5.07a5 5 0 010 5.86M13.5 3.5a7.5 7.5 0 010 9"/></svg>
-          <svg aria-hidden="true" id="mute-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display:none"><path d="M9 2.5v11l-4-3H2a1 1 0 01-1-1v-3a1 1 0 011-1h3l4-3zM11.5 6l3 4m0-4l-3 4"/></svg>
+        <button id="vol-mute-btn" title="Mute (Ctrl+M)">
+          <svg id="vol-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M9 2.5v11l-4-3H2a1 1 0 01-1-1v-3a1 1 0 011-1h3l4-3zM12.07 5.07a5 5 0 010 5.86M13.5 3.5a7.5 7.5 0 010 9"/></svg>
+          <svg id="mute-icon" width="16" height="16" viewBox="0 0 16 16" fill="currentColor" style="display:none"><path d="M9 2.5v11l-4-3H2a1 1 0 01-1-1v-3a1 1 0 011-1h3l4-3zM11.5 6l3 4m0-4l-3 4"/></svg>
         </button>
         <input id="vol-slider" type="range" min="0" max="1" step="0.01" value="1">
         <span id="vol-pct">100%</span>
@@ -273,7 +273,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
     <div class="section-label" style="margin-top:4px">Controls</div>
     <div class="hk-grid" id="hk-grid"></div>
   </div>
-  <button id="btn-expand-panel" title="Expand panel" aria-label="Expand panel"><svg aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
+  <button id="btn-expand-panel" title="Expand panel"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg></button>
   <div id="editor-wrapper">
     <div id="editor-scroll">
       <div id="editor-area">
@@ -292,15 +292,15 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
   </div>
 </div>
 <div id="settings-overlay">
-  <div id="settings-win" role="dialog" aria-modal="true" aria-labelledby="settings-heading">
+  <div id="settings-win">
     <div id="settings-title-bar">
-      <span id="settings-heading">Settings</span>
+      <span>Settings</span>
       <span id="settings-conflict"></span>
       <div id="s-search-wrap">
         <input id="s-search" type="text" placeholder="Search…" autocomplete="off" spellcheck="false">
-        <button id="s-search-kbd" title="Switch to hotkey search (or press toggle mode key)" aria-label="Switch to hotkey search mode">⌨</button>
+        <button id="s-search-kbd" title="Switch to hotkey search (or press toggle mode key)">⌨</button>
       </div>
-      <button id="settings-close" aria-label="Close settings">✕</button>
+      <button id="settings-close">✕</button>
     </div>
     <div id="settings-body">
       <div>
@@ -315,14 +315,14 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
       </div>
       <div>
         <div class="s-sec-label">Intervals</div>
-        <div class="s-row"><label for="s-tiny">Tiny</label><input class="s-num" id="s-tiny" type="number" value="100"><span class="s-unit">ms</span></div>
-        <div class="s-row"><label for="s-small">Small</label><input class="s-num" id="s-small" type="number" value="200"><span class="s-unit">ms</span></div>
-        <div class="s-row"><label for="s-medium">Medium</label><input class="s-num" id="s-medium" type="number" value="400"><span class="s-unit">ms</span></div>
-        <div class="s-row"><label for="s-large">Large</label><input class="s-num" id="s-large" type="number" value="1000"><span class="s-unit">ms</span></div>
-        <div class="s-row"><label for="s-seek-inc">Seek increment</label><input class="s-num" id="s-seek-inc" type="number" value="5" min="1" max="600"><span class="s-unit">s</span></div>
-        <div class="s-row"><label for="s-speed-ratio">Speed ratio</label><input class="s-num" id="s-speed-ratio" type="number" value="1.10" step="0.01" min="1.01" max="2"><span class="s-unit">×</span></div>
-        <div class="s-row"><label for="s-vol-inc">Volume increment</label><input class="s-num" id="s-vol-inc" type="number" value="10" min="1" max="100"><span class="s-unit">%</span></div>
-        <div class="s-row"><label for="s-undo-debounce">Undo window</label><input class="s-num" id="s-undo-debounce" type="number" value="150" min="1" max="5000"><span class="s-unit">ms</span></div>
+        <div class="s-row"><label>Tiny</label><input class="s-num" id="s-tiny" type="number" value="100"><span class="s-unit">ms</span></div>
+        <div class="s-row"><label>Small</label><input class="s-num" id="s-small" type="number" value="200"><span class="s-unit">ms</span></div>
+        <div class="s-row"><label>Medium</label><input class="s-num" id="s-medium" type="number" value="400"><span class="s-unit">ms</span></div>
+        <div class="s-row"><label>Large</label><input class="s-num" id="s-large" type="number" value="1000"><span class="s-unit">ms</span></div>
+        <div class="s-row"><label>Seek increment</label><input class="s-num" id="s-seek-inc" type="number" value="5" min="1" max="600"><span class="s-unit">s</span></div>
+        <div class="s-row"><label>Speed ratio</label><input class="s-num" id="s-speed-ratio" type="number" value="1.10" step="0.01" min="1.01" max="2"><span class="s-unit">×</span></div>
+        <div class="s-row"><label>Volume increment</label><input class="s-num" id="s-vol-inc" type="number" value="10" min="1" max="100"><span class="s-unit">%</span></div>
+        <div class="s-row"><label>Undo window</label><input class="s-num" id="s-undo-debounce" type="number" value="150" min="1" max="5000"><span class="s-unit">ms</span></div>
       </div>
       <div>
         <div class="s-sec-label">Default metadata tags</div>
@@ -344,7 +344,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 <input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none">
 <script>
 'use strict';
-// SECTIONS: Config~348 | Hotkey rules~417 | Theme~515 | Font~528 | Tooltips~543 | State~572 | Persistence~588 | Undo/redo~626 | Mode switching~644 | Auto mode~703 | Helpers~706 [LRC parse~707 | Paste/meta~726 | Genius~782 | Render/UI~879] | Audio~961 | Sync/timestamp~1149 | Secondary~1341 | Line counts~1449 | Title~1529 | Import~1537 | Controls~1657 | Settings~1755 | Settings search~1821 | Confirm~2167 | Keyboard~2203 [Key norm~2204 | Main textarea KD~2212 | Overlay utils~2271 | Global KD~2273] | Unload~2427 | Button wiring~2433 | Init~2471
+// SECTIONS: Config~347 | Hotkey rules~416 | Theme~514 | Font~527 | Tooltips~542 | State~571 | Persistence~586 | Undo/redo~624 | Mode switching~642 | Auto mode~701 | Helpers~704 [LRC parse~705 | Paste/meta~724 | Genius~781 | Render/UI~878] | Audio~960 | Sync/timestamp~1144 | Secondary~1336 | Line counts~1444 | Title~1524 | Import~1532 | Controls~1644 | Settings~1738 | Settings search~1804 | Confirm~2150 | Keyboard~2186 [Key norm~2187 | Main textarea KD~2195 | Overlay utils~2254 | Global KD~2256] | Unload~2410 | Button wiring~2416 | Init~2433
 // ── Config ───────────────────────────────────────────────────────────────────
 const DEFAULT_META='[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n';
 const DEFAULT_CFG={
@@ -365,13 +365,13 @@ const DEFAULT_CFG={
     offset_mode_toggle:'Shift+~',sync_file:'Ctrl+I',
     add_field:'Ctrl+4',remove_field:'Ctrl+5',merge_fields:'Ctrl+6',
     replay_line:'Enter',replay_only:'R',replay_end:'Shift+R',
-    open:'Ctrl+;',settings:'Ctrl+,',
+    open:'Ctrl+O',settings:'Ctrl+,',
     undo:'Ctrl+Z',redo:'Ctrl+Y',
     speed_down:'Ctrl+1',speed_up:'Ctrl+2',speed_reset:'Ctrl+3',
     seek_back:'Ctrl+9',seek_fwd:'Ctrl+0',
-    save:"Ctrl+'",help:'Ctrl+/',theme_toggle:'Ctrl+.',
+    save:'Ctrl+;',help:'Ctrl+/',theme_toggle:'Ctrl+.',
     mark_translation:'Ctrl+ArrowLeft',
-    issues:'Ctrl+[',
+    issues:"Ctrl+'",
     panel_toggle:'Ctrl+`',
     reset_defaults:'Ctrl+\\',
   },
@@ -421,7 +421,6 @@ const RESTRICTED_ALL=new Set([
   'Escape','Tab','Enter',
   // Ctrl combos browsers reserve
   'Ctrl+R','Ctrl+F','Ctrl+Q','Ctrl+W','Ctrl+L',
-  'Ctrl+O',
   'Ctrl+T','Ctrl+D','Ctrl+M','Ctrl+N','Ctrl+P','Ctrl+H','Ctrl+J','Ctrl+U',
   'Ctrl+B','Ctrl+G',
   'Ctrl+Z','Ctrl+Y','Ctrl+X','Ctrl+C','Ctrl+V','Ctrl+E','Ctrl+K',
@@ -457,6 +456,13 @@ function isRestrictedForAll(ks){
 function isRestrictedForKey(ks,key){
   const allMsg=isRestrictedForAll(ks);
   if(allMsg)return allMsg;
+  if(ks==='Ctrl+;'&&key!=='save')return'Ctrl+; is reserved for Save';
+  if(ks==='Ctrl+O'&&key!=='open')return'Ctrl+O is reserved for Open';
+  if(ks==='Ctrl+,'&&key!=='settings')return'Ctrl+, is reserved for Settings';
+  if(ks==='Ctrl+.'&&key!=='theme_toggle')return'Ctrl+. is reserved for Toggle theme';
+  if(ks==='Ctrl+/'&&key!=='help')return'Ctrl+/ is reserved for Help';
+  if(ks==="Ctrl+'"&&key!=='issues')return"Ctrl+' is reserved for Issues";
+  if(ks==='Ctrl+ArrowLeft'&&key!=='mark_translation')return'Ctrl+ArrowLeft is reserved for Mark line as translation';
   if((key==='toggle_mode'||key==='offset_mode_toggle')&&ALPHA_NUM_SPACE_RE.test(ks)){
     return'Letters, numbers, and Space are not allowed for this action';
   }
@@ -469,8 +475,7 @@ function loadCfg(){
     if(!s)return JSON.parse(JSON.stringify(DEFAULT_CFG));
     const d=JSON.parse(s),c=JSON.parse(JSON.stringify(DEFAULT_CFG));
     Object.assign(c,d);c.hotkeys=Object.assign({},DEFAULT_CFG.hotkeys,d.hotkeys||{});
-    if(c.hotkeys.open==='Ctrl+M')c.hotkeys.open='Ctrl+;';
-    if(c.hotkeys.open==='Ctrl+O')c.hotkeys.open='Ctrl+;';
+    if(c.hotkeys.open==='Ctrl+M')c.hotkeys.open='Ctrl+O';
     if(d.hotkeys&&d.hotkeys.end_line==='R'&&!d.hotkeys.replay_only)c.hotkeys.end_line='T';
     if(!c.hotkeys.replay_only)c.hotkeys.replay_only='R';
     if(d.speed_increment!==undefined&&d.speed_ratio===undefined)c.speed_ratio=1.10;
@@ -480,8 +485,7 @@ function loadCfg(){
       if(d.hotkeys.seek_back==='Ctrl+S')c.hotkeys.seek_back='Ctrl+9';
       if(d.hotkeys.seek_fwd==='Alt+W')c.hotkeys.seek_fwd='Ctrl+0';
       if(d.hotkeys.seek_fwd==='Ctrl+D')c.hotkeys.seek_fwd='Ctrl+0';
-      if(d.hotkeys.save==='Ctrl+S')c.hotkeys.save="Ctrl+'";
-      if(d.hotkeys.save==='Ctrl+;')c.hotkeys.save="Ctrl+'";
+      if(d.hotkeys.save==='Ctrl+S')c.hotkeys.save='Ctrl+;';
       if(d.hotkeys.settings==='Alt+`')c.hotkeys.settings='Ctrl+,';
       if(d.hotkeys.help==='F2')c.hotkeys.help='Ctrl+/';
       if(d.hotkeys.toggle_mode==='Tab')c.hotkeys.toggle_mode='`';
@@ -497,8 +501,7 @@ function loadCfg(){
     if(!c.hotkeys.theme_toggle)c.hotkeys.theme_toggle='Ctrl+.';
     if(!c.hotkeys.replay_end)c.hotkeys.replay_end='Shift+R';
     if(!c.hotkeys.mark_translation)c.hotkeys.mark_translation='Ctrl+ArrowLeft';
-    if(!c.hotkeys.issues)c.hotkeys.issues='Ctrl+[';
-    if(c.hotkeys.issues==="Ctrl+'")c.hotkeys.issues='Ctrl+[';
+    if(!c.hotkeys.issues)c.hotkeys.issues="Ctrl+'";
     if(!c.hotkeys.panel_toggle)c.hotkeys.panel_toggle='Ctrl+`';
     if(!c.hotkeys.reset_defaults)c.hotkeys.reset_defaults='Ctrl+\\';
     // Remove deprecated mute hotkey
@@ -572,7 +575,6 @@ let secondaryPool=[];
 let masterVolume=parseFloat(localStorage.getItem('lbl_vol')??'1');
 if(isNaN(masterVolume)||masterVolume<0||masterVolume>1)masterVolume=1;
 let masterMuted=localStorage.getItem('lbl_muted')==='1';
-let _preMuteVolume=masterVolume;
 let mergeDone=false;
 let undoStack=[],redoStack=[];
 let suppressScrollSync=false,activeLine=-1,selectedLines=new Set();
@@ -957,9 +959,8 @@ document.getElementById('main-lines').addEventListener('paste',e=>{
 
 // ── Audio ────────────────────────────────────────────────────────────────────
 function applyVolume(){
-  const displayVol=masterMuted?0:masterVolume;
-  document.getElementById('vol-slider').value=displayVol;
-  document.getElementById('vol-pct').textContent=Math.round(displayVol*100)+'%';
+  document.getElementById('vol-slider').value=masterVolume;
+  document.getElementById('vol-pct').textContent=Math.round(masterVolume*100)+'%';
   updateMuteIcon();
   if(audioEl){try{audioEl.muted=masterMuted;audioEl.volume=masterVolume;}catch(_){}}
   localStorage.setItem('lbl_vol',masterVolume);
@@ -969,7 +970,6 @@ function updateMuteIcon(){
   const muted=masterMuted||masterVolume===0;
   document.getElementById('vol-icon').style.display=muted?'none':'';
   document.getElementById('mute-icon').style.display=muted?'':'none';
-  document.getElementById('vol-mute-btn').setAttribute('aria-label',muted?'Unmute':'Mute');
 }
 function setupAudio(file,pathHint){
   if(audioEl){audioEl.pause();audioEl.src='';}
@@ -1031,8 +1031,6 @@ function updatePlayBtn(){
   const pi=document.getElementById('media-play-icon'),pai=document.getElementById('media-pause-icon');
   if(pi)pi.style.display=playing?'none':'';
   if(pai)pai.style.display=playing?'':'none';
-  const pp=document.getElementById('btn-play-pause');
-  if(pp)pp.setAttribute('aria-label',playing?'Pause':'Play');
   rebuildHkPanel();
 }
 function currentMs(){return audioEl?audioEl.currentTime*1000:0;}
@@ -1725,10 +1723,6 @@ function rebuildHkPanel(){
     if(key==='sync'){
       const replayKey=hk.replay_line||'Enter';
       cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${hk[key]||'—'}</span><span class="hk-key">${replayKey==='Escape'?'Esc':replayKey}</span></span>`;
-    }else if(key==='prev_line'){
-      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${hk[key]==='Escape'?'Esc':(hk[key]||'—')}</span><span class="hk-key">↑</span></span>`;
-    }else if(key==='next_line'){
-      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${hk[key]==='Escape'?'Esc':(hk[key]||'—')}</span><span class="hk-key">↓</span></span>`;
     }else{
       cell.innerHTML=`<span>${label}</span><span class="hk-key">${hk[key]==='Escape'?'Esc':(hk[key]||'—')}</span>`;
     }
@@ -2018,15 +2012,8 @@ function buildHkRows(){
       });
       rst.addEventListener('click',()=>{
         const defDisp=def==='Escape'?'Esc':def;
-        // If another key currently holds this default value, blank it first
-        let holderBlanked=false;
-        if(def){
-          const holder=Object.entries(cfg.hotkeys).find(([k2,v])=>k2!==key&&v===def);
-          if(holder){cfg.hotkeys[holder[0]]='';holderBlanked=true;}
-        }
         cfg.hotkeys[key]=def;_lastGoodVal=defDisp;
         saveCfg();setConflict('');rebuildHkPanel();updateDynamicTooltips();
-        if(holderBlanked){buildHkRows();return;}// full rebuild so blanked field updates too
         inp.value=defDisp;
         rep.classList.remove('visible');row.classList.remove('hk-conflict');_conflictKey='';
         restrictWarn.classList.remove('visible');
@@ -2280,7 +2267,7 @@ document.addEventListener('keydown',e=>{
     const focusable=Array.from(win.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])')).filter(el=>!el.disabled&&el.offsetParent!==null&&!el.classList.contains('hk-clear')&&!el.classList.contains('hk-reset')&&!el.classList.contains('hk-replace')&&el.id!=='settings-close');
     if(!focusable.length)return;
     const idx=focusable.indexOf(document.activeElement);
-    const next=e.shiftKey?Math.max(0,idx-1):Math.min(focusable.length-1,idx+1);
+    const next=e.shiftKey?(idx<=0?focusable.length-1:idx-1):(idx>=focusable.length-1?0:idx+1);
     focusable[next].focus();
     return;
   }
