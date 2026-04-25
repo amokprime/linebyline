@@ -9,7 +9,7 @@
 | python_abandoned   | :x:                |
 
 ## Reporting a Vulnerability
-Just open a new Issue. I should see it in a day or two. Since I'm not a developer or security researcher this will boil down to the usual [security checks](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) + asking Sonnet.
+You can open a new [Issue](https://github.com/amokprime/linebyline/issues) or [report it privately](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/privately-reporting-a-security-vulnerability). I should see it in a day or two. Since I'm not a developer or security researcher this will boil down to the usual [security checks](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) + asking Sonnet.
 
 ## Deprecated tools
 I am switching to CodeQL + making PRs for future changes instead of directly committing.
