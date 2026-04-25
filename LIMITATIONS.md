@@ -1,4 +1,4 @@
-**These apply to the .html app as of version 0.35.9**
+**These apply to the .html app as of version 0.35.10**
 - No direct filesystem access due to browser security restrictions
 	- Can't read audio file metadata tags
 	- Audio file doesn't persist if page is reloaded

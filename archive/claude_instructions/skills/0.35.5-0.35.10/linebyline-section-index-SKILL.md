@@ -5,7 +5,7 @@ description: Efficient section-targeted reading of linebyline-*.html to avoid lo
 
 # LineByLine Section Index
 
-The app HTML is ~2500 lines. Loading it whole costs ~50k tokens. Most prompts only touch 1–4 sections. This skill tells you how to read only what you need.
+The app HTML is ~2200 lines. Loading it whole costs ~50k tokens. Most prompts only touch 1–4 sections. This skill tells you how to read only what you need.
 
 ---
 
@@ -19,7 +19,7 @@ sed -n '328,332p' /path/to/linebyline-*.html
 
 The SECTIONS line looks like:
 ```
-// SECTIONS: Config~346 | Hotkey rules~415 | Theme~510 | Font~523 | Tooltips~538 | State~567 | Persistence~583 | Undo/redo~621 | Mode switching~639 | Auto mode~699 | Helpers~702 [LRC parse~703 | Paste/meta~722 | Genius~778 | Render/UI~875] | Audio~960 | Sync/timestamp~1148 | Secondary~1340 | Line counts~1448 | Title~1528 | Import~1536 | Controls~1648 | Settings~1746 | Settings search~1812 | Confirm~2164 | Keyboard~2200 [Key norm~2201 | Main textarea KD~2209 | Overlay utils~2268 | Global KD~2270] | Unload~2428 | Button wiring~2434 | Init~2451
+// SECTIONS: Config~437 | Hotkey rules~500 | Theme~581 | ... | Keyboard~2045 [Key norm~2046 | Main textarea KD~2054 | Overlay utils~2113 | Global KD~2125] | ...
 ```
 
 - Top-level sections: `Name~linenum`
@@ -72,9 +72,7 @@ Using the Filesystem connector's `head`/`tail` parameters for a middle slice:
 | Change init sequence or startup state | Init + Persistence + State |
 | Fix unload / dirty warning | Unload + State |
 | Fix button wiring | Button wiring |
-| Fix collapse/expand panel button | Button wiring (`applyPanelCollapse` lives here, not Init) |
-| Add/change confirmation dialog | Confirm dialog + Settings + Keyboard → Global KD |
-| Fix Settings focus trap / Tab navigation | Settings search + Keyboard → Global KD |
+| Fix collapse/expand panel button | Button wiring + Init |
 
 For cross-cutting changes (e.g. new hotkey = Config + Hotkey rules + Controls + Global KD), read all listed sections before patching. Reading 4 sections of ~80 lines each (~320 lines) is still ~6x cheaper than the full file.
 
@@ -104,7 +102,7 @@ Sub-sections that belong to a parent section are grouped in `[...]` immediately 
 
 ## Section list (reference)
 
-This is the current section structure as of v0.35.10. Actual line numbers are in the embedded SECTIONS comment in the file — use that, not this list, since edits shift lines.
+This is the current section structure as of v0.35.4. Actual line numbers are in the embedded SECTIONS comment in the file — use that, not this list, since edits shift lines.
 
 ```
 Config               — DEFAULT_CFG, HK_SECTIONS, HK_LABELS
@@ -135,8 +133,7 @@ Import               — doImport, doSave, file-picker handler, multi-file handl
 Controls panel       — rebuildHkPanel, CTRL_ACTIONS, HOTKEY_ONLY, changeSpeed
 Settings             — openSettings, closeSettings, saveSettingsNow, buildHkRows
 Settings search      — setSearchHkMode, applySettingsFilter, initSettingsSearch
-Confirm dialog       — _resetConfirmPending, showResetConfirm, hideResetConfirm,
-                       _doResetDefaults; inline Yes/No confirm UI in settings footer
+Confirm dialog       — (empty stub section)
 Keyboard
   Key normalization  — keyStr, hkMatch
   Main textarea KD   — Enter trim, bracket/paren autocomplete

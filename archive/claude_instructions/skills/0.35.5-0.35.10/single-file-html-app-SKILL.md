@@ -453,7 +453,6 @@ updateTooltips();
 
 ## Common pitfalls
 
-- **Single source of truth for stateful UI** — when two variables represent the same underlying state (e.g. `masterVolume` + `masterMuted` as separate flags, or a range `<input>` whose `.value` is both a display source and an input source), pick one as the authoritative value and derive everything else from it. Having two representations that can disagree is a reliable source of subtle, hard-to-reproduce bugs. Example: if `masterVolume` is always the actual volume (0 when muted), then the mute button, the slider position, and the percentage label all read from it directly — no conditional branching needed, no state sync to forget.
 - **`min-height: 0` on flex children** — without this, nested flex containers overflow instead of scroll
 - **`box-sizing: border-box`** on everything — padding and border should not blow out element widths
 - **`user-select: none` on the body** for tool apps where click-dragging shouldn't highlight text; selectively re-enable on content areas with `user-select: text`
