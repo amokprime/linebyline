@@ -13,7 +13,7 @@ Prompt history and older versions are shared in [/archive](https://github.com/am
 6. Go back to Genius or DuckDuckGo for metadata and translations
 7. Review in [LRCGET](https://github.com/tranxuanthang/lrcget) and Publish
 
-LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are required.
+LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are required. It's also a single .html file that can be downloaded for offline use.
 ### Features
 **Extensive hotkey support**
 - Traditional play/pause and seek controls
@@ -107,7 +107,7 @@ Visit the app's GitHub Page or download from the [Releases](https://github.com/a
 Any human developers willing to review vibe code are welcome🧡.
 
 If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login) Projects and request many small changes in one prompt (drafted in [Obsidian](https://obsidian.md/)). Steps to reproduce a typical workflow:
-1. Add latest [claude_instructions](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions) (including skills)
+1. Add latest [claude_instructions](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions) (including skills) if they don't already exist
 2. Add the latest app version to project files and enable memory if using claude.ai
 3. Draft Prompt.md in Obsidian if you have a lot of requests and might fatfinger `Enter`.
 4. PR Claude's output .html and .md files in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning.
@@ -122,6 +122,7 @@ If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login
 Starting with version 0.34.7, releases come with [QA test](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) results. It's a manual checklist and I may put it off by:
 - Pushing minor changes to their own subfolders in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) without releasing until several versions later
 - Noting minor bugs caught by QA tests as [Known Issues](https://share.note.sx/9wimmaly) rather than patching right away (and immediately obligating a retest for bugs introduced by the patch)
+- Making a very long PR or PR draft and merging later
 
 ### Maybe someday
 - Cross-platform automated QA tests that recognize browser elements (i.e. Playwright)
@@ -129,8 +130,18 @@ Starting with version 0.34.7, releases come with [QA test](https://github.com/am
 - OpenCode free models (i.e. GLM) for nicer quotas and workflow
 
 ### Not planned for now
-1. AI transcription - unreliable and maybe out of scope for current architecture of this app
-2. Word-by-word syncing - don't know anyone willing to do that manually
-3. Desktop app - unreliable AI oneshot output, fewer free QA/UI resources
-4. Mobile PWA - see 2 and 3; would also need UI refactor
-5. Publish directly to LRCLIB - see 3, safer to keep LRCGET as a final check
+1. AI transcription
+	1. Unreliable transcription. Maybe useful for syncing if the vocals have clear beginnings and endings
+	2. Out of scope for current architecture of this app. I could imagine a Bring Your Own AI but I don't have experience with MCP
+2. Word-by-word syncing
+	1. LRCGET has this
+	2. Would need to refactor LineByLine (enhanced .lrc support and more hotkey modes)
+		1. Per-line without trailing timestamp
+		2. Per-line with trailing timestamp
+		3. Per-word with trailing timestamp
+	3. Can't [dogfood](https://en.wikipedia.org/wiki/Eating_your_own_dog_food) the output (I use Navidrome/Feishin which don't highlight per word yet)
+3. Desktop app
+	1. Unreliable AI oneshot output
+	2. Fewer free QA/UI resources
+4. Mobile PWA - see 2.2, 2.3 (I don't listen to music on my phone)
+5. Publish directly to LRCLIB - see 2.1 and 3
