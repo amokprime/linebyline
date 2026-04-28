@@ -13,7 +13,7 @@ Prompt history and older versions are shared in [/archive](https://github.com/am
 6. Go back to Genius or DuckDuckGo for metadata and translations
 7. Review in [LRCGET](https://github.com/tranxuanthang/lrcget) and Publish
 
-LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are required. It's also a single .html file that can be downloaded for offline use.
+LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are required.
 ### Features
 **Extensive hotkey support**
 - Traditional play/pause and seek controls
@@ -99,18 +99,19 @@ After↓
 ```
 
 ### Getting started
-Visit the app's GitHub Page or download from the [Releases](https://github.com/amokprime/linebyline/releases) page or [/docs/linebyline.html](https://github.com/amokprime/linebyline/tree/main/docs/linebyline.html). Also see the [HELP](https://github.com/amokprime/linebyline/blob/main/HELP.md) file (linked to with the "?" button in the app).
+Visit the app's GitHub Page or download from the [Releases](https://github.com/amokprime/linebyline/releases) page or [/docs/index.html](https://github.com/amokprime/linebyline/tree/main/docs/index.html). Also see the [HELP](https://github.com/amokprime/linebyline/blob/main/HELP.md) file (linked to with the "?" button in the app).
 
 ### Contributing
 [This](https://share.note.sx/9wimmaly) Obsidian Share Note has the most recent list of things planned for the next version.
 
-Any human developers willing to review vibe code are welcome🧡.
+Any human developers willing to review vibe code are welcome🧡. Python port is abandoned. Current LineByLine is a no-dependencies .html file with 2.6k+ LOC. Breakdown in the latest [linebyline-section-index-SKILL](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions/skills) that Claude itself uses.
 
 If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login) Projects and request many small changes in one prompt (drafted in [Obsidian](https://obsidian.md/)). Steps to reproduce a typical workflow:
 1. Add latest [claude_instructions](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions) (including skills) if they don't already exist
 2. Add the latest app version to project files and enable memory if using claude.ai
 3. Draft Prompt.md in Obsidian if you have a lot of requests and might fatfinger `Enter`.
-4. PR Claude's output .html and .md files in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning.
+4. Open the output .html in a browser. You don't have to run through the whole checklist, but do test the specific features Claude added before starting PR.
+5. PR Claude's output .html and .md files in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning.
 	1. Bug fixes and refinements of existing features: "Patch"
 		- 0.34.9 → Patch → 0.34.10
 	2. New features that fit well into the existing app: "Minor"

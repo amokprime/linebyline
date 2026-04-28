@@ -1,8 +1,8 @@
-**These apply to the .html app as of version 0.35.10**
+**These apply to the .html app as of version 0.35.13**
 - No direct filesystem access due to browser security restrictions
 	- Can't read audio file metadata tags
 	- Audio file doesn't persist if page is reloaded
-	- Can't live edit .lrc file in place, must work with a copy in localStorage or sessionStorage and save it manually elsewhere
+	- Can't live edit .lrc file in place, must work with a copy in `localStorage` or `sessionStorage` and save it manually elsewhere
 - No system media keys - cannot even assign volume up or down hotkeys as workarounds, only mute
 - The main field cannot be focused on startup or tabbing back into the app. Copied from [linebyline-0.34.1.md](https://github.com/amokprime/linebyline/blob/main/archive/semantic/0.34.1/linebyline-0.34.1.md):
 ```
@@ -10,7 +10,7 @@ browsers intentionally block programmatic `focus()` calls that aren't triggered 
 ```
 - Cursor is positioned one line too high in **Typing mode** on startup. Worked around by pasting in lyrics in **Hotkey mode** first which adds the expected newline, or changing ⚙️**Default metadata tags** to not include a newline.
 - Only buttons and Settings have aria labels (for screen readers). See [semantic-html.md](https://github.com/amokprime/linebyline/tree/main/archive/semantic/0.35.8/semantic-html.md).
-- Many hotkey restrictions (copied from [/docs/linebyline.html](https://github.com/amokprime/linebyline/blob/main/docs/index.html))
+- Many hotkey restrictions (copied from [/docs/index.html](https://github.com/amokprime/linebyline/blob/main/docs/index.html))
 ```html
 // ── Restricted hotkey rules ──────────────────────────────────────────────────
 // Keys blocked for ALL remappable hotkeys (browser-reserved or destructive)
