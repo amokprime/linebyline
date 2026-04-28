@@ -9,11 +9,11 @@
 | [pre-semantic](https://github.com/amokprime/linebyline/tree/main/archive/pre-semantic) | :x:                |
 
 ## Reporting a Vulnerability
-You can open a new [Issue](https://github.com/amokprime/linebyline/issues) or [report it privately](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/privately-reporting-a-security-vulnerability). There are many known [false positives](https://share.note.sx/9wimmaly) that boil down to these points:
+You can open a new [Issue](https://github.com/amokprime/linebyline/issues) or [report it privately](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/privately-reporting-a-security-vulnerability). There are many known [false positives](https://github.com/amokprime/linebyline/blob/main/SECURITY.md#false-positives) that boil down to these points:
 1. LineByLine is an offline app. Loading the GitHub Page is basically the same as downloading index.html and opening it in a browser.
 2. Scanners treat it like a website that stores and processes data server-side. SonarQube Cloud is especially spammy here. I'm using it more to check Claude's code quality as CodeQL already covers security.
 
-I am not a cybersecurity professional or security researcher. What I can do about any true positives:
+I am not a cybersecurity professional or security researcher. What I can do about any [true positives](https://github.com/amokprime/linebyline/blob/main/SECURITY.md#true-positives):
 1. Me asking Sonnet - hopefully it's solved here🤷
 2. GitHub account compromise - I change all my passwords
 3. Code issue AI can't solve confined to recent version of the app - delete folder and commit
