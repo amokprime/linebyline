@@ -1,8 +1,8 @@
 # LineByLine
 
 ### AI Disclosure
-I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo, featuring 🤖Claude Sonnet 4.6 — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️.
-Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). Positive security scans of this repo from CodeQL, Opengrep, etc. are pushed with Sonnet commentary to the semantic subfolder associated with a release, starting with 0.34.7. Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
+I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️.
+Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
 ### About
 **LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to [LRCLIB](https://lrclib.net/):
 1. Find original lyrics from [Genius](https://genius.com/) or LRCLIB, or DuckDuckGo if really obscure
@@ -104,7 +104,7 @@ Visit the app's GitHub Page or download from the [Releases](https://github.com/a
 ### Contributing
 [This](https://share.note.sx/9wimmaly) Obsidian Share Note has the most recent list of things planned for the next version.
 
-Any human developers willing to review vibe code are welcome🧡. Python port is abandoned. Current LineByLine is a no-dependencies .html file with 2.6k+ LOC. Breakdown in the latest [linebyline-section-index-SKILL](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions/skills) that Claude itself uses.
+Any human developers willing to review vibe code are welcome🧡. Current LineByLine is a no-dependencies .html file with 2.6k+ LOC. Breakdown in the latest [linebyline-section-index-SKILL](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions/skills) that Claude itself uses.
 
 If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login) Projects and request many small changes in one prompt (drafted in [Obsidian](https://obsidian.md/)). Steps to reproduce a typical workflow:
 1. Add latest [claude_instructions](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions) (including skills) if they don't already exist

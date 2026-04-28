@@ -11,9 +11,9 @@ assignees: ''
 Mobile is not officially supported for now.
 
 **What version of the app is this for?**
-Only semantic [versions](https://github.com/amokprime/linebyline/blob/main/SECURITY.md) are officially supported.
+Only the deployed [version](https://github.com/amokprime/linebyline/blob/main/docs/index.html) is officially supported.
 
-**Is this a [known issue](https://share.note.sx/9wimmaly) or [limitation](https://github.com/amokprime/linebyline/blob/main/LIMITATIONS.md)?**
+**Is this a [known issue](https://share.note.sx/9wimmaly), [false positive](https://github.com/amokprime/linebyline/blob/main/SECURITY.md), or [limitation](https://github.com/amokprime/linebyline/blob/main/LIMITATIONS.md)?**
 Yes/No
 
 **Is this a regression (breaking of things that worked in a previous version)?**
