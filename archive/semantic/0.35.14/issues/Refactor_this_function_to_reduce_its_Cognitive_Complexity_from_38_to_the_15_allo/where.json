@@ -1,0 +1,402 @@
+{
+  "component": "amokprime_linebyline:docs/index.html",
+  "cleanCodeAttribute": "FOCUSED",
+  "cleanCodeAttributeCategory": "ADAPTABLE",
+  "textRange": {
+    "startLine": 2189,
+    "endLine": 2189,
+    "startOffset": 38,
+    "endOffset": 40
+  },
+  "line": 2189,
+  "rule": "javascript:S3776",
+  "message": "Refactor this function to reduce its Cognitive Complexity from 38 to the 15 allowed.",
+  "flows": [
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2192,
+            "endLine": 2192,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2195,
+            "endLine": 2195,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2195,
+            "endLine": 2195,
+            "startOffset": 30,
+            "endOffset": 32
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2196,
+            "endLine": 2196,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2197,
+            "endLine": 2197,
+            "startOffset": 10,
+            "endOffset": 12
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2202,
+            "endLine": 2202,
+            "startOffset": 12,
+            "endOffset": 14
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2202,
+            "endLine": 2202,
+            "startOffset": 33,
+            "endOffset": 37
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2206,
+            "endLine": 2206,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2207,
+            "endLine": 2207,
+            "startOffset": 10,
+            "endOffset": 12
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2213,
+            "endLine": 2213,
+            "startOffset": 12,
+            "endOffset": 14
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2213,
+            "endLine": 2213,
+            "startOffset": 33,
+            "endOffset": 37
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2214,
+            "endLine": 2214,
+            "startOffset": 16,
+            "endOffset": 18
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2220,
+            "endLine": 2220,
+            "startOffset": 12,
+            "endOffset": 14
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2220,
+            "endLine": 2220,
+            "startOffset": 33,
+            "endOffset": 37
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2224,
+            "endLine": 2224,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2227,
+            "endLine": 2227,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2227,
+            "endLine": 2227,
+            "startOffset": 40,
+            "endOffset": 42
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2227,
+            "endLine": 2227,
+            "startOffset": 74,
+            "endOffset": 76
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2230,
+            "endLine": 2230,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2231,
+            "endLine": 2231,
+            "startOffset": 31,
+            "endOffset": 32
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2231,
+            "endLine": 2231,
+            "startOffset": 45,
+            "endOffset": 46
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2231,
+            "endLine": 2231,
+            "startOffset": 66,
+            "endOffset": 67
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2233,
+            "endLine": 2233,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2235,
+            "endLine": 2235,
+            "startOffset": 38,
+            "endOffset": 39
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2239,
+            "endLine": 2239,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2252,
+            "endLine": 2252,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2258,
+            "endLine": 2258,
+            "startOffset": 9,
+            "endOffset": 13
+          },
+          "msg": "+1"
+        }
+      ]
+    }
+  ],
+  "type": "CODE_SMELL",
+  "severity": "CRITICAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "HIGH"
+    }
+  ]
+}

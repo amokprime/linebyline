@@ -155,7 +155,7 @@
 - [x] Moving to previous line: plays with configured Seek offset when navigating with `Q` and `E` keys
 - [x] Moving to next line: plays with configured Seek offset when navigating with `Q` and `E` keys
 - [x] Resuming currently playing line: replays with configured Seek offset instead of resuming when unpausing with `Space`
-- [x] Playing another line: plays with configured Seek offset instead of from start when clicking another line
+- [ ] Playing another line: plays with configured Seek offset instead of from start when clicking another line
 - [x] Adjusting seek offset: replays with configured Seek offset instead of continuing to play
 - [x] Syncing line: replays with configured Seek offset instead of continuing to play
 - [x] Adjusting timestamp: replays with configured Seek offset instead of continuing to play
@@ -185,7 +185,7 @@
 ```
 
 - [x] Click each hotkey field and click the "X" to clear it
-- [x] Refresh webpage (F5) and confirm each change made in this section persisted and the placeholder metadata fields are altered
+- [ ] Refresh webpage (F5) and confirm each change made in this section persisted and the placeholder metadata fields are altered
 - [x] Press `Ctrl+\` when Settings window is closed opens Settings window dialog
 	- [x] Clicking No or pressing `Backspace` keeps changes
 	- [ ] Clicking Yes or pressing `Enter` reverts to defaults
