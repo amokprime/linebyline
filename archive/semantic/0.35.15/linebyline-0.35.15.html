@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LineByLine 0.35.14</title>
+<title>LineByLine 0.35.15</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000000' height='24' width='24'/%3E%3Cpath d='m13,5l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,12l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,19l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m3,17l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m3,7l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 /* ── Themes ── */
@@ -347,7 +347,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 <input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none">
 <script>
 'use strict';
-// SECTIONS: Config~351 | Hotkey rules~419 | Theme~512 | Font~524 | Tooltips~539 | State~568 | Persistence~585 | Undo/redo~625 | Mode switching~644 | Auto mode~721 | Helpers~724 [LRC parse~725 | Paste/meta~788 | Genius~843 | Render/UI~935] | Audio~1036 | Sync/timestamp~1238 | Secondary~1480 | Line counts~1590 | Title~1670 | Import~1678 | Controls~1785 | Settings~1883 | Settings search~1949 | Confirm~2299 | Keyboard~2335 [Key norm~2336 | Main textarea KD~2344 | Overlay utils~2402 | Global KD~2404] | Unload~2566 | Button wiring~2572 | Init~2591
+// SECTIONS: Config~351 | Hotkey rules~419 | Theme~512 | Font~524 | Tooltips~539 | State~568 | Persistence~585 | Undo/redo~625 | Mode switching~644 | Auto mode~721 | Helpers~724 [LRC parse~725 | Paste/meta~788 | Genius~843 | Render/UI~943] | Audio~1044 | Sync/timestamp~1246 | Secondary~1458 | Line counts~1568 | Title~1648 | Import~1656 | Controls~1763 | Settings~1861 | Settings search~1927 | Confirm~2277 | Keyboard~2313 [Key norm~2314 | Main textarea KD~2322 | Overlay utils~2380 | Global KD~2382] | Unload~2544 | Button wiring~2550 | Init~2569
 // ── Config ───────────────────────────────────────────────────────────────────
 const DEFAULT_META='[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n';
 const DEFAULT_CFG={
@@ -841,8 +841,8 @@ function mergeLrcMeta(lrcText){
 }
 
 // ── Genius extraction ──────────────────────────────────────────────────────
-function cleanGenius(text){
-  const lines=text.split('\n');
+function _findGeniusLyricBounds(lines){
+  // Returns {start, end} or null if not Genius content
   const hasLyricsHeading=lines.some(l=>/Lyrics$/.test(l.trim()));
   const hasGenius=lines.some(l=>/Genius\.com|genius\.com|ML Genius|Genius is the/.test(l));
   const hasReadMore=lines.some(l=>/Read More\s*$/.test(l.trim()));
@@ -863,26 +863,32 @@ function cleanGenius(text){
     if(t==='About'||t==='Song Bio'||/^© \d{4}/.test(t)||t==='Sign Up And Drop Knowledge 🤓'){end=i;break;}
     if(t==='Credits'&&i>start+5){end=i;break;}
   }
-  let lyricLines=lines.slice(start,end);
-  const preFiltered=[];let inYmal=false;
+  return{start,end};
+}
+function _filterYmal(lyricLines){
+  const out=[];let inYmal=false;
   for(let i=0;i<lyricLines.length;i++){
     const t=lyricLines[i].trim();
     if(t==='You might also like'){
-      if(preFiltered.length&&preFiltered[preFiltered.length-1].trim()!=='')preFiltered.push('');
+      if(out.length&&out[out.length-1].trim()!=='')out.push('');
       inYmal=true;continue;
     }
     if(inYmal){
-      if(t===''||(/^\[[^\]]+\]$/.test(t)&&!TS_RE.test(t))){inYmal=false;}
-      else{continue;}
+      if(t===''||(/^\[[^\]]+\]$/.test(t)&&!TS_RE.test(t)))inYmal=false;
+      else continue;
     }
-    preFiltered.push(lyricLines[i]);
+    out.push(lyricLines[i]);
   }
-  lyricLines=preFiltered;
+  return out;
+}
+function cleanGenius(text){
+  const lines=text.split('\n');
+  const bounds=_findGeniusLyricBounds(lines);
+  if(!bounds)return null;
+  let lyricLines=_filterYmal(lines.slice(bounds.start,bounds.end));
   lyricLines=lyricLines.filter(l=>{
     const t=l.trim();
-    if(/^\[[^\]]+\]$/.test(t)&&!TS_RE.test(t))return false;
-    if(/^\[.{2,50}\]$/.test(t)&&!TS_RE.test(t))return false;
-    return true;
+    return!(/^\[.{2,50}\]$/.test(t)&&!TS_RE.test(t));
   });
   const out=collapseBlanks(lyricLines).join('\n').trim();
   if(!out)return null;
@@ -893,14 +899,11 @@ function markGeniusSource(){
   if(_geniusDetectedThisSession)return;
   _geniusDetectedThisSession=true;
   let updated=getTA().replace(/^\[re:.*\]/m,'[re: Genius, LineByLine]');
-  // Ensure LineByLine is in the re tag after replacement
   updated=ensureReTagDefault(updated);
   if(updated!==getTA()){_setTA(updated);renderMainLines();updateTitleFromText();}
 }
-function extractGeniusMeta(raw){
-  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);
+function _extractGeniusFields(head){
   let title='',artist='',album='';
-  const head=lines.slice(0,40);
   for(let i=0;i<head.length;i++){
     const m=head[i].match(/^Cover art for .+ by (.+)$/i);
     if(m){artist=m[1].trim();break;}
@@ -920,6 +923,11 @@ function extractGeniusMeta(raw){
   for(let i=0;i<head.length-1;i++){
     if(/^Track\s+\d+\s+(on|[-–])/i.test(head[i])){album=head[i+1].trim();break;}
   }
+  return{title,artist,album};
+}
+function extractGeniusMeta(raw){
+  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);
+  const{title,artist,album}=_extractGeniusFields(lines.slice(0,40));
   let text=getTA();
   function replaceIfDefault(tag,val){
     if(!val)return;
@@ -1298,6 +1306,11 @@ function adjustTs(delta){
   setMainText(lines.join('\n'));
   if(cfg.replay_after_ts){replayActiveLine(false);}
 }
+// Find the next timestamped line after fromIdx; returns ms or null
+function _findNextTimestampMs(lines,fromIdx){
+  for(let j=fromIdx+1;j<lines.length;j++){const ms=tsToMs(lines[j]);if(ms!==null)return ms;}
+  return null;
+}
 // Extract the last top-level parenthesized group from end of string, return [before, group] or null
 function _peelLastParen(s){
   const t=s.trimEnd();
@@ -1310,6 +1323,49 @@ function _peelLastParen(s){
   }
   return null;
 }
+// Assign interpolated timestamps to un-timestamped runs between two timestamped lines
+function _assignInterpolatedTs(out){
+  for(let i=0;i<out.length;i++){
+    if(META_RE.test(out[i])||out[i].trim()==='')continue;
+    if(tsToMs(out[i])!==null)continue;
+    let prevMs=null;
+    for(let j=i-1;j>=0;j--){
+      if(out[j].trim()===''||META_RE.test(out[j]))continue;
+      prevMs=tsToMs(out[j]);break;
+    }
+    if(prevMs===null)continue;
+    let runEnd=i;
+    while(runEnd+1<out.length&&!META_RE.test(out[runEnd+1])&&out[runEnd+1].trim()!==''&&tsToMs(out[runEnd+1])===null)runEnd++;
+    let nextMs=null;
+    for(let j=runEnd+1;j<out.length;j++){
+      if(out[j].trim()===''||META_RE.test(out[j]))continue;
+      const ms=tsToMs(out[j]);if(ms!==null){nextMs=ms;break;}
+    }
+    if(nextMs===null)continue;
+    const count=runEnd-i+1;
+    for(let k=0;k<count;k++){
+      out[i+k]=msToTs(Math.max(0,nextMs-(count-k)*10))+' '+out[i+k];
+    }
+    i=runEnd;
+  }
+}
+// Advance activeLine to next unprocessed line after a split-mode mark-as-translation
+function _advanceAfterSplit(updatedLines,afterInserted){
+  let nextUnprocessed=-1;
+  for(let j=afterInserted;j<updatedLines.length;j++){
+    const ul=updatedLines[j];
+    if(META_RE.test(ul)||ul.trim()==='')continue;
+    const ulContent=TS_RE.test(ul)?ul.slice(10).replace(/^ /,''):ul;
+    if(_peelLastParen(ulContent)!==null){nextUnprocessed=j;break;}
+    if(nextUnprocessed<0)nextUnprocessed=j;
+  }
+  if(nextUnprocessed<0){
+    for(let j=afterInserted;j<updatedLines.length;j++){
+      if(!META_RE.test(updatedLines[j])&&updatedLines[j].trim()!==''){nextUnprocessed=j;break;}
+    }
+  }
+  if(nextUnprocessed>=0){activeLine=nextUnprocessed;suppressAuto();renderMainLines();scrollToActive();}
+}
 // Batch-split trailing parenthesized groups on all non-meta lines (including timestamped).
 // Inserts peeled groups as plain lines immediately after their parent.
 // Second pass: assigns interpolated timestamps to inserted groups when surrounding lines are timestamped.
@@ -1318,9 +1374,7 @@ function batchSplitParens(text){
   const out=[];
   for(let i=0;i<lines.length;i++){
     const l=lines[i];
-    // Skip meta or blank lines
     if(META_RE.test(l)||l.trim()===''){out.push(l);continue;}
-    // Strip timestamp prefix if present
     const hasTs=TS_RE.test(l);
     const tsPrefix=hasTs?l.slice(0,10):'';
     let content=hasTs?l.slice(10).replace(/^ /,''):l;
@@ -1331,38 +1385,10 @@ function batchSplitParens(text){
       groups.push(group);
       content=before;
     }
-    out.push(tsPrefix+(content?' '+content:content).replace(/^ /,''));
+    out.push(tsPrefix+(tsPrefix&&content?' '+content:content));
     if(groups.length)out.push(...groups.slice().reverse());
   }
-  // Second pass: assign timestamps to any non-timestamped lines inserted between timestamped lines
-  // Find each run of un-timestamped non-meta lines that are preceded by a timestamped line
-  for(let i=0;i<out.length;i++){
-    if(META_RE.test(out[i])||out[i].trim()==='')continue;
-    if(tsToMs(out[i])!==null)continue;
-    // Check if previous non-blank non-meta line had a timestamp
-    let prevMs=null;
-    for(let j=i-1;j>=0;j--){
-      if(out[j].trim()===''||META_RE.test(out[j]))continue;
-      prevMs=tsToMs(out[j]);break;
-    }
-    if(prevMs===null)continue;
-    // Collect this run of un-timestamped lines
-    let runEnd=i;
-    while(runEnd+1<out.length&&!META_RE.test(out[runEnd+1])&&out[runEnd+1].trim()!==''&&tsToMs(out[runEnd+1])===null)runEnd++;
-    // Find the next timestamped line
-    let nextMs=null;
-    for(let j=runEnd+1;j<out.length;j++){
-      if(out[j].trim()===''||META_RE.test(out[j]))continue;
-      const ms=tsToMs(out[j]);if(ms!==null){nextMs=ms;break;}
-    }
-    if(nextMs===null)continue;
-    const count=runEnd-i+1;
-    for(let k=0;k<count;k++){
-      const offsetMs=nextMs-(count-k)*10;
-      out[i+k]=msToTs(Math.max(0,offsetMs))+' '+out[i+k];
-    }
-    i=runEnd;// skip processed run
-  }
+  _assignInterpolatedTs(out);
   return out.join('\n');
 }
 function markAsTranslation(){
@@ -1382,14 +1408,7 @@ function markAsTranslation(){
   const splitMode=document.getElementById('main-split-check').checked;
   const useParens=document.getElementById('main-paren-check').checked;
 
-  // Find next timestamped line (used by both modes)
-  function findNextMs(fromIdx){
-    for(let j=fromIdx+1;j<lines.length;j++){const ms=tsToMs(lines[j]);if(ms!==null)return ms;}
-    return null;
-  }
-
   if(splitMode){
-    // Collect all trailing parenthesized groups by peeling from the end
     let content=TS_RE.test(lines[targetIdx])?lines[targetIdx].slice(10).replace(/^ /,''):lines[targetIdx];
     const ts=TS_RE.test(lines[targetIdx])?lines[targetIdx].slice(0,10):'';
     const groups=[];
@@ -1399,79 +1418,38 @@ function markAsTranslation(){
       groups.push(group);
       content=before;
     }
-    if(groups.length===0){
-      // No trailing paren groups — fall through to normal mark-as-translation
-    }else{
-      // groups[0] is last (outermost), groups[last] is first (innermost from end)
-      // They should be inserted in reverse so the last-peeled ends up closest to nextMs
-      // groups is already in peel order (last group first), so insert as-is: they'll
-      // appear in document order matching the original left-to-right sequence.
-      // Rebuild parent line with remaining content
+    if(groups.length>0){
       lines[targetIdx]=ts+(content?' '+content:content);
-      // Insert groups after targetIdx in original order (reverse of peel order)
       const toInsert=groups.slice().reverse();
       lines.splice(targetIdx+1,0,...toInsert);
-      // Find nextMs from the line that was previously after targetIdx (now shifted)
-      const nextMsLine=targetIdx+1+toInsert.length;
-      let nextMs=null;
-      for(let j=nextMsLine;j<lines.length;j++){const ms=tsToMs(lines[j]);if(ms!==null){nextMs=ms;break;}}
+      const nextMs=_findNextTimestampMs(lines,targetIdx+toInsert.length);
       if(nextMs!==null){
-        // Assign timestamps: closest to nextMs first (last group = index 0 in toInsert = nextMs-10)
         toInsert.forEach((g,k)=>{
           const idx=targetIdx+1+k;
-          const offsetMs=nextMs-(toInsert.length-k)*10;
-          lines[idx]=msToTs(Math.max(0,offsetMs))+(g?' '+g:'');
+          lines[idx]=msToTs(Math.max(0,nextMs-(toInsert.length-k)*10))+(g?' '+g:'');
         });
       }
       setMainText(lines.join('\n'));
-      // Advance to next "unprocessed" line: first line after the inserted groups
-      // that has non-paren content (or just the next lyric line if none qualifies)
-      if(hotkeyMode){
-        const updatedLines=getTA().split('\n');
-        const afterInserted=targetIdx+1+toInsert.length;
-        // Find next line with non-parenthesized lyric content, or failing that just next lyric
-        let nextUnprocessed=-1;
-        for(let j=afterInserted;j<updatedLines.length;j++){
-          const ul=updatedLines[j];
-          if(META_RE.test(ul)||ul.trim()==='')continue;
-          const ulContent=TS_RE.test(ul)?ul.slice(10).replace(/^ /,''):ul;
-          if(_peelLastParen(ulContent)!==null){nextUnprocessed=j;break;}
-          // Also accept any lyric line as fallback destination
-          if(nextUnprocessed<0)nextUnprocessed=j;
-        }
-        if(nextUnprocessed<0){
-          // No unprocessed lines ahead — just go to next lyric line
-          for(let j=afterInserted;j<updatedLines.length;j++){
-            if(!META_RE.test(updatedLines[j])&&updatedLines[j].trim()!==''){nextUnprocessed=j;break;}
-          }
-        }
-        if(nextUnprocessed>=0){
-          activeLine=nextUnprocessed;suppressAuto();
-          renderMainLines();scrollToActive();
-        }
-      }
+      if(hotkeyMode)_advanceAfterSplit(getTA().split('\n'),targetIdx+1+toInsert.length);
       return;
     }
   }
 
   // Normal mark-as-translation
-  const nextMs=findNextMs(targetIdx);
+  const nextMs=_findNextTimestampMs(lines,targetIdx);
   if(nextMs===null)return;
-  const offsetMs=nextMs-10;
   const content=TS_RE.test(lines[targetIdx])?lines[targetIdx].slice(10).replace(/^ /,''):lines[targetIdx];
   let newContent=content;
   if(useParens&&newContent.trim()&&!newContent.trim().startsWith('(')){
     newContent='('+newContent.trim()+')';
   }
-  lines[targetIdx]=msToTs(offsetMs)+(newContent?' '+newContent:'');
+  lines[targetIdx]=msToTs(nextMs-10)+(newContent?' '+newContent:'');
   setMainText(lines.join('\n'));
-  // Advance to next lyric line in hotkey mode
   if(hotkeyMode){
     const updatedLines=getTA().split('\n');
     for(let j=targetIdx+1;j<updatedLines.length;j++){
       if(!META_RE.test(updatedLines[j])&&updatedLines[j].trim()!==''){
-        activeLine=j;suppressAuto();
-        renderMainLines();scrollToActive();break;
+        activeLine=j;suppressAuto();renderMainLines();scrollToActive();break;
       }
     }
   }
