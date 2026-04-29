@@ -1,0 +1,23 @@
+{
+  "flows": [],
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "component": "amokprime_linebyline:docs/index.html",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "HIGH"
+    }
+  ],
+  "textRange": {
+    "startLine": 518,
+    "endLine": 518,
+    "startOffset": 2,
+    "endOffset": 82
+  },
+  "type": "CODE_SMELL",
+  "message": "Prefer `.dataset` over `setAttribute(\u2026)`.",
+  "rule": "javascript:S7761",
+  "severity": "MAJOR",
+  "line": 518,
+  "cleanCodeAttribute": "CONVENTIONAL"
+}

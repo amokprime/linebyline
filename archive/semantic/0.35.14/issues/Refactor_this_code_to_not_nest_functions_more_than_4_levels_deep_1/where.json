@@ -1,0 +1,80 @@
+{
+  "severity": "CRITICAL",
+  "type": "CODE_SMELL",
+  "rule": "javascript:S2004",
+  "textRange": {
+    "startLine": 2198,
+    "endLine": 2198,
+    "startOffset": 32,
+    "endOffset": 34
+  },
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 2198,
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "HIGH"
+    }
+  ],
+  "cleanCodeAttribute": "FOCUSED",
+  "message": "Refactor this code to not nest functions more than 4 levels deep.",
+  "flows": [
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2082,
+            "endLine": 2082,
+            "startOffset": 9,
+            "endOffset": 20
+          },
+          "msg": "Nesting +1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2086,
+            "endLine": 2086,
+            "startOffset": 36,
+            "endOffset": 38
+          },
+          "msg": "Nesting +1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2091,
+            "endLine": 2091,
+            "startOffset": 20,
+            "endOffset": 22
+          },
+          "msg": "Nesting +1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2189,
+            "endLine": 2189,
+            "startOffset": 38,
+            "endOffset": 40
+          },
+          "msg": "Nesting +1"
+        }
+      ]
+    }
+  ],
+  "cleanCodeAttributeCategory": "ADAPTABLE"
+}
