@@ -30,5 +30,7 @@ npm-debug.log*
 .obsidian
 .global
 
-# Licensed music
-/tests/music/local/
+# Offline
+genius.txt
+ROADMAP.md
+local
