@@ -2,7 +2,8 @@
 
 ### AI Disclosure
 I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️.
-Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
+Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
+Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). See what I'm working on [here](https://share.note.sx/9wimmaly). 
 ### About
 **LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to [LRCLIB](https://lrclib.net/):
 1. Find original lyrics from [Genius](https://genius.com/) or LRCLIB, or DuckDuckGo if really obscure
@@ -100,35 +101,6 @@ After↓
 
 ### Getting started
 Visit the app's GitHub Page or download from the [Releases](https://github.com/amokprime/linebyline/releases) page or [/docs/index.html](https://github.com/amokprime/linebyline/tree/main/docs/index.html). Also see the [HELP](https://github.com/amokprime/linebyline/blob/main/HELP.md) file (linked to with the "?" button in the app).
-
-### Contributing
-[This](https://share.note.sx/9wimmaly) Obsidian Share Note has the most recent list of things planned for the next version.
-
-Any human developers willing to review vibe code are welcome🧡. Current LineByLine is a no-dependencies .html file with 2.6k+ LOC. Breakdown in the latest [linebyline-section-index-SKILL](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions/skills) that Claude itself uses.
-
-If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login) Projects and request many small changes in one prompt (drafted in [Obsidian](https://obsidian.md/)). Steps to reproduce a typical workflow:
-1. Add latest [claude_instructions](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions) (including skills) if they don't already exist
-2. Add the latest app version to project files and enable memory if using claude.ai
-3. Draft Prompt.md in Obsidian if you have a lot of requests and might fatfinger `Enter`.
-4. Open the output .html in a browser. You don't have to run through the whole checklist, but do test the specific features Claude added before starting PR.
-5. PR Claude's output .html and .md files in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning.
-	1. Bug fixes and refinements of existing features: "Patch"
-		- 0.34.9 → Patch → 0.34.10
-	2. New features that fit well into the existing app: "Minor"
-		- 0.34.7 → Minor → 0.35.0
-	3. Refactoring the existing app: "Major"
-		- 0.34.7 → Major → 1.0.0
-	4. If Claude doesn't update the output file version you can just rename the app's filename and the title element: `<title>LineByLine 0.34.7</title>`.
-
-Starting with version 0.34.7, releases come with [QA test](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) results. It's a manual checklist and I may put it off by:
-- Pushing minor changes to their own subfolders in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) without releasing until several versions later
-- Noting minor bugs caught by QA tests as [Known Issues](https://share.note.sx/9wimmaly) rather than patching right away (and immediately obligating a retest for bugs introduced by the patch)
-- Making a very long PR or PR draft and merging later
-
-### Maybe someday
-- Cross-platform automated QA tests that recognize browser elements (i.e. Playwright)
-- UI refactor to look nicer (i.e. Penpot, shadcn/ui, Radix)
-- OpenCode free models (i.e. GLM) for nicer quotas and workflow
 
 ### Not planned for now
 1. AI transcription

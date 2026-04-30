@@ -77,7 +77,7 @@
 - [ ] Toggle Hotkey/Typing mode with `` ` `` and button
 - [ ] Lyrics appear at about the same position onscreen when toggling Hotkey/Typing mode
 - [ ] Lyrics can be pasted in both Hotkey and Typing mode when the field is focused
-	- [ ] Genius lyrics and metadata are extracted correctly
+	- [ ] Genius lyrics and metadata are extracted correctly even if ↩ is checked
 	- [ ] Pasting can be undone and redone
 - [ ] Lyrics paste and typing manually in `[ar: ]` metadata field updates Unknown Artist in Now Playing box
 - [ ] Navigate to previous line with `ArrowUp` in any mode
@@ -101,7 +101,7 @@
 - [ ] Add field with `Ctrl+4` and button
 - [ ] .lrc file picker opens with `Middle click` in secondary field and 📂button
 - [ ] Lyrics are replaced for secondary field when new .lrc file is added
-- [ ] Lyrics paste extract Genius metadata and lyrics
+- [ ] Lyrics paste in secondary fields extract Genius metadata and lyrics
 - [ ] Hide field with `Ctrl+5` and button hides the field without deleting lyrics
 - [ ] Newlines and the final end timestamp are not counted as lyric lines
 - [ ] Merge fields button is grayed out and `Ctrl+6` throws warning popup when
