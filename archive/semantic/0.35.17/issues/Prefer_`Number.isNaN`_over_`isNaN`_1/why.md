@@ -1,0 +1,54 @@
+This rule raises an issue when global functions like `parseInt()`, `parseFloat()`, `isNaN()`, `isFinite()` or global values like `NaN`, `Infinity` are used instead of their `Number` constructor equivalents.
+
+ECMAScript 2015 introduced static methods and properties on the `Number` constructor to replace several global functions and values. Using these `Number` equivalents provides several benefits:
+
+**Consistency and Organization** : All number-related utilities are grouped under the `Number` namespace, making the code more organized and easier to understand.
+
+**Reduced Global Namespace Pollution** : By using `Number` methods instead of globals, you help keep the global namespace cleaner and reduce the risk of naming conflicts.
+
+**Improved Behavior** : Some `Number` methods have better behavior than their global counterparts:
+
+  * `Number.isNaN()` only returns `true` for actual `NaN` values, while global `isNaN()` coerces non-numbers to numbers first, leading to unexpected results 
+  * `Number.isFinite()` only returns `true` for finite numbers, while global `isFinite()` coerces non-numbers first 
+
+
+
+**Modern JavaScript Standards** : Using `Number` methods aligns with modern JavaScript practices and demonstrates familiarity with ES2015+ features.
+
+The global functions still exist for backward compatibility, but the `Number` equivalents are the recommended approach in modern JavaScript development.
+
+### What is the potential impact?
+
+Using global functions instead of `Number` methods can lead to:
+
+  * **Unexpected behavior** : Global `isNaN()` and `isFinite()` perform type coercion, which can cause bugs when checking non-number values 
+  * **Code inconsistency** : Mixing global and `Number` methods makes the codebase less uniform 
+  * **Maintainability issues** : Code that doesn't follow modern standards may be harder for other developers to understand and maintain 
+
+
+
+### How to fix?
+
+Replace global parsing functions with their Number equivalents. The behavior is identical, but the Number methods are more explicit and organized.
+
+#### Non-compliant code example
+    
+    
+    const num1 = parseInt('42', 10); // Noncompliant
+    const num2 = parseFloat('3.14'); // Noncompliant
+    
+
+#### Compliant code example
+    
+    
+    const num1 = Number.parseInt('42', 10);
+    const num2 = Number.parseFloat('3.14');
+    
+
+### Documentation
+
+  * [eslint-plugin-unicorn](https://github.com/sindresorhus/eslint-plugin-unicorn#readme) \- Rule [prefer-number-properties](https://github.com/sindresorhus/eslint-plugin-unicorn/blob/HEAD/docs/rules/prefer-number-properties.md)
+  * Number.parseInt() - MDN - [Documentation for Number.parseInt() method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/parseInt)
+  * Number.parseFloat() - MDN - [Documentation for Number.parseFloat() method](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/parseFloat)
+  * Number.isNaN() - MDN - [Documentation for Number.isNaN() method and its differences from global isNaN()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isNaN)
+  * Number.isFinite() - MDN - [Documentation for Number.isFinite() method and its differences from global isFinite()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/isFinite)
