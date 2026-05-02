@@ -1,0 +1,27 @@
+{
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "component": "amokprime_linebyline:docs/index.html",
+  "severity": "MINOR",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    },
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": [],
+  "rule": "javascript:S7773",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "line": 2588,
+  "type": "CODE_SMELL",
+  "textRange": {
+    "startLine": 2588,
+    "endLine": 2588,
+    "startOffset": 75,
+    "endOffset": 85
+  },
+  "message": "Prefer `Number.parseFloat` over `parseFloat`."
+}
