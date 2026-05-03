@@ -22,6 +22,7 @@
   "homepage": "https://github.com/amokprime/linebyline#readme",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
-    "@types/node": "^25.6.0"
+    "@types/node": "^25.6.0",
+    "@linebyline/test-helpers": "file:./tests/helpers"
   }
 }
