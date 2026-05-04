@@ -1130,3 +1130,63 @@ await expect(fontSelect).toMatchAriaSnapshot(`
 Native `<select>` dropdown keyboard behavior is **browser-specific** — Firefox and Chromium handle `ArrowDown` on a closed `<select>` differently. `selectOption('serif')` sets the value directly without opening the dropdown, making it reliable across browsers. Save keyboard testing for your `keyboard-nav.spec.js` where you specifically test Tab + Arrow focus behavior.
 
 ---
+Now I understand the full picture. There are two categories of SonarQube issues:
+
+### Issue 1: Code quality (3 specific findings)
+
+All are easy fixes:
+Code quality fixes are done. Now the bigger issue:
+
+### Issue 2: "0% coverage on new code" — SonarQube is scanning the wrong files
+
+SonarQube is reporting **0% line coverage** on your **test files themselves**:
+
+| File | Uncovered lines |
+|---|---|
+| `tests/helpers/index.js` | 19 |
+| `tests/smoke.spec.js` | 23 |
+| `tests/theme-font.spec.js` | 26 |
+
+This is a **misconfiguration** — SonarQube is treating your Playwright test files as **application source code** and trying to measure how much of *them* is covered by unit tests. But test files don't get tested by other tests — they *are* the tests.
+
+### The fix: exclude test files from SonarQube coverage
+
+Add a `sonar.properties` file to your repo root (or add to your `sonar-project.properties` if you have one):
+
+```properties
+# Tests are test infrastructure, not application code
+sonar.tests=tests
+sonar.test.inclusions=tests/**/*.spec.js
+sonar.coverage.exclusions=tests/**/*
+```
+
+Or if you configure via GitHub Actions YAML, add these as arguments:
+
+```yaml
+- name: SonarQube Scan
+  uses: SonarSource/sonarqube-scan-action@v4
+  with:
+    args: >
+      -Dsonar.tests=tests
+      -Dsonar.test.inclusions=tests/**/*.spec.js
+      -Dsonar.coverage.exclusions=tests/**/*
+```
+
+This tells SonarQube:
+- **`sonar.tests=tests`** — the `tests/` directory contains test files (not source code)
+- **`sonar.test.inclusions`** — which files *are* tests (`.spec.js` files)
+- **`sonar.coverage.exclusions`** — don't measure coverage on test infrastructure
+
+### Why the quality gate fails
+
+Your SonarQube quality gate requires **≥80% coverage on new code**. Since SonarQube is counting all 68 lines in your test files as "uncovered source code," the coverage percentage drops to 0%. Once you exclude them, only your actual app code (`linebyline-0.35.18.html`) will be measured for coverage — and that's a single HTML file that SonarQube's JavaScript scanner likely can't instrument anyway.
+
+### Summary of changes
+
+| File                     | Change                                                                                | SonarQube rule      |
+| ------------------------ | ------------------------------------------------------------------------------------- | ------------------- |
+| `tests/helpers/index.js` | `require('fs')` → `require('node:fs')`, `require('path')` → `require('node:path')`    | S7772               |
+| `playwright.config.js`   | Removed commented-out dotenv import and commented-out mobile/branded browser projects | S125                |
+| Repo root (new)          | Add `sonar.properties` to exclude test files from coverage                            | N/A — configuration |
+
+---
