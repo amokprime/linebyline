@@ -1,0 +1,23 @@
+{
+  "message": "Use <dialog> instead of the dialog role to ensure accessibility across all devices.",
+  "component": "amokprime_linebyline:docs/index.html",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "severity": "MAJOR",
+  "flows": [],
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "textRange": {
+    "startLine": 299,
+    "endLine": 299,
+    "startOffset": 2,
+    "endOffset": 92
+  },
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "line": 299,
+  "type": "CODE_SMELL",
+  "rule": "Web:S6819"
+}

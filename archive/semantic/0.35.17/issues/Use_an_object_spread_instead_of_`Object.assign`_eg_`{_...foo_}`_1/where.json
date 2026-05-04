@@ -1,0 +1,23 @@
+{
+  "type": "CODE_SMELL",
+  "textRange": {
+    "startLine": 2311,
+    "endLine": 2311,
+    "startOffset": 46,
+    "endOffset": 59
+  },
+  "rule": "javascript:S6661",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "flows": [],
+  "severity": "MAJOR",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 2311,
+  "message": "Use an object spread instead of `Object.assign` eg: `{ ...foo }`.",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ]
+}

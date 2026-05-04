@@ -1,0 +1,23 @@
+{
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "textRange": {
+    "startLine": 2059,
+    "endLine": 2059,
+    "startOffset": 52,
+    "endOffset": 82
+  },
+  "rule": "javascript:S3358",
+  "component": "amokprime_linebyline:docs/index.html",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "message": "Extract this nested ternary operation into an independent statement.",
+  "type": "CODE_SMELL",
+  "line": 2059,
+  "cleanCodeAttribute": "CLEAR",
+  "severity": "MAJOR",
+  "flows": []
+}

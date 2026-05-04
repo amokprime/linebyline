@@ -1,0 +1,27 @@
+{
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    },
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "component": "amokprime_linebyline:docs/index.html",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "textRange": {
+    "startLine": 2288,
+    "endLine": 2288,
+    "startOffset": 5,
+    "endOffset": 10
+  },
+  "flows": [],
+  "rule": "javascript:S7773",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "line": 2288,
+  "message": "Prefer `Number.isNaN` over `isNaN`.",
+  "type": "CODE_SMELL",
+  "severity": "MINOR"
+}

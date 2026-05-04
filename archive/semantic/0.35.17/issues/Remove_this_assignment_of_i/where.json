@@ -1,0 +1,38 @@
+{
+  "flows": [
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1339,
+            "endLine": 1339,
+            "startOffset": 27,
+            "endOffset": 28
+          },
+          "msg": "Counter variable update"
+        }
+      ]
+    }
+  ],
+  "textRange": {
+    "startLine": 1364,
+    "endLine": 1364,
+    "startOffset": 4,
+    "endOffset": 5
+  },
+  "cleanCodeAttribute": "CLEAR",
+  "rule": "javascript:S2310",
+  "line": 1364,
+  "message": "Remove this assignment of \"i\".",
+  "type": "CODE_SMELL",
+  "component": "amokprime_linebyline:docs/index.html",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "severity": "MAJOR"
+}

@@ -1,0 +1,28 @@
+{
+  "name": "linebyline",
+  "version": "1.0.0",
+  "description": "I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️. Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me. Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). See what I'm working on [here](https://share.note.sx/9wimmaly).  ### About **LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to [LRCLIB](https://lrclib.net/): 1. Find original lyrics from [Genius](https://genius.com/) or LRCLIB, or DuckDuckGo if really obscure 2. Extract clean lyrics from Genius with GeniusLyricCopier extension 3. Strip sections with https://www.lrcgenerator.com/ 4. Add song and lyrics to https://seinopsys.dev/lrc 5. Use AutoHotkey to workaround hotkey limitations (see [/archive/autohotkey](https://github.com/amokprime/linebyline/tree/main/archive/autohotkey)) 6. Go back to Genius or DuckDuckGo for metadata and translations 7. Review in [LRCGET](https://github.com/tranxuanthang/lrcget) and Publish",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/amokprime/linebyline.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/amokprime/linebyline/issues"
+  },
+  "homepage": "https://github.com/amokprime/linebyline#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.59.1",
+    "@types/node": "^25.6.0",
+    "@linebyline/test-helpers": "file:./tests/helpers"
+  }
+}

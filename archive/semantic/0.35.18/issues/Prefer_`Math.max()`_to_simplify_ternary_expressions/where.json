@@ -1,0 +1,23 @@
+{
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "flows": [],
+  "cleanCodeAttribute": "CLEAR",
+  "component": "amokprime_linebyline:docs/index.html",
+  "type": "CODE_SMELL",
+  "rule": "javascript:S7766",
+  "message": "Prefer `Math.max()` to simplify ternary expressions.",
+  "severity": "MINOR",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "line": 2526,
+  "textRange": {
+    "startLine": 2526,
+    "endLine": 2526,
+    "startOffset": 13,
+    "endOffset": 38
+  }
+}

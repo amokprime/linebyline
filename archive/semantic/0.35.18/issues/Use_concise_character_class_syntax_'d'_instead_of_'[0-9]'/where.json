@@ -1,0 +1,23 @@
+{
+  "cleanCodeAttribute": "CLEAR",
+  "rule": "javascript:S6353",
+  "flows": [],
+  "message": "Use concise character class syntax '\\d' instead of '[0-9]'.",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 453,
+  "type": "CODE_SMELL",
+  "severity": "MINOR",
+  "textRange": {
+    "startLine": 453,
+    "endLine": 453,
+    "startOffset": 35,
+    "endOffset": 40
+  },
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ]
+}
