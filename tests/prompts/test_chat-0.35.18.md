@@ -1190,3 +1190,22 @@ Your SonarQube quality gate requires **≥80% coverage on new code**. Since Sona
 | Repo root (new)          | Add `sonar.properties` to exclude test files from coverage                            | N/A — configuration |
 
 ---
+Found it — **duplicate `sonar.exclusions` keys**. YAML and SonarQube don't merge them; the second one **replaces** the first:
+
+```yaml
+-Dsonar.exclusions=archive/**    # ← overwritten by next line
+-Dsonar.exclusions=tests/**      # ← only this one takes effect
+```
+
+So `archive/` is no longer excluded. Fix: combine them into a single comma-separated value:
+
+```yaml
+args:
+  -Dsonar.projectKey=amokprime_linebyline
+  -Dsonar.organization=amokprime
+  -Dsonar.scm.provider=git
+  -Dsonar.exclusions=archive/**,tests/**
+```
+That's the fix. **Duplicate `-Dsonar.exclusions` keys don't merge — the last one wins.** So when you added `tests/**`, it silently replaced `archive/**` instead of adding to it. The comma-separated syntax (`archive/**,tests/**`) excludes both.
+
+---
