@@ -3,6 +3,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { test: base, expect } = require('@playwright/test');
 
 /**
  * Scans archive/semantic/ for the highest semver directory
@@ -50,4 +51,16 @@ function findLatestVersion(archiveRoot = 'archive/semantic') {
   return `/${archiveRoot}/${latest}/${htmlFile}`;
 }
 
-module.exports = { findLatestVersion };
+const MEDIA_DIR = path.join(__dirname, '..', 'media');
+
+const test = base.extend({
+  page: async ({ page }, use) => {
+    await page.goto(findLatestVersion());
+    await use(page);
+  },
+  media: async ({}, use) => {
+    await use((filename) => path.join(MEDIA_DIR, filename));
+  },
+});
+
+module.exports = { findLatestVersion, test, expect };
