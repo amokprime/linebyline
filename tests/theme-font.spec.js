@@ -10,9 +10,9 @@ test('link-hrefs', async ({ page }) => {
 });
 
 test('theme-toggle', async ({ page }) => {
-  await page.keyboard.press('Control+.')
+  await page.keyboard.press('Control+.');
   await expect(page).toHaveScreenshot('dark-mode.png');
-  await page.keyboard.press('Control+.')
+  await page.keyboard.press('Control+.');
   await expect(page).toHaveScreenshot('light-mode.png');
 });
 
