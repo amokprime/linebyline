@@ -61,6 +61,9 @@ const test = base.extend({
   media: async ({}, use) => {
     await use((filename) => path.join(MEDIA_DIR, filename));
   },
+  readMedia: async ({}, use) => {
+    await use((filename) => fs.readFileSync(path.join(MEDIA_DIR, filename), 'utf-8'));
+  },
 });
 
 module.exports = { findLatestVersion, test, expect };

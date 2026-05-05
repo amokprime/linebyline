@@ -15,7 +15,7 @@ export default defineConfig({
     baseURL: 'http://localhost:3004',
     trace: 'on-first-retry',
   },
-
+  outputDir: './trash',
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },

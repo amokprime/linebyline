@@ -2,7 +2,7 @@ Icons ("undo", "redo", "list-checks" recolored for LineByLine logo, "play", "ski
 
 "list-checks" recolored with an online SVG editor
 
-Built with [Claude Sonnet 4.6](https://www.anthropic.com/claude) AI assistance
+Built with [Claude Sonnet 4.6](https://www.anthropic.com/claude) and [GLM-5.1](https://chat.z.ai/) AI assistance
 
 Lyrics and metadata extraction tested with [Genius](https://genius.com/)
 
@@ -13,3 +13,5 @@ French and Spanish translations for "I Wish I Could Identify That Smell" generat
 **Segoe UI, Georgia, Courier New** © Microsoft Corporation used when preinstalled on Windows systems in versions before 0.34.5
 
 Markdown files written with [Obsidian](https://obsidian.md/)
+
+Naughty strings tests by minimaxir: https://github.com/minimaxir/big-list-of-naughty-strings
