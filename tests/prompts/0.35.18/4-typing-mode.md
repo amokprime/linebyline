@@ -1,3 +1,6 @@
+---
+model: GLM-5.1
+---
 I finished `sync-adjust.spec.js` and am now working on `typing-mode.spec.js`. There may be a way to automate a test planned to keep manual in 1.1-suggestions.md: "Lyrics scroll position after mode toggle". Recall the 2-import-paste.md strategy "10,000 lines of normal lyrics doesn't need a source file. Generate it inline:". 
 
 Now suppose 1,000 lines were generated with an incrementing number + unique ID per line. The original scroll bug in a much earlier version of LineByLine jumped all the way to the bottom when entering Typing mode if there were enough lyrics to run offscreen. And 1,000 lines should be more than most computer monitors can display, maybe an even lower number would work. Checking that 1-uniquerandomid is visible (i.e. `getByText`) in both Hotkey and Typing modes should catch the scroll bug's return. If a more subtle scroll bug emerged, it could be found by line number + ID.

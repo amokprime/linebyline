@@ -1,3 +1,6 @@
+---
+model: GLM-5.1
+---
 Read contents of linebyline.zip for context, starting with INDEX.md (/linebyline parent folder represents repo root). I need to figure out why the audio-box text changes in Typing mode.
 # Test info
 - Name: playback.spec.js >> play-pause-typing

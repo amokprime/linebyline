@@ -1,5 +1,5 @@
-AI used: [GLM-5.1](https://chat.z.ai)
-
+---
+model: GLM-5.1
 ---
 Read contents of linebyline.zip for context, starting with INDEX.md (/linebyline parent folder represents repo root). I need to decide whether test-files.js is still worthwhile over [direct references](https://playwright.dev/docs/input#upload-files) given the flat /media structure I reorganized /music into. A few /music folders like folder 1 were referenced frequently in the original checklist, but many of those checklist tests were invalidated in suggestions-0.35.18.md.
 

@@ -25,6 +25,21 @@ test('import-synced', async ({ page, media }) => {
     expect(lyrics).toMatchSnapshot('import-synced-textarea.txt');
 });
 
+test('import-replace', async ({ page, media }) => {
+  await page.locator('#file-picker').setInputFiles([
+    media('audio.mp3'),
+    media('synced_english.lrc'),
+  ]);
+  await page.locator('#file-picker').setInputFiles([
+    media('plain_english.lrc'),
+  ]);
+    await expect(page.getByText('audio')).toBeVisible();
+    const lines = await page.locator('#main-lines').innerText();
+    expect(lines).toMatchSnapshot('import-replace-lines.txt');
+    const lyrics = await page.locator('#main-textarea').inputValue();
+    expect(lyrics).toMatchSnapshot('import-replace-textarea.txt');
+});
+
 test('paste-plain-hotkey', async ({ page, readMedia }) => {
   await page.locator('#main-lines').click();
   await page.evaluate((text) => {

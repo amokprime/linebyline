@@ -1,7 +1,6 @@
-AI used: [GLM-5.1](https://chat.z.ai)
-
 ---
-
+model: GLM-5.1
+---
 I am learning Playwright (https://playwright.dev/docs/intro, used from Windows Terminal Git Bash profile) to test a vibe coded web app. The latest version relative to repo folder root is at /archive/semantic/0.35.18/linebyline-0.35.18.html. 
 Playwright expects a server URL to be configured in playwright.config.js located at root. So my first task is to configure playwright.config.js to serve the local file. Port 3004 is free.
 
