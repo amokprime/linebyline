@@ -38,7 +38,6 @@ test('sync-time-end', async ({ page, media }) => {
     media('audio.mp3'),
     media('synced_english.lrc'),
   ]);
-  
   await page.keyboard.press('t');
   await expect(page.locator('div').filter({ hasText: /^\[00:00\.00\]$/ })).toBeVisible();
 });

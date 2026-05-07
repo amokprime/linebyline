@@ -60,11 +60,12 @@ test('seek-typing', async({ page, media }) => {
   await expect(page.locator('#audio-box')).toContainText('0:05');
 });
 
-test('speed', async ({ page, media }) => {
+test('speed-typing', async ({ page, media }) => {
   await page.locator('#file-picker').setInputFiles([
     media('audio.mp3'),
     media('synced_english.lrc'),
   ]);
+  await page.keyboard.press('Backquote');
   for (let i = 0; i < 2; i++) await page.keyboard.press('Control+1');
   await expect(page.locator('#speed-val')).toHaveValue('0.83');
   await page.keyboard.press('Control+2');
