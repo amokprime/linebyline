@@ -115,3 +115,11 @@ test('replay-sync-time', async ({ page, media }) => {
   await page.keyboard.press('c');
   await expect(page.getByText('[00:00.00] I wish I could identify that smell[00:04.06] That smell [00:06.35]')).toHaveScreenshot();
 });
+
+test('sync-empty', async ({ page, media }) => {
+  await page.locator('#main-lines').pressSequentially('asdfzxcvt');
+  const lines = await page.locator('#main-lines').innerText();
+  expect(lines).toMatchSnapshot('sync-empty-lines.txt');
+  const lyrics = await page.locator('#main-textarea').inputValue();
+  expect(lyrics).toMatchSnapshot('sync-empty-textarea.txt');
+});

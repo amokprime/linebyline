@@ -87,3 +87,14 @@ test('volume-mute-down', async({ page, media }) => {
   await page.mouse.wheel(0, 120);
   await expect(page.locator('#vol-slider')).toHaveValue('0.9');
 });
+
+test('import-audio-update', async({ page, media }) => {
+  await page.keyboard.press('Space');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Control+1');
+  await page.locator('#progress-wrap').click();
+  await page.locator('#file-picker').setInputFiles([
+    media('audio.mp3'),
+  ]);
+  await expect(page.getByText('audio Unknown Artist 0:000:13')).toBeVisible();
+});
