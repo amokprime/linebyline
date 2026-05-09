@@ -36,7 +36,7 @@ test('paste-secondary-genius', async ({ page, readMedia }) => {
   await page.getByRole('textbox').click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
-  }, readMedia('genius.txt'));
+  }, readMedia('mock.txt'));
   await page.keyboard.press('Control+v');
   const lyrics = await page.getByRole('textbox').inputValue();
   expect(lyrics).toMatchSnapshot();

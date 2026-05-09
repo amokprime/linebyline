@@ -5,11 +5,9 @@ Any human developers willing to review vibe code are welcome🧡. Current LineBy
 If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login) Projects and request many small changes in one prompt (drafted in [Obsidian](https://obsidian.md/)). Steps to reproduce a typical workflow:
 1. Add latest [claude_instructions](https://github.com/amokprime/linebyline/tree/main/archive/claude_instructions) (including skills) if they don't already exist
 2. Add the latest app version to project files and enable memory if using claude.ai
-3. Add the [QA tests](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) to project files, especially if refactoring
-4. Draft Prompt.md in Obsidian if you have a lot of requests and might fatfinger `Enter`.
-5. Open the output .html in a browser and run the tests that Claude suggests
-	1. Delete project files that Claude duplicated as Artifacts to save tokens
-6. PR Claude's output .html and .md files in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning.
+3. Draft Prompt.md in Obsidian if you have a lot of requests and might fatfinger `Enter`.
+4. Delete project files that Claude duplicated as Artifacts to save tokens
+5. PR Claude's output .html and .md files in a new [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) subfolder numbered with semantic versioning.
 	1. Bug fixes and refinements of existing features: "Patch"
 		- 0.34.9 → Patch → 0.34.10
 	2. New features that fit well into the existing app: "Minor"
@@ -18,9 +16,18 @@ If you are also vibe coding: I use free plan [claude.ai](https://claude.ai/login
 		- 0.34.7 → Major → 1.0.0
 	4. If Claude doesn't update the output file version you can just rename the app's filename (i.e. linebyline-0.34.7.html) and the title element: `<title>LineByLine 0.34.7</title>`.
 
+Starting with the SonarQube Cloud code quality refactor in 0.35.18, every version gets Playwright [tests](https://github.com/amokprime/linebyline/blob/main/tests/). I am running them locally without CI for now, so you would have to generate your own snapshots.
+
+One of the test files is a syntactic representation of a Genius web page. Let me know if Genius changes their website and breaks extraction in the real app.
+
+Some [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) tests are also recommended.
+
+---
+#### Deprecated
+
+Starting with PR version 0.35.14, every version gets partial tests suggested by Claude from the checklist based on what it changed. Actual releases will still get full tests.
+
 Starting with version 0.34.7, releases come with [QA test](https://github.com/amokprime/linebyline/blob/main/tests/CHECKLIST.md) results. It's a manual checklist and I may put it off by:
 - Pushing minor changes to their own subfolders in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic) without releasing until several versions later
 - Noting minor bugs caught by QA tests as [Known Issues](https://share.note.sx/9wimmaly) rather than patching right away (and immediately obligating a retest for bugs introduced by the patch)
 - Making a very long PR or PR draft and merging later
-
-Starting with PR version 0.35.14, every version gets partial tests suggested by Claude from the checklist based on what it changed. Actual releases will still get full tests.

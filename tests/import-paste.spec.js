@@ -97,7 +97,7 @@ test('paste-genius-hotkey', async ({ page, readMedia }) => {
   await page.locator('#main-lines').click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
-  }, readMedia('genius.txt'));
+  }, readMedia('mock.txt'));
   await page.keyboard.press('Control+v');
   const lyrics = await page.locator('#main-textarea').inputValue();
   expect(lyrics).toMatchSnapshot();
@@ -108,7 +108,7 @@ test('paste-genius-typing', async ({ page, readMedia }) => {
   await page.locator('#main-textarea').click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
-  }, readMedia('genius.txt'));
+  }, readMedia('mock.txt'));
   await page.keyboard.press('Control+v');
   const lyrics = await page.locator('#main-textarea').inputValue();
   expect(lyrics).toMatchSnapshot();

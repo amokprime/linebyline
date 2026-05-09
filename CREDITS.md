@@ -2,9 +2,9 @@ Icons ("undo", "redo", "list-checks" recolored for LineByLine logo, "play", "ski
 
 "list-checks" recolored with an online SVG editor
 
-Built with [Claude Sonnet 4.6](https://www.anthropic.com/claude) and [GLM-5.1](https://chat.z.ai/) AI assistance
+Built with [Claude Sonnet 4.6](https://www.anthropic.com/claude) and [GLM](https://chat.z.ai/) AI assistance
 
-Lyrics and metadata extraction tested with [Genius](https://genius.com/)
+Lyrics page extraction code and mock test designed for compatibility with [Genius](https://genius.com/) page structure
 
 "I Wish I Could Identify That Smell" by The Jazz Kissingers published 2017 and downloaded from http://freemusicarchive.org/
 

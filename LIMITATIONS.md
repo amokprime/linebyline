@@ -45,3 +45,5 @@ const RESTRICTED_ALL=new Set([
   'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
 ]);
 ```
+
+**Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) as of version 0.35.18**
