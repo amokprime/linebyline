@@ -1,9 +1,9 @@
 // @ts-check
-'use strict';
+"use strict";
 
-const fs = require('node:fs');
-const path = require('node:path');
-const { test: base, expect } = require('@playwright/test');
+const fs = require("node:fs");
+const path = require("node:path");
+const { test: base, expect } = require("@playwright/test");
 
 /**
  * Scans archive/semantic/ for the highest semver directory
@@ -15,7 +15,7 @@ const { test: base, expect } = require('@playwright/test');
  * @param {string} [archiveRoot='archive/semantic'] - Relative path from project root
  * @returns {string} URL path like /archive/semantic/0.35.18/linebyline-0.35.18.html
  */
-function findLatestVersion(archiveRoot = 'archive/semantic') {
+function findLatestVersion(archiveRoot = "archive/semantic") {
   const absRoot = path.resolve(process.cwd(), archiveRoot);
 
   if (!fs.existsSync(absRoot)) {
@@ -25,13 +25,13 @@ function findLatestVersion(archiveRoot = 'archive/semantic') {
   const entries = fs.readdirSync(absRoot, { withFileTypes: true });
 
   const versions = entries
-    .filter(d => d.isDirectory() && /^\d+\.\d+\.\d+$/.test(d.name))
-    .map(d => {
-      const [major, minor, patch] = d.name.split('.').map(Number);
+    .filter((d) => d.isDirectory() && /^\d+\.\d+\.\d+$/.test(d.name))
+    .map((d) => {
+      const [major, minor, patch] = d.name.split(".").map(Number);
       return { name: d.name, major, minor, patch };
     })
-    .sort((a, b) =>
-      b.major - a.major || b.minor - a.minor || b.patch - a.patch
+    .sort(
+      (a, b) => b.major - a.major || b.minor - a.minor || b.patch - a.patch,
     );
 
   if (versions.length === 0) {
@@ -40,30 +40,59 @@ function findLatestVersion(archiveRoot = 'archive/semantic') {
 
   const latest = versions[0].name;
   const htmlFile = `linebyline-${latest}.html`;
-  const htmlAbsPath = path.resolve(process.cwd(), archiveRoot, latest, htmlFile);
+  const htmlAbsPath = path.resolve(
+    process.cwd(),
+    archiveRoot,
+    latest,
+    htmlFile,
+  );
 
   if (!fs.existsSync(htmlAbsPath)) {
     throw new Error(
-      `Version directory ${latest} exists but expected file not found: ${htmlAbsPath}`
+      `Version directory ${latest} exists but expected file not found: ${htmlAbsPath}`,
     );
   }
 
   return `/${archiveRoot}/${latest}/${htmlFile}`;
 }
 
-const MEDIA_DIR = path.join(__dirname, '..', 'media');
+const MEDIA_DIR = path.join(__dirname, "..", "media");
+/**
+ * @typedef {object} CustomFixtures
+ * @property {(filename: string) => string} media - Resolves a media filename to an absolute path
+ * @property {(filename: string) => string} readMedia - Reads a media file's contents as UTF-8
+ * @property {(nth: number, filename: string) => Promise<void>} importSecondary - Opens nth 📂 button and sets files
+ */
 
-const test = base.extend({
-  page: async ({ page }, use) => {
-    await page.goto(findLatestVersion());
-    await use(page);
-  },
-  media: async ({}, use) => {
-    await use((filename) => path.join(MEDIA_DIR, filename));
-  },
-  readMedia: async ({}, use) => {
-    await use((filename) => fs.readFileSync(path.join(MEDIA_DIR, filename), 'utf-8'));
-  },
-});
+const test =
+  /** @type {import('@playwright/test').TestType<import('@playwright/test').PlaywrightTestArgs & import('@playwright/test').PlaywrightTestOptions & CustomFixtures, import('@playwright/test').PlaywrightWorkerArgs & import('@playwright/test').PlaywrightWorkerOptions>} */ (
+    base.extend({
+      page: async ({ page }, use) => {
+        await page.goto(findLatestVersion());
+        await use(page);
+      },
+      media: async ({}, use) => {
+        await use((/** @type {string} */ filename) =>
+          path.join(MEDIA_DIR, filename),
+        );
+      },
+      readMedia: async ({}, use) => {
+        await use((/** @type {string} */ filename) =>
+          fs.readFileSync(path.join(MEDIA_DIR, filename), "utf-8"),
+        );
+      },
+      importSecondary: async ({ page, media }, use) => {
+        await use(
+          async (/** @type {number} */ nth, /** @type {string} */ filename) => {
+            const [fc] = await Promise.all([
+              page.waitForEvent("filechooser"),
+              page.getByRole("button", { name: "📂" }).nth(nth).click(),
+            ]);
+            await fc.setFiles([media(filename)]);
+          },
+        );
+      },
+    })
+  );
 
 module.exports = { findLatestVersion, test, expect };

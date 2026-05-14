@@ -1,138 +1,177 @@
-const { test, expect } = require('@linebyline/test-helpers');
+const { test, expect } = require("@linebyline/test-helpers");
 
-test('import-plain', async ({ page, media }) => {
-  await page.locator('#file-picker').setInputFiles([
-    media('audio.mp3'),
-    media('plain_english.lrc'),
-  ]);
-    await expect(page.getByText('audio')).toBeVisible();
-    const lines = await page.locator('#main-lines').innerText();
-    expect(lines).toMatchSnapshot('import-plain-lines.txt');
-    const lyrics = await page.locator('#main-textarea').inputValue();
-    expect(lyrics).toMatchSnapshot('import-plain-textarea.txt');
+test("import-plain", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("audio.mp3"), media("plain_english.lrc")]);
+  await expect(page.getByText("audio")).toBeVisible();
+  const lines = await page.locator("#main-lines").innerText();
+  expect(lines).toMatchSnapshot("import-plain-lines.txt");
+  const lyrics = await page.locator("#main-textarea").inputValue();
+  expect(lyrics).toMatchSnapshot("import-plain-textarea.txt");
 });
 
-test('import-synced', async ({ page, media }) => {
-  await page.locator('#file-picker').setInputFiles([
-    media('audio.mp3'),
-    media('synced_english.lrc'),
-  ]);
-    await expect(page.getByText('I Wish I Could Identify That Smell', { exact: true })).toBeVisible();
-    await expect(page.getByText('The Jazz Kissingers')).toBeVisible();
-    const lines = await page.locator('#main-lines').innerText();
-    expect(lines).toMatchSnapshot('import-synced-lines.txt');
-    const lyrics = await page.locator('#main-textarea').inputValue();
-    expect(lyrics).toMatchSnapshot('import-synced-textarea.txt');
+test("import-synced", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await expect(
+    page.getByText("I Wish I Could Identify That Smell", { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByText("The Jazz Kissingers")).toBeVisible();
+  const lines = await page.locator("#main-lines").innerText();
+  expect(lines).toMatchSnapshot("import-synced-lines.txt");
+  const lyrics = await page.locator("#main-textarea").inputValue();
+  expect(lyrics).toMatchSnapshot("import-synced-textarea.txt");
 });
 
-test('import-replace', async ({ page, media }) => {
-  await page.locator('#file-picker').setInputFiles([
-    media('audio.mp3'),
-    media('synced_english.lrc'),
-  ]);
-  await page.locator('#file-picker').setInputFiles([
-    media('plain_english.lrc'),
-  ]);
-    await expect(page.getByText('audio')).toBeVisible();
-    const lines = await page.locator('#main-lines').innerText();
-    expect(lines).toMatchSnapshot('import-replace-lines.txt');
-    const lyrics = await page.locator('#main-textarea').inputValue();
-    expect(lyrics).toMatchSnapshot('import-replace-textarea.txt');
+test("import-replace", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("plain_english.lrc")]);
+  await expect(page.getByText("audio")).toBeVisible();
+  const lines = await page.locator("#main-lines").innerText();
+  expect(lines).toMatchSnapshot("import-replace-lines.txt");
+  const lyrics = await page.locator("#main-textarea").inputValue();
+  expect(lyrics).toMatchSnapshot("import-replace-textarea.txt");
 });
 
-test('paste-plain-hotkey', async ({ page, readMedia }) => {
-  await page.locator('#main-lines').click();
+test("import-lyrics-first", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("plain_english.lrc")]);
+  await expect(page.getByText("plain_english")).toBeVisible();
+  await page.locator("#file-picker").setInputFiles([media("audio.mp3")]);
+  await expect(page.getByText("audio")).toBeVisible();
+});
+
+test("import-corrupted-lyrics", async ({ page, media }) => {
+  await page.locator("#file-picker").setInputFiles([media("corrupted.lrc")]);
+  await expect(page.getByText("corrupted")).toBeVisible();
+  await expect(page.getByText("Unknown Artist")).toBeVisible();
+  const lines = await page.locator("#main-lines").innerText();
+  expect(lines).toMatchSnapshot("corrupted-lines.txt");
+  const lyrics = await page.locator("#main-textarea").inputValue();
+  expect(lyrics).toMatchSnapshot("corrupted-textarea.txt");
+});
+
+test("paste-plain-hotkey", async ({ page, readMedia }) => {
+  await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
-  }, readMedia('plain_english.lrc'));
-  await page.keyboard.press('Control+v');
-    const lines = await page.locator('#main-lines').innerText();
-    expect(lines).toMatchSnapshot('paste-plain-hotkey-lines.txt');
+  }, readMedia("plain_english.lrc"));
+  await page.keyboard.press("Control+v");
+  const lines = await page.locator("#main-lines").innerText();
+  expect(lines).toMatchSnapshot("paste-plain-hotkey-lines.txt");
 });
 
-test('paste-synced-hotkey', async ({ page, readMedia }) => {
-  await page.locator('#main-lines').click();
+test("paste-synced-hotkey", async ({ page, readMedia }) => {
+  await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
-  }, readMedia('synced_english.lrc'));
-  await page.keyboard.press('Control+v');
-    const lines = await page.locator('#main-lines').innerText();
-    expect(lines).toMatchSnapshot();
+  }, readMedia("synced_english.lrc"));
+  await page.keyboard.press("Control+v");
+  const lines = await page.locator("#main-lines").innerText();
+  expect(lines).toMatchSnapshot();
 });
 
-test('paste-plain-typing', async ({ page, readMedia }) => {
-  await page.keyboard.press('Backquote')
-  await page.locator('#main-textarea').click();
+test("paste-plain-typing", async ({ page, readMedia }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
-  }, readMedia('plain_english.lrc'));
-  await page.keyboard.press('Control+v');
-  const lyrics = await page.locator('#main-textarea').inputValue();
+  }, readMedia("plain_english.lrc"));
+  await page.keyboard.press("Control+v");
+  const lyrics = await page.locator("#main-textarea").inputValue();
   expect(lyrics).toMatchSnapshot();
 });
 
-test('paste-synced-typing', async ({ page, readMedia }) => {
-  await page.keyboard.press('Backquote')
-  await page.locator('#main-textarea').click();
+test("paste-synced-typing", async ({ page, readMedia }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
-  }, readMedia('synced_english.lrc'));
-  await page.keyboard.press('Control+v');
-  const lyrics = await page.locator('#main-textarea').inputValue();
+  }, readMedia("synced_english.lrc"));
+  await page.keyboard.press("Control+v");
+  const lyrics = await page.locator("#main-textarea").inputValue();
   expect(lyrics).toMatchSnapshot();
 });
 
-test('paste-secondary', async ({ page, readMedia }) => {
-  await page.keyboard.press('Control+4');
-  await page.getByRole('textbox').click();
+test("paste-secondary", async ({ page, readMedia }) => {
+  await page.keyboard.press("Control+4");
+  await page.getByRole("textbox").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
-  }, readMedia('plain_french.lrc'));
-  await page.keyboard.press('Control+v');
-  const lyrics = await page.getByRole('textbox').inputValue();
-  expect(lyrics).toMatchSnapshot();
-});
-
-test('paste-genius-hotkey', async ({ page, readMedia }) => {
-  await page.locator('#main-lines').click();
-  await page.evaluate((text) => {
-    navigator.clipboard.writeText(text);
-  }, readMedia('mock.txt'));
-  await page.keyboard.press('Control+v');
-  const lyrics = await page.locator('#main-textarea').inputValue();
+  }, readMedia("plain_french.lrc"));
+  await page.keyboard.press("Control+v");
+  const lyrics = await page.getByRole("textbox").inputValue();
   expect(lyrics).toMatchSnapshot();
 });
 
-test('paste-genius-typing', async ({ page, readMedia }) => {
-  await page.keyboard.press('Backquote')
-  await page.locator('#main-textarea').click();
+test("paste-genius-hotkey", async ({ page, readMedia }) => {
+  await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
-  }, readMedia('mock.txt'));
-  await page.keyboard.press('Control+v');
-  const lyrics = await page.locator('#main-textarea').inputValue();
-  expect(lyrics).toMatchSnapshot();
+  }, readMedia("mock.txt"));
+  await page.keyboard.press("Control+v");
+  const lyrics = await page.locator("#main-textarea").inputValue();
+  expect(lyrics).toMatchSnapshot();
 });
 
-test('10k-line-paste', async ({ page }) => {
-  const longText = Array(10000).fill('I wish I could identify that smell').join('\n');
-  await page.locator('#main-lines').click();
+test("paste-genius-typing", async ({ page, readMedia }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  await page.evaluate((text) => {
+    navigator.clipboard.writeText(text);
+  }, readMedia("mock.txt"));
+  await page.keyboard.press("Control+v");
+  const lyrics = await page.locator("#main-textarea").inputValue();
+  expect(lyrics).toMatchSnapshot();
+});
+
+test("save", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("synced_english.lrc")]);
+  const TITLE = "I Wish I Could Identify That Smell";
+  const downloadPromise = page.waitForEvent("download");
+  await page.keyboard.press("Control+'");
+  const download = await downloadPromise;
+  const content = await download
+    .path()
+    .then((p) => require("fs").readFileSync(p, "utf-8"));
+  const filename = download.suggestedFilename();
+  const savedTitle = content.match(/\[ti: (.+?)\]/)?.[1];
+  expect(savedTitle).toEqual(TITLE);
+  expect(content).toContain("[ar: The Jazz Kissingers]");
+  expect(content).toMatchSnapshot();
+  expect(filename).toBe(`${TITLE}.lrc`);
+});
+
+test("10k-line-paste", async ({ page }) => {
+  const longText = Array(10000)
+    .fill("I wish I could identify that smell")
+    .join("\n");
+  await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, longText);
-  await page.keyboard.press('Control+v');
-  await expect(page.locator('#main-lines')).toContainText('I wish I could');
+  await page.keyboard.press("Control+v");
+  await expect(page.locator("#main-lines")).toContainText("I wish I could");
 });
 
-test('naughty-strings', async ({ page, readMedia }) => {
+test("naughty-strings", async ({ page, readMedia }) => {
   test.setTimeout(120000);
-  const blns = JSON.parse(readMedia('naughty-strings.json'));
-  await page.locator('#main-lines').click();
+  const blns = JSON.parse(readMedia("naughty-strings.json"));
+  await page.locator("#main-lines").click();
   for (const naughty of blns) {
     await page.evaluate((text) => {
       navigator.clipboard.writeText(text);
     }, naughty);
-    await page.keyboard.press('Control+v');
-    await expect(page.locator('#main-lines')).toBeVisible();
+    await page.keyboard.press("Control+v");
+    await expect(page.locator("#main-lines")).toBeVisible();
   }
 });

@@ -1,12 +1,46 @@
 const { test, expect } = require('@linebyline/test-helpers');
 
 test('persistence', async ({ page, media }) => {
-  await page.locator('#file-picker').setInputFiles([
-    media('plain_english.lrc'),
-  ]);
+  const exp = (role, name, v, soft) =>
+    (soft ? expect.soft : expect)(page.getByRole(role, { name })).toHaveValue(v);
+  const titlebar = page.getByText('📂 💾 System Sans System');
+  const newmeta = '[ti: Lalala]\n[ar: Me]\n[al: Myself]\n[re: And I]'
+  await page.locator('#file-picker').setInputFiles([media('plain_english.lrc')]);
+  // Set
+  await page.getByRole('combobox',  { name: 'Editor font' }).selectOption('serif');
+  await page.getByRole('spinbutton', { name: 'Font size' }).fill('20');
+  await page.getByRole('spinbutton', { name: 'Playback speed' }).fill('1.5');
+  await page.getByRole('spinbutton', { name: 'Seek offset (ms): shifts' }).fill('-400');
   await page.keyboard.press('Control+.');
+  await page.keyboard.press('Control+,');
+  await page.getByRole('checkbox', { name: 'Moving to previous line' }).check();
+  await page.getByRole('spinbutton', { name: 'Tiny' }).fill('99');
+  await page.locator('#s-default-meta').fill(newmeta);
+  await page.keyboard.press('Escape');
+  await expect(titlebar).toHaveScreenshot('titlebar-dark.png');
+  // Reload
   await page.reload();
-  await expect(page).toHaveScreenshot();
+  await page.locator('#file-picker').setInputFiles([media('plain_english.lrc')]);
+  await exp('combobox',  'Editor font', 'serif');
+  await exp('spinbutton', 'Font size', '20');
+  await exp('spinbutton', 'Playback speed', '1.5', true); // soft: confirmed broken
+  await exp('spinbutton', 'Seek offset (ms): shifts', '-400');
+  await expect(titlebar).toHaveScreenshot('titlebar-dark.png');
+  await page.keyboard.press('Control+,');
+  await expect(page.getByRole('checkbox', { name: 'Moving to previous line' })).toBeChecked();
+  await exp('spinbutton', 'Tiny', '99');
+  await expect(page.locator('#s-default-meta')).toHaveValue(newmeta);
+  // Reset
+  await page.locator('#settings-body').focus();
+  await page.locator('body').press('ControlOrMeta+\\');
+  await page.keyboard.press('Enter');
+  await exp('combobox',  'Editor font', 'system-ui,sans-serif');
+  await exp('spinbutton', 'Font size', '14');
+  await exp('spinbutton', 'Playback speed', '1'); // hard: reset should work even for broken-persist items
+  await exp('spinbutton', 'Seek offset (ms): shifts', '-600');
+  await expect(page.getByRole('checkbox', { name: 'Moving to previous line' })).not.toBeChecked();
+  await exp('spinbutton', 'Tiny', '100');
+  await expect(page.locator('#s-default-meta')).toHaveValue('[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n');
 });
 
 test('settings-window', async ({ page, media }) => {
