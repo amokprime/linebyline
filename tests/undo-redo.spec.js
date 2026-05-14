@@ -72,7 +72,7 @@ test("sync-repeat", async ({ page, media }) => {
   await expect(page.locator("#main-lines")).not.toContainText(/\d{2}:\d{2}/);
 });
 
-test("typing-debounce", async ({ page, media }) => {
+test("typing-debounce", async ({ page }) => {
   await page.keyboard.press("Backquote");
   const lyrics = () => page.locator("#main-textarea").inputValue();
   await page.locator("#main-textarea").pressSequentially("abc");

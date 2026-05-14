@@ -852,3 +852,55 @@ This way:
 - No blank line breaks anything — `const` immediately follows the comment
 
 ---
+```js
+const { test, expect } = require("@linebyline/test-helpers");
+import AxeBuilder from "@axe-core/playwright";
+
+test("axe-scan-landing", async ({ page }) => {
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test("axe-scan-lyrics", async ({ page, media, importSecondary }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await page.keyboard.press("Control+4");
+  await importSecondary(1, "plain_french.lrc");
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+
+test("axe-scan-settings", async ({ page }) => {
+  await page.keyboard.press("Control+,");
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+});
+```
+I renamed the "axe-scan" test to "axe-scan-landing" and added the other tests recommended in 8-review.md/"A. **`accessibility.spec.js` — single axe scan on empty page**". The secondary lyrics field is technically seen by Playwright as `page.getByRole('textbox')`. The Settings window doesn't really have a unified box but is split into `page.getByText('Settings ⌨')`, `page.locator('#settings-body')`, and `page.getByText('Reset defaults Reset all')`. Do I need to customize these two lines for each test accordingly:
+```js
+  const results = await new AxeBuilder({ page }).analyze();
+  expect(results.violations).toEqual([]);
+```
+
+---
+No, you don't need to customize those lines. The default `new AxeBuilder({ page }).analyze()` already scans the entire DOM on the page — every element, including the textbox, the settings body, and everything else.
+
+The whole reason to have three separate tests is that each test **navigates to a different view first**, and then the same one-liner scan captures everything visible in that view:
+
+| Test | What it sets up | What the scan sees |
+|------|-----------------|-------------------|
+| `axe-scan-landing` | Empty page | Landing state |
+| `axe-scan-lyrics` | Files loaded, secondary import | Textboxes, buttons, all lyrics UI |
+| `axe-scan-settings` | Settings opened | Settings body, inputs, labels |
+
+You don't need `.include('#settings-body')` or `.include('textbox')` because those elements are already on the page — axe finds them automatically.
+
+The only reason to customize the AxeBuilder call would be:
+
+- **`.exclude()`** — to silence a known false positive you can't fix (e.g., a third-party component or an intentional design choice like low contrast on a decorative element)
+- **`.withRules()`** — to focus on a specific rule during debugging
+
+Neither applies here. The plain two-liner is correct for all three tests as-is.
+
+---

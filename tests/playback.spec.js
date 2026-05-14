@@ -68,14 +68,14 @@ test("speed-typing", async ({ page, media }) => {
   await expect(page.locator("#speed-val")).toHaveValue("1");
 });
 
-test("volume-mute-up", async ({ page, media }) => {
+test("volume-mute-up", async ({ page }) => {
   await page.locator("#vol-slider").hover();
   await page.keyboard.press("Control+m");
   await page.mouse.wheel(0, -120);
   await expect(page.locator("#vol-slider")).toHaveValue("0.1");
 });
 
-test("volume-mute-down", async ({ page, media }) => {
+test("volume-mute-down", async ({ page }) => {
   await page.locator("#vol-slider").hover();
   for (let i = 0; i < 2; i++) await page.keyboard.press("Control+m");
   await page.mouse.wheel(0, 120);

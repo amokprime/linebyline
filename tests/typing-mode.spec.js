@@ -1,6 +1,6 @@
 const { test, expect } = require("@linebyline/test-helpers");
 
-test("controls-gray", async ({ page, media }) => {
+test("controls-gray", async ({ page }) => {
   await page.keyboard.press("Backquote");
   await expect(
     page.getByText(
@@ -25,7 +25,7 @@ test("controls-disabled", async ({ page, media }) => {
   expect(lyrics).toMatchSnapshot();
 });
 
-test("toggle-scroll", async ({ page, media }) => {
+test("toggle-scroll", async ({ page }) => {
   const lines = [];
   for (let i = 1; i <= 1000; i++)
     lines.push(`nmbr${String(i).padStart(4, "0")}`);
@@ -52,7 +52,7 @@ test("arrow-nav-skip", async ({ page, media }) => {
   await expect(page).toHaveScreenshot("arrow-up.png");
 });
 
-test("meta-playing-update", async ({ page, media }) => {
+test("meta-playing-update", async ({ page }) => {
   await page.keyboard.press("Backquote");
   await page
     .locator("#main-textarea")
@@ -64,7 +64,7 @@ test("meta-playing-update", async ({ page, media }) => {
   await expect(page.getByText("TestArtist")).toBeVisible();
 });
 
-test("meta-save-update", async ({ page, media }) => {
+test("meta-save-update", async ({ page }) => {
   await page.keyboard.press("Backquote");
   const META =
     "[ti: TestTitle]\n[ar: TestArtist]\n[al: TestAlbum]\n[re: TestTool]\n";
@@ -80,14 +80,14 @@ test("meta-save-update", async ({ page, media }) => {
   expect(filename).toBe("TestTitle.lrc");
 });
 
-test("paren-close", async ({ page, media }) => {
+test("paren-close", async ({ page }) => {
   await page.keyboard.press("Backquote");
   await page.keyboard.press("(");
   await page.keyboard.press("Backquote");
   await expect(page.getByText("()")).toBeVisible();
 });
 
-test("brackets-close", async ({ page, media }) => {
+test("brackets-close", async ({ page }) => {
   await page.keyboard.press("Backquote");
   await page.keyboard.press("[");
   await page.keyboard.press("Backquote");

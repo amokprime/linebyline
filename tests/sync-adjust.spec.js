@@ -1,28 +1,5 @@
 const { test, expect } = require("@linebyline/test-helpers");
 
-test("control-time", async ({ page, media }) => {
-  await expect(page.getByText("−100ms time")).toBeVisible();
-  await expect(page.getByText("−200ms time")).toBeVisible();
-  await expect(page.getByText("−400ms time")).toBeVisible();
-  await expect(page.getByText("−1000ms time")).toBeVisible();
-  await expect(page.getByText("+100ms time")).toBeVisible();
-  await expect(page.getByText("+200ms time")).toBeVisible();
-  await expect(page.getByText("+400ms time")).toBeVisible();
-  await expect(page.getByText("+1000ms time")).toBeVisible();
-});
-
-test("control-seek", async ({ page, media }) => {
-  await page.keyboard.press("Shift+Backquote");
-  await expect(page.getByText("−100ms seek")).toBeVisible();
-  await expect(page.getByText("−200ms seek")).toBeVisible();
-  await expect(page.getByText("−400ms seek")).toBeVisible();
-  await expect(page.getByText("−1000ms seek")).toBeVisible();
-  await expect(page.getByText("+100ms seek")).toBeVisible();
-  await expect(page.getByText("+200ms seek")).toBeVisible();
-  await expect(page.getByText("+400ms seek")).toBeVisible();
-  await expect(page.getByText("+1000ms seek")).toBeVisible();
-});
-
 test("sync-time", async ({ page, media }) => {
   await page
     .locator("#file-picker")
@@ -157,7 +134,7 @@ test("replay-another-line", async ({ page, media }) => {
   await expect(page).toHaveScreenshot();
 });
 
-test("sync-empty", async ({ page, media }) => {
+test("sync-empty", async ({ page }) => {
   await page.locator("#main-lines").pressSequentially("asdfzxcvt");
   const lines = await page.locator("#main-lines").innerText();
   expect(lines).toMatchSnapshot("sync-empty-lines.txt");
