@@ -10,6 +10,9 @@
 #### File picker window
 - [ ] Open test file 1 and verify a normal looking file picker window appears
 
+#### Genius
+- [ ] Visit the Genius website and test pasting a real page in case the website layout changed
+
 #### Playback
 - Open test files and play the song. Verify that its audio:
 - [ ] Sounds "normal"
@@ -41,8 +44,7 @@
 
 #### Unsaved work warning
 - Open test files and check the popup is triggered by:
-- [ ] `Ctrl+W`
-- [ ] `Alt+F4`
+- [ ] `Ctrl+W` / `Alt+F4` (some OSes might intercept this before the browser)
 - [ ] Middle click on LineByLine browser tab
 - [ ] Clicking the browser tab `x` close button
 - [ ] Clicking the browser close button

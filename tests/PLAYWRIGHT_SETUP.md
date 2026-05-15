@@ -28,7 +28,12 @@ alias bsr="nano ~/.bashrc"
 alias srv="npx serve . -l 3004"
 alias tsta="npx playwright test --ui --project=firefox"
 alias tst="npx playwright test --project=firefox"
-cgn() {
+ff() {
+  npx serve . -l 3004 &
+  until curl -s http://localhost:3004 >/dev/null 2>&1; do
+    sleep 1
+  done
+  npx playwright test --ui --project=firefox &
   local path=$(node -e "const{findLatestVersion}=require('@linebyline/test-helpers');process.stdout.write(findLatestVersion())")
   npx playwright codegen "http://localhost:3004${path}" --browser firefox
 }

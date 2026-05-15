@@ -1403,3 +1403,29 @@ D: You're right that these are inherently subjective. Don't try to make them mor
 So for MANUAL.md, keep the wording subjective and pair it with a note that the exact timing is verified by the automated test. Something like: "Type quickly (as fast as you can): all characters should be undone as a group. Type slowly (about one key per second): each character should be undone separately." That's testable by a human and doesn't pretend to precision it can't deliver.
 
 ---
+For 6, I rewrote CONTRIBUTING.md heavily (see Draft.md) and added a Genius check to MANUAL.md. My project is niche enough that I might realistically not get other users for a long time, let alone contributors. In the new few months I hope to have the tests all passing and then move to Playwright CI (GitHub headless Ubuntu runner). Or at least migrate to Linux for more standardized snapshots and a better development environment in general. Either of which might make the "Running tests" and "Writing tests" sections partially obsolete before anyone sees them.
+
+---
+The "Running tests" and "Writing tests" sections serve different fates:
+
+**"Running tests"** → will be mostly obsoleted by CI. Once you have GitHub Actions running Playwright headless, the contributor workflow becomes "push a branch, CI tells you if it passes." The current section is essentially a disclaimer that local test runs are fragile and platform-dependent, plus the known-failures table. After CI, you'd replace most of it with "CI runs automatically on PRs; if you want to run locally, see PLAYWRIGHT_SETUP.md" and keep the known-failures table.
+
+**"Writing tests"** → stays relevant regardless of CI. Contributors still need to know the helper API (`media`, `readMedia`, `importSecondary`, `tabUntilFocused`, the custom `test` fixture). This section is reference documentation, not setup instructions. It won't become obsolete — it'll just need occasional updates when helpers change.
+
+So: keep "Writing tests" as-is. For "Running tests," it's fine to keep it now, but I'd add one sentence flagging the planned transition so you (or a future reader) aren't surprised when it changes:
+
+> Once CI is set up, most of this section will be replaced by automatic PR checks.
+
+That way if it does become obsolete, the intent is already documented and the rewrite is scoped.
+
+---
+
+On the MANUAL.md additions:
+
+The Genius check is good. It's the one thing that can break silently — the app's Genius parser targets a specific DOM structure, and if Genius redesigns, the parser fails without any app code changing. No Playwright test can catch this because it requires a live network request to the real site. Worth noting that explicitly in the test:
+
+> - [ ] Visit the Genius website and test pasting a real page to make sure extraction still works (this cannot be automated because it depends on a live third-party website)
+
+The "Unsaved work warning" section has a subtle issue: `Ctrl+W` and `Alt+F4` are OS-level shortcuts that close the tab/window. If the browser intercepts them before the `beforeunload` event fires, the test can't distinguish "popup appeared and I cancelled" from "popup didn't appear." The reliable checks are the last two (clicking the tab × and the browser close button), because those always trigger `beforeunload`. The keyboard shortcuts depend on the OS and browser — on some configurations they bypass `beforeunload` entirely. You might want to phrase those as conditional:
+
+> - [ ] `Ctrl+W` or `Alt+F4` (may be intercepted by OS before `beforeunload` fires)
