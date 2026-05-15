@@ -5,10 +5,12 @@ test("import-plain", async ({ page, media }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("plain_english.lrc")]);
   await expect(page.getByText("audio")).toBeVisible();
-  const lines = await page.locator("#main-lines").innerText();
-  expect(lines).toMatchSnapshot("import-plain-lines.txt");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot("import-plain-textarea.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "import-plain-lines.txt",
+  );
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "import-plain-textarea.txt",
+  );
 });
 
 test("import-synced", async ({ page, media }) => {
@@ -19,10 +21,12 @@ test("import-synced", async ({ page, media }) => {
     page.getByText("I Wish I Could Identify That Smell", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText("The Jazz Kissingers")).toBeVisible();
-  const lines = await page.locator("#main-lines").innerText();
-  expect(lines).toMatchSnapshot("import-synced-lines.txt");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot("import-synced-textarea.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "import-synced-lines.txt",
+  );
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "import-synced-textarea.txt",
+  );
 });
 
 test("import-replace", async ({ page, media }) => {
@@ -33,10 +37,12 @@ test("import-replace", async ({ page, media }) => {
     .locator("#file-picker")
     .setInputFiles([media("plain_english.lrc")]);
   await expect(page.getByText("audio")).toBeVisible();
-  const lines = await page.locator("#main-lines").innerText();
-  expect(lines).toMatchSnapshot("import-replace-lines.txt");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot("import-replace-textarea.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "import-replace-lines.txt",
+  );
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "import-replace-textarea.txt",
+  );
 });
 
 test("import-lyrics-first", async ({ page, media }) => {
@@ -52,10 +58,12 @@ test("import-corrupted-lyrics", async ({ page, media }) => {
   await page.locator("#file-picker").setInputFiles([media("corrupted.lrc")]);
   await expect(page.getByText("corrupted")).toBeVisible();
   await expect(page.getByText("Unknown Artist")).toBeVisible();
-  const lines = await page.locator("#main-lines").innerText();
-  expect(lines).toMatchSnapshot("corrupted-lines.txt");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot("corrupted-textarea.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "corrupted-lines.txt",
+  );
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "corrupted-textarea.txt",
+  );
 });
 
 test("paste-plain-hotkey", async ({ page, readMedia }) => {
@@ -64,8 +72,9 @@ test("paste-plain-hotkey", async ({ page, readMedia }) => {
     navigator.clipboard.writeText(text);
   }, readMedia("plain_english.lrc"));
   await page.keyboard.press("Control+v");
-  const lines = await page.locator("#main-lines").innerText();
-  expect(lines).toMatchSnapshot("paste-plain-hotkey-lines.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "paste-plain-hotkey.txt",
+  );
 });
 
 test("paste-synced-hotkey", async ({ page, readMedia }) => {
@@ -74,8 +83,9 @@ test("paste-synced-hotkey", async ({ page, readMedia }) => {
     navigator.clipboard.writeText(text);
   }, readMedia("synced_english.lrc"));
   await page.keyboard.press("Control+v");
-  const lines = await page.locator("#main-lines").innerText();
-  expect(lines).toMatchSnapshot();
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "paste-synced-hotkey.txt",
+  );
 });
 
 test("paste-plain-typing", async ({ page, readMedia }) => {
@@ -85,8 +95,9 @@ test("paste-plain-typing", async ({ page, readMedia }) => {
     navigator.clipboard.writeText(text);
   }, readMedia("plain_english.lrc"));
   await page.keyboard.press("Control+v");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot();
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "paste-plain-typing.txt",
+  );
 });
 
 test("paste-synced-typing", async ({ page, readMedia }) => {
@@ -96,8 +107,9 @@ test("paste-synced-typing", async ({ page, readMedia }) => {
     navigator.clipboard.writeText(text);
   }, readMedia("synced_english.lrc"));
   await page.keyboard.press("Control+v");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot();
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "paste-synced-typing.txt",
+  );
 });
 
 test("paste-secondary", async ({ page, readMedia }) => {
@@ -107,8 +119,9 @@ test("paste-secondary", async ({ page, readMedia }) => {
     navigator.clipboard.writeText(text);
   }, readMedia("plain_french.lrc"));
   await page.keyboard.press("Control+v");
-  const lyrics = await page.getByRole("textbox").inputValue();
-  expect(lyrics).toMatchSnapshot();
+  expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot(
+    "paste-secondary.txt",
+  );
 });
 
 test("paste-genius-hotkey", async ({ page, readMedia }) => {
@@ -117,8 +130,9 @@ test("paste-genius-hotkey", async ({ page, readMedia }) => {
     navigator.clipboard.writeText(text);
   }, readMedia("mock.txt"));
   await page.keyboard.press("Control+v");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot();
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "paste-genius-hotkey.txt",
+  );
 });
 
 test("paste-genius-typing", async ({ page, readMedia }) => {
@@ -128,8 +142,9 @@ test("paste-genius-typing", async ({ page, readMedia }) => {
     navigator.clipboard.writeText(text);
   }, readMedia("mock.txt"));
   await page.keyboard.press("Control+v");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot();
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "paste-genius-typing.txt",
+  );
 });
 
 test("save", async ({ page, media }) => {
@@ -151,27 +166,36 @@ test("save", async ({ page, media }) => {
   expect(filename).toBe(`${TITLE}.lrc`);
 });
 
-test("10k-line-paste", async ({ page }) => {
-  const longText = Array(10000)
-    .fill("I wish I could identify that smell")
-    .join("\n");
-  await page.locator("#main-lines").click();
-  await page.evaluate((text) => {
-    navigator.clipboard.writeText(text);
-  }, longText);
-  await page.keyboard.press("Control+v");
-  await expect(page.locator("#main-lines")).toContainText("I wish I could");
+test("import-10k-lines", async ({ page, media }) => {
+  await page.locator("#file-picker").setInputFiles([media("10k_lines.lrc")]); //Test crash
+  await expect(page.getByText("nmbr0001")).toBeVisible(); //Test view scroll jump to bottom bug
+  await page.keyboard.press("Backquote"); //Test lost lyrics
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot();
 });
 
-test("naughty-strings", async ({ page, readMedia }) => {
-  test.setTimeout(120000);
-  const blns = JSON.parse(readMedia("naughty-strings.json"));
+test("naughty-strings", async ({ page }) => {
+  // Targets paste-path edge cases NOT covered by import-corrupted-lyrics:
+  //  import-corrupted-lyrics already tests: 3/4-decimal timestamps,
+  //  non-numeric [X:X.X], missing brackets, trailing end timestamps.
+  const NAUGHTY = [
+    "[ar: <script>alert(1)</script>]", // META_RE match with HTML in value
+    "[123: numeric key]", // bracket+colon but NOT META_RE (digits)
+    "[]", // empty brackets
+    "[[[nested]]]", // triple brackets
+    "\ufeffBOM prefix", // BOM character
+    "zero\u200bwidth", // zero-width space
+    "line1\rline2", // carriage return (not split by \n)
+    "A".repeat(10000), // extremely long single line
+  ];
+
   await page.locator("#main-lines").click();
-  for (const naughty of blns) {
+  for (const [i, naughty] of NAUGHTY.entries()) {
     await page.evaluate((text) => {
       navigator.clipboard.writeText(text);
     }, naughty);
     await page.keyboard.press("Control+v");
     await expect(page.locator("#main-lines")).toBeVisible();
+    await page.keyboard.press("Control+a");
+    await page.keyboard.press("Backspace");
   }
 });

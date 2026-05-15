@@ -5,16 +5,14 @@ test("hide-secondary", async ({ page, importSecondary }) => {
   await importSecondary(1, "plain_spanish.lrc");
   await page.keyboard.press("Control+5");
   await page.keyboard.press("Control+4");
-  const lyrics = await page.getByRole("textbox").inputValue();
-  expect(lyrics).toMatchSnapshot();
+  expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot();
 });
 
 test("replace-secondary", async ({ page, importSecondary }) => {
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_spanish.lrc");
   await importSecondary(1, "plain_french.lrc");
-  const lyrics = await page.getByRole("textbox").inputValue();
-  expect(lyrics).toMatchSnapshot();
+  expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot();
 });
 
 test("paste-secondary-genius", async ({ page, readMedia }) => {
@@ -24,8 +22,7 @@ test("paste-secondary-genius", async ({ page, readMedia }) => {
     navigator.clipboard.writeText(text);
   }, readMedia("mock.txt"));
   await page.keyboard.press("Control+v");
-  const lyrics = await page.getByRole("textbox").inputValue();
-  expect(lyrics).toMatchSnapshot();
+  expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot();
 });
 
 test("font", async ({ page, media, importSecondary }) => {
@@ -51,10 +48,12 @@ test("merge-one", async ({ page, media, importSecondary }) => {
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_french.lrc");
   await page.keyboard.press("Control+6");
-  const lines = await page.locator("#main-lines").innerText();
-  expect(lines).toMatchSnapshot("merge-one-lines.txt");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot("merge-one-textarea.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "merge-one-lines.txt",
+  );
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "merge-one-textarea.txt",
+  );
 });
 
 test("merge-two", async ({ page, media, importSecondary }) => {
@@ -66,10 +65,12 @@ test("merge-two", async ({ page, media, importSecondary }) => {
   await page.keyboard.press("Control+4");
   await importSecondary(2, "plain_spanish.lrc");
   await page.keyboard.press("Control+6");
-  const lines = await page.locator("#main-lines").innerText();
-  expect(lines).toMatchSnapshot("merge-two-lines.txt");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot("merge-two-textarea.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "merge-two-lines.txt",
+  );
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "merge-two-textarea.txt",
+  );
 });
 
 test("merge-no-timestamps", async ({ page, media, importSecondary }) => {
@@ -85,16 +86,11 @@ test("merge-no-timestamps", async ({ page, media, importSecondary }) => {
 test("merge-no-trailing", async ({ page, media, importSecondary }) => {
   await page
     .locator("#file-picker")
-    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+    .setInputFiles([media("audio.mp3"), media("no_trailing.lrc")]);
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_french.lrc");
   await page.locator("#left-panel-header").click();
   await page.keyboard.press("Backquote");
-  await page.keyboard.press("Control+End");
-  await page.keyboard.down("Shift");
-  for (let i = 0; i < 10; i++) await page.keyboard.press("ArrowLeft");
-  await page.keyboard.press("Backspace");
-  await page.keyboard.up("Shift");
   await page.keyboard.press("Control+6");
   await expect(page).toHaveScreenshot();
 });

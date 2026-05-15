@@ -136,8 +136,10 @@ test("replay-another-line", async ({ page, media }) => {
 
 test("sync-empty", async ({ page }) => {
   await page.locator("#main-lines").pressSequentially("asdfzxcvt");
-  const lines = await page.locator("#main-lines").innerText();
-  expect(lines).toMatchSnapshot("sync-empty-lines.txt");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot("sync-empty-textarea.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "sync-empty-lines.txt",
+  );
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "sync-empty-textarea.txt",
+  );
 });

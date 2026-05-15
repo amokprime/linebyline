@@ -48,10 +48,12 @@ test("split-paren", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("translation_split.lrc")]);
-  const lines = await page.locator("#main-lines").innerText();
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lines).toMatchSnapshot("split-paren-lines.txt");
-  expect(lyrics).toMatchSnapshot("split-paren-textarea.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "split-paren-lines.txt",
+  );
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "split-paren-textarea.txt",
+  );
 });
 
 test("split-plain", async ({ page, media }) => {
@@ -60,8 +62,10 @@ test("split-plain", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("translation_split.lrc")]);
-  const lines = await page.locator("#main-lines").innerText();
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lines).toMatchSnapshot("split-plain-lines.txt");
-  expect(lyrics).toMatchSnapshot("split-plain-textarea.txt");
+  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
+    "split-plain-lines.txt",
+  );
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "split-plain-textarea.txt",
+  );
 });

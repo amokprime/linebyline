@@ -94,5 +94,26 @@ const test =
       },
     })
   );
-
-module.exports = { findLatestVersion, test, expect };
+/**
+ * Press Tab repeatedly until the element matching the selector receives focus.
+ * @param {import('@playwright/test').Page} page
+ * @param {string} selector - CSS selector
+ * @param {{ index?: number, maxTabs?: number }} [options]
+ */
+async function tabUntilFocused(page, selector, options = {}) {
+  const { index = 0, maxTabs = 50 } = options;
+  const locator = page.locator(selector).nth(index);
+  for (let i = 0; i < maxTabs; i++) {
+    if (
+      await locator.evaluate(
+        (/** @type {Element} */ el) => el === document.activeElement,
+      )
+    )
+      return;
+    await page.keyboard.press("Tab");
+  }
+  throw new Error(
+    `tabUntilFocused: ${selector}[${index}] not focused after ${maxTabs} Tabs`,
+  );
+}
+module.exports = { findLatestVersion, test, expect, tabUntilFocused };

@@ -93,8 +93,7 @@ test("search-field", async ({ page }) => {
     .getByRole("textbox", { name: "Search…" })
     .pressSequentially("Default");
   for (let i = 0; i < 2; i++) await page.keyboard.press("Tab");
-  const mdata = await page.locator("#s-default-meta").inputValue();
-  await expect(mdata).toMatchSnapshot();
+  expect(await page.locator("#s-default-meta").inputValue()).toMatchSnapshot();
 });
 
 test("assign-ok-click", async ({ page }) => {

@@ -21,24 +21,7 @@ test("controls-disabled", async ({ page, media }) => {
   await page.keyboard.press("t");
   await page.keyboard.press("z");
   await page.keyboard.press("v");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot();
-});
-
-test("toggle-scroll", async ({ page }) => {
-  const lines = [];
-  for (let i = 1; i <= 1000; i++)
-    lines.push(`nmbr${String(i).padStart(4, "0")}`);
-  const text = lines.join("\n");
-  await page.evaluate((t) => {
-    const ta = document.getElementById("main-textarea");
-    ta.value = t;
-    ta.dispatchEvent(new Event("input"));
-  }, text);
-  await expect(page.getByText("nmbr0001")).toBeVisible();
-  await page.keyboard.press("Backquote");
-  const lyrics = await page.locator("#main-textarea").inputValue();
-  expect(lyrics).toMatchSnapshot();
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot();
 });
 
 test("arrow-nav-skip", async ({ page, media }) => {
