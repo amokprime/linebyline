@@ -34,11 +34,12 @@ The `ff` .bashrc alias in the setup file starts a local server from the highest-
 
 The following Playwright tests are known to fail as of version 0.35.18:
 
-| Test file         | Line | Test name            | Issue                                                                                                                                                                            |
-| ----------------- | ---- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| settings.spec.js  | 36   | persistence          | Playback speed field doesn't reset with page reload.                                                                                                                             |
-| undo-redo.spec.js | 27   | import-one-secondary | Undo import doesn't work in secondary fields.                                                                                                                                    |
-| undo-redo.spec.js | 70   | sync-repeat          | Two undoes are required per sync except first line. Similar to undoing multiline edits in Typing mode with Settings/ Undo window set to 1ms, except sync is done in Hotkey mode. |
+| Test file             | Line | Test name            | Issue                                                                                                                                                                            |
+| --------------------- | ---- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| accessibility.spec.js | All  | All                  | Many, this is a top priority for next version                                                                                                                                    |
+| settings.spec.js      | 36   | persistence          | Playback speed field doesn't reset with page reload.                                                                                                                             |
+| undo-redo.spec.js     | 27   | import-one-secondary | Undo import doesn't work in secondary fields.                                                                                                                                    |
+| undo-redo.spec.js     | 70   | sync-repeat          | Two undoes are required per sync except first line. Similar to undoing multiline edits in Typing mode with Settings/ Undo window set to 1ms, except sync is done in Hotkey mode. |
 Open a new Issue if you find:
 - Other latent bugs that also exist in the latest main branch version
 - Brittle tests that fail at first and only pass on second run (except if caused by missing snapshots the first run)

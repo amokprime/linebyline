@@ -19,7 +19,11 @@ Follow these steps when building a code file:
 		    	1. Include the full contents of Prompt.md if uploaded
 		    2. Your prose output
 			    1. Use "about" to express approximation instead of "~"
-			    2. At the end, include a rote copy of each CHECKLIST.md item affected by changes, organized by original header
 4. Update
 	1. Re-index the section index skill if line numbers shifted
 	2. Update memory if anything structural changed
+
+After building a SKILL file, follow a variant of code file step 3. Present:
+- Keep the skill file name the same, but present it in .md format
+- Name the skill file's companion file with this pattern: linebyline-0.34.9.html → skills-0.34.9.md
+Then follow code file step 4.2.

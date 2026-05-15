@@ -8,7 +8,7 @@
 2. /tests/media/audio.mp3
 3. /tests/media/synced_english.lrc
 #### File picker window
-- [ ] Open test file 1 and verify a normal looking file picker window appears
+- [ ] Open test file 1 and verify that clicking the 📂 button opens a normal looking file picker window
 
 #### Genius
 - [ ] Visit the Genius website and test pasting a real page in case the website layout changed
@@ -36,7 +36,7 @@
 - [ ] Adjusting timestamp
 
 #### Undo debounce
-- Open test file 1 and verify that:
+- Open test file 1 and verify in Typing mode that:
 - [ ] Typing "abc" very quickly (as fast as possible) inline gets undone and redone in one step
 - [ ] Typing "abc" slowly (about 1-2 letters/second) inline gets undone and redone in three steps
 - [ ] Typing "a", then "b", then "c" very quickly on newlines get undone and redone in one step

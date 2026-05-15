@@ -104,7 +104,13 @@ Sub-sections that belong to a parent section are grouped in `[...]` immediately 
 
 ## Section list (reference)
 
-This is the current section structure as of v0.35.10. Actual line numbers are in the embedded SECTIONS comment in the file — use that, not this list, since edits shift lines.
+This is the current section structure as of v0.35.18. Actual line numbers are in the embedded SECTIONS comment in the file — use that, not this list, since edits shift lines.
+
+Full SECTIONS index (v0.35.18, verified against file):
+```
+// SECTIONS: Config~351 | Hotkey rules~419 | Theme~512 | Font~524 | Tooltips~539 | State~568 | Persistence~585 | Undo/redo~625 | Mode switching~644 | Auto mode~721 | Helpers~724 [LRC parse~725 | Paste/meta~788 | Genius~843 | Render/UI~943] | Audio~1044 | Sync/timestamp~1246 | Secondary~1458 | Line counts~1564 | Title~1648 | Import~1656 | Controls~1763 | Settings~1861 | Settings search~1928 | Confirm~2273 | Keyboard~2309 [Key norm~2310 | Main textarea KD~2318 | Overlay utils~2373 | Global KD~2509] | Unload~2531 | Button wiring~2537 | Init~2556
+```
+Always use the embedded SECTIONS comment in the file as the authoritative source — this copy is for reference only and goes stale when lines shift.
 
 ```
 Config               — DEFAULT_CFG, HK_SECTIONS, HK_LABELS

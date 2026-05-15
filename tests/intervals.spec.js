@@ -55,7 +55,7 @@ test("typing-debounce-1", async ({ page }) => {
   await page.keyboard.press("Control+,");
   await page.getByRole("spinbutton", { name: "Undo window" }).fill("1");
   await page.keyboard.press("Escape");
-  await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
+  await page.locator("#main-textarea").click(); //Not needed in real browser; Playwright loses focus
   await page.keyboard.press("a");
   await page.keyboard.press("b");
   await page.keyboard.press("c");
