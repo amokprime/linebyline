@@ -1,0 +1,23 @@
+{
+  "textRange": {
+    "startLine": 927,
+    "endLine": 927,
+    "startOffset": 44,
+    "endOffset": 58
+  },
+  "severity": "MINOR",
+  "cleanCodeAttribute": "CLEAR",
+  "type": "CODE_SMELL",
+  "rule": "javascript:S7780",
+  "line": 927,
+  "message": "`String.raw` should be used to avoid escaping `\\`.",
+  "component": "amokprime_linebyline:docs/index.html",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "flows": [],
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ]
+}

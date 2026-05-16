@@ -1,0 +1,23 @@
+{
+  "textRange": {
+    "startLine": 1929,
+    "endLine": 1929,
+    "startOffset": 95,
+    "endOffset": 96
+  },
+  "severity": "MINOR",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "rule": "javascript:S7748",
+  "flows": [],
+  "type": "CODE_SMELL",
+  "line": 1929,
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "message": "Don't use a zero fraction in the number.",
+  "component": "amokprime_linebyline:docs/index.html",
+  "cleanCodeAttribute": "CONVENTIONAL"
+}

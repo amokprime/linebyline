@@ -1,0 +1,23 @@
+{
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "cleanCodeAttribute": "CLEAR",
+  "textRange": {
+    "startLine": 1117,
+    "endLine": 1117,
+    "startOffset": 68,
+    "endOffset": 78
+  },
+  "type": "CODE_SMELL",
+  "rule": "javascript:S2486",
+  "line": 1117,
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:docs/index.html",
+  "flows": [],
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "message": "Handle this exception or don't catch it at all."
+}

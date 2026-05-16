@@ -1,0 +1,23 @@
+{
+  "message": "The empty object is useless.",
+  "component": "amokprime_linebyline:docs/index.html",
+  "cleanCodeAttribute": "CLEAR",
+  "rule": "javascript:S7744",
+  "textRange": {
+    "startLine": 501,
+    "endLine": 501,
+    "startOffset": 72,
+    "endOffset": 74
+  },
+  "type": "CODE_SMELL",
+  "line": 501,
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "severity": "MINOR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "flows": []
+}

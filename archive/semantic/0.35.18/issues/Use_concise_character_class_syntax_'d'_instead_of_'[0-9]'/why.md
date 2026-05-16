@@ -1,0 +1,29 @@
+A regular expression is a sequence of characters that specifies a match pattern in text. Among the most important concepts are:
+
+  * Character classes: defines a set of characters, any one of which can occur in an input string for a match to succeed. 
+  * Quantifiers: used to specify how many instances of a character, group, or character class must be present in the input for a match. 
+  * Wildcard (`.`): matches all characters except line terminators (also matches them if the `s` flag is set). 
+
+
+
+Many of these features include shortcuts of widely used expressions, so there is more than one way to construct a regular expression to achieve the same results. For example, to match a two-digit number, one could write `[0-9]{2,2}` or `\d{2}`. The latter is not only shorter but easier to read and thus to maintain.
+
+This rule recommends replacing some quantifiers and character classes with more concise equivalents:
+
+  * `\d` for `[0-9]` and `\D` for `[^0-9]`
+  * `\w` for `[A-Za-z0-9_]` and `\W` for `[^A-Za-z0-9_]`
+  * `.` for character classes matching everything (e.g. `[\w\W]`, `[\d\D]`, or `[\s\S]` with `s` flag) 
+  * `x?` for `x{0,1}`, `x*` for `x{0,}`, `x+` for `x{1,}`, `x{N}` for `x{N,N}`
+
+
+    
+    
+    /a{1,}/;        // Noncompliant, '{1,}' quantifier is the same as '+'
+    /[A-Za-z0-9_]/; // Noncompliant, '\w' is equivalent
+    
+
+Use the more concise version to make the regex expression more readable.
+    
+    
+    /a+/;
+    /\w/;

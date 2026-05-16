@@ -1,0 +1,27 @@
+{
+  "rule": "javascript:S7773",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "type": "CODE_SMELL",
+  "line": 1217,
+  "flows": [],
+  "severity": "MINOR",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    },
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "component": "amokprime_linebyline:docs/index.html",
+  "message": "Prefer `Number.parseInt` over `parseInt`.",
+  "textRange": {
+    "startLine": 1217,
+    "endLine": 1217,
+    "startOffset": 10,
+    "endOffset": 18
+  },
+  "cleanCodeAttributeCategory": "CONSISTENT"
+}

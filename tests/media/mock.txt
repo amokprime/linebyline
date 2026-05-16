@@ -1,0 +1,115 @@
+# MOCK LYRICS PAGE — FOR TESTING ONLY
+#
+# This file replicates the structural markup of a lyrics-hosting website page
+# to test LineByLine's extraction and parsing code. All lyric text, song
+# titles, artist names, and other potentially licensed content have been
+# replaced with functional placeholders. No copyrighted expression is
+# reproduced. The text structure is preserved only to the extent necessary
+# for interoperability testing of LineByLine's parsing functions
+# (cleanGenius, extractGeniusMeta).
+#
+# Do not replace placeholders with actual copyrighted lyrics.
+
+2025, In Review
+Featured
+Charts
+Cover art for Mock Song by Alpha & Beta
+Mock Song
+Alpha & Beta
+Producers
+Mock Producer
+Track 1 on
+Mock Album
+Jan. 1, 2001
+5 viewers
+100 views
+Mock Song Lyrics
+This is a mock description that serves as a placeholder for the real one that would appear here on an actual lyrics website page. It exists to test the Read More detection boundary. Read More
+[Intro: Alpha]
+Filler line intro one
+
+[Verse 1: Alpha, Beta & Both]
+Filler line verse one A
+Filler line verse one B
+Filler line verse one C
+Filler line verse one D
+Filler line verse one E
+Filler line verse one F
+
+[Chorus: Alpha & Beta]
+Filler line chorus one A
+Filler line chorus one B
+Filler line chorus one C
+Filler line chorus one D
+
+[Verse 2: Alpha, Alpha & Beta]
+Filler line verse two A
+Filler line verse two B
+Filler line verse two C
+Filler line verse two D
+Filler line verse two E
+
+[Chorus: Alpha & Beta]
+Filler line chorus two A
+Filler line chorus two B
+Filler line chorus two C
+Filler line chorus two D
+You might also like
+Mock Related Song One
+Mock Related Artist One
+Mock Related Song Two
+Mock Related Artist Two
+
+[Bridge: Alpha, Beta & Both]
+Filler line bridge one A
+Filler line bridge one B
+Filler line bridge one C
+Filler line bridge one D
+Filler line bridge one E
+Filler line bridge one F
+Filler line bridge one G
+
+[Verse 3: Beta, Alpha & Both]
+Filler line verse three A
+Filler line verse three B
+Filler line verse three C
+Filler line verse three D
+Filler line verse three E
+
+[Chorus: Alpha & Beta, Beta]
+Filler line chorus three A
+Filler line chorus three B
+Filler line chorus three C
+Filler line chorus three D
+Filler line chorus three E
+Filler line chorus three F
+Filler line chorus three G
+Filler line chorus three H
+About
+Song Bio
+
+This is a mock song bio paragraph that would normally contain background information about the song and artists. It exists here solely to test the About/Song Bio boundary detection.
+
+This is a second mock bio paragraph that would normally contain additional trivia or context. It also exists solely for boundary testing.
++1
+Q&A
+
+Find answers to frequently asked questions about the song and explore its deeper meaning
+Who produced "Mock Song" by Alpha & Beta?
+When did Alpha & Beta release "Mock Song"?
+Who wrote "Mock Song" by Alpha & Beta?
+Credits
+Released on
+January 1, 2001
+Producers
+Mock Producer
+Writers
+Mock Writer
+Vocals
+Alpha & Beta
+Recorded At
+Mock Studio
+Tags
+Mock Genre One
+Mock Genre Two
+Comments

@@ -1,0 +1,206 @@
+{
+  "rule": "javascript:S3776",
+  "severity": "CRITICAL",
+  "component": "amokprime_linebyline:docs/index.html",
+  "flows": [
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1328,
+            "endLine": 1328,
+            "startOffset": 2,
+            "endOffset": 5
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1329,
+            "endLine": 1329,
+            "startOffset": 4,
+            "endOffset": 6
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1330,
+            "endLine": 1330,
+            "startOffset": 4,
+            "endOffset": 6
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1332,
+            "endLine": 1332,
+            "startOffset": 4,
+            "endOffset": 7
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1333,
+            "endLine": 1333,
+            "startOffset": 6,
+            "endOffset": 8
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1336,
+            "endLine": 1336,
+            "startOffset": 4,
+            "endOffset": 6
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1338,
+            "endLine": 1338,
+            "startOffset": 4,
+            "endOffset": 9
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1338,
+            "endLine": 1338,
+            "startOffset": 29,
+            "endOffset": 31
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1340,
+            "endLine": 1340,
+            "startOffset": 4,
+            "endOffset": 7
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1341,
+            "endLine": 1341,
+            "startOffset": 6,
+            "endOffset": 8
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1342,
+            "endLine": 1342,
+            "startOffset": 30,
+            "endOffset": 32
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1344,
+            "endLine": 1344,
+            "startOffset": 4,
+            "endOffset": 6
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 1346,
+            "endLine": 1346,
+            "startOffset": 4,
+            "endOffset": 7
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    }
+  ],
+  "textRange": {
+    "startLine": 1327,
+    "endLine": 1327,
+    "startOffset": 9,
+    "endOffset": 30
+  },
+  "type": "CODE_SMELL",
+  "message": "Refactor this function to reduce its Cognitive Complexity from 27 to the 15 allowed.",
+  "cleanCodeAttributeCategory": "ADAPTABLE",
+  "line": 1327,
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "HIGH"
+    }
+  ],
+  "cleanCodeAttribute": "FOCUSED"
+}

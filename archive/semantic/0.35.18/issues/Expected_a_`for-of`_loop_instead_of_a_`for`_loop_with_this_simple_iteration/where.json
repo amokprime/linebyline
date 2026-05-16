@@ -1,0 +1,23 @@
+{
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:docs/index.html",
+  "rule": "javascript:S4138",
+  "message": "Expected a `for-of` loop instead of a `for` loop with this simple iteration.",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "line": 597,
+  "type": "CODE_SMELL",
+  "textRange": {
+    "startLine": 597,
+    "endLine": 597,
+    "startOffset": 8,
+    "endOffset": 62
+  },
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "flows": []
+}

@@ -1,0 +1,23 @@
+{
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "textRange": {
+    "startLine": 1820,
+    "endLine": 1820,
+    "startOffset": 28,
+    "endOffset": 30
+  },
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "rule": "javascript:S7748",
+  "component": "amokprime_linebyline:docs/index.html",
+  "type": "CODE_SMELL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "flows": [],
+  "message": "Don't use a zero fraction in the number.",
+  "line": 1820,
+  "severity": "MINOR"
+}
