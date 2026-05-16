@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LineByLine 0.35.13</title>
+<title>LineByLine 0.35.18</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000000' height='24' width='24'/%3E%3Cpath d='m13,5l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,12l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,19l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m3,17l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m3,7l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 /* ── Themes ── */
@@ -347,7 +347,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 <input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none">
 <script>
 'use strict';
-// SECTIONS: Config~351 | Hotkey rules~419 | Theme~514 | Font~526 | Tooltips~541 | State~570 | Persistence~587 | Undo/redo~626 | Mode switching~645 | Auto mode~722 | Helpers~725 [LRC parse~726 | Paste/meta~789 | Genius~844 | Render/UI~936] | Audio~1040 | Sync/timestamp~1240 | Secondary~1465 | Line counts~1575 | Title~1655 | Import~1663 | Controls~1770 | Settings~1868 | Settings search~1934 | Confirm~2286 | Keyboard~2322 [Key norm~2323 | Main textarea KD~2331 | Overlay utils~2389 | Global KD~2391] | Unload~2553 | Button wiring~2559 | Init~2578
+// SECTIONS: Config~351 | Hotkey rules~419 | Theme~512 | Font~524 | Tooltips~539 | State~568 | Persistence~585 | Undo/redo~625 | Mode switching~644 | Auto mode~721 | Helpers~724 [LRC parse~725 | Paste/meta~788 | Genius~843 | Render/UI~943] | Audio~1044 | Sync/timestamp~1246 | Secondary~1458 | Line counts~1564 | Title~1648 | Import~1656 | Controls~1763 | Settings~1861 | Settings search~1928 | Confirm~2273 | Keyboard~2309 [Key norm~2310 | Main textarea KD~2318 | Overlay utils~2373 | Global KD~2509] | Unload~2531 | Button wiring~2537 | Init~2556
 // ── Config ───────────────────────────────────────────────────────────────────
 const DEFAULT_META='[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n';
 const DEFAULT_CFG={
@@ -378,7 +378,7 @@ const DEFAULT_CFG={
     panel_toggle:'Ctrl+`',
     reset_defaults:'Ctrl+\\',
   },
-  speed_ratio:1.10,
+  speed_ratio:1.1,
   vol_increment:0.1,
 };
 
@@ -450,7 +450,7 @@ const RESTRICTED_ALL=new Set([
 ]);
 
 // Keys that only allow non-alphanumeric/Space (for toggle_mode and offset_mode_toggle)
-const ALPHA_NUM_SPACE_RE=/^(([A-Z]|[0-9]|Space)$|Shift\+[A-Z0-9]$)/;
+const ALPHA_NUM_SPACE_RE=/^(([A-Z]|\d|Space)$|Shift\+[A-Z0-9]$)/;
 
 function isRestrictedForAll(ks){
   if(RESTRICTED_ALL.has(ks))return`"${ks}" is reserved by the browser`;
@@ -465,48 +465,46 @@ function isRestrictedForKey(ks,key){
   return null;
 }
 
+function _migrateHotkeys(d,c){
+  if(d.hotkeys){
+    const h=d.hotkeys,hc=c.hotkeys;
+    if(h.seek_back==='Ctrl+A'||h.seek_back==='Ctrl+S')hc.seek_back='Ctrl+9';
+    if(h.seek_fwd==='Alt+W'||h.seek_fwd==='Ctrl+D')hc.seek_fwd='Ctrl+0';
+    if(h.save==='Ctrl+S'||h.save==='Ctrl+;')hc.save="Ctrl+'";
+    if(h.settings==='Alt+`')hc.settings='Ctrl+,';
+    if(h.help==='F2')hc.help='Ctrl+/';
+    if(h.toggle_mode==='Tab')hc.toggle_mode='`';
+    if(h.offset_mode_toggle==='`')hc.offset_mode_toggle='Shift+~';
+    if(h.sync_file==='Ctrl+`')hc.sync_file='Ctrl+I';
+    if(h.speed_down==='Alt+1')hc.speed_down='Ctrl+1';
+    if(h.speed_up==='Alt+2')hc.speed_up='Ctrl+2';
+    if(h.speed_reset==='Alt+3')hc.speed_reset='Ctrl+3';
+    if(h.add_field==='Ctrl+1')hc.add_field='Ctrl+4';
+    if(h.remove_field==='Ctrl+2')hc.remove_field='Ctrl+5';
+    if(h.merge_fields==='Ctrl+3')hc.merge_fields='Ctrl+6';
+  }
+  if(c.hotkeys.theme_toggle===undefined)c.hotkeys.theme_toggle='Ctrl+.';
+  if(c.hotkeys.replay_end===undefined)c.hotkeys.replay_end='Shift+R';
+  if(c.hotkeys.replay_only===undefined)c.hotkeys.replay_only='R';
+  if(c.hotkeys.mark_translation===undefined)c.hotkeys.mark_translation='Ctrl+ArrowLeft';
+  if(c.hotkeys.issues===undefined)c.hotkeys.issues='Ctrl+[';
+  if(c.hotkeys.issues==="Ctrl+'")c.hotkeys.issues='Ctrl+[';
+  if(c.hotkeys.panel_toggle===undefined)c.hotkeys.panel_toggle='Ctrl+`';
+  if(c.hotkeys.reset_defaults===undefined)c.hotkeys.reset_defaults='Ctrl+\\';
+  if(c.hotkeys.mute)delete c.hotkeys.mute;
+}
 function loadCfg(){
   try{
     const s=localStorage.getItem('lbl_cfg');
-    if(!s)return JSON.parse(JSON.stringify(DEFAULT_CFG));
-    const d=JSON.parse(s),c=JSON.parse(JSON.stringify(DEFAULT_CFG));
-    Object.assign(c,d);c.hotkeys=Object.assign({},DEFAULT_CFG.hotkeys,d.hotkeys||{});
-    if(c.hotkeys.open==='Ctrl+M')c.hotkeys.open='Ctrl+;';
-    if(c.hotkeys.open==='Ctrl+O')c.hotkeys.open='Ctrl+;';
+    if(!s)return structuredClone(DEFAULT_CFG);
+    const d=JSON.parse(s),c=structuredClone(DEFAULT_CFG);
+    Object.assign(c,d);c.hotkeys={...DEFAULT_CFG.hotkeys,...(d.hotkeys||{})};
+    if(c.hotkeys.open==='Ctrl+M'||c.hotkeys.open==='Ctrl+O')c.hotkeys.open='Ctrl+;';
     if(d.hotkeys&&d.hotkeys.end_line==='R'&&!d.hotkeys.replay_only)c.hotkeys.end_line='T';
-    if(!c.hotkeys.replay_only)c.hotkeys.replay_only='R';
-    if(d.speed_increment!==undefined&&d.speed_ratio===undefined)c.speed_ratio=1.10;
-    // Migrate old hotkeys to new defaults
-    if(d.hotkeys){
-      if(d.hotkeys.seek_back==='Ctrl+A')c.hotkeys.seek_back='Ctrl+9';
-      if(d.hotkeys.seek_back==='Ctrl+S')c.hotkeys.seek_back='Ctrl+9';
-      if(d.hotkeys.seek_fwd==='Alt+W')c.hotkeys.seek_fwd='Ctrl+0';
-      if(d.hotkeys.seek_fwd==='Ctrl+D')c.hotkeys.seek_fwd='Ctrl+0';
-      if(d.hotkeys.save==='Ctrl+S')c.hotkeys.save="Ctrl+'";
-      if(d.hotkeys.save==='Ctrl+;')c.hotkeys.save="Ctrl+'";
-      if(d.hotkeys.settings==='Alt+`')c.hotkeys.settings='Ctrl+,';
-      if(d.hotkeys.help==='F2')c.hotkeys.help='Ctrl+/';
-      if(d.hotkeys.toggle_mode==='Tab')c.hotkeys.toggle_mode='`';
-      if(d.hotkeys.offset_mode_toggle==='`')c.hotkeys.offset_mode_toggle='Shift+~';
-      if(d.hotkeys.sync_file==='Ctrl+`')c.hotkeys.sync_file='Ctrl+I';
-      if(d.hotkeys.speed_down==='Alt+1')c.hotkeys.speed_down='Ctrl+1';
-      if(d.hotkeys.speed_up==='Alt+2')c.hotkeys.speed_up='Ctrl+2';
-      if(d.hotkeys.speed_reset==='Alt+3')c.hotkeys.speed_reset='Ctrl+3';
-      if(d.hotkeys.add_field==='Ctrl+1')c.hotkeys.add_field='Ctrl+4';
-      if(d.hotkeys.remove_field==='Ctrl+2')c.hotkeys.remove_field='Ctrl+5';
-      if(d.hotkeys.merge_fields==='Ctrl+3')c.hotkeys.merge_fields='Ctrl+6';
-    }
-    if(!c.hotkeys.theme_toggle)c.hotkeys.theme_toggle='Ctrl+.';
-    if(!c.hotkeys.replay_end)c.hotkeys.replay_end='Shift+R';
-    if(!c.hotkeys.mark_translation)c.hotkeys.mark_translation='Ctrl+ArrowLeft';
-    if(!c.hotkeys.issues)c.hotkeys.issues='Ctrl+[';
-    if(c.hotkeys.issues==="Ctrl+'")c.hotkeys.issues='Ctrl+[';
-    if(!c.hotkeys.panel_toggle)c.hotkeys.panel_toggle='Ctrl+`';
-    if(!c.hotkeys.reset_defaults)c.hotkeys.reset_defaults='Ctrl+\\';
-    // Remove deprecated mute hotkey
-    if(c.hotkeys.mute)delete c.hotkeys.mute;
+    if(d.speed_increment!==undefined&&d.speed_ratio===undefined)c.speed_ratio=1.1;
+    _migrateHotkeys(d,c);
     return c;
-  }catch(e){return JSON.parse(JSON.stringify(DEFAULT_CFG));}
+  }catch(e){return structuredClone(DEFAULT_CFG);}
 }
 function saveCfg(){localStorage.setItem('lbl_cfg',JSON.stringify(cfg));}
 let cfg=loadCfg();
@@ -515,7 +513,7 @@ let cfg=loadCfg();
 const THEME_ICONS={light:'🌙',dark:'☀️'};
 let themeMode=localStorage.getItem('lbl_theme')||'light';
 function applyTheme(){
-  document.documentElement.setAttribute('data-theme',themeMode==='dark'?'dark':'');
+  document.documentElement.dataset.theme=themeMode==='dark'?'dark':'';
   document.getElementById('btn-theme').textContent=THEME_ICONS[themeMode];
 }
 function cycleTheme(){
@@ -525,7 +523,7 @@ function cycleTheme(){
 
 // ── Font settings ─────────────────────────────────────────────────────────────
 let editorFont=localStorage.getItem('lbl_font')||'system-ui,sans-serif';
-let editorSize=parseFloat(localStorage.getItem('lbl_fsize'))||14;
+let editorSize=Number.parseFloat(localStorage.getItem('lbl_fsize'))||14;
 function applyEditorFont(){
   document.documentElement.style.setProperty('--editor-font',editorFont);
   document.documentElement.style.setProperty('--editor-size',editorSize+'px');
@@ -570,8 +568,8 @@ document.getElementById('speed-down-btn').title=`Reduce speed (${fmt(hk.speed_do
 // ── State ────────────────────────────────────────────────────────────────────
 let hotkeyMode=true,offsetSeekMode=false,playing=false,audioEl=null,secondaryCols=[];
 let secondaryPool=[];
-let _savedVol=parseFloat(localStorage.getItem('lbl_vol')??'1');
-if(isNaN(_savedVol)||_savedVol<0||_savedVol>1)_savedVol=1;
+let _savedVol=Number.parseFloat(localStorage.getItem('lbl_vol')??'1');
+if(Number.isNaN(_savedVol)||_savedVol<0||_savedVol>1)_savedVol=1;
 let masterMuted=localStorage.getItem('lbl_muted')==='1';
 let _preMuteVolume=_savedVol;
 let masterVolume=masterMuted?0:_savedVol;
@@ -585,6 +583,15 @@ let _pasteJustHappened=false;
 let _undoDebounceTimer=null;
 
 // ── Persistence ──────────────────────────────────────────────────────────────
+function _restoreSecondaryPool(d){
+  for(let i=0;i<d.poolTexts.length;i++){addSecondary();}
+  d.poolTexts.forEach((txt,i)=>{if(secondaryPool[i])secondaryPool[i].linesEl.value=txt;});
+  const vis=d.visibleCount||0;
+  for(const entry of secondaryPool.slice(vis)){
+    entry.col.style.display='none';
+    if(secondaryCols[secondaryCols.length-1]===entry)secondaryCols.pop();
+  }
+}
 function loadAutosave(){
   try{
     const s=sessionStorage.getItem('lbl_autosave');
@@ -593,15 +600,7 @@ function loadAutosave(){
       _setTA(d.main||cfg.default_meta);
       if(d.mergeDone)mergeDone=d.mergeDone;
       if(d.audioPath)savedAudioPath=d.audioPath;
-      if(d.poolTexts&&d.poolTexts.length){
-        for(let i=0;i<d.poolTexts.length;i++){addSecondary();}
-        d.poolTexts.forEach((txt,i)=>{if(secondaryPool[i])secondaryPool[i].linesEl.value=txt;});
-        const vis=d.visibleCount||0;
-        for(let i=vis;i<secondaryPool.length;i++){
-          secondaryPool[i].col.style.display='none';
-          if(secondaryCols[secondaryCols.length-1]===secondaryPool[i])secondaryCols.pop();
-        }
-      }
+      if(d.poolTexts&&d.poolTexts.length)_restoreSecondaryPool(d);
     }else{_setTA(cfg.default_meta);}
   }catch(e){_setTA(cfg.default_meta);}
   renderMainLines();checkLineCounts();updateTitleFromText();
@@ -736,8 +735,8 @@ function isEndTs(l){return TS_RE.test(l)&&l.replace(TS_RE,'').trim()==='';}
 function isHeader(l){return l.startsWith('[')&&!META_RE.test(l)&&!TS_RE.test(l);}
 function replaceTs(l,ms){return TS_RE.test(l)?msToTs(ms)+l.slice(10):msToTs(ms)+' '+l;}
 // Truncate 3-decimal timestamps ([mm:ss.000]) to 2-decimal ([mm:ss.00]) on import
-function normalizeLrcTimestamps(text){return text.replace(/\[(\d{2}):(\d{2})\.(\d{2})\d\]/g,'[$1:$2.$3]');}
-function getSeekOffset(){return parseInt(document.getElementById('seek-offset').value)||0;}
+function normalizeLrcTimestamps(text){return text.replaceAll(/\[(\d{2}):(\d{2})\.(\d{2})\d\]/g,'[$1:$2.$3]');}
+function getSeekOffset(){return Number.parseInt(document.getElementById('seek-offset').value)||0;}
 function stripSecLine(l){return l.replace(TS_RE,'').replace(/^ /,'');}
 function hasLyricContent(){
   return getTA().split('\n').some(l=>{
@@ -842,8 +841,8 @@ function mergeLrcMeta(lrcText){
 }
 
 // ── Genius extraction ──────────────────────────────────────────────────────
-function cleanGenius(text){
-  const lines=text.split('\n');
+function _findGeniusLyricBounds(lines){
+  // Returns {start, end} or null if not Genius content
   const hasLyricsHeading=lines.some(l=>/Lyrics$/.test(l.trim()));
   const hasGenius=lines.some(l=>/Genius\.com|genius\.com|ML Genius|Genius is the/.test(l));
   const hasReadMore=lines.some(l=>/Read More\s*$/.test(l.trim()));
@@ -864,26 +863,32 @@ function cleanGenius(text){
     if(t==='About'||t==='Song Bio'||/^© \d{4}/.test(t)||t==='Sign Up And Drop Knowledge 🤓'){end=i;break;}
     if(t==='Credits'&&i>start+5){end=i;break;}
   }
-  let lyricLines=lines.slice(start,end);
-  const preFiltered=[];let inYmal=false;
-  for(let i=0;i<lyricLines.length;i++){
-    const t=lyricLines[i].trim();
+  return{start,end};
+}
+function _filterYmal(lyricLines){
+  const out=[];let inYmal=false;
+  for(const line of lyricLines){
+    const t=line.trim();
     if(t==='You might also like'){
-      if(preFiltered.length&&preFiltered[preFiltered.length-1].trim()!=='')preFiltered.push('');
+      if(out.length&&out[out.length-1].trim()!=='')out.push('');
       inYmal=true;continue;
     }
     if(inYmal){
-      if(t===''||(/^\[[^\]]+\]$/.test(t)&&!TS_RE.test(t))){inYmal=false;}
-      else{continue;}
+      if(t===''||(/^\[[^\]]+\]$/.test(t)&&!TS_RE.test(t)))inYmal=false;
+      else continue;
     }
-    preFiltered.push(lyricLines[i]);
+    out.push(line);
   }
-  lyricLines=preFiltered;
+  return out;
+}
+function cleanGenius(text){
+  const lines=text.split('\n');
+  const bounds=_findGeniusLyricBounds(lines);
+  if(!bounds)return null;
+  let lyricLines=_filterYmal(lines.slice(bounds.start,bounds.end));
   lyricLines=lyricLines.filter(l=>{
     const t=l.trim();
-    if(/^\[[^\]]+\]$/.test(t)&&!TS_RE.test(t))return false;
-    if(/^\[.{2,50}\]$/.test(t)&&!TS_RE.test(t))return false;
-    return true;
+    return!(/^\[.{2,50}\]$/.test(t)&&!TS_RE.test(t));
   });
   const out=collapseBlanks(lyricLines).join('\n').trim();
   if(!out)return null;
@@ -894,14 +899,11 @@ function markGeniusSource(){
   if(_geniusDetectedThisSession)return;
   _geniusDetectedThisSession=true;
   let updated=getTA().replace(/^\[re:.*\]/m,'[re: Genius, LineByLine]');
-  // Ensure LineByLine is in the re tag after replacement
   updated=ensureReTagDefault(updated);
   if(updated!==getTA()){_setTA(updated);renderMainLines();updateTitleFromText();}
 }
-function extractGeniusMeta(raw){
-  const lines=raw.split('\n').map(l=>l.trim()).filter(l=>l);
+function _extractGeniusFields(head){
   let title='',artist='',album='';
-  const head=lines.slice(0,40);
   for(let i=0;i<head.length;i++){
     const m=head[i].match(/^Cover art for .+ by (.+)$/i);
     if(m){artist=m[1].trim();break;}
@@ -921,6 +923,11 @@ function extractGeniusMeta(raw){
   for(let i=0;i<head.length-1;i++){
     if(/^Track\s+\d+\s+(on|[-–])/i.test(head[i])){album=head[i+1].trim();break;}
   }
+  return{title,artist,album};
+}
+function extractGeniusMeta(raw){
+  const lines=raw.split('\n').map(l=>l.trim()).filter(Boolean);
+  const{title,artist,album}=_extractGeniusFields(lines.slice(0,40));
   let text=getTA();
   function replaceIfDefault(tag,val){
     if(!val)return;
@@ -934,6 +941,28 @@ function extractGeniusMeta(raw){
 }
 
 // ── Render / line UI ───────────────────────────────────────────────────────
+function _handleLineClick(e,i,line,lines){
+  if(e.shiftKey&&activeLine>=0){
+    const lo=Math.min(activeLine,i),hi=Math.max(activeLine,i);
+    for(let j=lo;j<=hi;j++){if(!META_RE.test(lines[j]))selectedLines.add(j);}
+    activeLine=i;renderMainLines();
+  }else if(e.ctrlKey){
+    if(selectedLines.has(i))selectedLines.delete(i);else selectedLines.add(i);
+    activeLine=i;renderMainLines();
+  }else{
+    selectedLines.clear();activeLine=i;
+    const ms=tsToMs(line);
+    if(ms!==null&&audioEl){
+      audioEl.currentTime=Math.max(0,ms+(cfg.replay_play_other?getSeekOffset():0))/1000;
+      lastPlayingLine=i;
+      if(!playing){
+        try{audioEl.volume=masterVolume;audioEl.muted=(masterVolume===0);}catch(_){/* read-only in some browser contexts */}
+        audioEl.play();playing=true;updatePlayBtn();
+      }
+    }
+    renderMainLines();scrollToActive();
+  }
+}
 function renderMainLines(){
   const lines=getTA().split('\n'),container=document.getElementById('main-lines');
   container.innerHTML='';
@@ -957,29 +986,7 @@ function renderMainLines(){
       div.innerHTML='&nbsp;';div.style.cursor='default';
     }else{div.textContent=line;}
     div.addEventListener('mousedown',e=>{
-      if(e.button===0){
-        e.preventDefault();
-        if(e.shiftKey&&activeLine>=0){
-          const lo=Math.min(activeLine,i),hi=Math.max(activeLine,i);
-          for(let j=lo;j<=hi;j++){if(!META_RE.test(lines[j]))selectedLines.add(j);}
-          activeLine=i;renderMainLines();
-        }else if(e.ctrlKey){
-          if(selectedLines.has(i))selectedLines.delete(i);else selectedLines.add(i);
-          activeLine=i;renderMainLines();
-        }else{
-          selectedLines.clear();activeLine=i;
-          const ms=tsToMs(line);
-          if(ms!==null&&audioEl){
-            audioEl.currentTime=Math.max(0,ms+getSeekOffset())/1000;
-            lastPlayingLine=i;
-            if(!playing){
-              try{audioEl.volume=masterVolume;audioEl.muted=(masterVolume===0);}catch(_){}
-              audioEl.play();playing=true;updatePlayBtn();
-            }
-          }
-          renderMainLines();scrollToActive();
-        }
-      }
+      if(e.button===0){e.preventDefault();_handleLineClick(e,i,line,lines);}
     });
     div.addEventListener('contextmenu',e=>e.preventDefault());
     container.appendChild(div);
@@ -1039,7 +1046,7 @@ function applyVolume(){
   document.getElementById('vol-slider').value=masterVolume;
   document.getElementById('vol-pct').textContent=Math.round(masterVolume*100)+'%';
   updateMuteIcon();
-  if(audioEl){try{audioEl.volume=masterVolume;audioEl.muted=(masterVolume===0);}catch(_){}}
+  if(audioEl){try{audioEl.volume=masterVolume;audioEl.muted=(masterVolume===0);}catch(_){/* read-only in some browser contexts */}}
   localStorage.setItem('lbl_vol',masterMuted?_preMuteVolume:masterVolume);
   localStorage.setItem('lbl_muted',masterMuted?'1':'0');
 }
@@ -1073,7 +1080,7 @@ function setupAudio(file,pathHint){
     // Sync icon if browser externally changes audio muted state
     if(audioEl.muted!==(masterVolume===0)){updateMuteIcon();}
   });
-  currentSpeed=1.0;if(audioEl)audioEl.playbackRate=1.0;document.getElementById('speed-val').value='1';
+  currentSpeed=1;if(audioEl)audioEl.playbackRate=1;document.getElementById('speed-val').value='1';
   const stem=file.name.replace(/\.[^.]+$/,'')||'Unknown Title';
   document.getElementById('song-title').textContent=stem;
   lastImportStem=stem;
@@ -1103,20 +1110,21 @@ function updateActiveLineFromTime(posMs){
 }
 function fmtTime(s){s=Math.floor(s);return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 let lastPlayingLine=-1;
+function _applySeekForPlay(lineMs,isCurrentLine){
+  if(isCurrentLine){
+    if(cfg.replay_resume_current&&lineMs!==null)audioEl.currentTime=Math.max(0,lineMs+getSeekOffset())/1000;
+  }else if(lineMs!==null){
+    audioEl.currentTime=cfg.replay_play_other?Math.max(0,lineMs+getSeekOffset())/1000:lineMs/1000;
+  }
+}
 function togglePlay(){
   if(!audioEl)return;
   if(playing){audioEl.pause();playing=false;updatePlayBtn();return;}
   const lineMs=activeLine>=0?tsToMs(getTA().split('\n')[activeLine]):null;
   const isCurrentLine=activeLine===lastPlayingLine;
-  if(isCurrentLine){
-    if(cfg.replay_resume_current&&lineMs!==null){audioEl.currentTime=Math.max(0,lineMs+getSeekOffset())/1000;}
-  }else{
-    if(cfg.replay_play_other&&lineMs!==null){audioEl.currentTime=Math.max(0,lineMs+getSeekOffset())/1000;}
-    else if(lineMs!==null){audioEl.currentTime=lineMs/1000;}
-  }
-  try{audioEl.volume=masterVolume;audioEl.muted=(masterVolume===0);}catch(_){}
+  _applySeekForPlay(lineMs,isCurrentLine);
+  try{audioEl.volume=masterVolume;audioEl.muted=(masterVolume===0);}catch(_){/* read-only in some browser contexts */}
   audioEl.play();playing=true;lastPlayingLine=activeLine;updatePlayBtn();
-  // Only set playingLine immediately if we didn't seek ahead by offset (offset=0 or no seek happened)
   const didOffsetSeek=(isCurrentLine&&cfg.replay_resume_current&&lineMs!==null)||
                       (!isCurrentLine&&cfg.replay_play_other&&lineMs!==null);
   if(!didOffsetSeek||getSeekOffset()===0){playingLine=activeLine;}
@@ -1199,8 +1207,8 @@ function doSeekFwd(){doSeek(1);}
 
 function tickSeekOffset(delta){
   const el=document.getElementById('seek-offset');
-  el.value=(parseInt(el.value)||0)+delta;
-  cfg.seek_offset=parseInt(el.value);saveCfg();
+  el.value=(Number.parseInt(el.value)||0)+delta;
+  cfg.seek_offset=Number.parseInt(el.value);saveCfg();
   if(cfg.replay_after_offset){replayActiveLine(false);}
 }
 function setOffsetMode(isSeek){offsetSeekMode=isSeek;rebuildHkPanel();}
@@ -1214,14 +1222,14 @@ document.getElementById('seek-arr-back').addEventListener('click',()=>tickSeekOf
 document.getElementById('seek-arr-fwd').addEventListener('click',()=>tickSeekOffset(cfg.seek_offset_tick));
 document.getElementById('sync-file-btn').addEventListener('click',doSyncFile);
 document.getElementById('seek-offset').addEventListener('change',()=>{
-  const v=parseInt(document.getElementById('seek-offset').value);
-  if(isNaN(v)){document.getElementById('seek-offset').value=cfg.seek_offset;return;}
+  const v=Number.parseInt(document.getElementById('seek-offset').value);
+  if(Number.isNaN(v)){document.getElementById('seek-offset').value=cfg.seek_offset;return;}
   cfg.seek_offset=v;saveCfg();
 });
 let _volWheeling=false;
 document.getElementById('vol-slider').addEventListener('input',()=>{
   if(_volWheeling)return;
-  const raw=parseFloat(document.getElementById('vol-slider').value);
+  const raw=Number.parseFloat(document.getElementById('vol-slider').value);
   const inc=cfg.vol_increment||0.1;
   masterVolume=Math.max(0,Math.min(1,+(Math.round(raw/inc)*inc).toFixed(2)));
   masterMuted=false;applyVolume();
@@ -1298,6 +1306,11 @@ function adjustTs(delta){
   setMainText(lines.join('\n'));
   if(cfg.replay_after_ts){replayActiveLine(false);}
 }
+// Find the next timestamped line after fromIdx; returns ms or null
+function _findNextTimestampMs(lines,fromIdx){
+  for(let j=fromIdx+1;j<lines.length;j++){const ms=tsToMs(lines[j]);if(ms!==null)return ms;}
+  return null;
+}
 // Extract the last top-level parenthesized group from end of string, return [before, group] or null
 function _peelLastParen(s){
   const t=s.trimEnd();
@@ -1310,6 +1323,49 @@ function _peelLastParen(s){
   }
   return null;
 }
+// Assign interpolated timestamps to un-timestamped runs between two timestamped lines
+function _assignInterpolatedTs(out){
+  for(let i=0;i<out.length;i++){
+    if(META_RE.test(out[i])||out[i].trim()==='')continue;
+    if(tsToMs(out[i])!==null)continue;
+    let prevMs=null;
+    for(let j=i-1;j>=0;j--){
+      if(out[j].trim()===''||META_RE.test(out[j]))continue;
+      prevMs=tsToMs(out[j]);break;
+    }
+    if(prevMs===null)continue;
+    let runEnd=i;
+    while(runEnd+1<out.length&&!META_RE.test(out[runEnd+1])&&out[runEnd+1].trim()!==''&&tsToMs(out[runEnd+1])===null)runEnd++;
+    let nextMs=null;
+    for(let j=runEnd+1;j<out.length;j++){
+      if(out[j].trim()===''||META_RE.test(out[j]))continue;
+      const ms=tsToMs(out[j]);if(ms!==null){nextMs=ms;break;}
+    }
+    if(nextMs===null)continue;
+    const count=runEnd-i+1;
+    for(let k=0;k<count;k++){
+      out[i+k]=msToTs(Math.max(0,nextMs-(count-k)*10))+' '+out[i+k];
+    }
+    i=runEnd;
+  }
+}
+// Advance activeLine to next unprocessed line after a split-mode mark-as-translation
+function _advanceAfterSplit(updatedLines,afterInserted){
+  let nextUnprocessed=-1;
+  for(let j=afterInserted;j<updatedLines.length;j++){
+    const ul=updatedLines[j];
+    if(META_RE.test(ul)||ul.trim()==='')continue;
+    const ulContent=TS_RE.test(ul)?ul.slice(10).replace(/^ /,''):ul;
+    if(_peelLastParen(ulContent)!==null){nextUnprocessed=j;break;}
+    if(nextUnprocessed<0)nextUnprocessed=j;
+  }
+  if(nextUnprocessed<0){
+    for(let j=afterInserted;j<updatedLines.length;j++){
+      if(!META_RE.test(updatedLines[j])&&updatedLines[j].trim()!==''){nextUnprocessed=j;break;}
+    }
+  }
+  if(nextUnprocessed>=0){activeLine=nextUnprocessed;suppressAuto();renderMainLines();scrollToActive();}
+}
 // Batch-split trailing parenthesized groups on all non-meta lines (including timestamped).
 // Inserts peeled groups as plain lines immediately after their parent.
 // Second pass: assigns interpolated timestamps to inserted groups when surrounding lines are timestamped.
@@ -1318,9 +1374,7 @@ function batchSplitParens(text){
   const out=[];
   for(let i=0;i<lines.length;i++){
     const l=lines[i];
-    // Skip meta or blank lines
     if(META_RE.test(l)||l.trim()===''){out.push(l);continue;}
-    // Strip timestamp prefix if present
     const hasTs=TS_RE.test(l);
     const tsPrefix=hasTs?l.slice(0,10):'';
     let content=hasTs?l.slice(10).replace(/^ /,''):l;
@@ -1331,50 +1385,22 @@ function batchSplitParens(text){
       groups.push(group);
       content=before;
     }
-    out.push(tsPrefix+(content?' '+content:content).replace(/^ /,''));
+    out.push(tsPrefix+(tsPrefix&&content?' '+content:content));
     if(groups.length)out.push(...groups.slice().reverse());
   }
-  // Second pass: assign timestamps to any non-timestamped lines inserted between timestamped lines
-  // Find each run of un-timestamped non-meta lines that are preceded by a timestamped line
-  for(let i=0;i<out.length;i++){
-    if(META_RE.test(out[i])||out[i].trim()==='')continue;
-    if(tsToMs(out[i])!==null)continue;
-    // Check if previous non-blank non-meta line had a timestamp
-    let prevMs=null;
-    for(let j=i-1;j>=0;j--){
-      if(out[j].trim()===''||META_RE.test(out[j]))continue;
-      prevMs=tsToMs(out[j]);break;
-    }
-    if(prevMs===null)continue;
-    // Collect this run of un-timestamped lines
-    let runEnd=i;
-    while(runEnd+1<out.length&&!META_RE.test(out[runEnd+1])&&out[runEnd+1].trim()!==''&&tsToMs(out[runEnd+1])===null)runEnd++;
-    // Find the next timestamped line
-    let nextMs=null;
-    for(let j=runEnd+1;j<out.length;j++){
-      if(out[j].trim()===''||META_RE.test(out[j]))continue;
-      const ms=tsToMs(out[j]);if(ms!==null){nextMs=ms;break;}
-    }
-    if(nextMs===null)continue;
-    const count=runEnd-i+1;
-    for(let k=0;k<count;k++){
-      const offsetMs=nextMs-(count-k)*10;
-      out[i+k]=msToTs(Math.max(0,offsetMs))+' '+out[i+k];
-    }
-    i=runEnd;// skip processed run
-  }
+  _assignInterpolatedTs(out);
   return out.join('\n');
 }
 function markAsTranslation(){
   if(!hasTrailingTimestamp())return;
   const lines=getTA().split('\n');
   let targetIdx;
-  if(!hotkeyMode){
+  if(hotkeyMode){
+    targetIdx=activeLine>=0?activeLine:-1;
+  }else{
     const ta=document.getElementById('main-textarea');
     const pos=ta.selectionStart;
     targetIdx=ta.value.slice(0,pos).split('\n').length-1;
-  }else{
-    targetIdx=activeLine>=0?activeLine:-1;
   }
   if(targetIdx<0||targetIdx>=lines.length)return;
   if(META_RE.test(lines[targetIdx]))return;
@@ -1382,14 +1408,7 @@ function markAsTranslation(){
   const splitMode=document.getElementById('main-split-check').checked;
   const useParens=document.getElementById('main-paren-check').checked;
 
-  // Find next timestamped line (used by both modes)
-  function findNextMs(fromIdx){
-    for(let j=fromIdx+1;j<lines.length;j++){const ms=tsToMs(lines[j]);if(ms!==null)return ms;}
-    return null;
-  }
-
   if(splitMode){
-    // Collect all trailing parenthesized groups by peeling from the end
     let content=TS_RE.test(lines[targetIdx])?lines[targetIdx].slice(10).replace(/^ /,''):lines[targetIdx];
     const ts=TS_RE.test(lines[targetIdx])?lines[targetIdx].slice(0,10):'';
     const groups=[];
@@ -1399,79 +1418,38 @@ function markAsTranslation(){
       groups.push(group);
       content=before;
     }
-    if(groups.length===0){
-      // No trailing paren groups — fall through to normal mark-as-translation
-    }else{
-      // groups[0] is last (outermost), groups[last] is first (innermost from end)
-      // They should be inserted in reverse so the last-peeled ends up closest to nextMs
-      // groups is already in peel order (last group first), so insert as-is: they'll
-      // appear in document order matching the original left-to-right sequence.
-      // Rebuild parent line with remaining content
+    if(groups.length>0){
       lines[targetIdx]=ts+(content?' '+content:content);
-      // Insert groups after targetIdx in original order (reverse of peel order)
       const toInsert=groups.slice().reverse();
       lines.splice(targetIdx+1,0,...toInsert);
-      // Find nextMs from the line that was previously after targetIdx (now shifted)
-      const nextMsLine=targetIdx+1+toInsert.length;
-      let nextMs=null;
-      for(let j=nextMsLine;j<lines.length;j++){const ms=tsToMs(lines[j]);if(ms!==null){nextMs=ms;break;}}
+      const nextMs=_findNextTimestampMs(lines,targetIdx+toInsert.length);
       if(nextMs!==null){
-        // Assign timestamps: closest to nextMs first (last group = index 0 in toInsert = nextMs-10)
         toInsert.forEach((g,k)=>{
           const idx=targetIdx+1+k;
-          const offsetMs=nextMs-(toInsert.length-k)*10;
-          lines[idx]=msToTs(Math.max(0,offsetMs))+(g?' '+g:'');
+          lines[idx]=msToTs(Math.max(0,nextMs-(toInsert.length-k)*10))+(g?' '+g:'');
         });
       }
       setMainText(lines.join('\n'));
-      // Advance to next "unprocessed" line: first line after the inserted groups
-      // that has non-paren content (or just the next lyric line if none qualifies)
-      if(hotkeyMode){
-        const updatedLines=getTA().split('\n');
-        const afterInserted=targetIdx+1+toInsert.length;
-        // Find next line with non-parenthesized lyric content, or failing that just next lyric
-        let nextUnprocessed=-1;
-        for(let j=afterInserted;j<updatedLines.length;j++){
-          const ul=updatedLines[j];
-          if(META_RE.test(ul)||ul.trim()==='')continue;
-          const ulContent=TS_RE.test(ul)?ul.slice(10).replace(/^ /,''):ul;
-          if(_peelLastParen(ulContent)!==null){nextUnprocessed=j;break;}
-          // Also accept any lyric line as fallback destination
-          if(nextUnprocessed<0)nextUnprocessed=j;
-        }
-        if(nextUnprocessed<0){
-          // No unprocessed lines ahead — just go to next lyric line
-          for(let j=afterInserted;j<updatedLines.length;j++){
-            if(!META_RE.test(updatedLines[j])&&updatedLines[j].trim()!==''){nextUnprocessed=j;break;}
-          }
-        }
-        if(nextUnprocessed>=0){
-          activeLine=nextUnprocessed;suppressAuto();
-          renderMainLines();scrollToActive();
-        }
-      }
+      if(hotkeyMode)_advanceAfterSplit(getTA().split('\n'),targetIdx+1+toInsert.length);
       return;
     }
   }
 
   // Normal mark-as-translation
-  const nextMs=findNextMs(targetIdx);
+  const nextMs=_findNextTimestampMs(lines,targetIdx);
   if(nextMs===null)return;
-  const offsetMs=nextMs-10;
   const content=TS_RE.test(lines[targetIdx])?lines[targetIdx].slice(10).replace(/^ /,''):lines[targetIdx];
   let newContent=content;
   if(useParens&&newContent.trim()&&!newContent.trim().startsWith('(')){
     newContent='('+newContent.trim()+')';
   }
-  lines[targetIdx]=msToTs(offsetMs)+(newContent?' '+newContent:'');
+  lines[targetIdx]=msToTs(nextMs-10)+(newContent?' '+newContent:'');
   setMainText(lines.join('\n'));
-  // Advance to next lyric line in hotkey mode
   if(hotkeyMode){
     const updatedLines=getTA().split('\n');
     for(let j=targetIdx+1;j<updatedLines.length;j++){
       if(!META_RE.test(updatedLines[j])&&updatedLines[j].trim()!==''){
-        activeLine=j;suppressAuto();
-        renderMainLines();scrollToActive();break;
+        activeLine=j;suppressAuto();renderMainLines();scrollToActive();break;
       }
     }
   }
@@ -1508,20 +1486,16 @@ function addSecondary(){
     let lines=text.split('\n');
     lines=lines.map(l=>stripSecLine(l)).filter(l=>!META_RE.test(l)&&!isHeader(l));
     const collapsed=collapseBlanks(lines);
-    const toInsert=parenCheck.checked?collapsed.map(l=>l.trim()&&!l.trim().startsWith("(")?'('+l.trim()+')':l):collapsed;
+    const toInsert=parenCheck.checked?collapsed.map(l=>{const t=l.trim();return t&&!t.startsWith('(')?'('+t+')':l;}):collapsed;
     const start=le.selectionStart,end=le.selectionEnd,v=le.value;
     le.value=v.slice(0,start)+toInsert.join('\n')+v.slice(end);
     le.setSelectionRange(start+toInsert.join('\n').length,start+toInsert.join('\n').length);
     le.dispatchEvent(new Event('input'));
   });
-  le.addEventListener('keydown',e=>{
-    // Always let the textarea handle its own navigation
+function _handleSecKeydown(e){
     if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Home','End','PageUp','PageDown'].includes(e.key)){e.stopPropagation();return;}
     if((e.ctrlKey||e.metaKey)&&e.key.toUpperCase()==='A'){e.stopPropagation();return;}
-    // Stop all printable single characters (letter/digit/punct typing)
     if(!e.ctrlKey&&!e.metaKey&&!e.altKey&&e.key.length===1){e.stopPropagation();return;}
-    // Stop only the hotkeys that are disabled in Typing mode (HOTKEY_ONLY set)
-    // plus toggle_mode and offset_mode_toggle — everything else (undo, save, add/remove field, etc.) passes through
     const SEC_BLOCKED=new Set([...HOTKEY_ONLY,'toggle_mode','offset_mode_toggle','clear_sel','replay_line','replay_end']);
     const ks=keyStr(e);
     const blockedHotkeys=Object.entries(cfg.hotkeys)
@@ -1529,9 +1503,9 @@ function addSecondary(){
       .map(([,v])=>v)
       .filter(Boolean);
     if(blockedHotkeys.includes(ks)){e.stopPropagation();return;}
-    // Always stop Space/Enter/Tab/Escape since they have special hotkeyMode roles
     if(e.key===' '||e.key==='Enter'||e.key==='Tab'||e.key==='Escape'){e.stopPropagation();}
-  });
+  }
+  le.addEventListener('keydown',_handleSecKeydown);
   le.addEventListener('input',()=>{
     const v=le.value,fixed=v.replace(/\n{3,}/g,'\n\n');
     if(fixed!==v){const pos=le.selectionStart;le.value=fixed;le.setSelectionRange(pos,pos);}
@@ -1554,7 +1528,7 @@ function addSecondary(){
       let lines=e2.target.result.split('\n');
       lines=lines.map(l=>stripSecLine(l)).filter(l=>!META_RE.test(l)&&!isHeader(l));
       const collapsed=collapseBlanks(lines);
-      const withParens=parenCheck.checked?collapsed.map(l=>l.trim()&&!l.trim().startsWith("(")?'('+l.trim()+')':l):collapsed;
+      const withParens=parenCheck.checked?collapsed.map(l=>{const t=l.trim();return t&&!t.startsWith('(')?'('+t+')':l;}):collapsed;
       le.value=withParens.join('\n').trim();
       checkLineCounts();updateMergeBtn();pushSnapshot();
     };
@@ -1638,6 +1612,19 @@ function updateMergeBtn(){
     secondaryCols.every(c=>{const sn=getSecLines(c.linesEl).length;return sn===0||sn===n;});
   document.getElementById('merge-btn').disabled=!ok;
 }
+function _buildMergedResult(mainLines,tsLines,contentTs,secData){
+  const result=[...mainLines];
+  for(let ci=contentTs.length-1;ci>=0;ci--){
+    const[lineIdx]=contentTs[ci];
+    let nextMs=null;for(const[i,ms]of tsLines){if(i>lineIdx){nextMs=ms;break;}}
+    if(nextMs===null)continue;
+    const ins=[];
+    secData.forEach(({lines})=>{if(ci<lines.length)ins.push(lines[ci]);});
+    const n=ins.length;
+    result.splice(lineIdx+1,0,...ins.map((t,j)=>`${msToTs(nextMs-(n-j)*10)} ${t}`));
+  }
+  return result;
+}
 function mergeTranslations(){
   const mainLines=getTA().split('\n');
   const tsLines=mainLines.map((l,i)=>[i,tsToMs(l)]).filter(([,ms])=>ms!==null);
@@ -1650,16 +1637,7 @@ function mergeTranslations(){
   const lastLine=mainLines[tsLines[tsLines.length-1][0]];
   if(!isEndTs(lastLine)&&!confirm('No trailing end timestamp found. Final secondary lines may not display correctly. Continue?'))return;
   const contentTs=tsLines.filter(([i])=>!isEndTs(mainLines[i]));
-  const result=[...mainLines];
-  for(let ci=contentTs.length-1;ci>=0;ci--){
-    const[lineIdx]=contentTs[ci];
-    let nextMs=null;for(const[i,ms]of tsLines){if(i>lineIdx){nextMs=ms;break;}}
-    if(nextMs===null)continue;
-    const ins=[];
-    secData.forEach(({lines})=>{if(ci<lines.length)ins.push(lines[ci]);});
-    const n=ins.length;
-    result.splice(lineIdx+1,0,...ins.map((t,j)=>`${msToTs(nextMs-(n-j)*10)} ${t}`));
-  }
+  const result=_buildMergedResult(mainLines,tsLines,contentTs,secData);
   pushSnapshot();
   _setTA(result.join('\n'));renderMainLines();checkLineCounts();updateTitleFromText();doAutosave();
   pushSnapshot();
@@ -1692,7 +1670,7 @@ function doSave(){
   const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download=stem+'.lrc';
   document.body.appendChild(a);a.click();
-  document.body.removeChild(a);URL.revokeObjectURL(url);
+  a.remove();URL.revokeObjectURL(url);
 }
 document.getElementById('btn-import').addEventListener('click',()=>{if(document.getElementById('settings-overlay').classList.contains('open'))return;doImport();});
 document.getElementById('btn-save').addEventListener('click',doSave);
@@ -1783,6 +1761,7 @@ document.getElementById('file-picker').addEventListener('change',e=>{
 });
 
 // ── Controls panel ────────────────────────────────────────────────────────────
+function _hkDisp(v){if(v==='Escape')return 'Esc';return v||'—';}
 const CTRL_ACTIONS={
   toggle_mode:()=>{hotkeyMode=!hotkeyMode;applyMode();},
   play_pause:()=>togglePlay(),
@@ -1815,11 +1794,11 @@ const CTRL_ACTIONS={
   reset_defaults:()=>{if(!document.getElementById('settings-overlay').classList.contains('open'))openSettings();showResetConfirm();},
   mark_translation:()=>markAsTranslation(),
 };
-let currentSpeed=1.0;
+let currentSpeed=1;
 function changeSpeed(dir){
-  if(dir===0){currentSpeed=1.0;}
+  if(dir===0){currentSpeed=1;}
   else{
-    const ratio=cfg.speed_ratio||1.10;
+    const ratio=cfg.speed_ratio||1.1;
     currentSpeed=dir>0?Math.min(4,+(currentSpeed*ratio).toFixed(4)):Math.max(0.1,+(currentSpeed/ratio).toFixed(4));
     currentSpeed=Math.round(currentSpeed*100)/100;
   }
@@ -1844,7 +1823,7 @@ function rebuildHkPanel(){
     cell.className='hk-cell mode half';
     if(warn){cell.style.background='var(--warn-bg)';cell.style.borderColor='var(--warn-border)';cell.style.color='var(--warn-text)';}
     cell.title=HK_LABELS[key]||label;
-    cell.innerHTML=`<span>${label}</span><span class="hk-key" style="${warn?'background:rgba(212,167,44,0.15);color:var(--warn-text)':''}">${hk[key]==='Escape'?'Esc':(hk[key]||'—')}</span>`;
+    cell.innerHTML=`<span>${label}</span><span class="hk-key" style="${warn?'background:rgba(212,167,44,0.15);color:var(--warn-text)':''}">${_hkDisp(hk[key])}</span>`;
     cell.addEventListener('click',()=>CTRL_ACTIONS[key]&&CTRL_ACTIONS[key]());
     modeRow.appendChild(cell);
   });
@@ -1865,11 +1844,11 @@ function rebuildHkPanel(){
       const replayKey=hk.replay_line||'Enter';
       cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${hk[key]||'—'}</span><span class="hk-key">${replayKey==='Escape'?'Esc':replayKey}</span></span>`;
     }else if(key==='prev_line'){
-      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${hk[key]==='Escape'?'Esc':(hk[key]||'—')}</span><span class="hk-key">↑</span></span>`;
+      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↑</span></span>`;
     }else if(key==='next_line'){
-      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${hk[key]==='Escape'?'Esc':(hk[key]||'—')}</span><span class="hk-key">↓</span></span>`;
+      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↓</span></span>`;
     }else{
-      cell.innerHTML=`<span>${label}</span><span class="hk-key">${hk[key]==='Escape'?'Esc':(hk[key]||'—')}</span>`;
+      cell.innerHTML=`<span>${label}</span><span class="hk-key">${_hkDisp(hk[key])}</span>`;
     }
     cell.addEventListener('click',()=>{if(!dimmed&&CTRL_ACTIONS[key])CTRL_ACTIONS[key]();});
     grid.appendChild(cell);
@@ -1894,7 +1873,7 @@ function openSettings(){
   document.getElementById('s-medium').value=cfg.medium_ms;
   document.getElementById('s-large').value=cfg.large_ms;
   document.getElementById('s-seek-inc').value=cfg.seek_increment_s??5;
-  document.getElementById('s-speed-ratio').value=(cfg.speed_ratio??1.10).toFixed(2);
+  document.getElementById('s-speed-ratio').value=(cfg.speed_ratio??1.1).toFixed(2);
   document.getElementById('s-vol-inc').value=Math.round((cfg.vol_increment||0.1)*100);
   document.getElementById('s-undo-debounce').value=cfg.undo_debounce_ms??150;
   document.getElementById('s-default-meta').value=cfg.default_meta;
@@ -1926,7 +1905,7 @@ function saveSettingsNow(){
   cfg.medium_ms=+document.getElementById('s-medium').value||400;
   cfg.large_ms=+document.getElementById('s-large').value||1000;
   cfg.seek_increment_s=Math.max(1,+document.getElementById('s-seek-inc').value||5);
-  cfg.speed_ratio=Math.max(1.01,Math.min(2,+document.getElementById('s-speed-ratio').value||1.10));
+  cfg.speed_ratio=Math.max(1.01,Math.min(2,+document.getElementById('s-speed-ratio').value||1.1));
   cfg.vol_increment=Math.max(0.01,Math.min(1,(+document.getElementById('s-vol-inc').value||10)/100));
   cfg.undo_debounce_ms=Math.max(1,+document.getElementById('s-undo-debounce').value||150);
   // Resync display for all number fields (handles blank+Enter revert case)
@@ -1947,6 +1926,7 @@ function setConflict(msg){
 }
 
 // ── Settings search ───────────────────────────────────────────────────────────
+function _normKey(k){if(k==='Escape')return 'Esc';if(k===' ')return 'Space';return k.length===1?k.toUpperCase():k;}
 let _sSearchHkMode=false;// true = hotkey capture mode in search bar
 
 function applySettingsFilter(){
@@ -2031,6 +2011,34 @@ function setSearchHkMode(on){
   }
 }
 
+function _handleSettingsSearchKeydown(e,inp){
+    if(_sSearchHkMode){
+      if(e.key==='Tab'){return;}
+      e.preventDefault();e.stopPropagation();
+      if(e.key==='Escape'||e.key==='Backspace'||e.key==='Delete'){
+        setSearchHkMode(false);inp.value='';applySettingsFilter();return;
+      }
+      const parts=[];
+      if(e.ctrlKey)parts.push('Ctrl');if(e.shiftKey)parts.push('Shift');if(e.altKey)parts.push('Alt');
+      const k=e.key;
+      if(['Control','Shift','Alt','Meta'].includes(k))return;
+      const disp=_normKey(k);
+      parts.push(disp);
+      const ks=parts.join('+');
+      const isAssigned=Object.values(cfg.hotkeys).some(v=>v===ks||(ks==='Esc'&&v==='Escape'));
+      const isGloballyRestricted=!!isRestrictedForAll(ks);
+      if(isGloballyRestricted&&!isAssigned)return;
+      inp.value=ks;
+      applySettingsFilter();
+    }else{
+      if(e.key==='Tab')return;
+      if(e.key==='Escape')return;
+      e.stopPropagation();
+      const ks=keyStr(e);
+      if(hkMatch(ks,cfg.hotkeys.toggle_mode)){e.preventDefault();setSearchHkMode(true);return;}
+    }
+  }
+
 function initSettingsSearch(){
   const inp=document.getElementById('s-search');
   const btn=document.getElementById('s-search-kbd');
@@ -2042,41 +2050,7 @@ function initSettingsSearch(){
 
   inp.oninput=()=>{if(!_sSearchHkMode)applySettingsFilter();};
 
-  inp.onkeydown=e=>{
-    if(_sSearchHkMode){
-      // Let Tab reach the global focus trap
-      if(e.key==='Tab'){return;}
-      e.preventDefault();e.stopPropagation();
-      // Backspace/Delete/Escape all reset search mode without assigning
-      if(e.key==='Escape'||e.key==='Backspace'||e.key==='Delete'){
-        setSearchHkMode(false);inp.value='';applySettingsFilter();return;
-      }
-      // Build key string
-      const parts=[];
-      if(e.ctrlKey)parts.push('Ctrl');if(e.shiftKey)parts.push('Shift');if(e.altKey)parts.push('Alt');
-      const k=e.key;
-      if(['Control','Shift','Alt','Meta'].includes(k))return;
-      const disp=k==='Escape'?'Esc':k===' '?'Space':k.length===1?k.toUpperCase():k;
-      parts.push(disp);
-      const ks=parts.join('+');
-      // Ignore keys that are globally restricted AND not assigned to any hotkey
-      // (i.e. they can never appear as a hotkey, so searching for them is meaningless)
-      const isAssigned=Object.values(cfg.hotkeys).some(v=>v===ks||(ks==='Esc'&&v==='Escape'));
-      const isGloballyRestricted=!!isRestrictedForAll(ks);
-      if(isGloballyRestricted&&!isAssigned)return;
-      inp.value=ks;
-      applySettingsFilter();
-    }else{
-      // Let Tab/Shift+Tab propagate to the Settings focus trap
-      if(e.key==='Tab')return;
-      // Let Esc propagate to the global handler (which closes Settings)
-      if(e.key==='Escape')return;
-      e.stopPropagation();
-      // Toggle hotkey search mode with the toggle_mode hotkey key
-      const ks=keyStr(e);
-      if(hkMatch(ks,cfg.hotkeys.toggle_mode)){e.preventDefault();setSearchHkMode(true);return;}
-    }
-  };
+  inp.onkeydown=e=>_handleSettingsSearchKeydown(e,inp);
 }
 
 function buildHkRows(){
@@ -2186,6 +2160,7 @@ function buildHkRows(){
         if(inp.value==='…')inp.value=_prevVal;
         updateClear();updateRst();
       });
+      function getHkCaptures(){return Array.from(document.getElementById('hk-settings-rows').querySelectorAll('.hk-capture'));}
       inp.addEventListener('keydown',e=>{
         // Let Tab/Shift+Tab reach the global focus trap (don't stopPropagation)
         // but preventDefault here to block the browser's native tab, avoiding double navigation
@@ -2195,10 +2170,9 @@ function buildHkRows(){
         if(e.key==='Backspace'&&e.shiftKey){clearHotkey(true);return;}
         if(e.key==='Backspace'){
           if(rst.classList.contains('visible')){
-            const allCaptures=()=>Array.from(document.getElementById('hk-settings-rows').querySelectorAll('.hk-capture'));
-            const curIdx=allCaptures().indexOf(inp);
+            const captures=getHkCaptures(),curIdx=captures.indexOf(inp);
             rst.click();
-            const next=allCaptures()[curIdx+1];
+            const next=getHkCaptures()[curIdx+1];
             if(next)next.focus();else document.getElementById('s-search').focus();
           }
           return;
@@ -2206,17 +2180,15 @@ function buildHkRows(){
         if(e.key==='Enter'){
           if(rep.classList.contains('visible')){
             // Replace: fire replace, then after buildHkRows advance to next capture by position
-            const allCaptures=()=>Array.from(document.getElementById('hk-settings-rows').querySelectorAll('.hk-capture'));
-            const curIdx=allCaptures().indexOf(inp);
+            const curIdx=getHkCaptures().indexOf(inp);
             rep.click();// triggers buildHkRows → new DOM
-            const next=allCaptures()[curIdx+1];
+            const next=getHkCaptures()[curIdx+1];
             if(next)next.focus();else document.getElementById('s-search').focus();
           }else if(inp.value!=='…'){
             // No conflict pending — just advance to next element
-            const allCaptures=()=>Array.from(document.getElementById('hk-settings-rows').querySelectorAll('.hk-capture'));
-            const curIdx=allCaptures().indexOf(inp);
+            const captures=getHkCaptures(),curIdx=captures.indexOf(inp);
             inp.blur();
-            const next=allCaptures()[curIdx+1];
+            const next=captures[curIdx+1];
             if(next)next.focus();else document.getElementById('s-search').focus();
           }
           return;
@@ -2228,7 +2200,7 @@ function buildHkRows(){
         const k=e.key;
         // Reject modifier-only keystrokes (no actual key beyond the modifier itself)
         if(['Control','Shift','Alt','Meta'].includes(k))return;
-        const disp=k==='Escape'?'Esc':k===' '?'Space':k.length===1?k.toUpperCase():k;
+        const disp=_normKey(k);
         parts.push(disp);
         if(!parts.length)return;
         const newVal=parts.join('+');
@@ -2284,8 +2256,8 @@ document.getElementById('s-replay-ts').addEventListener('change',saveSettingsNow
 document.getElementById('s-default-meta').addEventListener('input',saveSettingsNow);
 document.getElementById('btn-settings').addEventListener('click',()=>openSettings());
 document.getElementById('speed-val').addEventListener('change',()=>{
-  const v=parseFloat(document.getElementById('speed-val').value);
-  if(isNaN(v)||v<=0){document.getElementById('speed-val').value=currentSpeed===1?'1':currentSpeed.toFixed(2);return;}
+  const v=Number.parseFloat(document.getElementById('speed-val').value);
+  if(Number.isNaN(v)||v<=0){document.getElementById('speed-val').value=currentSpeed===1?'1':currentSpeed.toFixed(2);return;}
   currentSpeed=Math.max(0.05,Math.min(4,+v.toFixed(2)));
   document.getElementById('speed-val').value=currentSpeed===1?'1':currentSpeed.toFixed(2);
   if(audioEl)audioEl.playbackRate=currentSpeed;
@@ -2301,14 +2273,14 @@ document.getElementById('settings-overlay').addEventListener('mousedown',e=>{
 // ── Confirm dialog ───────────────────────────────────────────────────────────
 let _resetConfirmPending=false;
 function _doResetDefaults(){
-  const d=JSON.parse(JSON.stringify(DEFAULT_CFG));
+  const d=structuredClone(DEFAULT_CFG);
   cfg.replay_prev_line=d.replay_prev_line;cfg.replay_next_line=d.replay_next_line;
   cfg.replay_resume_current=d.replay_resume_current;cfg.replay_play_other=d.replay_play_other;
   cfg.replay_after_offset=d.replay_after_offset;cfg.replay_after_sync=d.replay_after_sync;cfg.replay_after_ts=d.replay_after_ts;
   cfg.tiny_ms=d.tiny_ms;cfg.small_ms=d.small_ms;cfg.medium_ms=d.medium_ms;cfg.large_ms=d.large_ms;
   cfg.seek_offset=d.seek_offset;cfg.seek_increment_s=d.seek_increment_s;document.getElementById('seek-offset').value=cfg.seek_offset;
   cfg.speed_ratio=d.speed_ratio;cfg.vol_increment=d.vol_increment;cfg.undo_debounce_ms=d.undo_debounce_ms;
-  cfg.default_meta=d.default_meta;cfg.hotkeys=Object.assign({},d.hotkeys);
+  cfg.default_meta=d.default_meta;cfg.hotkeys={...d.hotkeys};
   if(editorFont!=='system-ui,sans-serif'){editorFont='system-ui,sans-serif';localStorage.setItem('lbl_font',editorFont);}
   if(editorSize!==14){editorSize=14;localStorage.setItem('lbl_fsize',editorSize);}
   applyEditorFont();
@@ -2338,158 +2310,131 @@ document.getElementById('s-confirm-no').addEventListener('click',()=>hideResetCo
   // ── Key normalization ──────────────────────────────────────────────────────
 function keyStr(e){
   const p=[];if(e.ctrlKey)p.push('Ctrl');if(e.shiftKey)p.push('Shift');if(e.altKey)p.push('Alt');
-  const k=e.key;if(!['Control','Shift','Alt','Meta'].includes(k))p.push(k===' '?'Space':k.length===1?k.toUpperCase():k);
+  const k=e.key;if(!['Control','Shift','Alt','Meta'].includes(k))p.push(_normKey(k));
   return p.join('+');
 }
 function hkMatch(ks,stored){return ks===stored||(stored==='Escape'&&ks==='Escape');}
 
   // ── Main textarea keydown (autocomplete / bracket logic) ───────────────────
-document.getElementById('main-textarea').addEventListener('keydown',e=>{
-  if(!hotkeyMode&&e.key==='Enter'){
-    const ta=e.target,pos=ta.selectionStart;
-    const v=ta.value;
-    const lineStart=v.lastIndexOf('\n',pos-1)+1;
-    const curLine=v.slice(lineStart,pos);
-    const trimmed=curLine.trimEnd();
-    if(trimmed.length<curLine.length){
-      e.preventDefault();
-      ta.value=v.slice(0,lineStart)+trimmed+'\n'+v.slice(pos);
-      ta.setSelectionRange(lineStart+trimmed.length+1,lineStart+trimmed.length+1);
-      ta.dispatchEvent(new Event('input'));
-    }
+function _handleTextareaEnterTrim(e){
+  const ta=e.target,pos=ta.selectionStart;
+  const v=ta.value;
+  const lineStart=v.lastIndexOf('\n',pos-1)+1;
+  const curLine=v.slice(lineStart,pos);
+  const trimmed=curLine.trimEnd();
+  if(trimmed.length<curLine.length){
+    e.preventDefault();
+    ta.value=v.slice(0,lineStart)+trimmed+'\n'+v.slice(pos);
+    ta.setSelectionRange(lineStart+trimmed.length+1,lineStart+trimmed.length+1);
+    ta.dispatchEvent(new Event('input'));
   }
-  if(!hotkeyMode&&(e.key==='('||e.key==='[')){
-    const close=e.key==='('?')':']';
-    const ta=e.target,start=ta.selectionStart,end=ta.selectionEnd;
-    if(start!==end){
-      // Wrap selected text
+}
+function _handleTextareaParenBracket(e){
+  const close=e.key==='('?')':']';
+  const ta=e.target,start=ta.selectionStart,end=ta.selectionEnd;
+  if(start!==end){
+    e.preventDefault();
+    const v=ta.value;
+    ta.value=v.slice(0,start)+e.key+v.slice(start,end)+close+v.slice(end);
+    ta.setSelectionRange(start+1,end+1);
+    ta.dispatchEvent(new Event('input'));
+  }else if(e.key==='('){
+    const v=ta.value;
+    const lineStart=v.lastIndexOf('\n',start-1)+1;
+    const lineEnd=v.indexOf('\n',start);
+    const lineText=v.slice(lineStart,lineEnd<0?v.length:lineEnd);
+    const posInContent=start-(lineStart+(TS_RE.test(lineText)?11:0));
+    if(posInContent<=0&&!META_RE.test(lineText)){
       e.preventDefault();
-      const v=ta.value;
-      ta.value=v.slice(0,start)+e.key+v.slice(start,end)+close+v.slice(end);
-      ta.setSelectionRange(start+1,end+1);
+      const restEnd=lineEnd<0?v.length:lineEnd;
+      const rest=v.slice(start,restEnd).trimEnd();
+      ta.value=v.slice(0,start)+'('+rest+')'+(lineEnd<0?'':v.slice(lineEnd));
+      ta.setSelectionRange(start+1,start+1);
       ta.dispatchEvent(new Event('input'));
-    }else if(e.key==='('){
-      // Auto-close ( at end of line if ( is placed at the start of a lyric line's content
-      const v=ta.value;
-      const lineStart=v.lastIndexOf('\n',start-1)+1;
-      const lineEnd=v.indexOf('\n',start);
-      const lineText=v.slice(lineStart,lineEnd<0?v.length:lineEnd);
-      const posInContent=start-(lineStart+(TS_RE.test(lineText)?11:0));
-      if(posInContent<=0&&!META_RE.test(lineText)){
-        // At start of lyric content — insert ( and ) around rest of line
-        e.preventDefault();
-        const restEnd=lineEnd<0?v.length:lineEnd;
-        const rest=v.slice(start,restEnd).trimEnd();
-        ta.value=v.slice(0,start)+'('+rest+')'+(lineEnd<0?'':v.slice(lineEnd));
-        ta.setSelectionRange(start+1,start+1);
-        ta.dispatchEvent(new Event('input'));
-      }else{
-        // Normal position — just insert ( and )
-        e.preventDefault();
-        ta.value=v.slice(0,start)+'()'+v.slice(end);
-        ta.setSelectionRange(start+1,start+1);
-        ta.dispatchEvent(new Event('input'));
-      }
     }else{
-      // [ — just insert with auto-close
       e.preventDefault();
-      const v=ta.value;
-      ta.value=v.slice(0,start)+e.key+close+v.slice(end);
+      ta.value=v.slice(0,start)+'()'+v.slice(end);
       ta.setSelectionRange(start+1,start+1);
       ta.dispatchEvent(new Event('input'));
     }
+  }else{
+    e.preventDefault();
+    const v=ta.value;
+    ta.value=v.slice(0,start)+e.key+close+v.slice(end);
+    ta.setSelectionRange(start+1,start+1);
+    ta.dispatchEvent(new Event('input'));
   }
+}
+document.getElementById('main-textarea').addEventListener('keydown',e=>{
+  if(!hotkeyMode&&e.key==='Enter')_handleTextareaEnterTrim(e);
+  if(!hotkeyMode&&(e.key==='('||e.key==='['))_handleTextareaParenBracket(e);
 });
 
   // ── Overlay utilities ──────────────────────────────────────────────────────
 let arrowNavTimer=null;
-  // ── Global keydown handler ────────────────────────────────────────────────
-document.addEventListener('keydown',e=>{
-  const settingsOpen=document.getElementById('settings-overlay').classList.contains('open');
-  const ks=keyStr(e),hk=cfg.hotkeys;
-  // Suppress key-repeat for all hotkeys (navigation keys are handled before this guard)
-  // Tab focus trap and settings toggle are exempt — they must always fire
-  const isNavKey=e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Tab';
-  // prev_line/next_line hotkeys are also exempt from repeat suppression unless instant-replay would fire
-  const isPrevNext=(hkMatch(ks,hk.prev_line)||hkMatch(ks,hk.next_line));
-  const prevNextReplayActive=isPrevNext&&((hkMatch(ks,hk.prev_line)&&cfg.replay_prev_line)||(hkMatch(ks,hk.next_line)&&cfg.replay_next_line));
-  // When settings is open, Tab navigates within settings-win (focus trap)
+
+// Returns true if the event was handled (caller should return)
+function _handleSettingsKeys(e,ks,hk,settingsOpen){
   if(settingsOpen&&e.key==='Tab'&&!e.ctrlKey&&!e.altKey){
     e.preventDefault();
     const win=document.getElementById('settings-win');
     const focusable=Array.from(win.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])'))
       .filter(el=>!el.disabled&&el.offsetParent!==null&&!el.classList.contains('hk-clear')&&!el.classList.contains('hk-reset')&&!el.classList.contains('hk-replace'));
-    if(!focusable.length)return;
+    if(!focusable.length)return true;
     const idx=focusable.indexOf(document.activeElement);
     const next=e.shiftKey?Math.max(0,idx-1):Math.min(focusable.length-1,idx+1);
     focusable[next].focus();
-    return;
+    return true;
   }
-  if(hkMatch(ks,hk.settings)){e.preventDefault();if(settingsOpen)closeSettings();else openSettings();return;}
-  if(hk.help&&hkMatch(ks,hk.help)){e.preventDefault();openHelp();return;}
-  if(hk.issues&&hkMatch(ks,hk.issues)){e.preventDefault();window.open('https://github.com/amokprime/linebyline/issues','_blank');return;}
-  if(hk.theme_toggle&&hkMatch(ks,hk.theme_toggle)){e.preventDefault();cycleTheme();return;}
-  if(hk.panel_toggle&&hkMatch(ks,hk.panel_toggle)){e.preventDefault();panelCollapsed=!panelCollapsed;applyPanelCollapse(true);return;}
-  if(hk.reset_defaults&&hkMatch(ks,hk.reset_defaults)){e.preventDefault();if(!settingsOpen)openSettings();showResetConfirm();return;}
-  // Escape in Settings: staged behaviour
+  if(hkMatch(ks,hk.settings)){e.preventDefault();if(settingsOpen)closeSettings();else openSettings();return true;}
+  if(hk.help&&hkMatch(ks,hk.help)){e.preventDefault();openHelp();return true;}
+  if(hk.issues&&hkMatch(ks,hk.issues)){e.preventDefault();window.open('https://github.com/amokprime/linebyline/issues','_blank');return true;}
+  if(hk.theme_toggle&&hkMatch(ks,hk.theme_toggle)){e.preventDefault();cycleTheme();return true;}
+  if(hk.panel_toggle&&hkMatch(ks,hk.panel_toggle)){e.preventDefault();panelCollapsed=!panelCollapsed;applyPanelCollapse(true);return true;}
+  if(hk.reset_defaults&&hkMatch(ks,hk.reset_defaults)){e.preventDefault();if(!settingsOpen)openSettings();showResetConfirm();return true;}
   if(e.key==='Escape'&&settingsOpen){
     e.preventDefault();
-    if(_resetConfirmPending){hideResetConfirm();return;}
+    if(_resetConfirmPending){hideResetConfirm();return true;}
     const focused=document.activeElement;
-    const isCapture=focused&&focused.classList.contains('hk-capture');
-    if(isCapture)return;// capture handles its own Esc
+    if(focused&&focused.classList.contains('hk-capture'))return true;
     const srch=document.getElementById('s-search');
     if(focused===srch){
-      if(_sSearchHkMode){
-        setSearchHkMode(false);srch.value='';applySettingsFilter();return;
-      }
-      closeSettings();return;// text mode: close immediately
+      if(_sSearchHkMode){setSearchHkMode(false);srch.value='';applySettingsFilter();return true;}
+      closeSettings();return true;
     }
-    closeSettings();// step 3: close
-    return;
+    closeSettings();return true;
   }
-  // Enter/Backspace confirm dialog shortcuts (when confirm is pending)
   if(settingsOpen&&_resetConfirmPending){
-    if(e.key==='Enter'){e.preventDefault();hideResetConfirm();_doResetDefaults();return;}
-    if(e.key==='Backspace'){e.preventDefault();hideResetConfirm();return;}
+    if(e.key==='Enter'){e.preventDefault();hideResetConfirm();_doResetDefaults();return true;}
+    if(e.key==='Backspace'){e.preventDefault();hideResetConfirm();return true;}
   }
-  if(settingsOpen)return;
-  // Suppress key-repeat for all non-navigation hotkeys
-  // Still preventDefault for mode-toggle keys to stop character insertion on repeat
-  if(e.repeat&&!isNavKey&&!(isPrevNext&&!prevNextReplayActive)){
-    if(hkMatch(ks,hk.toggle_mode)||hkMatch(ks,hk.offset_mode_toggle))e.preventDefault();
-    return;
-  }
-  // Suppress hotkey dispatch when a focusable UI element (button/input/select/a) outside
-  // the lyric area has focus — prevents e.g. Enter on a toolbar button also triggering syncLine
-  const ae=document.activeElement;
-  const inLyricArea=ae&&(ae===document.getElementById('main-textarea')||ae===document.getElementById('main-lines')||ae===document.body||ae===document.documentElement);
-  const isFocusedUI=ae&&!inLyricArea&&(ae.tagName==='BUTTON'||ae.tagName==='INPUT'||ae.tagName==='SELECT'||ae.tagName==='TEXTAREA'||ae.tagName==='A');
-  if(isFocusedUI&&!e.ctrlKey&&!e.altKey)return;
+  return false;
+}
 
-  if(hk.open&&hkMatch(ks,hk.open)){e.preventDefault();doImport();return;}
-  if(hk.save&&hkMatch(ks,hk.save)){e.preventDefault();doSave();return;}
-  if(hkMatch(ks,hk.undo)){e.preventDefault();doUndo();return;}
-  if(hkMatch(ks,hk.redo)){e.preventDefault();doRedo();return;}
-  if(hkMatch(ks,hk.add_field)){e.preventDefault();addSecondary();return;}
-  if(hkMatch(ks,hk.remove_field)){e.preventDefault();removeSecondary();return;}
-  if(hkMatch(ks,hk.merge_fields)){e.preventDefault();mergeTranslations();return;}
-  if(hk.mark_translation&&hkMatch(ks,hk.mark_translation)){e.preventDefault();markAsTranslation();return;}
-  if(hkMatch(ks,hk.speed_down)){e.preventDefault();changeSpeed(-1);return;}
-  if(hkMatch(ks,hk.speed_up)){e.preventDefault();changeSpeed(1);return;}
-  if(hkMatch(ks,hk.speed_reset)){e.preventDefault();changeSpeed(0);return;}
-  if(hkMatch(ks,hk.seek_back)){e.preventDefault();doSeekBack();return;}
-  if(hkMatch(ks,hk.seek_fwd)){e.preventDefault();doSeekFwd();return;}
-  if(hk.play_pause_alt&&hkMatch(ks,hk.play_pause_alt)){e.preventDefault();togglePlay();return;}
-  // Ctrl+M: hardcoded mute (mirrors browser tab mute)
-  if(ks==='Ctrl+M'){e.preventDefault();toggleMute();return;}
-  if(hkMatch(ks,hk.toggle_mode)){e.preventDefault();hotkeyMode=!hotkeyMode;applyMode();return;}
-  if(hkMatch(ks,hk.offset_mode_toggle)){e.preventDefault();setOffsetMode(!offsetSeekMode);return;}
-  if(hkMatch(ks,hk.sync_file)){e.preventDefault();doSyncFile();return;}
-  if(!hotkeyMode)return;
+function _handleGlobalHotkeys(e,ks,hk){
+  if(hk.open&&hkMatch(ks,hk.open)){e.preventDefault();doImport();return true;}
+  if(hk.save&&hkMatch(ks,hk.save)){e.preventDefault();doSave();return true;}
+  if(hkMatch(ks,hk.undo)){e.preventDefault();doUndo();return true;}
+  if(hkMatch(ks,hk.redo)){e.preventDefault();doRedo();return true;}
+  if(hkMatch(ks,hk.add_field)){e.preventDefault();addSecondary();return true;}
+  if(hkMatch(ks,hk.remove_field)){e.preventDefault();removeSecondary();return true;}
+  if(hkMatch(ks,hk.merge_fields)){e.preventDefault();mergeTranslations();return true;}
+  if(hk.mark_translation&&hkMatch(ks,hk.mark_translation)){e.preventDefault();markAsTranslation();return true;}
+  if(hkMatch(ks,hk.speed_down)){e.preventDefault();changeSpeed(-1);return true;}
+  if(hkMatch(ks,hk.speed_up)){e.preventDefault();changeSpeed(1);return true;}
+  if(hkMatch(ks,hk.speed_reset)){e.preventDefault();changeSpeed(0);return true;}
+  if(hkMatch(ks,hk.seek_back)){e.preventDefault();doSeekBack();return true;}
+  if(hkMatch(ks,hk.seek_fwd)){e.preventDefault();doSeekFwd();return true;}
+  if(hk.play_pause_alt&&hkMatch(ks,hk.play_pause_alt)){e.preventDefault();togglePlay();return true;}
+  if(ks==='Ctrl+M'){e.preventDefault();toggleMute();return true;}
+  if(hkMatch(ks,hk.toggle_mode)){e.preventDefault();hotkeyMode=!hotkeyMode;applyMode();return true;}
+  if(hkMatch(ks,hk.offset_mode_toggle)){e.preventDefault();setOffsetMode(!offsetSeekMode);return true;}
+  if(hkMatch(ks,hk.sync_file)){e.preventDefault();doSyncFile();return true;}
+  return false;
+}
 
+function _handleHotkeyModeKeys(e,ks,hk){
   if(e.key==='Escape'||hkMatch(ks,hk.clear_sel)){e.preventDefault();selectedLines.clear();renderMainLines();return;}
-
   const allLines=getTA().split('\n');
   const lineCount=allLines.length;
   if(e.key==='Home'||e.key==='End'){
@@ -2509,7 +2454,7 @@ document.addEventListener('keydown',e=>{
     const nonMeta=allLines.map((l,i)=>({l,i})).filter(({l})=>!META_RE.test(l)&&l.trim()!=='');
     if(!nonMeta.length)return;
     const curPos=nonMeta.findIndex(({i})=>i===activeLine);
-    const base=curPos<0?(e.key==='PageUp'?nonMeta.length-1:0):curPos;
+    let base=curPos;if(base<0)base=e.key==='PageUp'?nonMeta.length-1:0;
     const targetPos=e.key==='PageUp'?Math.max(0,base-pageLines):Math.min(nonMeta.length-1,base+pageLines);
     activeLine=nonMeta[targetPos].i;
     selectedLines.clear();renderMainLines();scrollToActive();return;
@@ -2536,17 +2481,13 @@ document.addEventListener('keydown',e=>{
     else{selectedLines.clear();activeLine=next;}
     renderMainLines();scrollToActive();return;
   }
-
   if(hkMatch(ks,hk.replay_line)&&activeLine>=0){e.preventDefault();syncLine();return;}
   if(hkMatch(ks,hk.replay_only)&&activeLine>=0){e.preventDefault();replayActiveLine(false);return;}
   if(hk.replay_end&&hkMatch(ks,hk.replay_end)&&activeLine>=0){e.preventDefault();replayActiveLine(true);return;}
   if(e.shiftKey&&e.key==='Enter'&&activeLine>=0){e.preventDefault();replayActiveLine(true);return;}
   if(e.shiftKey&&hkMatch('Space',hk.play_pause)&&e.key===' '){e.preventDefault();replayActiveLine(true);return;}
-
-  // Hardcoded ArrowLeft/Right = seek back/forward in Hotkey mode (not remappable, not shown in Settings)
   if(e.key==='ArrowLeft'){e.preventDefault();doSeekBack();return;}
   if(e.key==='ArrowRight'){e.preventDefault();doSeekFwd();return;}
-
   const actions={
     [hk.play_pause]:()=>togglePlay(),
     [hk.sync]:()=>syncLine(),
@@ -2563,6 +2504,28 @@ document.addEventListener('keydown',e=>{
     [hk.ts_fwd_large]:()=>CTRL_ACTIONS.ts_fwd_large(),
   };
   if(actions[ks]){e.preventDefault();actions[ks]();}
+}
+
+  // ── Global keydown handler ────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  const settingsOpen=document.getElementById('settings-overlay').classList.contains('open');
+  const ks=keyStr(e),hk=cfg.hotkeys;
+  const isNavKey=e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Tab';
+  const isPrevNext=(hkMatch(ks,hk.prev_line)||hkMatch(ks,hk.next_line));
+  const prevNextReplayActive=isPrevNext&&((hkMatch(ks,hk.prev_line)&&cfg.replay_prev_line)||(hkMatch(ks,hk.next_line)&&cfg.replay_next_line));
+  if(_handleSettingsKeys(e,ks,hk,settingsOpen))return;
+  if(settingsOpen)return;
+  if(e.repeat&&!isNavKey&&!(isPrevNext&&!prevNextReplayActive)){
+    if(hkMatch(ks,hk.toggle_mode)||hkMatch(ks,hk.offset_mode_toggle))e.preventDefault();
+    return;
+  }
+  const ae=document.activeElement;
+  const inLyricArea=ae&&(ae===document.getElementById('main-textarea')||ae===document.getElementById('main-lines')||ae===document.body||ae===document.documentElement);
+  const isFocusedUI=ae&&!inLyricArea&&(ae.tagName==='BUTTON'||ae.tagName==='INPUT'||ae.tagName==='SELECT'||ae.tagName==='TEXTAREA'||ae.tagName==='A');
+  if(isFocusedUI&&!e.ctrlKey&&!e.altKey)return;
+  if(_handleGlobalHotkeys(e,ks,hk))return;
+  if(!hotkeyMode)return;
+  _handleHotkeyModeKeys(e,ks,hk);
 });
 
 // ── Unload warning ────────────────────────────────────────────────────────────
@@ -2583,9 +2546,9 @@ document.getElementById('merge-btn').addEventListener('click',mergeTranslations)
 document.getElementById('btn-theme').addEventListener('click',cycleTheme);
 document.getElementById('vol-mute-btn').addEventListener('click',()=>{toggleMute();});
 document.getElementById('font-select').addEventListener('change',e=>{editorFont=e.target.value;saveEditorFont();});
-document.getElementById('font-size-inp').addEventListener('change',e=>{editorSize=Math.max(8,Math.min(32,parseFloat(e.target.value)||14));saveEditorFont();});
+document.getElementById('font-size-inp').addEventListener('change',e=>{editorSize=Math.max(8,Math.min(32,Number.parseFloat(e.target.value)||14));saveEditorFont();});
 document.getElementById('font-size-inp').addEventListener('keydown',e=>{
-  if(e.key==='Enter'){e.preventDefault();editorSize=Math.max(8,Math.min(32,parseFloat(e.target.value)||14));saveEditorFont();e.target.blur();}
+  if(e.key==='Enter'){e.preventDefault();editorSize=Math.max(8,Math.min(32,Number.parseFloat(e.target.value)||14));saveEditorFont();e.target.blur();}
 });
 document.getElementById('fs-up').addEventListener('click',()=>{editorSize=Math.min(32,editorSize+1);saveEditorFont();});
 document.getElementById('fs-down').addEventListener('click',()=>{editorSize=Math.max(8,editorSize-1);saveEditorFont();});
