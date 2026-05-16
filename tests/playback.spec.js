@@ -4,6 +4,7 @@ test("play-pause-hotkey", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
   await page.keyboard.press("Space");
   await expect(page.locator("#audio-box")).toContainText("0:01");
   await page.keyboard.press("Space");

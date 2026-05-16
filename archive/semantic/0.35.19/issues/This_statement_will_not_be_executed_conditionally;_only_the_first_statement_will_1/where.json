@@ -1,0 +1,23 @@
+{
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "FORMATTED",
+  "textRange": {
+    "startLine": 1764,
+    "endLine": 1764,
+    "startOffset": 49,
+    "endOffset": 63
+  },
+  "line": 1764,
+  "severity": "MAJOR",
+  "component": "amokprime_linebyline:docs/index.html",
+  "message": "This statement will not be executed conditionally; only the first statement will be. The rest will execute unconditionally.",
+  "flows": [],
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "rule": "javascript:S2681"
+}

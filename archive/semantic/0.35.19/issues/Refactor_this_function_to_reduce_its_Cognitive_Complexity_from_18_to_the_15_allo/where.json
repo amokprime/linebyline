@@ -1,0 +1,178 @@
+{
+  "line": 2332,
+  "cleanCodeAttribute": "FOCUSED",
+  "textRange": {
+    "startLine": 2332,
+    "endLine": 2332,
+    "startOffset": 9,
+    "endOffset": 36
+  },
+  "message": "Refactor this function to reduce its Cognitive Complexity from 18 to the 15 allowed.",
+  "flows": [
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2333,
+            "endLine": 2333,
+            "startOffset": 25,
+            "endOffset": 26
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2335,
+            "endLine": 2335,
+            "startOffset": 2,
+            "endOffset": 4
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2341,
+            "endLine": 2341,
+            "startOffset": 8,
+            "endOffset": 10
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2360,
+            "endLine": 2360,
+            "startOffset": 3,
+            "endOffset": 7
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2345,
+            "endLine": 2345,
+            "startOffset": 46,
+            "endOffset": 47
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2346,
+            "endLine": 2346,
+            "startOffset": 61,
+            "endOffset": 62
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2347,
+            "endLine": 2347,
+            "startOffset": 4,
+            "endOffset": 6
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2354,
+            "endLine": 2354,
+            "startOffset": 5,
+            "endOffset": 9
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2347,
+            "endLine": 2347,
+            "startOffset": 22,
+            "endOffset": 24
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2349,
+            "endLine": 2349,
+            "startOffset": 29,
+            "endOffset": 30
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:docs/index.html",
+          "textRange": {
+            "startLine": 2351,
+            "endLine": 2351,
+            "startOffset": 55,
+            "endOffset": 56
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    }
+  ],
+  "component": "amokprime_linebyline:docs/index.html",
+  "type": "CODE_SMELL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "HIGH"
+    }
+  ],
+  "cleanCodeAttributeCategory": "ADAPTABLE",
+  "rule": "javascript:S3776",
+  "severity": "CRITICAL"
+}
