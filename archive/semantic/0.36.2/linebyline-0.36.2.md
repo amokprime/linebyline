@@ -153,3 +153,16 @@ Changes made:
 4. **S3776 L1290 — insertEndLine CC=29→11**: Extracted `_insertSyncTrailing(lines,ms)` helper from the `_syncAutoAdvanced` branch of `insertEndLine()`. This deeply nested section (for loop scanning for trailing ts, conditional insert, while loop advancing to next content line) accounted for about 18 CC points. `insertEndLine` now calls `_insertSyncTrailing(lines,ms)` and returns early if it returns true. `_insertSyncTrailing` has CC≈12, `insertEndLine` has CC≈11 — both well under the 15 threshold.
 
 5. **S3776 L2571 — global keydown CC=17→15**: Extracted `_isPrevNextReplay(ks,hk)` helper from the `prevNextReplayActive` inline computation. The two logical operators (`&&` and `||`) in the original expression each contributed +1 CC. Moving them to a separate function removes 2 points from the global keydown handler, bringing it to the 15 threshold.
+
+---
+
+### Turn 5: SonarQube S3776 — global keydown CC 16→14
+
+User prompt verbatim:
+
+> Another one
+> (Refactor_this_function_to_reduce_its_Cognitive_Complexity_from_16_to_the_15_allo.zip)
+
+Changes made:
+
+1. **S3776 L2572 — global keydown CC 16→14**: Extracted `_isFocusedUIElement(ae)` helper from the global keydown handler. The helper encapsulates two previously-inline `const` expressions: `inLyricArea` (checks if `activeElement` is textarea/lines/body/documentElement) and `isFocusedUI` (combines `!inLyricArea` with tag-name checks for BUTTON/INPUT/SELECT/TEXTAREA/A). These two expressions contributed +1 CC each due to `&&`/`||` operator mixing. Since method calls are free in cognitive complexity, replacing both with `const isFocusedUI=_isFocusedUIElement(ae)` removes 2 CC points from the handler (16→14), well under the 15 threshold.

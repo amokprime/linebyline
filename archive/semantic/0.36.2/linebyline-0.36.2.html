@@ -2567,6 +2567,11 @@ function _handleHotkeyModeKeys(e,ks,hk){
 function _isPrevNextReplay(ks,hk){
   return (hkMatch(ks,hk.prev_line)&&cfg.replay_prev_line)||(hkMatch(ks,hk.next_line)&&cfg.replay_next_line);
 }
+function _isFocusedUIElement(ae){
+  if(!ae)return false;
+  const inLyricArea=ae===document.getElementById('main-textarea')||ae===document.getElementById('main-lines')||ae===document.body||ae===document.documentElement;
+  return !inLyricArea&&(ae.tagName==='BUTTON'||ae.tagName==='INPUT'||ae.tagName==='SELECT'||ae.tagName==='TEXTAREA'||ae.tagName==='A');
+}
 
   // ── Global keydown handler ────────────────────────────────────────────────
 document.addEventListener('keydown',e=>{
@@ -2582,8 +2587,7 @@ document.addEventListener('keydown',e=>{
     return;
   }
   const ae=document.activeElement;
-  const inLyricArea=ae&&(ae===document.getElementById('main-textarea')||ae===document.getElementById('main-lines')||ae===document.body||ae===document.documentElement);
-  const isFocusedUI=ae&&!inLyricArea&&(ae.tagName==='BUTTON'||ae.tagName==='INPUT'||ae.tagName==='SELECT'||ae.tagName==='TEXTAREA'||ae.tagName==='A');
+  const isFocusedUI=_isFocusedUIElement(ae);
   // Allow Escape to blur focused UI elements so hotkeys work again
   if(isFocusedUI&&e.key==='Escape'){e.preventDefault();ae.blur();return;}
   if(isFocusedUI&&!e.ctrlKey&&!e.altKey)return;
