@@ -1,0 +1,23 @@
+- text: Main
+- checkbox "( )" [checked]
+- text: ( )
+- checkbox "↩"
+- text: ↩
+- list "Lyric lines":
+  - listitem: /\[\d+:\d+\.\d+\] I wish I could identify that smell/
+  - listitem: /\[\d+:\d+\.\d+\] \(J'aimerais pouvoir identifier cette odeur\)/
+  - listitem: /\[\d+:\d+\.\d+\] That smell/
+  - listitem: /\[\d+:\d+\.\d+\] \(Cette odeur\)/
+  - listitem
+  - listitem: /\[\d+:\d+\.\d+\] It disturbs my concentration/
+  - listitem: /\[\d+:\d+\.\d+\] \(Cela perturbe ma concentration\)/
+  - listitem: /\[\d+:\d+\.\d+\] And it bothers me to hell/
+  - listitem: /\[\d+:\d+\.\d+\] \(Et ça me dérange au plus haut point\)/
+  - listitem: /\[\d+:\d+\.\d+\] Oh, I wish I could identify that smell/
+  - listitem: /\[\d+:\d+\.\d+\] \(Oh, j'aimerais pouvoir identifier cette odeur\)/
+  - listitem: /\[\d+:\d+\.\d+\]/
+- text: Secondary 1
+- button "Import secondary lyrics file"
+- checkbox "( )" [checked]
+- text: /\( \) ⚠ Line count mismatch \(5 vs \d+\)/
+- textbox "Secondary 1 lyrics": (J'aimerais pouvoir identifier cette odeur) (Cette odeur) (Cela perturbe ma concentration) (Et ça me dérange au plus haut point) (Oh, j'aimerais pouvoir identifier cette odeur)

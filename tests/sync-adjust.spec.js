@@ -36,13 +36,13 @@ test("adjust-seek", async ({ page, media }) => {
   await page.keyboard.press("Shift+Backquote");
   await page.keyboard.press("v");
   await expect(
-    page.getByRole("spinbutton", { name: "Seek offset (ms): shifts" }),
+    page.getByRole("spinbutton", { name: "Seek offset in milliseconds" }),
   ).toHaveValue("-500");
   await page.keyboard.press("Control+i");
   await expect(page.getByText("[00:02.56] That smell")).toBeVisible();
   await page.keyboard.press("z");
   await expect(
-    page.getByRole("spinbutton", { name: "Seek offset (ms): shifts" }),
+    page.getByRole("spinbutton", { name: "Seek offset in milliseconds" }),
   ).toHaveValue("-600");
 });
 
@@ -120,7 +120,9 @@ test("replay-resume", async ({ page, media }) => {
   await page.keyboard.press("Space");
   await expect(page.locator("#audio-box")).toContainText("0:01");
   await page.keyboard.press("Space");
-  await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Play", exact: true }),
+  ).toBeVisible();
 });
 
 test("replay-another-line", async ({ page, media }) => {
@@ -136,10 +138,5 @@ test("replay-another-line", async ({ page, media }) => {
 
 test("sync-empty", async ({ page }) => {
   await page.locator("#main-lines").pressSequentially("asdfzxcvt");
-  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
-    "sync-empty-lines.txt",
-  );
-  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
-    "sync-empty-textarea.txt",
-  );
+  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
 });

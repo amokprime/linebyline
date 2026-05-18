@@ -4,11 +4,13 @@ test("play-pause-hotkey", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
-  await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
+  await expect(page.getByText("[00:00.00] I wish I could")).toBeVisible(); //Not needed in a real browser; Playwright can press Space before lyrics finish loading
   await page.keyboard.press("Space");
   await expect(page.locator("#audio-box")).toContainText("0:01");
   await page.keyboard.press("Space");
-  await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Play", exact: true }),
+  ).toBeVisible();
 });
 
 test("play-pause-typing", async ({ page, media }) => {
@@ -19,7 +21,9 @@ test("play-pause-typing", async ({ page, media }) => {
   await page.keyboard.press("Control+Space"); //Sometimes this fails if many tests are running
   await expect(page.locator("#audio-box")).toContainText("0:01");
   await page.keyboard.press("Control+Space");
-  await expect(page.getByRole("button", { name: "Play" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Play", exact: true }),
+  ).toBeVisible();
 });
 
 test("seek-click", async ({ page, media }) => {
@@ -34,7 +38,7 @@ test("seek-click", async ({ page, media }) => {
     );
   }
   await seekTo(page, 1 / 13);
-  await page.getByRole("button", { name: "Play" }).click();
+  await page.getByRole("button", { name: "Play", exact: true }).click();
   await expect(page.locator("#audio-box")).toContainText("0:01");
 });
 

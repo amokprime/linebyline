@@ -1,19 +1,13 @@
 const { test, expect } = require("@linebyline/test-helpers");
 
-test("controls-gray", async ({ page }) => {
-  await page.keyboard.press("Backquote");
-  await expect(
-    page.getByText(
-      "Offset timeShift+~Typing mode`Play/pauseSpaceSync lineWEnterPrevious lineQ↑Next",
-    ),
-  ).toHaveScreenshot();
-});
-
 test("controls-disabled", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await page.keyboard.press("Backquote");
+  await expect(page.locator("#left-panel")).toMatchAriaSnapshot({
+    name: "controls-disabled.yml",
+  });
   await page.keyboard.press("Space");
   await page.keyboard.press("w");
   await page.keyboard.press("q");

@@ -86,7 +86,7 @@ const test =
           async (/** @type {number} */ nth, /** @type {string} */ filename) => {
             const [fc] = await Promise.all([
               page.waitForEvent("filechooser"),
-              page.getByRole("button", { name: "📂" }).nth(nth).click(),
+              page.getByRole("button", { name: "Import secondary lyrics file" }).nth(nth - 1).click(),
             ]);
             await fc.setFiles([media(filename)]);
           },

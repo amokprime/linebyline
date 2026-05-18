@@ -2,13 +2,13 @@ See this [Obsidian Share Note](https://share.note.sx/9wimmaly) for what's planne
 
 #### Architecture and environment
 
-LineByLine is a no-dependencies 2.6k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects and uses [these](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions) skills and instructions. Any comparable model that can work with files (i.e. GLM in [Z.ai](https://chat.z.ai/) Agent mode web chat) should also be able to follow the skills and instructions. If you use z.ai specifically, avoid peak hours.
+LineByLine is a no-dependencies 2.6k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects and uses [these](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions) skills and instructions. Any comparable model that can work with files (i.e. GLM in [Z.ai](https://chat.z.ai/) Agent mode web chat) should also be able to follow the skills and instructions. Use a Chromium-based browser like Helium with uBlock Origin enabled. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
 
-#### Organization
+#### General organization
 
-The guidelines below are designed for a free account AI web chat without access to your filesystem. If using Claude Code, OpenCode, etc., you might find it more efficient to just ask it to make all the changes directly.
+The guidelines below are designed for a free account AI web chat without access to your filesystem. You may be able to install Claude Desktop on Windows, but I haven't had a good experience with the Filesystem or GitHub MCP connectors. If using Claude Code, OpenCode, etc., you might find it more efficient to just ask it to make all the changes directly.
 
-Put each new version of LineByLine and its companion .md file into its own semantically numbered folder in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic). Tell the AI a version keyword to get it to automatically name the app version and .md file following [Project.md](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions/Project.md) instructions:
+Put each new version of LineByLine and its companion .md file into its own semantically numbered folder in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic). Tell the [AI](https://github.com/amokprime/linebyline/tree/main/archive/ai) a version keyword to get it to automatically name the app version and .md file following Project.md instructions:
 
 | Scope of your changes                                                         | Version keyword | Resulting number change |
 | ----------------------------------------------------------------------------- | --------------- | ----------------------- |
@@ -17,6 +17,21 @@ Put each new version of LineByLine and its companion .md file into its own seman
 | New features that fit into existing ones and invisible code quality refactors | Minor           | 0.34.9→ 0.35.0          |
 | Refactoring that visibly breaks existing features                             | Major           | 0.34.9 → 1.0.0          |
 Rename the folder manually with the same number. If the AI forgets to update the version or does it wrong, edit the app's filename (i.e. linebyline-0.34.7.html) and the HTML `<title>` element (i.e. `<title>LineByLine 0.34.7</title>`).
+
+#### claude-sonnet (web chat/Claude Desktop)
+
+claude.ai has extremely strict 5-hour limits. Simply fill out the preferences and project instructions and add the skills, and turn on memory. Occasionally upload a zip of all chat logs since last skill update and ask Claude to update them or create new ones (it has a skill-creator skill).
+
+#### z-ai-glm(web chat Agent mode)
+
+chat.z.ai is currently far more generous overall with some caveats:
+- I have noticed as many as 2k ads being blocked by uBlock Origin! It starts at a few hundred and just keeps ramping up over time.
+- The website itself is often unresponsive even in Chromium browsers (I wonder why??). It may help to close the browser window and reopen the page (just reloading or closing the browser tab isn't always enough)
+- A captcha slider randomly appears sometimes
+- Sessions now expire after 2 hours. After that, start a new sandbox, because the originally uploaded files vanish and newly uploaded files fail to persist. Work around by typing something before it expires to reset the timer.
+- Downgrade from GLM-5.1 to a lower model during peak hours
+
+There's also no built-in skills or memory scaffolding. You must upload relevant .md files at the start of each chat and explicitly tell GLM to read them (paste contents of Chat.md followed by your actual prompt). This can even extend to duplicating some of the repo structure for it to analyze (see Index.md for example). I suggest searching in a file manager for things like `snapshots` and `*.html` (without backticks) to avoid bloating memory context or bringing down usage limits. GLM can update its own skills since they aren't locked down as a separate feature.
 
 #### CI
 
@@ -36,7 +51,7 @@ The following Playwright tests are known to fail as of version 0.35.18:
 
 | Test file             | Line | Test name            | Issue                                                                                                                                                                            |
 | --------------------- | ---- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| accessibility.spec.js | All  | All                  | Many, this is a top priority for next minor version.                                                                                                                             |
+| accessibility.spec.js | All  | All                  | Many; this is a top priority for the next minor version.                                                                                                                         |
 | settings.spec.js      | 36   | persistence          | Playback speed field doesn't reset with page reload.                                                                                                                             |
 | undo-redo.spec.js     | 27   | import-one-secondary | Undo import doesn't work in secondary fields.                                                                                                                                    |
 | undo-redo.spec.js     | 70   | sync-repeat          | Two undoes are required per sync except first line. Similar to undoing multiline edits in Typing mode with Settings/ Undo window set to 1ms, except sync is done in Hotkey mode. |

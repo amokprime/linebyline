@@ -1,3 +1,6 @@
+---
+model: Sonnet 4.6
+---
 # LineByLine 0.35.19 — Build Log
 
 ## Changes from 0.35.18

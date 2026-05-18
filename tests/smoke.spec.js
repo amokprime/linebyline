@@ -17,28 +17,27 @@ test("landing", async ({ page }) => {
   page.on("console", (msg) => {
     if (msg.type() === "error") errors.push(`console.error: ${msg.text()}`);
   });
-  // Visual snapshot (already exists)
+  // Visual snapshot
   await expect(page).toHaveScreenshot();
+  // ARIA snapshot to check elements
+  await expect(page.locator("body")).toMatchAriaSnapshot({
+    name: "landing.yml",
+  });
   // No JS errors on load
   expect(errors).toEqual([]);
-  // Layout structure
-  await expect(page.locator("#menu-bar")).toBeVisible();
-  await expect(page.locator("#left-panel")).toBeVisible();
   await expect(page.locator("#editor-wrapper")).toBeVisible();
-  // Controls grid rendered (rebuildHkPanel ran)
-  await expect(page.locator("#hk-grid .hk-cell")).toHaveCount(16);
   // File picker exists but is hidden
   await expect(page.locator("#file-picker")).toHaveCSS("display", "none");
 });
 
 test("button-tint", async ({ page }) => {
-  const button = page.getByRole("button", { name: "Play" });
+  const button = page.getByRole("button", { name: "Play", exact: true });
   await button.hover();
   await expect(button).toHaveScreenshot();
 });
 
 test("button-feedback", async ({ page }) => {
-  const button = page.getByRole("button", { name: "Play" });
+  const button = page.getByRole("button", { name: "Play", exact: true });
   await button.click();
   await expect(button).toHaveScreenshot();
 });
