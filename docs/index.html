@@ -341,7 +341,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
       </div>
     </div>
     <footer id="settings-footer" aria-label="Settings actions">
-      <button class="s-btn" id="s-reset-defaults" aria-label="Reset all settings to defaults">Reset defaults</button>
+      <button class="s-btn" id="s-reset-defaults">Reset defaults</button>
       <span id="s-confirm-msg" style="display:none;font-size:13.2px;color:var(--warn-text);">Reset all settings to defaults?</span>
       <button class="s-btn primary" id="s-confirm-yes" style="display:none;" aria-label="Confirm reset">Yes</button>
       <button class="s-btn" id="s-confirm-no" style="display:none;" aria-label="Cancel reset">No</button>
@@ -1287,33 +1287,31 @@ function syncLine(){
     }
   }
 }
+function _insertSyncTrailing(lines,ms){
+  if(_syncAutoAdvanced<0)return false;
+  const prevIdx=_syncAutoAdvanced;
+  _syncAutoAdvanced=-1;
+  let hasTrailingAfterPrev=false;
+  for(let i=prevIdx+1;i<lines.length;i++){
+    if(META_RE.test(lines[i])||lines[i].trim()==='')continue;
+    if(isEndTs(lines[i])){hasTrailingAfterPrev=true;}
+    break;
+  }
+  if(!hasTrailingAfterPrev&&prevIdx<lines.length){
+    const insertIdx=prevIdx+1;
+    lines.splice(insertIdx,0,msToTs(ms));setMainText(lines.join('\n'));
+    const updated=getTA().split('\n');
+    let next=insertIdx+1;
+    while(next<updated.length&&(META_RE.test(updated[next])||updated[next].trim()===''||isEndTs(updated[next])))next++;
+    activeLine=next<updated.length?next:insertIdx;
+    suppressAuto();renderMainLines();scrollToActive();return true;
+  }
+  return false;
+}
 function insertEndLine(){
   if(!hasLyricContent())return;
   const ms=currentMs(),lines=getTA().split('\n');
-  // If W auto-advanced activeLine and the previous (synced) line is missing a trailing
-  // timestamp, set the trailing timestamp for that previous line instead
-  if(_syncAutoAdvanced>=0){
-    const prevIdx=_syncAutoAdvanced;
-    _syncAutoAdvanced=-1;
-    // Check if there's already a trailing timestamp after prevIdx
-    let hasTrailingAfterPrev=false;
-    for(let i=prevIdx+1;i<lines.length;i++){
-      if(META_RE.test(lines[i])||lines[i].trim()==='')continue;
-      if(isEndTs(lines[i])){hasTrailingAfterPrev=true;}
-      break;
-    }
-    if(!hasTrailingAfterPrev&&prevIdx<lines.length){
-      // Insert trailing timestamp after the synced line
-      const insertIdx=prevIdx+1;
-      lines.splice(insertIdx,0,msToTs(ms));setMainText(lines.join('\n'));
-      // Advance to next content line so user can press W immediately
-      const updated=getTA().split('\n');
-      let next=insertIdx+1;
-      while(next<updated.length&&(META_RE.test(updated[next])||updated[next].trim()===''||isEndTs(updated[next])))next++;
-      activeLine=next<updated.length?next:insertIdx;
-      suppressAuto();renderMainLines();scrollToActive();return;
-    }
-  }
+  if(_insertSyncTrailing(lines,ms))return;
   // If activeLine is itself a trailing timestamp, update it in place
   if(activeLine>=0&&isEndTs(lines[activeLine])){
     lines[activeLine]=replaceTs(lines[activeLine],ms);setMainText(lines.join('\n'));
@@ -2344,7 +2342,7 @@ function _doResetDefaults(){
   if(editorFont!=='system-ui,sans-serif'){editorFont='system-ui,sans-serif';localStorage.setItem('lbl_font',editorFont);}
   if(editorSize!==14){editorSize=14;localStorage.setItem('lbl_fsize',editorSize);}
   applyEditorFont();
-  currentSpeed=1;document.getElementById('speed-val').value='1';if(audioEl)audioEl.playbackRate=1;localStorage.setItem('lbl_speed','1');
+  currentSpeed=1;document.getElementById('speed-val').value='1';if(audioEl){audioEl.playbackRate=1;}localStorage.setItem('lbl_speed','1');
   saveCfg();openSettings();rebuildHkPanel();updateDynamicTooltips();
 }
 function showResetConfirm(){
@@ -2566,6 +2564,9 @@ function _handleHotkeyModeKeys(e,ks,hk){
   };
   if(actions[ks]){e.preventDefault();actions[ks]();}
 }
+function _isPrevNextReplay(ks,hk){
+  return (hkMatch(ks,hk.prev_line)&&cfg.replay_prev_line)||(hkMatch(ks,hk.next_line)&&cfg.replay_next_line);
+}
 
   // ── Global keydown handler ────────────────────────────────────────────────
 document.addEventListener('keydown',e=>{
@@ -2573,7 +2574,7 @@ document.addEventListener('keydown',e=>{
   const ks=keyStr(e),hk=cfg.hotkeys;
   const isNavKey=e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Tab';
   const isPrevNext=(hkMatch(ks,hk.prev_line)||hkMatch(ks,hk.next_line));
-  const prevNextReplayActive=isPrevNext&&((hkMatch(ks,hk.prev_line)&&cfg.replay_prev_line)||(hkMatch(ks,hk.next_line)&&cfg.replay_next_line));
+  const prevNextReplayActive=isPrevNext&&_isPrevNextReplay(ks,hk);
   if(_handleSettingsKeys(e,ks,hk,settingsOpen))return;
   if(settingsOpen)return;
   if(e.repeat&&!isNavKey&&!(isPrevNext&&!prevNextReplayActive)){

@@ -133,3 +133,23 @@ User prompt verbatim:
 Changes made:
 
 1. **T trailing-ts advances active line**: In `insertEndLine()`, the `_syncAutoAdvanced` branch (W→T workflow) now advances `activeLine` past the inserted trailing timestamp to the next content line. After inserting `[00:02.56]`, the code scans forward skipping blank, meta, and end-ts lines to find the next content line ("That smell"). If a content line is found, `activeLine` is set there; otherwise it falls back to the inserted line. Calls `suppressAuto()` to reset `_syncAutoAdvanced` and prevent auto-advance interference. The user can now press W immediately after T to continue syncing without manual navigation.
+
+---
+
+### Turn 4: Checkbox order fix + SonarQube issues
+
+User prompt verbatim:
+
+> Same version-more Sonar issues. Also, you silently swapped the positions of "( )" and "↩" checkboxes in 0.36.1. I reverted the labels manually back to where they were in 0.36.0 (for version 0.36.2):
+
+Changes made:
+
+1. **Checkbox order restored**: Swapped `( )` and `↩` checkbox labels back to v0.36.0 order: `( )` first, then `↩`. The 0.36.1 version had silently reversed their order, and 0.36.2 inherited that reversal.
+
+2. **S7927 L344 — accessible name**: Removed redundant `aria-label="Reset all settings to defaults"` from `#s-reset-defaults` button. The visible text "Reset defaults" is now the accessible name (via inner text), matching the rule that visible text must be contained in the accessible name.
+
+3. **S2681 L2347 — braceless if**: Added braces to `if(audioEl)audioEl.playbackRate=1;` → `if(audioEl){audioEl.playbackRate=1;}`. The following `localStorage.setItem('lbl_speed','1')` executes unconditionally (by design), but the missing braces made this ambiguous and triggered the SonarQube warning.
+
+4. **S3776 L1290 — insertEndLine CC=29→11**: Extracted `_insertSyncTrailing(lines,ms)` helper from the `_syncAutoAdvanced` branch of `insertEndLine()`. This deeply nested section (for loop scanning for trailing ts, conditional insert, while loop advancing to next content line) accounted for about 18 CC points. `insertEndLine` now calls `_insertSyncTrailing(lines,ms)` and returns early if it returns true. `_insertSyncTrailing` has CC≈12, `insertEndLine` has CC≈11 — both well under the 15 threshold.
+
+5. **S3776 L2571 — global keydown CC=17→15**: Extracted `_isPrevNextReplay(ks,hk)` helper from the `prevNextReplayActive` inline computation. The two logical operators (`&&` and `||`) in the original expression each contributed +1 CC. Moving them to a separate function removes 2 points from the global keydown handler, bringing it to the 15 threshold.

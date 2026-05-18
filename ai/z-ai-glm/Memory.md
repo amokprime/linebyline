@@ -14,6 +14,12 @@
   - L236, L279, L292, L303, L340 (S6819): semantic HTML elements — Fixed
   - L239 (S6819): `role="slider"` → Won't Fix (custom mousedown/drag/wheel model)
   - L348 (S6825): `aria-hidden` on focusable — Fixed
+- **Checkbox order restored**: `( )` before `↩` in main field header, matching v0.36.0. v0.36.1 had silently swapped them
+- **SonarQube round 2**:
+  - L344 (S7927): `#s-reset-defaults` aria-label removed — visible text "Reset defaults" is now the accessible name
+  - L2347 (S2681): braceless `if(audioEl)` in `_doResetDefaults` — added braces; `localStorage.setItem` was already unconditional
+  - L1290 (S3776): `insertEndLine` CC=29→11 — extracted `_insertSyncTrailing(lines,ms)` for the `_syncAutoAdvanced` branch (CC≈12)
+  - L2571 (S3776): global keydown CC=17→15 — extracted `_isPrevNextReplay(ks,hk)` for `prevNextReplayActive` computation
 
 ## 0.36.1
 
