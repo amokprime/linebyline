@@ -1,3 +1,18 @@
+## 0.36.1
+
+- **SonarQube S6819 (6 instances → semantic HTML)**: `role="region"` → `<section>` on `#audio-box`; `role="group"` → `<fieldset>` on `#hk-grid`; `role="list"` → `<ul>` on `#main-lines`; `role="status"` → `<output>` on `#settings-conflict`; `role="contentinfo"` → `<footer>` on `#settings-footer`. CSS resets added: `.lyric-area{list-style:none;margin:0}`, `.hk-grid{border:none;margin:0;padding:0;min-inline-size:0}`. `role="slider"` on `#progress-wrap` Won't Fix — custom mousedown/drag/wheel interaction model can't be replicated with `<input type="range">`
+- **SonarQube S7927 (3 instances → accessible name matches visible label)**: `#btn-add-sec` aria-label changed from "Add secondary field" to "Add field"; `#btn-remove-sec` from "Hide last secondary field" to "Hide field"; `#merge-btn` already matched
+- **SonarQube S6825 (1 instance → aria-hidden on focusable)**: Removed `aria-hidden="true"` from `#file-picker` — `display:none` already removes from a11y tree
+- **Undo/redo single-push model**: Replaced double-push pattern (`pushSnapshot(); mutate; pushSnapshot()`) with single post-change push (`mutate; pushSnapshot()`). The pre-change state is already on the stack from the previous operation. Double-push created a duplicate that caused sync/adjust to require two Ctrl+Z to undo. Applied to `setMainText`, `mergeTranslations`, both paste paths, and LRC-only import
+- **Secondary import undo fix**: `applySnapshot` now clears secondary textareas beyond what the snapshot captured: `for(let i=snap.secondaries.length;i<secondaryCols.length;i++){secondaryCols[i].linesEl.value='';}`. Root cause: adding a field didn't push a snapshot, so undoing to a pre-add snapshot had an empty `secondaries` array and the forEach skipped the still-visible textarea
+- **Unsaved work warning for secondaries**: `beforeunload` handler now checks `secondaryCols.some(c=>c.linesEl.value.trim()!=='')` in addition to main textarea
+- **Speed field persistence**: `currentSpeed` loaded from `localStorage.getItem('lbl_speed')` on init; saved in `changeSpeed()` and speed-val change handler. Init section restores display value
+- **Reset defaults resets speed**: `_doResetDefaults()` now resets `currentSpeed=1`, updates `#speed-val` display, resets `audioEl.playbackRate`, and persists to localStorage
+- **↩ split-parens always on**: Removed `#main-split-check` checkbox and label from main field header. All `document.getElementById('main-split-check').checked` replaced with unconditional `batchSplitParens()` calls. `markAsTranslation` split-mode guard removed — always attempts peel first
+- **Esc blurs focused UI**: Added `if(isFocusedUI&&e.key==='Escape'){e.preventDefault();ae.blur();return;}` before the `isFocusedUI` early-return guard in global keydown. Lets users press Esc to return to content area after Tab-navigating to buttons/inputs
+- **Left panel ARIA regions**: Now Playing wrapped in `<section id="audio-box">`, Controls wrapped in new `<section id="controls-box" aria-labelledby="controls-label">`. Playwright can target `#controls-box` separately
+- **beforeunload dialog focus**: Known limitation — browser-native dialog button focus is not controllable from JavaScript
+
 ## 0.36.0
 
 - **axe fixes (Turn 3)**: `role="banner"` removed from field headers — `banner` landmark must be top-level, not nested inside `<main>`. Retained `aria-label` for accessible naming. `--text-faint` (#9198a1) on `.ts` and `.end-ts` changed to `--text-muted` (#656d76) — 2.73:1 contrast was below 4.5:1 AA minimum

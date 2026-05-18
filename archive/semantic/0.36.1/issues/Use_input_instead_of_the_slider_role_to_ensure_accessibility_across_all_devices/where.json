@@ -1,0 +1,23 @@
+{
+  "textRange": {
+    "startLine": 239,
+    "endLine": 239,
+    "startOffset": 6,
+    "endOffset": 161
+  },
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "severity": "MAJOR",
+  "flows": [],
+  "component": "amokprime_linebyline:docs/index.html",
+  "message": "Use <input> instead of the slider role to ensure accessibility across all devices.",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "line": 239,
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "type": "CODE_SMELL",
+  "rule": "Web:S6819"
+}

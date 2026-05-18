@@ -9,8 +9,8 @@
   - spinbutton "Font size"
   - button "▲"
   - button "▼"
-  - button "Add secondary field"
-  - button "Hide last secondary field" [disabled]
+  - button "Add field"
+  - button "Hide field" [disabled]
   - button "Merge fields" [disabled]
   - button "Settings"
   - button "Toggle theme"
@@ -43,27 +43,26 @@
     - button "Mute"
     - slider "Volume"
     - text: ""
-  - text: Controls
-  - group "Controls":
-    - button "Toggle offset mode": Offset time Shift+~
-    - button "Toggle mode": "Hotkey mode `"
-    - button "Play/pause": Play/pause Space
-    - button "Sync line start": Sync line W Enter
-    - button "Previous line": Previous line Q ↑
-    - button "Next line": Next line E ↓
-    - button "Replay only"
-    - button "Sync line end"
-    - button "Back tiny amount"
-    - button "Forward tiny amount"
-    - button "Back small amount"
-    - button "Forward small amount"
-    - button "Back medium amount"
-    - button "Forward medium amount"
-    - button "Back large amount"
-    - button "Forward large amount"
+  - region "Controls":
+    - text: ""
+    - group "Controls":
+      - button "Toggle offset mode": Offset time Shift+~
+      - button "Toggle mode": "Hotkey mode `"
+      - button "Play/pause": Play/pause Space
+      - button "Sync line start": Sync line W Enter
+      - button "Previous line": Previous line Q ↑
+      - button "Next line": Next line E ↓
+      - button "Replay only"
+      - button "Sync line end"
+      - button "Back tiny amount"
+      - button "Forward tiny amount"
+      - button "Back small amount"
+      - button "Forward small amount"
+      - button "Back medium amount"
+      - button "Forward medium amount"
+      - button "Back large amount"
+      - button "Forward large amount"
   - text: Main
   - checkbox "( )" [checked]
   - text: ( )
-  - checkbox "↩"
-  - text: ↩
   - list "Lyric lines"

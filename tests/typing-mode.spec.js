@@ -5,7 +5,7 @@ test("controls-disabled", async ({ page, media }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await page.keyboard.press("Backquote");
-  await expect(page.locator("#left-panel")).toMatchAriaSnapshot({
+  await expect(page.locator("#controls-box")).toMatchAriaSnapshot({
     name: "controls-disabled.yml",
   });
   await page.keyboard.press("Space");

@@ -104,11 +104,11 @@ Sub-sections that belong to a parent section are grouped in `[...]` immediately 
 
 ## Section list (reference)
 
-This is the current section structure as of v0.35.18. Actual line numbers are in the embedded SECTIONS comment in the file — use that, not this list, since edits shift lines.
+This is the current section structure as of v0.36.1. Actual line numbers are in the embedded SECTIONS comment in the file — use that, not this list, since edits shift lines.
 
-Full SECTIONS index (v0.35.18, verified against file):
+Full SECTIONS index (v0.36.1, verified against file):
 ```
-// SECTIONS: Config~351 | Hotkey rules~419 | Theme~512 | Font~524 | Tooltips~539 | State~568 | Persistence~585 | Undo/redo~625 | Mode switching~644 | Auto mode~721 | Helpers~724 [LRC parse~725 | Paste/meta~788 | Genius~843 | Render/UI~943] | Audio~1044 | Sync/timestamp~1246 | Secondary~1458 | Line counts~1564 | Title~1648 | Import~1656 | Controls~1763 | Settings~1861 | Settings search~1928 | Confirm~2273 | Keyboard~2309 [Key norm~2310 | Main textarea KD~2318 | Overlay utils~2373 | Global KD~2509] | Unload~2531 | Button wiring~2537 | Init~2556
+// SECTIONS: Config~355 | Hotkey rules~423 | Theme~516 | Font~528 | Tooltips~543 | State~572 | Persistence~589 | Undo/redo~629 | Mode switching~650 | Auto mode~725 | Helpers~728 [LRC parse~729 | Paste/meta~792 | Genius~847 | Render/UI~947] | Audio~1049 | Sync/timestamp~1255 | Secondary~1464 | Line counts~1570 | Title~1655 | Import~1663 | Controls~1769 | Settings~1875 | Settings search~1941 | Confirm~2287 | Keyboard~2324 [Key norm~2325 | Main textarea KD~2333 | Overlay utils~2388 | Global KD~2524] | Unload~2548 | Button wiring~2555 | Init~2574
 ```
 Always use the embedded SECTIONS comment in the file as the authoritative source — this copy is for reference only and goes stale when lines shift.
 
@@ -121,6 +121,8 @@ Dynamic tooltips     — updateDynamicTooltips
 State                — all let/const mutable state declarations
 Persistence          — loadAutosave, doAutosave, takeSnapshot init
 Undo/redo            — pushSnapshot, doUndo, doRedo, applySnapshot
+                       (single-push model: only post-change push; applySnapshot clears
+                       extra secondaries beyond snapshot data)
 Mode switching       — applyMode, hotkeyMode toggle logic
 Auto mode            — secondary field focus → auto switch to typing mode
 Helpers
@@ -129,16 +131,19 @@ Helpers
                        maybeAppendTrailingTs
   Paste/meta         — cleanPaste, ensureReTagDefault, mergeLrcMeta
   Genius             — cleanGenius, markGeniusSource, extractGeniusMeta
-  Render/UI          — renderMainLines, scrollToActive, main-lines paste handler
+  Render/UI          — renderMainLines, scrollToActive, main-lines paste handler,
+                       _announce
 Audio                — audio element setup, playback controls, volume, seekbar
 Sync/timestamp       — syncLine, insertEndLine, seekPrev/NextLine, replayActiveLine,
                        adjustTs, _peelLastParen, batchSplitParens, markAsTranslation,
                        doSyncFile, tickSeekOffset, setOffsetMode
-Secondary fields     — addSecondary, removeSecondary, secondary textarea keydown
+Secondary fields     — addSecondary, removeSecondary, secondary textarea keydown,
+                       secondary import (file picker, middle-click)
 Line counts/merge    — getSecLines, checkLineCounts, updateMergeBtn, mergeTranslations
 Title                — updateTitleFromText
 Import               — doImport, doSave, file-picker handler, multi-file handling
 Controls panel       — rebuildHkPanel, CTRL_ACTIONS, HOTKEY_ONLY, changeSpeed
+                       (currentSpeed persisted to localStorage 'lbl_speed')
 Settings             — openSettings, closeSettings, saveSettingsNow, buildHkRows
 Settings search      — setSearchHkMode, applySettingsFilter, initSettingsSearch
 Confirm dialog       — _resetConfirmPending, showResetConfirm, hideResetConfirm,
@@ -148,8 +153,9 @@ Keyboard
   Main textarea KD   — Enter trim, bracket/paren autocomplete
   Overlay utilities  — arrowNavTimer declaration
   Global KD          — document keydown handler (all hotkey dispatch)
-Unload warning       — beforeunload dirty check
+                       (Esc blurs focused UI elements before isFocusedUI guard)
+Unload warning       — beforeunload dirty check (includes secondary fields)
 Button wiring        — all addEventListener calls for toolbar/panel buttons
 Init                 — startup sequence: theme, font, autosave, render, tooltips,
-                       panel collapse state
+                       speed restore, panel collapse state
 ```

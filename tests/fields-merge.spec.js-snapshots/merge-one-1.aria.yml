@@ -1,8 +1,6 @@
 - text: Main
 - checkbox "( )" [checked]
 - text: ( )
-- checkbox "↩"
-- text: ↩
 - list "Lyric lines":
   - listitem: /\[\d+:\d+\.\d+\] I wish I could identify that smell/
   - listitem: /\[\d+:\d+\.\d+\] \(J'aimerais pouvoir identifier cette odeur\)/

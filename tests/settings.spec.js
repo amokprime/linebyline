@@ -33,8 +33,8 @@ test("persistence", async ({ page, media }) => {
     .setInputFiles([media("plain_english.lrc")]);
   await exp("combobox", "Editor font", "serif");
   await exp("spinbutton", "Font size", "20");
-  await exp("spinbutton", "Playback speed", "1.5", true); // soft: confirmed broken
-  await exp("spinbutton", "Seek offset (ms): shifts", "-400");
+  await exp("spinbutton", "Playback speed", "1.50", true);
+  await exp("spinbutton", "Seek offset in milliseconds", "-400");
   await expect(titlebar).toHaveScreenshot("titlebar-dark.png");
   await page.keyboard.press("Control+,");
   await expect(
@@ -49,7 +49,7 @@ test("persistence", async ({ page, media }) => {
   await exp("combobox", "Editor font", "system-ui,sans-serif");
   await exp("spinbutton", "Font size", "14");
   await exp("spinbutton", "Playback speed", "1"); // hard: reset should work even for broken-persist items
-  await exp("spinbutton", "Seek offset (ms): shifts", "-600");
+  await exp("spinbutton", "Seek offset in milliseconds", "-600");
   await expect(
     page.getByRole("checkbox", { name: "Moving to previous line" }),
   ).not.toBeChecked();
