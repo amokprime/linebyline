@@ -65,4 +65,6 @@
   - text: Main
   - checkbox "( )" [checked]
   - text: ( )
+  - checkbox "↩"
+  - text: ↩
   - list "Lyric lines"

@@ -5,41 +5,30 @@ description: Efficient section-targeted reading of linebyline-*.html to avoid lo
 
 # LineByLine Section Index
 
-The app HTML is ~2500 lines. Loading it whole costs ~50k tokens. Most prompts only touch 1–4 sections. This skill tells you how to read only what you need.
+The app HTML is ~2600 lines. Loading it whole costs ~50k tokens. Most prompts only touch 1–4 sections. This skill tells you how to read only what you need.
 
 ---
 
-## Step 1: Read the SECTIONS index first — not the whole file
+## Step 1: Read the section markers — grep for `// ──`
 
-The app has a one-line section index embedded near the top of the `<script>` block (around line 330, immediately below `'use strict';`). **Always read this line before anything else.** It is cheaper than grep and gives you every section name and its start line number.
+The app no longer embeds a SECTIONS index comment. Instead, grep for section markers:
 
 ```bash
-sed -n '328,332p' /path/to/linebyline-*.html
+rg -n "^// ──|^  // ──" /path/to/linebyline-*.html
 ```
 
-The SECTIONS line looks like:
-```
-// SECTIONS: Config~346 | Hotkey rules~415 | Theme~510 | Font~523 | Tooltips~538 | State~567 | Persistence~583 | Undo/redo~621 | Mode switching~639 | Auto mode~699 | Helpers~702 [LRC parse~703 | Paste/meta~722 | Genius~778 | Render/UI~875] | Audio~960 | Sync/timestamp~1148 | Secondary~1340 | Line counts~1448 | Title~1528 | Import~1536 | Controls~1648 | Settings~1746 | Settings search~1812 | Confirm~2164 | Keyboard~2200 [Key norm~2201 | Main textarea KD~2209 | Overlay utils~2268 | Global KD~2270] | Unload~2428 | Button wiring~2434 | Init~2451
-```
-
-- Top-level sections: `Name~linenum`
-- Sub-sections inside `[...]`: same format, indented one level under their parent
-
-**Use this index to find start lines. Do not grep the file unless the SECTIONS line is missing or you need to verify line numbers after a patch that inserted or deleted lines.**
+This gives you every section name and its start line number. Use this output to find the sections you need.
 
 ---
 
 ## Step 2: Read only the relevant section(s)
 
-Once you have start lines from the index, read the range from that line to just before the next section's start:
+Once you have start lines from the grep, read the range from that line to just before the next section's start:
 
 ```bash
 # Read lines N through M (e.g. section starting at 826, next section at 923)
 sed -n '826,922p' /path/to/linebyline-*.html
 ```
-
-Using the Filesystem connector's `head`/`tail` parameters for a middle slice:
-- Not directly supported for an arbitrary range — use `copy_file_user_to_claude` + `sed` on Claude's machine instead, or read the whole file only if the section is near the start or end.
 
 **Read the minimum set of sections needed.** Use the prompt-to-section map below as a guide.
 
@@ -82,35 +71,19 @@ For cross-cutting changes (e.g. new hotkey = Config + Hotkey rules + Controls + 
 
 ## Step 3: After patching — re-extract the index
 
-Any patch that **inserts or deletes lines** shifts all subsequent line numbers. After writing a patched file, re-run the section grep and check whether the SECTIONS index line is still accurate:
+Any patch that **inserts or deletes lines** shifts all subsequent line numbers. After writing a patched file, re-run the section grep:
 
 ```bash
-grep -n "^// ──\|^  // ──\|^// SECTIONS" /path/to/linebyline-*.html
+rg -n "^// ──|^  // ──" /path/to/linebyline-*.html
 ```
 
-If numbers have shifted, update the SECTIONS line in the file before presenting it.
-
-### Updating the SECTIONS line
-
-The SECTIONS line is at the very top of the `<script>` block (2 lines below `<script>`). Update it with exact line numbers from the grep output. Format:
-
-```
-// SECTIONS: Name~N | Name~N | Parent~N [Sub~N | Sub~N] | ...
-```
-
-Sub-sections that belong to a parent section are grouped in `[...]` immediately after their parent's entry.
+Update the section reference below if the structure changes.
 
 ---
 
 ## Section list (reference)
 
-This is the current section structure as of v0.36.1. Actual line numbers are in the embedded SECTIONS comment in the file — use that, not this list, since edits shift lines.
-
-Full SECTIONS index (v0.36.1, verified against file):
-```
-// SECTIONS: Config~355 | Hotkey rules~423 | Theme~516 | Font~528 | Tooltips~543 | State~572 | Persistence~589 | Undo/redo~629 | Mode switching~650 | Auto mode~725 | Helpers~728 [LRC parse~729 | Paste/meta~792 | Genius~847 | Render/UI~947] | Audio~1049 | Sync/timestamp~1255 | Secondary~1464 | Line counts~1570 | Title~1655 | Import~1663 | Controls~1769 | Settings~1875 | Settings search~1941 | Confirm~2287 | Keyboard~2324 [Key norm~2325 | Main textarea KD~2333 | Overlay utils~2388 | Global KD~2524] | Unload~2548 | Button wiring~2555 | Init~2574
-```
-Always use the embedded SECTIONS comment in the file as the authoritative source — this copy is for reference only and goes stale when lines shift.
+This is the current section structure as of v0.36.2. Actual line numbers must be found by grepping the file — this list documents the section structure and contents, not exact line numbers.
 
 ```
 Config               — DEFAULT_CFG, HK_SECTIONS, HK_LABELS
@@ -119,6 +92,7 @@ Theme                — themeMode, cycleTheme, applyTheme
 Font settings        — editorFont/Size, saveEditorFont, applyEditorFont
 Dynamic tooltips     — updateDynamicTooltips
 State                — all let/const mutable state declarations
+                       (_syncAutoAdvanced tracks sync→T trailing-ts flow)
 Persistence          — loadAutosave, doAutosave, takeSnapshot init
 Undo/redo            — pushSnapshot, doUndo, doRedo, applySnapshot
                        (single-push model: only post-change push; applySnapshot clears
@@ -131,12 +105,16 @@ Helpers
                        maybeAppendTrailingTs
   Paste/meta         — cleanPaste, ensureReTagDefault, mergeLrcMeta
   Genius             — cleanGenius, markGeniusSource, extractGeniusMeta
+                       (markGeniusSource prepends "Genius" to [re:] value, then
+                       ensureReTagDefault appends the configured default)
   Render/UI          — renderMainLines, scrollToActive, main-lines paste handler,
                        _announce
 Audio                — audio element setup, playback controls, volume, seekbar
+                       (auto-play on seek: doSeek and seekbar mouseup start playback)
 Sync/timestamp       — syncLine, insertEndLine, seekPrev/NextLine, replayActiveLine,
                        adjustTs, _peelLastParen, batchSplitParens, markAsTranslation,
                        doSyncFile, tickSeekOffset, setOffsetMode
+                       (insertEndLine: T after W auto-advance sets prev line's trailing ts)
 Secondary fields     — addSecondary, removeSecondary, secondary textarea keydown,
                        secondary import (file picker, middle-click)
 Line counts/merge    — getSecLines, checkLineCounts, updateMergeBtn, mergeTranslations
@@ -146,6 +124,7 @@ Controls panel       — rebuildHkPanel, CTRL_ACTIONS, HOTKEY_ONLY, changeSpeed
                        (currentSpeed persisted to localStorage 'lbl_speed')
 Settings             — openSettings, closeSettings, saveSettingsNow, buildHkRows
 Settings search      — setSearchHkMode, applySettingsFilter, initSettingsSearch
+                       (reset_defaults hotkey fires from search field)
 Confirm dialog       — _resetConfirmPending, showResetConfirm, hideResetConfirm,
                        _doResetDefaults; inline Yes/No confirm UI in settings footer
 Keyboard
@@ -156,6 +135,8 @@ Keyboard
                        (Esc blurs focused UI elements before isFocusedUI guard)
 Unload warning       — beforeunload dirty check (includes secondary fields)
 Button wiring        — all addEventListener calls for toolbar/panel buttons
+                       (Now Playing / Controls buttons don't steal focus via
+                       mousedown preventDefault on button clicks)
 Init                 — startup sequence: theme, font, autosave, render, tooltips,
                        speed restore, panel collapse state
 ```

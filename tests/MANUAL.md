@@ -29,9 +29,9 @@
 - [ ] Moving to next line
 - [ ] Resuming currently playing line
 - [ ] Playing another line
-- [ ] Adjusting seek offset
 - [ ] Syncing line
 - [ ] Adjusting timestamp
+- [ ] Adjusting seek offset
 
 #### Genius
 - [ ] Visit the Genius website and test pasting a real page in case the website layout changed

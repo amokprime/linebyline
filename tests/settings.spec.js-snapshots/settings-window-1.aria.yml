@@ -7,12 +7,12 @@
 - text: Resuming currently playing line
 - checkbox "Playing another line"
 - text: Playing another line
-- checkbox "Adjusting seek offset"
-- text: Adjusting seek offset
 - checkbox "Syncing line"
 - text: Syncing line
 - checkbox "Adjusting timestamp"
-- text: Adjusting timestamp Intervals Tiny
+- text: Adjusting timestamp
+- checkbox "Adjusting seek offset"
+- text: Adjusting seek offset Intervals Tiny
 - spinbutton "Tiny"
 - text: ms Small
 - spinbutton "Small"

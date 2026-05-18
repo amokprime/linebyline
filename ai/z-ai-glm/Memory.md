@@ -1,3 +1,20 @@
+## 0.36.2
+
+- **↩ split-parens checkbox restored**: Reverted 0.36.1's unconditional `batchSplitParens` back to checkbox-guarded. Restored `#main-split-check` checkbox HTML and `splitMode` guard in `markAsTranslation`. All six `batchSplitParens` call sites now check `document.getElementById('main-split-check').checked`. Default unchecked (matching 0.36.0). Reason: some single-language songs have parentheses that shouldn't be split
+- **Genius paste metadata fix**: `markGeniusSource()` no longer mechanically replaces `[re:...]` with `[re: Genius, LineByLine]`. Now prepends "Genius" to the existing `[re:]` value (if not already present), then `ensureReTagDefault()` appends the configured default. Fixes duplicate/empty-comma issues with custom `[re:]` defaults
+- **Now Playing button focus stealing fix**: `mousedown` listeners on `#audio-box` and `#controls-box` call `e.preventDefault()` for button clicks, preventing mouse-initiated focus without blocking `click` events. Keyboard Tab navigation unaffected. Root cause: focused buttons triggered `isFocusedUI` guard in global keydown, blocking hotkeys until user manually refocused editor
+- **Reserved hotkey focus fix**: When a restricted key is pressed in capture input, the handler now reverts the display value and clears conflict UI but **keeps focus** on the capture input (instead of `revertAndExit()` which blurs). This prevents Tab from snapping to the search field due to the focus trap finding `activeElement` at index -1 after blur
+- **Ctrl+\ in search field fix**: `_handleSettingsSearchKeydown` (text mode) now checks for the `reset_defaults` hotkey before `e.stopPropagation()`, calling `showResetConfirm()` directly. Previously `stopPropagation` blocked the global handler from seeing `Ctrl+\`
+- **SECTIONS index moved to skill**: Removed `// SECTIONS:` comment from app code. Authoritative section index now lives in `linebyline-section-index-SKILL.md`. Updated skill protocol to use `rg -n "^// ──"` instead of reading an embedded index line
+- **Auto-play on seek**: `doSeek()` now starts playback if paused. Seekbar `mouseup` after drag starts playback. Wheel-seek covered by `doSeek`. Click-to-seek on progress bar starts playback on mouse release
+- **Settings UI reorder**: Moved "Adjusting seek offset" checkbox to appear after "Adjusting timestamp" in Instant Replay section, grouping timestamp-related options together
+- **T after W trailing-ts**: Added `_syncAutoAdvanced` state variable. When `syncLine()` auto-advances `activeLine`, it stores the previous line index. `suppressAuto()` clears it on any manual navigation. `insertEndLine()` checks `_syncAutoAdvanced`: if the previous line is missing a trailing timestamp, T inserts one for that previous line instead of the current line. After insertion, advances `activeLine` to the next content line (skipping blank/meta/end-ts) so user can press W immediately. Makes W→T→W workflow fluid
+- **SonarQube Cloud issues by line number** (all 10 in `docs/index.html`):
+  - L220, L221, L341 (S7927): accessible name matches visible label — Fixed
+  - L236, L279, L292, L303, L340 (S6819): semantic HTML elements — Fixed
+  - L239 (S6819): `role="slider"` → Won't Fix (custom mousedown/drag/wheel model)
+  - L348 (S6825): `aria-hidden` on focusable — Fixed
+
 ## 0.36.1
 
 - **SonarQube S6819 (6 instances → semantic HTML)**: `role="region"` → `<section>` on `#audio-box`; `role="group"` → `<fieldset>` on `#hk-grid`; `role="list"` → `<ul>` on `#main-lines`; `role="status"` → `<output>` on `#settings-conflict`; `role="contentinfo"` → `<footer>` on `#settings-footer`. CSS resets added: `.lyric-area{list-style:none;margin:0}`, `.hk-grid{border:none;margin:0;padding:0;min-inline-size:0}`. `role="slider"` on `#progress-wrap` Won't Fix — custom mousedown/drag/wheel interaction model can't be replicated with `<input type="range">`
@@ -8,7 +25,7 @@
 - **Unsaved work warning for secondaries**: `beforeunload` handler now checks `secondaryCols.some(c=>c.linesEl.value.trim()!=='')` in addition to main textarea
 - **Speed field persistence**: `currentSpeed` loaded from `localStorage.getItem('lbl_speed')` on init; saved in `changeSpeed()` and speed-val change handler. Init section restores display value
 - **Reset defaults resets speed**: `_doResetDefaults()` now resets `currentSpeed=1`, updates `#speed-val` display, resets `audioEl.playbackRate`, and persists to localStorage
-- **↩ split-parens always on**: Removed `#main-split-check` checkbox and label from main field header. All `document.getElementById('main-split-check').checked` replaced with unconditional `batchSplitParens()` calls. `markAsTranslation` split-mode guard removed — always attempts peel first
+- **↩ split-parens always on**: Removed `#main-split-check` checkbox and label from main field header. All `document.getElementById('main-split-check').checked` replaced with unconditional `batchSplitParens()` calls. `markAsTranslation` split-mode guard removed — always attempts peel first. **Reverted in 0.36.2**
 - **Esc blurs focused UI**: Added `if(isFocusedUI&&e.key==='Escape'){e.preventDefault();ae.blur();return;}` before the `isFocusedUI` early-return guard in global keydown. Lets users press Esc to return to content area after Tab-navigating to buttons/inputs
 - **Left panel ARIA regions**: Now Playing wrapped in `<section id="audio-box">`, Controls wrapped in new `<section id="controls-box" aria-labelledby="controls-label">`. Playwright can target `#controls-box` separately
 - **beforeunload dialog focus**: Known limitation — browser-native dialog button focus is not controllable from JavaScript
