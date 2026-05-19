@@ -16,6 +16,7 @@ Put each new version of LineByLine and its companion .md file into its own seman
 | Bug fixes and refining existing features                                      | Patch           | 0.34.9 → 0.34.10        |
 | New features that fit into existing ones and invisible code quality refactors | Minor           | 0.34.9→ 0.35.0          |
 | Refactoring that visibly breaks existing features                             | Major           | 0.34.9 → 1.0.0          |
+
 Rename the folder manually with the same number. If the AI forgets to update the version or does it wrong, edit the app's filename (i.e. linebyline-0.34.7.html) and the HTML `<title>` element (i.e. `<title>LineByLine 0.34.7</title>`).
 
 #### Working with Claude Sonnet (web chat/Claude Desktop)
