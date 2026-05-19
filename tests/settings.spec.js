@@ -17,7 +17,7 @@ test("persistence", async ({ page, media }) => {
   await page.getByRole("spinbutton", { name: "Font size" }).fill("20");
   await page.getByRole("spinbutton", { name: "Playback speed" }).fill("1.5");
   await page
-    .getByRole("spinbutton", { name: "Seek offset (ms): shifts" })
+    .getByRole("spinbutton", { name: "Seek offset in milliseconds" })
     .fill("-400");
   await page.keyboard.press("Control+.");
   await page.keyboard.press("Control+,");
@@ -33,8 +33,8 @@ test("persistence", async ({ page, media }) => {
     .setInputFiles([media("plain_english.lrc")]);
   await exp("combobox", "Editor font", "serif");
   await exp("spinbutton", "Font size", "20");
-  await exp("spinbutton", "Playback speed", "1.5", true); // soft: confirmed broken
-  await exp("spinbutton", "Seek offset (ms): shifts", "-400");
+  await exp("spinbutton", "Playback speed", "1.50", true);
+  await exp("spinbutton", "Seek offset in milliseconds", "-400");
   await expect(titlebar).toHaveScreenshot("titlebar-dark.png");
   await page.keyboard.press("Control+,");
   await expect(
@@ -49,7 +49,7 @@ test("persistence", async ({ page, media }) => {
   await exp("combobox", "Editor font", "system-ui,sans-serif");
   await exp("spinbutton", "Font size", "14");
   await exp("spinbutton", "Playback speed", "1"); // hard: reset should work even for broken-persist items
-  await exp("spinbutton", "Seek offset (ms): shifts", "-600");
+  await exp("spinbutton", "Seek offset in milliseconds", "-600");
   await expect(
     page.getByRole("checkbox", { name: "Moving to previous line" }),
   ).not.toBeChecked();
@@ -62,15 +62,7 @@ test("persistence", async ({ page, media }) => {
 test("settings-window", async ({ page }) => {
   await page.keyboard.press("Control+,");
   await expect(page.locator("#settings-overlay")).toHaveClass(/open/);
-  await page.evaluate(() => {
-    const win = document.getElementById("settings-win");
-    const body = document.getElementById("settings-body");
-    win.style.maxHeight = "none";
-    win.style.overflow = "visible";
-    body.style.overflow = "visible";
-    body.style.flex = "none";
-  });
-  await expect(page.locator("#settings-body")).toHaveScreenshot();
+  await expect(page.locator("#settings-body")).toMatchAriaSnapshot();
   await page.keyboard.press("Escape");
   await expect(page.locator("#settings-overlay")).not.toHaveClass(/open/);
 });
@@ -78,7 +70,7 @@ test("settings-window", async ({ page }) => {
 test("search-check", async ({ page }) => {
   await page.keyboard.press("Control+,");
   await page
-    .getByRole("textbox", { name: "Search…" })
+    .getByRole("textbox", { name: "Search settings" })
     .pressSequentially("Moving to n");
   for (let i = 0; i < 2; i++) await page.keyboard.press("Tab");
   await page.keyboard.press("Space");
@@ -90,7 +82,7 @@ test("search-check", async ({ page }) => {
 test("search-field", async ({ page }) => {
   await page.keyboard.press("Control+,");
   await page
-    .getByRole("textbox", { name: "Search…" })
+    .getByRole("textbox", { name: "Search settings" })
     .pressSequentially("Default");
   for (let i = 0; i < 2; i++) await page.keyboard.press("Tab");
   expect(await page.locator("#s-default-meta").inputValue()).toMatchSnapshot();
@@ -98,7 +90,9 @@ test("search-field", async ({ page }) => {
 
 test("assign-ok-click", async ({ page }) => {
   await page.keyboard.press("Control+,");
-  await page.getByRole("textbox", { name: "Search…" }).pressSequentially("y/");
+  await page
+    .getByRole("textbox", { name: "Search settings" })
+    .pressSequentially("y/");
   await page.getByRole("textbox").nth(1).click();
   await page.keyboard.press("NumpadAdd");
   await expect(page.getByRole("textbox").nth(1)).toHaveValue("+");
@@ -106,14 +100,16 @@ test("assign-ok-click", async ({ page }) => {
 
 test("assign-reserved-click", async ({ page }) => {
   await page.keyboard.press("Control+,");
-  await page.getByRole("textbox", { name: "Search…" }).pressSequentially("of");
+  await page
+    .getByRole("textbox", { name: "Search settings" })
+    .pressSequentially("of");
   await page.locator("#hk-settings-rows").getByRole("textbox").click();
   await page.keyboard.press("Control+c");
   await expect(page.getByText('⚠ "Ctrl+C" is reserved by the')).toBeVisible();
   await expect(
     page.locator("#hk-settings-rows").getByRole("textbox"),
   ).toHaveValue("Shift+~");
-  await page.getByRole("button", { name: "↺ Default" }).click();
+  await page.getByRole("button", { name: "Reset hotkey for Toggle" }).click();
   await expect(page.getByText("Hotkeys MenuOpen✕Replace↺")).toHaveScreenshot();
 });
 

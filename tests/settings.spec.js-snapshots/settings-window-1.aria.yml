@@ -1,0 +1,108 @@
+- text: Instant Replay
+- checkbox "Moving to previous line"
+- text: Moving to previous line
+- checkbox "Moving to next line"
+- text: Moving to next line
+- checkbox "Resuming currently playing line"
+- text: Resuming currently playing line
+- checkbox "Playing another line"
+- text: Playing another line
+- checkbox "Syncing line"
+- text: Syncing line
+- checkbox "Adjusting timestamp"
+- text: Adjusting timestamp
+- checkbox "Adjusting seek offset"
+- text: Adjusting seek offset Intervals Tiny
+- spinbutton "Tiny"
+- text: ms Small
+- spinbutton "Small"
+- text: ms Medium
+- spinbutton "Medium"
+- text: ms Large
+- spinbutton "Large"
+- text: ms Seek increment
+- spinbutton "Seek increment"
+- text: s Speed ratio
+- spinbutton "Speed ratio"
+- text: × Volume increment
+- spinbutton "Volume increment"
+- text: "% Undo window"
+- spinbutton "Undo window"
+- text: ms Default metadata tags
+- textbox "Default metadata tags": "[ti: Unknown] [ar: Unknown] [al: Unknown] [re: https://amokprime.github.io/linebyline/]"
+- text: Hotkeys Menu Open
+- textbox "Open": Ctrl+;
+- text: Save
+- textbox "Save": Ctrl+'
+- text: Undo
+- textbox "Undo": Ctrl+Z
+- text: Redo
+- textbox "Redo": Ctrl+Y
+- text: Settings
+- textbox "Settings"
+- text: Toggle theme
+- textbox "Toggle theme"
+- text: Help
+- textbox "Help": Ctrl+/
+- text: Issues
+- textbox "Issues": Ctrl+[
+- text: Toggle panel
+- textbox "Toggle panel"
+- text: Reset defaults
+- textbox "Reset defaults"
+- text: Playback Play/pause
+- textbox "Play/pause"
+- text: Play/pause (alternate)
+- textbox "Play/pause (alternate)"
+- text: Reduce speed
+- textbox "Reduce speed"
+- text: Increase speed
+- textbox "Increase speed"
+- text: Reset speed
+- textbox "Reset speed"
+- text: Seek back
+- textbox "Seek back"
+- text: Seek forward
+- textbox "Seek forward"
+- text: Sync Toggle offset mode
+- textbox "Toggle offset mode"
+- text: Sync file
+- textbox "Sync file"
+- text: Sync line start
+- textbox "Sync line start"
+- text: Sync line end
+- textbox "Sync line end"
+- text: Previous line
+- textbox "Previous line"
+- text: Next line
+- textbox "Next line"
+- text: Replay only
+- textbox "Replay only"
+- text: Replay end
+- textbox "Replay end"
+- text: Adjustments Back tiny amount
+- textbox "Back tiny amount"
+- text: Forward tiny amount
+- textbox "Forward tiny amount"
+- text: Back small amount
+- textbox "Back small amount"
+- text: Forward small amount
+- textbox "Forward small amount"
+- text: Back medium amount
+- textbox "Back medium amount"
+- text: Forward medium amount
+- textbox "Forward medium amount"
+- text: Back large amount
+- textbox "Back large amount"
+- text: Forward large amount
+- textbox "Forward large amount"
+- text: Text Toggle mode
+- textbox "Toggle mode"
+- text: Add field
+- textbox "Add field"
+- text: Hide field
+- textbox "Hide field"
+- text: Merge fields
+- textbox "Merge fields"
+- text: Mark line as translation
+- textbox "Mark line as translation"

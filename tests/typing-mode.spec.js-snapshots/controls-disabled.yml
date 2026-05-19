@@ -1,0 +1,19 @@
+- region "Controls":
+  - text: ""
+  - group "Controls":
+    - button "Toggle offset mode": Offset time Shift+~
+    - button "Toggle mode": "Typing mode `"
+    - button "Play/pause" [disabled]: Play/pause Space
+    - button "Sync line start" [disabled]: Sync line W Enter
+    - button "Previous line" [disabled]: Previous line Q ↑
+    - button "Next line" [disabled]: Next line E ↓
+    - button "Replay only" [disabled]
+    - button "Sync line end" [disabled]
+    - button "Back tiny amount" [disabled]
+    - button "Forward tiny amount" [disabled]
+    - button "Back small amount" [disabled]
+    - button "Forward small amount" [disabled]
+    - button "Back medium amount" [disabled]
+    - button "Forward medium amount" [disabled]
+    - button "Back large amount" [disabled]
+    - button "Forward large amount" [disabled]

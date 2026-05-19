@@ -1,0 +1,9 @@
+- text: Main
+- checkbox "( )" [checked]
+- text: ( )
+- list "Lyric lines"
+- text: Secondary 1
+- button "Import secondary lyrics file"
+- checkbox "( )" [checked]
+- text: ( ) ⚠ Line count mismatch (5 vs 0)
+- textbox "Secondary 1 lyrics": (Ojalá pudiera identificar ese olor) (Ese olor) (Me altera la concentración) (Y me molesta muchísimo) (Oh, ojalá pudiera identificar ese olor)

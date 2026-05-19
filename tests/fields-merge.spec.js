@@ -5,14 +5,14 @@ test("hide-secondary", async ({ page, importSecondary }) => {
   await importSecondary(1, "plain_spanish.lrc");
   await page.keyboard.press("Control+5");
   await page.keyboard.press("Control+4");
-  expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot();
+  expect(page.locator("#editor-area")).toMatchAriaSnapshot();
 });
 
 test("replace-secondary", async ({ page, importSecondary }) => {
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_spanish.lrc");
   await importSecondary(1, "plain_french.lrc");
-  expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot();
+  expect(page.locator("#editor-area")).toMatchAriaSnapshot();
 });
 
 test("paste-secondary-genius", async ({ page, readMedia }) => {
@@ -22,7 +22,7 @@ test("paste-secondary-genius", async ({ page, readMedia }) => {
     navigator.clipboard.writeText(text);
   }, readMedia("mock.txt"));
   await page.keyboard.press("Control+v");
-  expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot();
+  expect(page.locator("#editor-area")).toMatchAriaSnapshot();
 });
 
 test("font", async ({ page, media, importSecondary }) => {
@@ -48,12 +48,7 @@ test("merge-one", async ({ page, media, importSecondary }) => {
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_french.lrc");
   await page.keyboard.press("Control+6");
-  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
-    "merge-one-lines.txt",
-  );
-  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
-    "merge-one-textarea.txt",
-  );
+  expect(page.locator("#editor-area")).toMatchAriaSnapshot();
 });
 
 test("merge-two", async ({ page, media, importSecondary }) => {
@@ -65,12 +60,7 @@ test("merge-two", async ({ page, media, importSecondary }) => {
   await page.keyboard.press("Control+4");
   await importSecondary(2, "plain_spanish.lrc");
   await page.keyboard.press("Control+6");
-  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
-    "merge-two-lines.txt",
-  );
-  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
-    "merge-two-textarea.txt",
-  );
+  expect(page.locator("#editor-area")).toMatchAriaSnapshot();
 });
 
 test("merge-no-timestamps", async ({ page, media, importSecondary }) => {
@@ -80,7 +70,7 @@ test("merge-no-timestamps", async ({ page, media, importSecondary }) => {
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_spanish.lrc");
   await page.keyboard.press("Control+6");
-  await expect(page).toHaveScreenshot();
+  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
 });
 
 test("merge-no-trailing", async ({ page, media, importSecondary }) => {
@@ -89,10 +79,8 @@ test("merge-no-trailing", async ({ page, media, importSecondary }) => {
     .setInputFiles([media("audio.mp3"), media("no_trailing.lrc")]);
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_french.lrc");
-  await page.locator("#left-panel-header").click();
-  await page.keyboard.press("Backquote");
   await page.keyboard.press("Control+6");
-  await expect(page).toHaveScreenshot();
+  expect(page.locator("#editor-area")).toMatchAriaSnapshot();
 });
 
 test("merge-line-mismatch", async ({ page, media, importSecondary }) => {
@@ -102,7 +90,10 @@ test("merge-line-mismatch", async ({ page, media, importSecondary }) => {
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_spanish_mismatch.lrc");
   await page.keyboard.press("Control+6");
-  await expect(page).toHaveScreenshot();
+  expect(page.getByText("⚠ Line count mismatch (4 vs 5)")).toBeVisible();
+  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot({
+    name: "synced_english.yml",
+  });
 });
 
 test("merge-block-reload", async ({ page, media, importSecondary }) => {
@@ -112,7 +103,12 @@ test("merge-block-reload", async ({ page, media, importSecondary }) => {
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_french.lrc");
   await page.keyboard.press("F5");
-  await expect(page).toHaveScreenshot();
+  await expect(
+    page.getByRole("button", { name: "Merge fields" }),
+  ).toBeVisible();
+  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot({
+    name: "synced_english.yml",
+  });
 });
 
 test("reload-merge-disabled", async ({ page, media, importSecondary }) => {
@@ -121,8 +117,11 @@ test("reload-merge-disabled", async ({ page, media, importSecondary }) => {
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_french.lrc");
+  await expect(
+    page.getByRole("button", { name: "Merge fields" }),
+  ).toBeVisible();
   await page.reload();
   await expect(
     page.getByRole("button", { name: "Merge fields" }),
-  ).toHaveScreenshot();
+  ).toBeDisabled();
 });

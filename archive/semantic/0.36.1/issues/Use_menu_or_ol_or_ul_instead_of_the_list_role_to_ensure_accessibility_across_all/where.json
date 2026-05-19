@@ -1,0 +1,23 @@
+{
+  "message": "Use <menu> or <ol> or <ul> instead of the list role to ensure accessibility across all devices.",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "textRange": {
+    "startLine": 292,
+    "endLine": 292,
+    "startOffset": 53,
+    "endOffset": 130
+  },
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 292,
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "rule": "Web:S6819",
+  "type": "CODE_SMELL",
+  "severity": "MAJOR",
+  "flows": [],
+  "cleanCodeAttribute": "CONVENTIONAL"
+}

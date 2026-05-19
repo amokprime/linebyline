@@ -1,0 +1,23 @@
+{
+  "rule": "Web:S7927",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "component": "amokprime_linebyline:docs/index.html",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "HIGH"
+    }
+  ],
+  "textRange": {
+    "startLine": 220,
+    "endLine": 220,
+    "startOffset": 2,
+    "endOffset": 103
+  },
+  "line": 220,
+  "message": "The accessible name should be part of the visible label.",
+  "flows": []
+}

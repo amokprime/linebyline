@@ -1,0 +1,23 @@
+{
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 279,
+  "flows": [],
+  "textRange": {
+    "startLine": 279,
+    "endLine": 279,
+    "startOffset": 4,
+    "endOffset": 84
+  },
+  "message": "Use <address> or <details> or <fieldset> or <optgroup> instead of the group role to ensure accessibility across all devices.",
+  "type": "CODE_SMELL",
+  "severity": "MAJOR",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "rule": "Web:S6819"
+}

@@ -1,0 +1,7 @@
+- list "Lyric lines":
+  - listitem: /\[\d+:\d+\.\d+\] I wish I could identify that smell/
+  - listitem
+  - listitem: /\d+:\d+\.\d+\] It disturbs my concentration/
+  - listitem: And it bothers me to hell
+  - listitem: Oh, I wish I could identify that smell
+  - listitem: /\[\d+:\d+\.\d+\]/

@@ -14,7 +14,7 @@ You can open a new [Issue](https://github.com/amokprime/linebyline/issues) or [r
 2. Scanners treat it like a website that stores and processes data server-side. SonarQube Cloud is especially spammy here. I'm using it more to check Claude's code quality as CodeQL already covers security.
 
 I am not a cybersecurity professional or security researcher. What I can do about any [true positives](https://github.com/amokprime/linebyline/blob/main/SECURITY.md#true-positives):
-1. Me asking Sonnet - hopefully it's solved here🤷
+1. Me asking AI - hopefully it's solved here🤷
 2. GitHub account compromise - I change all my passwords
 3. Code issue AI can't solve confined to recent version of the app - delete folder and commit
 4. Code issue AI can't solve affecting most versions of the app - archive whole repo

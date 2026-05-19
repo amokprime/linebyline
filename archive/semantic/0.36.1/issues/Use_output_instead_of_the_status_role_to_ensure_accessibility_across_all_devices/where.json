@@ -1,0 +1,23 @@
+{
+  "message": "Use <output> instead of the status role to ensure accessibility across all devices.",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "component": "amokprime_linebyline:docs/index.html",
+  "textRange": {
+    "startLine": 303,
+    "endLine": 303,
+    "startOffset": 6,
+    "endOffset": 68
+  },
+  "severity": "MAJOR",
+  "flows": [],
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "line": 303,
+  "rule": "Web:S6819"
+}

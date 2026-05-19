@@ -5,9 +5,7 @@ test("import-plain", async ({ page, media }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("plain_english.lrc")]);
   await expect(page.getByText("audio")).toBeVisible();
-  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
-    "import-plain-lines.txt",
-  );
+  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "import-plain-textarea.txt",
   );
@@ -21,9 +19,7 @@ test("import-synced", async ({ page, media }) => {
     page.getByText("I Wish I Could Identify That Smell", { exact: true }),
   ).toBeVisible();
   await expect(page.getByText("The Jazz Kissingers")).toBeVisible();
-  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
-    "import-synced-lines.txt",
-  );
+  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "import-synced-textarea.txt",
   );
@@ -37,9 +33,7 @@ test("import-replace", async ({ page, media }) => {
     .locator("#file-picker")
     .setInputFiles([media("plain_english.lrc")]);
   await expect(page.getByText("audio")).toBeVisible();
-  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
-    "import-replace-lines.txt",
-  );
+  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "import-replace-textarea.txt",
   );
@@ -58,9 +52,7 @@ test("import-corrupted-lyrics", async ({ page, media }) => {
   await page.locator("#file-picker").setInputFiles([media("corrupted.lrc")]);
   await expect(page.getByText("corrupted")).toBeVisible();
   await expect(page.getByText("Unknown Artist")).toBeVisible();
-  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
-    "corrupted-lines.txt",
-  );
+  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "corrupted-textarea.txt",
   );
