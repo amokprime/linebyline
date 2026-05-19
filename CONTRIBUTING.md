@@ -2,7 +2,7 @@ See this [Obsidian Share Note](https://share.note.sx/9wimmaly) for what's planne
 
 #### Architecture and environment
 
-LineByLine is a no-dependencies 2.6k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects and uses [these](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions) skills and instructions. Any comparable model that can work with files (i.e. GLM in [Z.ai](https://chat.z.ai/) Agent mode web chat) should also be able to follow the skills and instructions. Use a Chromium-based browser like Helium with uBlock Origin enabled. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
+LineByLine is a no-dependencies 2.6k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects and uses [these](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions) skills and instructions. Any comparable model that can work with files (i.e. GLM in [Z.ai](https://chat.z.ai/) Agent mode web chat) should also be able to follow the skills and instructions. Use a Chromium-based browser like Helium with uBlock Origin enabled or Chromium/Google Chrome with AdGuard AdBlocker enabled. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
 
 #### General organization
 
@@ -18,12 +18,12 @@ Put each new version of LineByLine and its companion .md file into its own seman
 | Refactoring that visibly breaks existing features                             | Major           | 0.34.9 → 1.0.0          |
 Rename the folder manually with the same number. If the AI forgets to update the version or does it wrong, edit the app's filename (i.e. linebyline-0.34.7.html) and the HTML `<title>` element (i.e. `<title>LineByLine 0.34.7</title>`).
 
-#### claude-sonnet (web chat/Claude Desktop)
+#### Working with Claude Sonnet (web chat/Claude Desktop)
 
 Warning: I stopped maintaining these after 0.35.19. You might have to backport some more updated information from GLM's instructions.
 claude.ai has extremely strict free plan 5-hour limits. Simply fill out the preferences and project instructions and add the skills, and turn on memory. Occasionally upload a zip of all chat logs since last skill update and ask Claude to update them or create new ones (it has a skill-creator skill).
 
-#### z-ai-glm(web chat Agent mode)
+#### Working with GLM (web chat Agent mode)
 
 chat.z.ai's free tier is currently far more generous overall with some caveats:
 - I have noticed as many as 2k ads being blocked by uBlock Origin! It starts at a few hundred and just keeps ramping up over time.
@@ -32,7 +32,27 @@ chat.z.ai's free tier is currently far more generous overall with some caveats:
 - Sessions now expire after 2 hours. After that, start a new Agent chat, because the originally uploaded files vanish and newly uploaded files fail to persist. Work around by typing something before it expires to reset the timer to another 2 hours.
 - Downgrade from GLM-5.1 to a lower model during peak hours (at least in the US, this feels very rare lately)
 
-There's also no built-in skills or memory scaffolding. You must upload relevant .md files at the start of each chat and explicitly tell GLM to read and to follow them (paste contents of Chat.md followed by your actual prompt). This can even extend to duplicating some of the repo structure for it to analyze (see Index.md for example). I suggest searching in a file manager for things like `snapshots` and `*.html` (without backticks) to avoid bloating memory context or bringing down usage limits. GLM can update its own skills since they aren't locked down as a separate feature.
+There's also no built-in skills or memory scaffolding. You must upload relevant .md files at the start of each chat and explicitly tell GLM to read and to follow them (paste contents of Chat.md followed by your actual prompt). This can even extend to duplicating some of the repo structure for it to analyze (see Index.md for example). I recommend:
+- Creating symlinks to heavily uploaded external repo folders and files like skills, tests/helpers, tests/media, tests/prompts, specific spec.js files, package.json, and playwright.config.js. If you zip a folder with symlinks and upload it, all symlinked folders and their contents will be included. Symlinks can be created one file/folder at a time on Windows with [Link Shell Extension](https://schinagl.priv.at/nt/hardlinkshellext/linkshellextension.html), or everything in one folder to another with a bash script like this and then deleting unnecessary ones (this will not delete the external contents):
+```cmd
+@echo off
+set "GLOBAL=originfolder"
+set "LOCAL=destinationfolder"
+for /d %%i in ("%GLOBAL%\*") do (
+    if not exist "%LOCAL%\%%~nxi" mklink /D "%LOCAL%\%%~nxi" "%%i"
+)
+for %%f in ("%GLOBAL%\*.*") do (
+    if not exist "%LOCAL%\%%~nxf" mklink "%LOCAL%\%%~nxf" "%%f"
+)
+```
+- Searching in a file manager for things like `snapshots` and `*.html` (without backticks) to avoid bloating memory context or bringing down usage limits.
+
+GLM can update its own skills and memory frequently since they aren't locked down as a separate feature.
+
+There are a few behavioral limitations to GLM in chat.z.ai's web chat:
+- It won't reliably copy a zip of all updated files to the downloads folder ("All files in chat"). After the first turn, it may later zip every file originally uploaded.
+- Sometimes it creates files but forgets to actually copy them to the downloads folder
+- It will always summarize its own output in the format of change steps. "Verbatim", "don't summarize", etc. won't change that. The line "including markdown tables and Mermaid diagrams" in Project.md has worked for tables so far.
 
 #### CI
 

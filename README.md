@@ -3,7 +3,7 @@
 ### AI Disclosure
 I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️.
 Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
-Prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive). See what I'm working on [here](https://share.note.sx/9wimmaly). 
+App prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive), test prompt history in [/tests/prompts](https://github.com/amokprime/linebyline/tree/main/tests/prompts), and AI scaffolding in [/ai/chat](https://github.com/amokprime/linebyline/tree/main/ai/chat). See what I'm working on [here](https://share.note.sx/9wimmaly). 
 ### About
 **LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to [LRCLIB](https://lrclib.net/):
 1. Find original lyrics from [Genius](https://genius.com/) or LRCLIB, or DuckDuckGo if really obscure
