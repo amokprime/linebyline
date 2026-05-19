@@ -4,6 +4,8 @@ Icons ("undo", "redo", "list-checks" recolored for LineByLine logo, "play", "ski
 
 Built with [Claude Sonnet 4.6](https://www.anthropic.com/claude) and [GLM](https://chat.z.ai/) AI assistance
 
+[Skill-creator skill](https://github.com/anthropics/skills/tree/main/skills/skill-creator) by Anthropic used to create [skill-SKILL.md](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/skills/skill-SKILL.md)
+
 Lyrics page extraction code and mock test designed for compatibility with [Genius](https://genius.com/) page structure
 
 "I Wish I Could Identify That Smell" by The Jazz Kissingers published 2017 and downloaded from http://freemusicarchive.org/

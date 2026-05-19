@@ -3,13 +3,11 @@ name: linebyline-section-index
 description: Efficient section-targeted reading of linebyline-*.html to avoid loading the entire file unnecessarily. Use this skill at the start of every LineByLine coding session, and before reading any part of the app HTML. Contains the protocol for locating relevant sections by name, reading only those sections, and patching the file with minimal token cost.
 ---
 
-# LineByLine Section Index
-
-The app HTML is ~2600 lines. Loading it whole costs ~50k tokens. Most prompts only touch 1–4 sections. This skill tells you how to read only what you need.
+The app HTML is about 2600 lines. Loading it whole costs about 50k tokens. Most prompts only touch 1–4 sections. This skill tells you how to read only what you need.
 
 ---
 
-## Step 1: Read the section markers — grep for `// ──`
+Step 1: Read the section markers — grep for `// ──`
 
 The app no longer embeds a SECTIONS index comment. Instead, grep for section markers:
 
@@ -21,20 +19,19 @@ This gives you every section name and its start line number. Use this output to 
 
 ---
 
-## Step 2: Read only the relevant section(s)
+Step 2: Read only the relevant section(s)
 
 Once you have start lines from the grep, read the range from that line to just before the next section's start:
 
 ```bash
-# Read lines N through M (e.g. section starting at 826, next section at 923)
 sed -n '826,922p' /path/to/linebyline-*.html
 ```
 
-**Read the minimum set of sections needed.** Use the prompt-to-section map below as a guide.
+Read the minimum set of sections needed. Use the prompt-to-section map below as a guide.
 
 ---
 
-## Prompt-to-section map
+Prompt-to-section map
 
 | Type of change | Sections to read |
 |---|---|
@@ -61,27 +58,25 @@ sed -n '826,922p' /path/to/linebyline-*.html
 | Change init sequence or startup state | Init + Persistence + State |
 | Fix unload / dirty warning | Unload + State |
 | Fix button wiring | Button wiring |
-| Fix collapse/expand panel button | Button wiring (`applyPanelCollapse` lives here, not Init) |
+| Fix collapse/expand panel button | Button wiring (applyPanelCollapse lives here, not Init) |
 | Add/change confirmation dialog | Confirm dialog + Settings + Keyboard → Global KD |
 | Fix Settings focus trap / Tab navigation | Settings search + Keyboard → Global KD |
 
-For cross-cutting changes (e.g. new hotkey = Config + Hotkey rules + Controls + Global KD), read all listed sections before patching. Reading 4 sections of ~80 lines each (~320 lines) is still ~6x cheaper than the full file.
+For cross-cutting changes (e.g. new hotkey = Config + Hotkey rules + Controls + Global KD), read all listed sections before patching. Reading 4 sections of about 80 lines each (about 320 lines) is still about 6x cheaper than the full file.
 
 ---
 
-## Step 3: After patching — re-extract the index
+Step 3: After patching — re-extract the index
 
-Any patch that **inserts or deletes lines** shifts all subsequent line numbers. After writing a patched file, re-run the section grep:
+Any patch that inserts or deletes lines shifts all subsequent line numbers. After writing a patched file, re-run the section grep:
 
 ```bash
 rg -n "^// ──|^  // ──" /path/to/linebyline-*.html
 ```
 
-Update the section reference below if the structure changes.
-
 ---
 
-## Section list (reference)
+Section list (reference)
 
 This is the current section structure as of v0.36.2. Actual line numbers must be found by grepping the file — this list documents the section structure and contents, not exact line numbers.
 
