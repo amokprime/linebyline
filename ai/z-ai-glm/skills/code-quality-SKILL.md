@@ -27,9 +27,10 @@ CC accounting in SonarQube:
 - Method calls: 0 (free) — this is why extraction works
 
 Historical CC reduction in this project:
-- Global keydown handler: 138 → 14 (multiple rounds of extraction)
+- Global keydown handler: 138 → 14 → 25 (0.37.0 added Typing-mode arrow-key block) → 12 (0.37.1 extracted `_handleRepeatGuard`, `_handleTypingModeArrowKeys`)
 - `insertEndLine`: 29 → 11 (extracted `_insertSyncTrailing`)
 - `buildHkRows`: 40 → ~15 (extracted `_handleSecKeydown`)
+- `rebuildHkPanel` forEach callback: 19 → ~4 (0.37.1 extracted `_renderHkCellContent`)
 - Multiple handlers extracted to outer scope: `_handleSettingsSearchKeydown`, `_handleTextareaEnterTrim`, `_handleTextareaParenBracket`, `_handleGlobalHotkeys`, `_handleHotkeyModeKeys`
 
 ---
@@ -200,3 +201,18 @@ mergedMeta.trimEnd() + '\n\n' + lyrics
 ```
 
 Inconsistent separator counts cause blank-line mismatches between main and secondary fields.
+
+---
+
+Pre-delivery code quality checklist
+
+Before delivering any patch, verify:
+
+1. CC of modified functions — estimate the cognitive complexity of any function you changed. If it exceeds 15, extract helpers or use early returns before delivering. Do not wait for SonarQube to flag it.
+2. Braceless-if — check every `if`/`else` in the patch for missing braces. Single-line bodies must still have `{}`.
+3. State management — if the patch adds a new state variable, verify it does not duplicate an existing one that tracks the same concept (single source of truth).
+4. Undo/redo — if the patch changes content-mutating logic, verify the pushSnapshot() call follows the single-push model (post-change only, except for wholesale replacement which needs pre + post).
+5. Config reads — if the patch references a user-configurable setting, verify it reads from `cfg` at runtime, not `DEFAULT_CFG`.
+6. Helper extraction safety — if the patch extracts a helper, search the codebase for all pre-existing callees to confirm none were accidentally deleted.
+7. Existing Playwright test code does not conflict with new app code. Reconcile any conflicts found and warn the user of tests that require snapshot or screenshot regen.
+8. New app features are covered by Playwright tests. Expand test coverage conservatively as needed with comments like `// Covers playback starting after seeking added in 0.36.2`. Favor expanding existing <20 LOC tests over creating new tests. Favor adding new tests to existing <200 LOC test files over creating new test files.

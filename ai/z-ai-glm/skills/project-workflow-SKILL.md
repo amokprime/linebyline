@@ -44,6 +44,7 @@ Before writing any code change:
 1. Stop and request clarification when: a request is unclear or overly complex, relevant files are missing, a request is technically infeasible, or a request violates best practices from a skill.
 2. Read only the sections you need — use the `linebyline-section-index` skill to locate sections by grepping for `// ──` markers, then read just those ranges. This avoids loading the entire ~2600-line file (~50k tokens) when only a few sections are relevant.
 3. Patch with minimal diff — change only what's needed and preserve surrounding code. Prefer targeted edits over full-section rewrites unless the section is being restructured. Don't generate your own icons; prioritize any the user uploads, then Lucide icons. Don't add code that links to external websites besides GitHub.
+4. Consult code-quality-SKILL before modifying functions.
 
 ---
 
@@ -66,14 +67,12 @@ Post-patch updates
    - A code change failed in a way that would surprise a fresh model in a new chat if it wasn't documented — failures are the most valuable Memory.md entries because they prevent re-discovery.
 3. Update a skill when a patch changes the architecture the skill documents (e.g. extracting `handleSecKeydown` to outer scope changes the section index skill, adding a new restricted key changes the hotkey skill). Don't update a skill for a pure bug fix that doesn't change the documented architecture.
 4. Don't update a skill when the patch is a pure bug fix that doesn't change the documented architecture.
-5. Reconcile Playwright tests with app code changes when feasible. Warn me of tests that require snapshot or screenshot regen due to app code change.
-6. For new features are not covered by existing Playwright tests, make conservative changes when reasonable with a comment like `// Covers playback starting after seeking added in 0.36.2`. Favor expanding existing <20 LOC tests over creating new tests. Favor adding new tests to existing <200 LOC test files over creating new test files.
 
 ---
 
 Versioning
 
-Version the code file semantically based on keywords the user provides. Don't change version on your own initiative and don't substitute version dots with spaces, underscores, or any other character — this applies to filenames passed to all tools, not just `<title>`.
+Version the code file semantically based on keywords the user provides. Don't change version without an explicit request from the user and don't substitute version dots with spaces, underscores, or any other character — this applies to filenames passed to all tools, not just `<title>`.
 
 - Same: 0.34.9 → 0.34.9
 - Patch: 0.34.9 → 0.34.10

@@ -159,10 +159,16 @@ test("save", async ({ page, media }) => {
 });
 
 test("import-10k-lines", async ({ page, media }) => {
-  await page.locator("#file-picker").setInputFiles([media("10k_lines.lrc")]); //Test crash
-  await expect(page.getByText("nmbr0001")).toBeVisible(); //Test view scroll jump to bottom bug
-  await page.keyboard.press("Backquote"); //Test lost lyrics
-  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot();
+  // 10k lines exceeds MAX_LINES (500) — import is blocked with alert
+  page.on("dialog", async (d) => {
+    expect(d.type()).toBe("alert");
+    expect(d.message()).toContain("500 line limit");
+    await d.accept();
+  });
+  await page.locator("#file-picker").setInputFiles([media("10k_lines.lrc")]);
+  // Content should not contain 10k-line data (nmbr0001 is first line of 10k_lines.lrc)
+  const content = await page.locator("#main-textarea").inputValue();
+  expect(content).not.toContain("nmbr0001");
 });
 
 test("naughty-strings", async ({ page }) => {

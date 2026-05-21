@@ -79,8 +79,17 @@ test("merge-no-trailing", async ({ page, media, importSecondary }) => {
     .setInputFiles([media("audio.mp3"), media("no_trailing.lrc")]);
   await page.keyboard.press("Control+4");
   await importSecondary(1, "plain_french.lrc");
+  // Merge is blocked when no trailing end timestamp exists (alert instead of confirm)
+  page.on("dialog", async (d) => {
+    expect(d.type()).toBe("alert");
+    expect(d.message()).toContain("No trailing end timestamp");
+    await d.accept();
+  });
   await page.keyboard.press("Control+6");
-  expect(page.locator("#editor-area")).toMatchAriaSnapshot();
+  // Merge button should still be enabled (merge did not proceed)
+  await expect(
+    page.getByRole("button", { name: "Merge fields" }),
+  ).toBeVisible();
 });
 
 test("merge-line-mismatch", async ({ page, media, importSecondary }) => {

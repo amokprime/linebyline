@@ -129,6 +129,7 @@ test("replay-another-line", async ({ page, media }) => {
   await page.getByRole("checkbox", { name: "Playing another line" }).check();
   await page.keyboard.press("Escape");
   await page.getByText("[00:03.06] That smell").click();
+  await page.keyboard.press("Space"); //Not needed in real browser; purely to freeze state for screenshot
   await expect(page).toHaveScreenshot();
 });
 

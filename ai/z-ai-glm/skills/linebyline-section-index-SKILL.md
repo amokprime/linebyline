@@ -3,7 +3,7 @@ name: linebyline-section-index
 description: Efficient section-targeted reading of linebyline-*.html to avoid loading the entire file unnecessarily. Use this skill at the start of every LineByLine coding session, and before reading any part of the app HTML. Contains the protocol for locating relevant sections by name, reading only those sections, and patching the file with minimal token cost.
 ---
 
-The app HTML is about 2600 lines. Loading it whole costs about 50k tokens. Most prompts only touch 1–4 sections. This skill tells you how to read only what you need.
+The app HTML is about 2700 lines. Loading it whole costs about 50k tokens. Most prompts only touch 1–4 sections. This skill tells you how to read only what you need.
 
 ---
 
@@ -78,7 +78,7 @@ rg -n "^// ──|^  // ──" /path/to/linebyline-*.html
 
 Section list (reference)
 
-This is the current section structure as of v0.36.2. Actual line numbers must be found by grepping the file — this list documents the section structure and contents, not exact line numbers.
+This is the current section structure as of v0.37.1. Actual line numbers must be found by grepping the file — this list documents the section structure and contents, not exact line numbers.
 
 ```
 Config               — DEFAULT_CFG, HK_SECTIONS, HK_LABELS
@@ -87,7 +87,7 @@ Hotkey rules         — RESTRICTED_ALL (no arrow keys), ALPHA_NUM_SPACE_RE, isR
 Theme                — themeMode, cycleTheme, applyTheme
 Font settings        — editorFont/Size, saveEditorFont, applyEditorFont
 Dynamic tooltips     — updateDynamicTooltips
-State                — all let/const mutable state declarations
+State                — MAX_LINES (500), all let/const mutable state declarations
                        (_syncAutoAdvanced tracks sync→T trailing-ts flow)
 Persistence          — loadAutosave, doAutosave, takeSnapshot init
 Undo/redo            — pushSnapshot, doUndo, doRedo, applySnapshot
@@ -111,12 +111,12 @@ Sync/timestamp       — syncLine, insertEndLine, seekPrev/NextLine, replayActiv
                        adjustTs, _peelLastParen, batchSplitParens, markAsTranslation,
                        doSyncFile, tickSeekOffset, setOffsetMode
                        (insertEndLine: T after W auto-advance sets prev line's trailing ts)
-Secondary fields     — addSecondary, removeSecondary, secondary textarea keydown,
+Secondary fields     — addSecondary (max 10 fields), removeSecondary, secondary textarea keydown,
                        secondary import (file picker, middle-click)
 Line counts/merge    — getSecLines, checkLineCounts, updateMergeBtn, mergeTranslations
 Title                — updateTitleFromText
 Import               — doImport, doSave, file-picker handler, multi-file handling
-Controls panel       — rebuildHkPanel, CTRL_ACTIONS, HOTKEY_ONLY, TYPING_AVAILABLE,
+Controls panel       — rebuildHkPanel, _renderHkCellContent, CTRL_ACTIONS, HOTKEY_ONLY, TYPING_AVAILABLE,
                        changeSpeed
                        (currentSpeed persisted to localStorage 'lbl_speed')
                        (Typing-mode overlays: play_pause shows play_pause_alt,
@@ -134,6 +134,8 @@ Keyboard
   Overlay utilities  — arrowNavTimer declaration
                        (ArrowUp/ArrowDown navigate all Settings elements, not just captures)
   Global KD          — document keydown handler (all hotkey dispatch)
+                       (_isRepeatAllowed, _handleRepeatGuard: repeat key guard)
+                       (_handleTypingModeArrowKeys: arrow keys for prev/next in Typing mode)
                        (Esc blurs focused UI elements before isFocusedUI guard)
                        (Typing mode: ↑/↓ for prev/next line when no textarea focused)
 Unload warning       — beforeunload dirty check (includes secondary fields)

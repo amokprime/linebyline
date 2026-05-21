@@ -1,3 +1,15 @@
+0.37.1
+
+- SonarQube S3776 CC reduction: Global keydown handler 25→12 (extracted `_isRepeatAllowed`, `_handleRepeatGuard`, `_handleTypingModeArrowKeys`; flattened focused-UI-element guards). `rebuildHkPanel` forEach callback 19→~4 (extracted `_renderHkCellContent` with early-return structure)
+- Root cause of 0.37.0 SonarQube regressions: code-quality skill loaded but not actively consulted as a checklist during Typing-mode overlay additions. Added "Pre-delivery code quality checklist" section to code-quality-SKILL.md to prevent recurrence
+- Warning popup consistency: `confirm('No trailing end timestamp found...')` changed to `alert()` matching other merge-block popups (Ok button, prompts fix instead of allowing override)
+- Secondary field limit: `addSecondary()` now enforces maximum of 10 fields with alert
+- Line limit: `MAX_LINES=500` constant; import and paste handlers reject content exceeding limit with alert
+- Control button rearrangement verified: user-reordered array at line 1876 (prev/play/next/sync) is purely visual, `CTRL_ACTIONS[key]` lookups are string-based, no dependency breakage
+- beforeunload dialog focus: confirmed that Chromium focuses Leave button (Enter works) but mouse cursor does not snap. Browser-native behavior, not fixable from JS. Known limitation retained
+
+---
+
 0.37.0
 
 - Controls panel Typing-mode overlays: `TYPING_AVAILABLE` set keeps play_pause/prev_line/next_line enabled in Typing mode with mode-specific hotkey displays (play_pause → Ctrl+Space, prev_line → ↑ only, next_line → ↓ only). Other HOTKEY_ONLY actions remain dimmed
