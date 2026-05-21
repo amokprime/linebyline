@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LineByLine 0.36.2</title>
+<title>LineByLine 0.37.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000000' height='24' width='24'/%3E%3Cpath d='m13,5l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,12l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,19l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m3,17l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m3,7l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 /* ── Themes ── */
@@ -162,10 +162,8 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 .s-num{width:70.4px;height:28.6px;font-size:13.2px;font-family:inherit;text-align:right;padding:0 6.6px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);}
 .s-unit{font-size:13.2px;color:var(--text-muted);}
 .s-meta{width:100%;height:96.8px;font-size:13.2px;font-family:inherit;padding:6.6px 8.8px;line-height:1.6;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);resize:none;}
-/* Hotkey row layout: [clear] [label] [capture] [replace] [reset] */
+/* Hotkey row layout: [label] [warning] [capture] [clear] [replace] [reset] */
 .hk-row{display:flex;align-items:center;gap:6px;min-height:30.8px;font-size:13.2px;margin-bottom:2.2px;flex-wrap:nowrap;}
-.hk-row.hk-conflict{min-height:auto;flex-wrap:wrap;padding-bottom:4px;}
-.hk-row.hk-conflict label{flex-basis:100%;order:-1;}
 .hk-row label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .hk-clear{width:22px;height:22px;border-radius:50%;border:1px solid var(--border-mid);background:transparent;cursor:pointer;font-size:11px;display:none;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-muted);padding:0;line-height:1;}
 .hk-clear.visible{display:flex;}
@@ -183,8 +181,8 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
 .hk-replace:hover{filter:brightness(0.95);}
 .hk-replace:active{filter:brightness(0.88);}
 #settings-conflict{display:none;font-size:12px;color:var(--warn-text);margin-left:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.hk-restrict-warn{font-size:11px;color:#c0392b;display:none;margin-left:4px;white-space:nowrap;}
-.hk-restrict-warn.visible{display:inline;}
+.hk-restrict-warn{font-size:11px;color:#c0392b;display:none;white-space:nowrap;flex-shrink:0;}
+.hk-restrict-warn.visible{display:inline-block;}
 #settings-footer{display:flex;justify-content:flex-start;align-items:center;gap:6.6px;height:46.2px;padding:0 15.4px;border-top:1px solid var(--border);background:var(--bg);flex-shrink:0;}
 .s-btn{height:28.6px;padding:0 15.4px;font-size:13.2px;border:1px solid var(--border-mid);border-radius:var(--radius);background:transparent;color:var(--text);cursor:pointer;}
 .s-btn:hover{background:var(--border);}
@@ -1831,7 +1829,7 @@ const CTRL_ACTIONS={
   seek_fwd:()=>doSeekFwd(),
   help:()=>window.open('https://github.com/amokprime/linebyline/blob/main/HELP.md','_blank'),
   theme_toggle:()=>cycleTheme(),
-  panel_toggle:()=>{panelCollapsed=!panelCollapsed;applyPanelCollapse(true);},
+  panel_toggle:()=>{panelCollapsed=!panelCollapsed;applyPanelCollapse(false);},
   reset_defaults:()=>{if(!document.getElementById('settings-overlay').classList.contains('open'))openSettings();showResetConfirm();},
   mark_translation:()=>markAsTranslation(),
 };
@@ -1852,6 +1850,8 @@ const HOTKEY_ONLY=new Set(['play_pause','play_pause_alt','sync','end_line','prev
   'ts_back_tiny','ts_fwd_tiny','ts_back_small','ts_fwd_small',
   'ts_back_medium','ts_fwd_medium','ts_back_large','ts_fwd_large',
   'sync_file']);
+// Actions that remain usable in Typing mode (with different hotkeys)
+const TYPING_AVAILABLE=new Set(['play_pause','prev_line','next_line']);
 function rebuildHkPanel(){
   const grid=document.getElementById('hk-grid');grid.innerHTML='';
   const hk=cfg.hotkeys,{tiny_ms:tn,small_ms:sm,medium_ms:med,large_ms:lg}=cfg;
@@ -1882,7 +1882,7 @@ function rebuildHkPanel(){
    ['ts_back_large',`\u2212${lg}ms ${tsLabel}`],['ts_fwd_large',`+${lg}ms ${tsLabel}`],
   ].forEach(([key,label])=>{
     const cell=document.createElement('div');cell.className='hk-cell';cell.setAttribute('role','button');cell.setAttribute('tabindex','0');
-    const dimmed=!hotkeyMode&&HOTKEY_ONLY.has(key);
+    const dimmed=!hotkeyMode&&HOTKEY_ONLY.has(key)&&!TYPING_AVAILABLE.has(key);
     cell.setAttribute('aria-label',HK_LABELS[key]||label+(dimmed?' (disabled in typing mode)':''));
     if(dimmed)cell.setAttribute('aria-disabled','true');
     cell.title=HK_LABELS[key]||label;
@@ -1890,10 +1890,24 @@ function rebuildHkPanel(){
     if(key==='sync'){
       const replayKey=hk.replay_line||'Enter';
       cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${hk[key]||'—'}</span><span class="hk-key">${replayKey==='Escape'?'Esc':replayKey}</span></span>`;
+    }else if(key==='play_pause'){
+      // In Typing mode, show the alternate play/pause key (Ctrl+Space) instead of Space
+      const ppKey=hotkeyMode?hk[key]:(hk.play_pause_alt||hk[key]);
+      cell.innerHTML=`<span>${label}</span><span class="hk-key">${_hkDisp(ppKey)}</span>`;
     }else if(key==='prev_line'){
-      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↑</span></span>`;
+      // In Typing mode, show only ↑; in Hotkey mode, show primary key + ↑
+      if(hotkeyMode){
+        cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↑</span></span>`;
+      }else{
+        cell.innerHTML=`<span>${label}</span><span class="hk-key">↑</span>`;
+      }
     }else if(key==='next_line'){
-      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↓</span></span>`;
+      // In Typing mode, show only ↓; in Hotkey mode, show primary key + ↓
+      if(hotkeyMode){
+        cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↓</span></span>`;
+      }else{
+        cell.innerHTML=`<span>${label}</span><span class="hk-key">↓</span>`;
+      }
     }else{
       cell.innerHTML=`<span>${label}</span><span class="hk-key">${_hkDisp(hk[key])}</span>`;
     }
@@ -2061,7 +2075,7 @@ function setSearchHkMode(on){
 
 function _handleSettingsSearchKeydown(e,inp){
     if(_sSearchHkMode){
-      if(e.key==='Tab'){return;}
+      if(e.key==='Tab'||e.key==='ArrowUp'||e.key==='ArrowDown'){return;}
       e.preventDefault();e.stopPropagation();
       if(e.key==='Escape'||e.key==='Backspace'||e.key==='Delete'){
         setSearchHkMode(false);inp.value='';applySettingsFilter();return;
@@ -2079,7 +2093,7 @@ function _handleSettingsSearchKeydown(e,inp){
       inp.value=ks;
       applySettingsFilter();
     }else{
-      if(e.key==='Tab')return;
+      if(e.key==='Tab'||e.key==='ArrowUp'||e.key==='ArrowDown')return;
       if(e.key==='Escape')return;
       // Allow reset_defaults hotkey to fire even from search field
       const ks=keyStr(e);
@@ -2130,7 +2144,7 @@ function buildHkRows(){
       inp.value=stored==='Escape'?'Esc':stored;
       inp.readOnly=true;
 
-      const rep=document.createElement('button');rep.className='hk-replace';rep.textContent='Replace';rep.setAttribute('aria-label','Replace conflict for '+labelText);
+      const rep=document.createElement('button');rep.className='hk-replace';rep.textContent='Swap';rep.setAttribute('aria-label','Swap hotkey with '+labelText);
       const rst=document.createElement('button');rst.className='hk-reset';rst.textContent='↺ Default';rst.setAttribute('aria-label','Reset hotkey for '+labelText+' to default');
       const restrictWarn=document.createElement('span');restrictWarn.className='hk-restrict-warn';
 
@@ -2177,21 +2191,27 @@ function buildHkRows(){
 
       rep.addEventListener('click',()=>{
         if(!_conflictKey)return;
-        cfg.hotkeys[_conflictKey]='';
+        // Swap: give this action's old key to the conflicting action, assign new key here
+        const oldKey=cfg.hotkeys[key]||'';
+        cfg.hotkeys[_conflictKey]=oldKey;
         cfg.hotkeys[key]=inp.value==='Esc'?'Escape':inp.value;
         saveCfg();setConflict('');buildHkRows();rebuildHkPanel();updateDynamicTooltips();
       });
       rst.addEventListener('click',()=>{
         const defDisp=def==='Escape'?'Esc':def;
-        // If another key currently holds this default value, blank it first
-        let holderBlanked=false;
+        // If another key currently holds this default value, give it its own default (swap pattern)
+        let needFullRebuild=false;
         if(def){
           const holder=Object.entries(cfg.hotkeys).find(([k2,v])=>k2!==key&&v===def);
-          if(holder){cfg.hotkeys[holder[0]]='';holderBlanked=true;}
+          if(holder){
+            const holderDef=DEFAULT_CFG.hotkeys[holder[0]]||'';
+            cfg.hotkeys[holder[0]]=holderDef;
+            needFullRebuild=true;
+          }
         }
         cfg.hotkeys[key]=def;_lastGoodVal=defDisp;
         saveCfg();setConflict('');rebuildHkPanel();updateDynamicTooltips();
-        if(holderBlanked){buildHkRows();return;}// full rebuild so blanked field updates too
+        if(needFullRebuild){buildHkRows();return;}// full rebuild so blanked field updates too
         inp.value=defDisp;
         rep.classList.remove('visible');row.classList.remove('hk-conflict');_conflictKey='';
         restrictWarn.classList.remove('visible');
@@ -2214,9 +2234,9 @@ function buildHkRows(){
       });
       function getHkCaptures(){return Array.from(document.getElementById('hk-settings-rows').querySelectorAll('.hk-capture'));}
       inp.addEventListener('keydown',e=>{
-        // Let Tab/Shift+Tab reach the global focus trap (don't stopPropagation)
-        // but preventDefault here to block the browser's native tab, avoiding double navigation
-        if(e.key==='Tab'){e.preventDefault();return;}
+        // Let Tab/Shift+Tab and arrow keys reach the global focus trap (don't stopPropagation)
+        // but preventDefault here to block the browser's native behavior, avoiding double navigation
+        if(e.key==='Tab'||e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();return;}
         e.preventDefault();e.stopPropagation();
         // Shift+Backspace = clear; plain Backspace = activate Default if visible; Escape = cancel
         if(e.key==='Backspace'&&e.shiftKey){clearHotkey(true);return;}
@@ -2231,7 +2251,7 @@ function buildHkRows(){
         }
         if(e.key==='Enter'){
           if(rep.classList.contains('visible')){
-            // Replace: fire replace, then after buildHkRows advance to next capture by position
+            // Swap: fire swap, then after buildHkRows advance to next capture by position
             const curIdx=getHkCaptures().indexOf(inp);
             rep.click();// triggers buildHkRows → new DOM
             const next=getHkCaptures()[curIdx+1];
@@ -2280,7 +2300,7 @@ function buildHkRows(){
         const conflict=Object.entries(cfg.hotkeys).find(([k2,v])=>k2!==key&&v===newStored);
         if(conflict){
           const conflictLabel=HK_LABELS[conflict[0]]||conflict[0];
-          setConflict(`⚠ Used by "${conflictLabel}"`);
+          setConflict(`⚠ "${conflictLabel}" uses this key — press Swap or Enter`);
           rep.classList.add('visible');_conflictKey=conflict[0];
           row.classList.add('hk-conflict');
           updateClear();updateRst();
@@ -2293,8 +2313,8 @@ function buildHkRows(){
         }
       });
 
-      // Layout: [label] [capture] [clear] [replace] [reset] [restrictWarn]
-      row.appendChild(lbl);row.appendChild(inp);row.appendChild(clrBtn);row.appendChild(rep);row.appendChild(rst);row.appendChild(restrictWarn);
+      // Layout: [label] [warning] [capture] [clear] [replace] [reset]
+      row.appendChild(lbl);row.appendChild(restrictWarn);row.appendChild(inp);row.appendChild(clrBtn);row.appendChild(rep);row.appendChild(rst);
       c.appendChild(row);
     });
   });
@@ -2445,11 +2465,23 @@ function _handleSettingsKeys(e,ks,hk,settingsOpen){
     focusable[next].focus();
     return true;
   }
+  // Arrow keys navigate between all Settings elements (alternative to Tab/Shift+Tab)
+  if(settingsOpen&&(e.key==='ArrowUp'||e.key==='ArrowDown')&&!e.ctrlKey&&!e.altKey){
+    e.preventDefault();
+    const win=document.getElementById('settings-win');
+    const focusable=Array.from(win.querySelectorAll('button,input,select,textarea,a[href],[tabindex]:not([tabindex="-1"])'))
+      .filter(el=>!el.disabled&&el.offsetParent!==null&&!el.classList.contains('hk-clear')&&!el.classList.contains('hk-reset')&&!el.classList.contains('hk-replace'));
+    if(!focusable.length)return true;
+    const idx=focusable.indexOf(document.activeElement);
+    const next=e.key==='ArrowUp'?Math.max(0,idx-1):Math.min(focusable.length-1,idx+1);
+    focusable[next].focus();
+    return true;
+  }
   if(hkMatch(ks,hk.settings)){e.preventDefault();if(settingsOpen)closeSettings();else openSettings();return true;}
   if(hk.help&&hkMatch(ks,hk.help)){e.preventDefault();openHelp();return true;}
   if(hk.issues&&hkMatch(ks,hk.issues)){e.preventDefault();window.open('https://github.com/amokprime/linebyline/issues','_blank');return true;}
   if(hk.theme_toggle&&hkMatch(ks,hk.theme_toggle)){e.preventDefault();cycleTheme();return true;}
-  if(hk.panel_toggle&&hkMatch(ks,hk.panel_toggle)){e.preventDefault();panelCollapsed=!panelCollapsed;applyPanelCollapse(true);return true;}
+  if(hk.panel_toggle&&hkMatch(ks,hk.panel_toggle)){e.preventDefault();panelCollapsed=!panelCollapsed;applyPanelCollapse(false);return true;}
   if(hk.reset_defaults&&hkMatch(ks,hk.reset_defaults)){e.preventDefault();if(!settingsOpen){openSettings();}showResetConfirm();return true;}
   if(e.key==='Escape'&&settingsOpen){
     e.preventDefault();
@@ -2592,7 +2624,18 @@ document.addEventListener('keydown',e=>{
   if(isFocusedUI&&e.key==='Escape'){e.preventDefault();ae.blur();return;}
   if(isFocusedUI&&!e.ctrlKey&&!e.altKey)return;
   if(_handleGlobalHotkeys(e,ks,hk))return;
-  if(!hotkeyMode)return;
+  if(!hotkeyMode){
+    // Arrow keys for prev/next line when textarea doesn't have focus
+    if((e.key==='ArrowUp'||e.key==='ArrowDown')&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){
+      const ae=document.activeElement;
+      if(!ae||ae===document.body||ae===document.documentElement){
+        e.preventDefault();
+        if(e.key==='ArrowUp')seekPrevLine();else seekNextLine();
+        return;
+      }
+    }
+    return;
+  }
   _handleHotkeyModeKeys(e,ks,hk);
 });
 
@@ -2604,11 +2647,14 @@ window.addEventListener('beforeunload',e=>{
 });
 
 // ── Button wiring ─────────────────────────────────────────────────────────────
-// Prevent Now Playing / Controls buttons from stealing focus from the editor area
-['audio-box','controls-box'].forEach(id=>{
+// Prevent toolbar / panel buttons from stealing focus from the editor area
+['audio-box','controls-box','menu-bar'].forEach(id=>{
   document.getElementById(id).addEventListener('mousedown',e=>{
     if(e.target.closest('button'))e.preventDefault();
   });
+});
+['btn-expand-panel','btn-collapse-panel'].forEach(id=>{
+  document.getElementById(id).addEventListener('mousedown',e=>{e.preventDefault();});
 });
 document.getElementById('btn-undo').addEventListener('click',doUndo);
 document.getElementById('btn-redo').addEventListener('click',doRedo);
@@ -2646,8 +2692,8 @@ function autoCollapseIfNeeded(){
   // Auto-collapse if panel takes >50% of window width (portrait phone)
   if(!panelCollapsed&&window.innerWidth<640){panelCollapsed=true;applyPanelCollapse();}
 }
-document.getElementById('btn-collapse-panel').addEventListener('click',()=>{panelCollapsed=true;applyPanelCollapse(true);});
-document.getElementById('btn-expand-panel').addEventListener('click',()=>{panelCollapsed=false;applyPanelCollapse(true);});
+document.getElementById('btn-collapse-panel').addEventListener('click',()=>{panelCollapsed=true;applyPanelCollapse(false);});
+document.getElementById('btn-expand-panel').addEventListener('click',()=>{panelCollapsed=false;applyPanelCollapse(false);});
 window.addEventListener('resize',autoCollapseIfNeeded);
 sessionStorage.removeItem('lbl_autosave');
 applyTheme();
