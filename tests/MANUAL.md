@@ -11,14 +11,19 @@
 #### File picker window
 - [ ] Open test file 1 and verify that clicking the 📂 button opens a normal looking file picker window
 
-#### Playback
+#### Playback and focus
 - Open test files and play the song. Verify that its audio:
-- [ ] Sounds "normal"
-- [ ] Moves the seek bar steadily
-- [ ] Plays when muted and then unmuted
-- [ ] Sounds quieter or louder depending on volume changes
-- [ ] Slows down when pressing `Ctrl+1`
-- [ ] Speeds up when pressing `Ctrl+2`
+	- [ ] Sounds "normal"
+	- [ ] Moves the seek bar steadily
+	- [ ] Plays when muted and then unmuted
+	- [ ] Sounds quieter or louder depending on volume changes
+	- [ ] Slows down when pressing `Ctrl+1`
+	- [ ] Speeds up when pressing `Ctrl+2`
+- Verify that clicking the following buttons does not steal focus from main field by pressing `ArrowUp` or `ArrowDown` immediately after clicking:
+	- [ ] Increase font size or Decrease font size
+	- [ ] Increase speed or Decrease speed
+	- [ ] Collapse panel or Expand panel
+- [ ] `Tab` several times and press `Esc` to escape tab selection, then press `ArrowUp` or `ArrowDown` to verify hotkeys work again
 
 #### Instant Replay
 - Open test files and check all the Instant Replay options in Settings. Verify that: 

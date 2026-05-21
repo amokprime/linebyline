@@ -58,6 +58,8 @@ test("seek-typing", async ({ page, media }) => {
   await page.keyboard.press("Backquote");
   await page.keyboard.press("Control+0");
   await expect(page.locator("#audio-box")).toContainText("0:05");
+  // Covers playback starting after seeking added in 0.36.2
+  await expect(page.locator("#audio-box")).toContainText("0:06");
 });
 
 test("speed-typing", async ({ page, media }) => {

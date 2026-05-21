@@ -1,3 +1,14 @@
+0.37.0
+
+- Controls panel Typing-mode overlays: `TYPING_AVAILABLE` set keeps play_pause/prev_line/next_line enabled in Typing mode with mode-specific hotkey displays (play_pause → Ctrl+Space, prev_line → ↑ only, next_line → ↓ only). Other HOTKEY_ONLY actions remain dimmed
+- Arrow keys removed from RESTRICTED_ALL: no longer flagged as "reserved by the browser" — arrow keys are for Settings navigation instead
+- Arrow key Settings navigation: ↑/↓ moves between ALL focusable Settings elements (like Tab/Shift+Tab), not just capture inputs. ArrowUp/ArrowDown on number inputs navigates instead of adjusting values
+- Arrow keys pass through: capture input and search keydown handlers let ↑/↓ bubble to global handler for navigation. ArrowLeft/ArrowRight also prevented from being assigned as hotkeys
+- Swap button (was Replace): conflict resolution now swaps hotkeys between actions — no blank hotkeys left over. Reset to default gives any holder of that default its own default back (swap pattern), not blank
+- Typing-mode ↑/↓ for prev/next line: when no textarea has focus in Typing mode, ArrowUp/ArrowDown triggers seekPrevLine/seekNextLine in the global keydown handler
+
+---
+
 0.36.2
 
 - SonarQube S3776 (CC 16→14): Extracted `_isFocusedUIElement(ae)` and `_isPrevNextReplay(ks,hk)` helpers from global keydown. `_insertSyncTrailing(lines,ms)` extracted from `insertEndLine` (CC 29→11)
