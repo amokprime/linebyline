@@ -79,13 +79,13 @@ Creating a new skill
 3. Extract from Memory.md — for each related entry: if it describes a general pattern, extract the pattern into the skill and prune Memory.md to a brief reference; if it describes an app-specific event, keep it in Memory.md as-is; if it straddles both, extract the general principle into the skill and keep the specific instance in Memory.md.
 4. Write the skill — follow the anatomy and writing style above. Draft it, then read it with fresh eyes and improve. Would a fresh model in a new session be able to follow this without additional context?
 5. Cross-reference with existing skills — check that the new skill doesn't duplicate or contradict existing ones. If it overlaps, merge the overlapping content, split the domain more clearly, or add a cross-reference note in both skills.
-6. Update Project.md if the new skill changes how the model should work (e.g. "always consult the ARIA skill before adding ARIA attributes").
+6. Update project-workflow-SKILL.md if the new skill changes how the model should work (e.g. "always consult the ARIA skill before adding ARIA attributes").
 
 ---
 
 Updating an existing skill
 
-Per Project.md: update a skill when a patch changes the architecture the skill documents. Don't update for a pure bug fix that doesn't change the documented architecture.
+Per project-workflow-SKILL.md: update a skill when a patch changes the architecture the skill documents. Don't update for a pure bug fix that doesn't change the documented architecture.
 
 Also update when: a new pattern or gotcha is discovered that the skill should cover; reference data is stale (section line numbers shifted, new SonarQube rules encountered); Memory.md entries reveal knowledge that belongs in the skill instead.
 
@@ -100,7 +100,7 @@ Evaluating skill quality
 1. Triggering accuracy — would the description cause the skill to be consulted when it should be? Would it trigger when it shouldn't?
 2. Self-sufficiency — can a fresh model follow the skill without additional context? If the skill says "use the pattern from v0.35.15," it's not self-sufficient.
 3. Brevity vs completeness — does every section earn its token cost?
-4. No contradiction — does the skill conflict with any other skill or with Project.md?
+4. No contradiction — does the skill conflict with any other skill or with project-workflow-SKILL.md?
 5. Currency — are version references current? Are deprecated patterns marked as such?
 
 ---

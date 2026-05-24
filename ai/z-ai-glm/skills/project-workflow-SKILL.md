@@ -1,39 +1,63 @@
 ---
 name: project-workflow
-description: Session bootstrapping, file navigation, and patch delivery workflow for the LineByLine project. Use this skill at the start of every session and whenever you need to locate project files, follow the build/patch workflow, version the app, update companion files, or decide whether Memory.md or a skill needs updating after a change. Replaces the former Index.md and Project.md — those files now redirect here.
+description: Phased session bootstrapping, file navigation, and patch delivery workflow for the LineByLine app. Use this skill at the start of every app build session and whenever you receive a phase zip, need to locate project files, follow the build/patch workflow, version the app, update companion files, or decide whether Memory.md or a skill needs updating after a change.
 ---
 
-The project has a fixed directory layout uploaded as a zip, a single-file HTML app that must be patched with minimal diff, and a set of post-patch obligations (syntax check, re-index, Memory.md update, companion .md, download copy). Following this workflow each turn prevents regressions and keeps session artifacts in sync.
+The project uses a phased upload workflow: skills and project files arrive in stages so that only the context needed for the current phase occupies attention. A single-file HTML app must be patched with minimal diff, and a set of post-patch obligations (syntax check, re-index, Memory.md update, companion .md, download copy) must be followed. Following this workflow each turn prevents regressions and keeps session artifacts in sync.
 
 ---
 
-Uploaded zip layout
+Session phases
 
-When the user uploads a `linebyline.zip`, extract it. The resulting folder contains:
+Skills and project files arrive across up to four phases. Each phase adds files to the same project directory. The user uploads one zip per phase; the skill tells you what to do with the arriving files.
 
-```
-linebyline/
-├── skills/                 — Architecture and domain knowledge (SKILL.md files)
-│   └── chat/              — Logs of skill creation/update sessions
-├── Memory.md              — Condensed lessons and decisions (newest first)
-├── Project.md             — Redirects here; formerly held build workflow rules
-├── Index.md               — Redirects here; formerly held file locations
-├── Prompt.md              — Current round of specific changes (if present)
-├── app/
-│   ├── linebyline-X.X.X.html  — Current app version (highest semver = latest)
-│   ├── linebyline-X.X.X.md    — That version's AI chat transcript
-│   ├── issues/             — SonarQube Cloud reports (may be absent)
-│   └── playwright/         — Playwright test errors (may be absent)
-└── tests/
-    ├── helpers/
-    │   └── index.js        — Local server starter + test-saving constants
-    ├── prompts/            — Previous AI chats about Playwright (lowest = oldest)
-    ├── media/              — Files for Playwright and manual tests
-    ├── MANUAL.md           — Manual tests not yet automated
-    └── *spec.js            — Playwright test files
-```
+Phase 1 — Onboard (1_onboard.zip)
 
-If subfolders for more than one app version exist inside `app/`, the highest semver is the latest. If you need files from an older version referenced by Memory.md, ask the user — they may not be included.
+Contains: project-workflow-SKILL.md, README.md.
+
+1. Read project-workflow-SKILL.md (this file) and README.md.
+2. Note the current app version from the user's chat message. They may state it directly ("Current version: 0.37.1") or as a filename ("The current app is linebyline-0.37.1.html") — extract the semver portion either way. This is the baseline; derive all version numbers from it rather than asking the user to type them again.
+3. Create the companion .md file in downloads if it is not already there (see Companion .md file section). Name it using the current version, not a placeholder.
+4. Do not begin coding — the app HTML and domain skills arrive in the next phase.
+
+Phase 2 — Work (2_work.zip + app HTML)
+
+Contains: domain skills (browser-hotkey-system-SKILL.md, linebyline-section-index-SKILL.md, single-file-html-app-SKILL.md), Memory.md, Prompt.md. The user also uploads the current app HTML file alongside this zip.
+
+1. Read Memory.md for development history, then Prompt.md for the current task.
+2. Re-read project-workflow-SKILL.md to refresh the workflow rules.
+3. Read only the domain skills relevant to the current Prompt.md — use the description in each skill's frontmatter to decide. Use the linebyline-section-index skill to read only the sections of the app HTML you need, not the entire file.
+4. Follow Prompt.md requests that do not conflict with project-workflow-SKILL.md. Before writing any code, follow the Pre-patch checklist. After every patch, follow Post-patch verification and Post-patch updates.
+5. Document all your work in the companion .md file in downloads.
+
+Phase 3 — Pre-push audit (3_pre-push.zip)
+
+Contains: audit skills (code-quality-SKILL.md, aria-accessibility-SKILL.md, playwright-testing-SKILL.md) and test files (helpers/, MANUAL.md, *.spec.js — no media or prompts directories).
+
+1. Re-read project-workflow-SKILL.md.
+2. Read code-quality-SKILL.md, aria-accessibility-SKILL.md, and playwright-testing-SKILL.md in full. These are the skills most likely to be missed if read too early — reading them now, immediately before the audit, maximizes recall.
+3. Review the code changes you made earlier this session (documented in the companion .md). Audit those changes for the issues referenced in the three audit skills and make suggested fixes.
+4. Document all your fixes in the companion .md file in downloads.
+
+Phase 4 — Post-push (conditional)
+
+This phase runs after the pre-push audit. There are two paths:
+
+If SonarQube issues are present (user uploads 4_post_push_issues.zip):
+Contains: skill-SKILL.md, sonarqube-workflow-SKILL.md, and an issues folder.
+
+1. Re-read project-workflow-SKILL.md to refresh deliverable obligations.
+2. Read sonarqube-workflow-SKILL.md and the issues folder. Fix SonarQube issues not caught previously.
+3. Document all your fixes in the companion .md file in downloads.
+4. Read skill-SKILL.md. Follow its guidelines to update Memory.md and/or uploaded skills.
+5. Update Memory.md with any skills you changed.
+
+If the SonarQube scan was clean (user uploads 4_post_push_clean.zip):
+Contains: skill-SKILL.md
+1. Re-read project-workflow-SKILL.md to refresh deliverable obligations.
+2. Read skill-SKILL.md. Follow its guidelines to update Memory.md and/or uploaded skills.
+3. Update Memory.md with any skills you changed.
+4. Document any skill or Memory.md updates in the companion .md file in downloads.
 
 ---
 
@@ -72,20 +96,24 @@ Post-patch updates
 
 Versioning
 
-Version the code file semantically based on keywords the user provides. Don't change version without an explicit request from the user and don't substitute version dots with spaces, underscores, or any other character — this applies to filenames passed to all tools, not just `<title>`.
+The user states the current version in their first chat message, either directly ("Current version: 0.37.1") or as a filename ("linebyline-0.37.1.html"). Extract the semver portion and use it as the baseline. When the user requests a version change, apply semver rules:
 
 - Same: 0.34.9 → 0.34.9
 - Patch: 0.34.9 → 0.34.10
 - Minor: 0.34.9 → 0.35.0
 - Major: 0.34.9 → 1.0.0
 
-Start from whatever semver the current `linebyline-X.X.X.html` filename shows.
+Don't change version without an explicit request from the user. Don't substitute version dots with spaces, underscores, or any other character — this applies to filenames passed to all tools, not just `<title>`.
+
+Derive the target version from the stated baseline and semver rules — don't ask the user to type it separately. The user states the version once; you apply it consistently everywhere (HTML filename, companion .md filename, `<title>`, version comments).
 
 ---
 
 Companion .md file
 
-For each code file version, create or update a companion `.md` file with the same base name (e.g. `linebyline-0.34.9.html` → `linebyline-0.34.9.md`). Include each turn leading up to and working on that code file version only.
+For each code file version, create or update a companion `.md` file with the same base name (e.g. `linebyline-0.34.9.html` → `linebyline-0.34.9.md`). Derive the version from the stated baseline and semver rules.
+
+Include each turn leading up to and working on that code file version only.
 
 Prepend or update frontmatter at the start:
 

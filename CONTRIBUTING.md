@@ -1,21 +1,21 @@
 See this [Obsidian Share Note](https://share.note.sx/9wimmaly) for what's planned in the near future.
 
-#### Architecture and environment
+### Architecture and environment
 
-LineByLine is a no-dependencies 2.6k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects and uses [these](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions) skills and instructions. Any comparable model that can work with files (i.e. GLM in [Z.ai](https://chat.z.ai/) Agent mode web chat) should also be able to follow the skills and instructions. Use a Chromium-based browser like Helium with uBlock Origin enabled. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
+LineByLine is a no-dependencies 2.7k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects and uses [these](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions) skills and instructions. Any comparable model that can work with files (i.e. GLM in [Z.ai](https://chat.z.ai/) Agent mode web chat that I currently use) should also be able to follow the skills and instructions. Use a Chromium-based browser like Helium with uBlock Origin, Microsoft Edge with uBlock Origin, or Google Chrome with Adguard Adblocker. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
 
-#### General organization
+### General workflow
 
 The guidelines below are designed for a free account AI web chat without access to your filesystem. You may be able to install Claude Desktop on Windows, but I haven't had a good experience with the Filesystem or GitHub MCP connectors. If using Claude Code, OpenCode, etc., you might find it more efficient to just ask it to make all the changes directly.
 
-Put each new version of LineByLine and its companion .md file into its own semantically numbered folder in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic). Tell the [AI](https://github.com/amokprime/linebyline/tree/main/archive/ai) a version keyword to get it to automatically name the app version and .md file following Project.md instructions:
+Put each new version of LineByLine and its companion .md file into its own semantically numbered folder in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic). Tell the [AI](https://github.com/amokprime/linebyline/tree/main/archive/ai) a version keyword to get it to automatically name the app version and .md file:
 
-| Scope of your changes                                                         | Version keyword | Resulting number change |
-| ----------------------------------------------------------------------------- | --------------- | ----------------------- |
-| Quick hotfix of a patch or minor feature                                      | Same            | 0.34.9 → 0.34.9         |
-| Bug fixes and refining existing features                                      | Patch           | 0.34.9 → 0.34.10        |
-| New features that fit into existing ones and invisible code quality refactors | Minor           | 0.34.9→ 0.35.0          |
-| Refactoring that visibly breaks existing features                             | Major           | 0.34.9 → 1.0.0          |
+| Scope of your changes                                                         | Version | Resulting number change |
+| ----------------------------------------------------------------------------- | ------- | ----------------------- |
+| Quick hotfix of a patch or minor feature                                      | Same    | 0.34.9 → 0.34.9         |
+| Bug fixes and refining existing features                                      | Patch   | 0.34.9 → 0.34.10        |
+| New features that fit into existing ones and invisible code quality refactors | Minor   | 0.34.9→ 0.35.0          |
+| Refactoring that visibly breaks existing features                             | Major   | 0.34.9 → 1.0.0          |
 Rename the folder manually with the same number. If the AI forgets to update the version or does it wrong, edit the app's filename (i.e. linebyline-0.34.7.html) and the HTML `<title>` element (i.e. `<title>LineByLine 0.34.7</title>`).
 
 #### claude-sonnet (web chat/Claude Desktop)
@@ -30,9 +30,26 @@ chat.z.ai's free tier is currently far more generous overall with some caveats:
 - The website itself is often unresponsive even in Chromium browsers (I wonder why??). It may help to close the browser window and reopen the page (just reloading or closing the browser tab isn't always enough)
 - A captcha slider randomly pops up sometimes
 - Sessions now expire after 2 hours. After that, start a new Agent chat, because the originally uploaded files vanish and newly uploaded files fail to persist. Work around by typing something before it expires to reset the timer to another 2 hours.
+- Uploads may fail to update if certain filenames like file.md and Memory.md are re-uploaded without renaming them or zipping them in a uniquely named folder
 - Downgrade from GLM-5.1 to a lower model during peak hours (at least in the US, this feels very rare lately)
 
-There's also no built-in skills or memory scaffolding. You must upload relevant .md files at the start of each chat and explicitly tell GLM to read and to follow them (paste contents of Chat.md followed by your actual prompt). This can even extend to duplicating some of the repo structure for it to analyze (see Index.md for example). I suggest searching in a file manager for things like `snapshots` and `*.html` (without backticks) to avoid bloating memory context or bringing down usage limits. GLM can update its own skills since they aren't locked down as a separate feature.
+There are also no built-in skills or memory scaffolding to enforce a large amount of recurring behaviors. The more competing demands, the less likely any of them are to be remembered, much less followed. My current workflow is to upload just-in-time, explicitly telling the agent what to read and follow on the spot without trusting its memory (Chat.md, project-workflow-SKILL.md).
+
+To make repetitive uploads easier, I create symlinks with a .bat script like below or Link File Extension on Windows.
+
+```batch
+@echo off
+set "GLOBAL=C:\fullpathto\linebyline\tests"
+set "LOCAL=C:\fullpathto\linebyline\local\phases\3_pre-push\tests"
+for /d %%i in ("%GLOBAL%\*") do (
+    if not exist "%LOCAL%\%%~nxi" mklink /D "%LOCAL%\%%~nxi" "%%i"
+)
+for %%f in ("%GLOBAL%\*.*") do (
+    if not exist "%LOCAL%\%%~nxf" mklink "%LOCAL%\%%~nxf" "%%f"
+)
+```
+
+When a folder of symlinks is zipped, the actual source files are copied inside as-is. This beats manually copying the source files and forgetting to update them, or hunting through folders to upload individual files. Delete unnecessary symlinks (this does not touch the source files) as everything uploaded bloats memory context in every subsequent turn whether the AI reads it or not. Search for keywords like `snapshots`, `*.html`, `media`, etc. (without backticks) to cut down upload size.
 
 #### CI
 
