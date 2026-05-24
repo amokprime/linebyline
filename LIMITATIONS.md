@@ -1,4 +1,4 @@
-**These apply to the .html app as of version 0.35.13**
+**These apply to the .html app as of version 0.36.2**
 - No direct filesystem access due to browser security restrictions
 	- Can't read audio file metadata tags
 	- Audio file doesn't persist if page is reloaded
@@ -9,7 +9,6 @@
 browsers intentionally block programmatic `focus()` calls that aren't triggered by user interaction, as an anti-fingerprinting and anti-annoyance measure. This applies in both standard Firefox and ResistFingerprinting mode. The only reliable approaches would be an explicit click-to-activate overlay (intrusive) or making the whole app a PWA installed to the OS (out of scope).
 ```
 - Cursor is positioned one line too high in **Typing mode** on startup. Worked around by pasting in lyrics in **Hotkey mode** first which adds the expected newline, or changing ⚙️**Default metadata tags** to not include a newline.
-- Only buttons and Settings have aria labels (for screen readers). See [semantic-html.md](https://github.com/amokprime/linebyline/tree/main/archive/semantic/0.35.8/semantic-html.md).
 - Many hotkey restrictions (copied from [/docs/index.html](https://github.com/amokprime/linebyline/blob/main/docs/index.html))
 ```html
 // ── Restricted hotkey rules ──────────────────────────────────────────────────
@@ -46,4 +45,11 @@ const RESTRICTED_ALL=new Set([
 ]);
 ```
 
-**Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) as of version 0.35.18**
+- Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) as of version 0.36.2
+- The unsaved work popup jumps to default "Leave page" button on Firefox but [not](https://github.com/amokprime/linebyline/blob/main/archive/semantic/0.36.1/linebyline-0.36.1.md) other browsers
+- Copying a Genius song to a text editor and then copying the contents of that file to LineByLine now adds this to the bottom:
+```
+somenumber
+Embed
+```
+- There's no reason I can think of at this point why anyone should do that though. The live Genius website should always be trusted over a potentially stale mock.txt, which provides a persistent test file anyway.

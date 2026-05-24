@@ -18,12 +18,12 @@ Put each new version of LineByLine and its companion .md file into its own seman
 | Refactoring that visibly breaks existing features                             | Major   | 0.34.9 → 1.0.0          |
 Rename the folder manually with the same number. If the AI forgets to update the version or does it wrong, edit the app's filename (i.e. linebyline-0.34.7.html) and the HTML `<title>` element (i.e. `<title>LineByLine 0.34.7</title>`).
 
-#### claude-sonnet (web chat/Claude Desktop)
+#### Working with Claude Sonnet (web chat/Claude Desktop)
 
 Warning: I stopped maintaining these after 0.35.19. You might have to backport some more updated information from GLM's instructions.
 claude.ai has extremely strict free plan 5-hour limits. Simply fill out the preferences and project instructions and add the skills, and turn on memory. Occasionally upload a zip of all chat logs since last skill update and ask Claude to update them or create new ones (it has a skill-creator skill).
 
-#### z-ai-glm(web chat Agent mode)
+#### Working with GLM (web chat Agent mode)
 
 chat.z.ai's free tier is currently far more generous overall with some caveats:
 - I have noticed as many as 2k ads being blocked by uBlock Origin! It starts at a few hundred and just keeps ramping up over time.
