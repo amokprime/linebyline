@@ -6,7 +6,7 @@ test("play-pause-hotkey", async ({ page, media }) => {
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await expect(page.getByText("[00:00.00] I wish I could")).toBeVisible(); //Not needed in a real browser; Playwright can press Space before lyrics finish loading
   await page.keyboard.press("Space");
-  await expect(page.locator("#audio-box")).toContainText("0:01");
+  await expect(page.getByText("0:010:13")).toBeVisible();
   await page.keyboard.press("Space");
   await expect(
     page.getByRole("button", { name: "Play", exact: true }),
@@ -17,9 +17,10 @@ test("play-pause-typing", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await expect(page.getByText("[00:00.00] I wish I could")).toBeVisible(); //Not needed in a real browser; Playwright can press keys before lyrics finish loading
   await page.keyboard.press("Backquote");
-  await page.keyboard.press("Control+Space"); //Sometimes this fails if many tests are running
-  await expect(page.locator("#audio-box")).toContainText("0:01");
+  await page.keyboard.press("Control+Space");
+  await expect(page.getByText("0:010:13")).toBeVisible();
   await page.keyboard.press("Control+Space");
   await expect(
     page.getByRole("button", { name: "Play", exact: true }),
@@ -58,6 +59,8 @@ test("seek-typing", async ({ page, media }) => {
   await page.keyboard.press("Backquote");
   await page.keyboard.press("Control+0");
   await expect(page.locator("#audio-box")).toContainText("0:05");
+  // Covers playback starting after seeking added in 0.36.2
+  await expect(page.locator("#audio-box")).toContainText("0:06");
 });
 
 test("speed-typing", async ({ page, media }) => {

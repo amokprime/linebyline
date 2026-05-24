@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LineByLine 0.37.1</title>
+<title>LineByLine 0.37.0</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg width='512' height='512' viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Crect fill='%23000000' height='24' width='24'/%3E%3Cpath d='m13,5l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,12l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m13,19l8,0' stroke='%23ffff00' stroke-width='1.5' stroke-linecap='round'/%3E%3Cpath d='m3,17l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='m3,7l2,2l4,-4' stroke='%2300ff00' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
 /* ── Themes ── */
@@ -568,7 +568,6 @@ document.getElementById('speed-down-btn').title=`Reduce speed (${fmt(hk.speed_do
 }
 
 // ── State ────────────────────────────────────────────────────────────────────
-const MAX_LINES=500;
 let hotkeyMode=true,offsetSeekMode=false,playing=false,audioEl=null,secondaryCols=[];
 let secondaryPool=[];
 let _savedVol=Number.parseFloat(localStorage.getItem('lbl_vol')??'1');
@@ -692,7 +691,6 @@ document.getElementById('main-textarea').addEventListener('paste',e=>{
   if(hotkeyMode)return;
   e.preventDefault();
   const raw=e.clipboardData.getData('text/plain');if(!raw)return;
-  if(raw.split('\n').length>MAX_LINES){alert(`Paste exceeds ${MAX_LINES} line limit.`);return;}
   const geniusCleaned=cleanGenius(raw);
   // If pasted content has metadata fields, treat like an lrc import (merge + overwrite)
   const hasMeta=!geniusCleaned&&raw.split('\n').some(l=>META_RE.test(l));
@@ -1511,7 +1509,6 @@ function _handleSecKeydown(e){
   if(e.key===' '||e.key==='Enter'||e.key==='Tab'||e.key==='Escape'){e.stopPropagation();}
 }
 function addSecondary(){
-  if(secondaryCols.length>=10){alert('Maximum of 10 secondary fields reached.');return;}
   const visibleCount=secondaryCols.length;
   if(visibleCount<secondaryPool.length){
     const entry=secondaryPool[visibleCount];
@@ -1680,7 +1677,7 @@ function mergeTranslations(){
   const n=getMainLyricLines().length;
   if(secData.some(d=>d.lines.length>0&&d.lines.length!==n)){alert('Line count mismatch between main and secondary fields. Fix counts before merging.');return;}
   const lastLine=mainLines[tsLines[tsLines.length-1][0]];
-  if(!isEndTs(lastLine)){alert('No trailing end timestamp found. Add an end timestamp to the last lyric line before merging.');return;}
+  if(!isEndTs(lastLine)&&!confirm('No trailing end timestamp found. Final secondary lines may not display correctly. Continue?'))return;
   const contentTs=tsLines.filter(([i])=>!isEndTs(mainLines[i]));
   const result=_buildMergedResult(mainLines,tsLines,contentTs,secData);
   _setTA(result.join('\n'));renderMainLines();checkLineCounts();updateTitleFromText();doAutosave();pushSnapshot();
@@ -1749,7 +1746,6 @@ document.getElementById('file-picker').addEventListener('change',e=>{
     const reader=new FileReader();
     reader.onload=ev=>{
       const raw=normalizeLrcTimestamps(ev.target.result);
-      if(raw.split('\n').length>MAX_LINES){alert(`File exceeds ${MAX_LINES} line limit. Import a shorter file.`);return;}
       let mergedMeta=mergeLrcMeta(raw);
       // Use lrc filename as title/save stem if no [ti:] in lrc and no audio loaded
       if(!lrcHasTi(raw)){
@@ -1785,7 +1781,6 @@ document.getElementById('file-picker').addEventListener('change',e=>{
   const reader=new FileReader();
   reader.onload=ev=>{
     const raw=normalizeLrcTimestamps(ev.target.result);
-    if(raw.split('\n').length>MAX_LINES){alert(`File exceeds ${MAX_LINES} line limit. Import a shorter file.`);return;}
     let mergedMeta=mergeLrcMeta(raw);
     // Preserve song stem: if lrc has no [ti:], use the audio filename
     if(lastImportStem&&!lrcHasTi(raw))mergedMeta=mergedMeta.replace(/^\[ti:.*\]/m,`[ti: ${lastImportStem}]`);
@@ -1857,35 +1852,6 @@ const HOTKEY_ONLY=new Set(['play_pause','play_pause_alt','sync','end_line','prev
   'sync_file']);
 // Actions that remain usable in Typing mode (with different hotkeys)
 const TYPING_AVAILABLE=new Set(['play_pause','prev_line','next_line']);
-function _renderHkCellContent(cell,key,label,hk,hotkeyMode){
-  if(key==='sync'){
-    const replayKey=hk.replay_line||'Enter';
-    cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${hk[key]||'—'}</span><span class="hk-key">${replayKey==='Escape'?'Esc':replayKey}</span></span>`;
-    return;
-  }
-  if(key==='play_pause'){
-    const ppKey=hotkeyMode?hk[key]:(hk.play_pause_alt||hk[key]);
-    cell.innerHTML=`<span>${label}</span><span class="hk-key">${_hkDisp(ppKey)}</span>`;
-    return;
-  }
-  if(key==='prev_line'){
-    if(hotkeyMode){
-      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↑</span></span>`;
-    }else{
-      cell.innerHTML=`<span>${label}</span><span class="hk-key">↑</span>`;
-    }
-    return;
-  }
-  if(key==='next_line'){
-    if(hotkeyMode){
-      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↓</span></span>`;
-    }else{
-      cell.innerHTML=`<span>${label}</span><span class="hk-key">↓</span>`;
-    }
-    return;
-  }
-  cell.innerHTML=`<span>${label}</span><span class="hk-key">${_hkDisp(hk[key])}</span>`;
-}
 function rebuildHkPanel(){
   const grid=document.getElementById('hk-grid');grid.innerHTML='';
   const hk=cfg.hotkeys,{tiny_ms:tn,small_ms:sm,medium_ms:med,large_ms:lg}=cfg;
@@ -1907,8 +1873,8 @@ function rebuildHkPanel(){
     modeRow.appendChild(cell);
   });
   grid.appendChild(modeRow);
-  [['prev_line','Previous line'],['play_pause','Play/pause'],
-   ['next_line','Next line'],['sync','Sync line'],
+  [['play_pause','Play/pause'],['sync','Sync line'],
+   ['prev_line','Previous line'],['next_line','Next line'],
    ['replay_only','Replay only'],['end_line','End line'],
    ['ts_back_tiny',`\u2212${tn}ms ${tsLabel}`],['ts_fwd_tiny',`+${tn}ms ${tsLabel}`],
    ['ts_back_small',`\u2212${sm}ms ${tsLabel}`],['ts_fwd_small',`+${sm}ms ${tsLabel}`],
@@ -1921,7 +1887,30 @@ function rebuildHkPanel(){
     if(dimmed)cell.setAttribute('aria-disabled','true');
     cell.title=HK_LABELS[key]||label;
     if(dimmed)cell.style.opacity='0.35';
-    _renderHkCellContent(cell,key,label,hk,hotkeyMode);
+    if(key==='sync'){
+      const replayKey=hk.replay_line||'Enter';
+      cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${hk[key]||'—'}</span><span class="hk-key">${replayKey==='Escape'?'Esc':replayKey}</span></span>`;
+    }else if(key==='play_pause'){
+      // In Typing mode, show the alternate play/pause key (Ctrl+Space) instead of Space
+      const ppKey=hotkeyMode?hk[key]:(hk.play_pause_alt||hk[key]);
+      cell.innerHTML=`<span>${label}</span><span class="hk-key">${_hkDisp(ppKey)}</span>`;
+    }else if(key==='prev_line'){
+      // In Typing mode, show only ↑; in Hotkey mode, show primary key + ↑
+      if(hotkeyMode){
+        cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↑</span></span>`;
+      }else{
+        cell.innerHTML=`<span>${label}</span><span class="hk-key">↑</span>`;
+      }
+    }else if(key==='next_line'){
+      // In Typing mode, show only ↓; in Hotkey mode, show primary key + ↓
+      if(hotkeyMode){
+        cell.innerHTML=`<span>${label}</span><span style="display:flex;gap:3px"><span class="hk-key">${_hkDisp(hk[key])}</span><span class="hk-key">↓</span></span>`;
+      }else{
+        cell.innerHTML=`<span>${label}</span><span class="hk-key">↓</span>`;
+      }
+    }else{
+      cell.innerHTML=`<span>${label}</span><span class="hk-key">${_hkDisp(hk[key])}</span>`;
+    }
     cell.addEventListener('click',()=>{if(!dimmed&&CTRL_ACTIONS[key])CTRL_ACTIONS[key]();});
     cell.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&!dimmed&&CTRL_ACTIONS[key]){e.preventDefault();CTRL_ACTIONS[key]();}});
     grid.appendChild(cell);
@@ -2616,41 +2605,35 @@ function _isFocusedUIElement(ae){
   return !inLyricArea&&(ae.tagName==='BUTTON'||ae.tagName==='INPUT'||ae.tagName==='SELECT'||ae.tagName==='TEXTAREA'||ae.tagName==='A');
 }
 
-function _isRepeatAllowed(e,ks,hk){
-  if(e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Tab')return true;
-  if(hkMatch(ks,hk.prev_line)&&cfg.replay_prev_line)return true;
-  if(hkMatch(ks,hk.next_line)&&cfg.replay_next_line)return true;
-  return false;
-}
-function _handleRepeatGuard(e,ks,hk){
-  if(!e.repeat)return false;
-  if(_isRepeatAllowed(e,ks,hk))return false;
-  if(hkMatch(ks,hk.toggle_mode)||hkMatch(ks,hk.offset_mode_toggle))e.preventDefault();
-  return true;
-}
-function _handleTypingModeArrowKeys(e){
-  if(e.ctrlKey||e.altKey||e.shiftKey)return false;
-  if(e.key!=='ArrowUp'&&e.key!=='ArrowDown')return false;
-  const ae=document.activeElement;
-  if(ae&&ae!==document.body&&ae!==document.documentElement)return false;
-  e.preventDefault();
-  if(e.key==='ArrowUp')seekPrevLine();else seekNextLine();
-  return true;
-}
-
   // ── Global keydown handler ────────────────────────────────────────────────
 document.addEventListener('keydown',e=>{
   const settingsOpen=document.getElementById('settings-overlay').classList.contains('open');
   const ks=keyStr(e),hk=cfg.hotkeys;
+  const isNavKey=e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowRight'||e.key==='Tab';
+  const isPrevNext=(hkMatch(ks,hk.prev_line)||hkMatch(ks,hk.next_line));
+  const prevNextReplayActive=isPrevNext&&_isPrevNextReplay(ks,hk);
   if(_handleSettingsKeys(e,ks,hk,settingsOpen))return;
   if(settingsOpen)return;
-  if(_handleRepeatGuard(e,ks,hk))return;
+  if(e.repeat&&!isNavKey&&!(isPrevNext&&!prevNextReplayActive)){
+    if(hkMatch(ks,hk.toggle_mode)||hkMatch(ks,hk.offset_mode_toggle))e.preventDefault();
+    return;
+  }
   const ae=document.activeElement;
-  if(_isFocusedUIElement(ae)&&e.key==='Escape'){e.preventDefault();ae.blur();return;}
-  if(_isFocusedUIElement(ae)&&!e.ctrlKey&&!e.altKey)return;
+  const isFocusedUI=_isFocusedUIElement(ae);
+  // Allow Escape to blur focused UI elements so hotkeys work again
+  if(isFocusedUI&&e.key==='Escape'){e.preventDefault();ae.blur();return;}
+  if(isFocusedUI&&!e.ctrlKey&&!e.altKey)return;
   if(_handleGlobalHotkeys(e,ks,hk))return;
   if(!hotkeyMode){
-    if(_handleTypingModeArrowKeys(e))return;
+    // Arrow keys for prev/next line when textarea doesn't have focus
+    if((e.key==='ArrowUp'||e.key==='ArrowDown')&&!e.ctrlKey&&!e.altKey&&!e.shiftKey){
+      const ae=document.activeElement;
+      if(!ae||ae===document.body||ae===document.documentElement){
+        e.preventDefault();
+        if(e.key==='ArrowUp')seekPrevLine();else seekNextLine();
+        return;
+      }
+    }
     return;
   }
   _handleHotkeyModeKeys(e,ks,hk);
@@ -2728,4 +2711,3 @@ autoCollapseIfNeeded();applyPanelCollapse();
 </script>
 </body>
 </html>
-

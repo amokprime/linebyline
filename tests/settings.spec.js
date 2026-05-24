@@ -110,7 +110,7 @@ test("assign-reserved-click", async ({ page }) => {
     page.locator("#hk-settings-rows").getByRole("textbox"),
   ).toHaveValue("Shift+~");
   await page.getByRole("button", { name: "Reset hotkey for Toggle" }).click();
-  await expect(page.getByText("Hotkeys MenuOpen✕Replace↺")).toHaveScreenshot();
+  await expect(page.getByText("Hotkeys MenuOpen✕Swap↺")).toHaveScreenshot();
 });
 
 test("assign-conflict-tab", async ({ page }) => {
@@ -139,5 +139,5 @@ test("assign-conflict-tab", async ({ page }) => {
   await page.keyboard.press("Enter");
   await page.keyboard.press("`");
   await page.keyboard.press("x");
-  await expect(page.getByText("Back large amount✕Replace↺")).toBeVisible();
+  await expect(page.getByText("Back large amount✕Swap↺")).toBeVisible();
 });

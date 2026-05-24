@@ -1,21 +1,17 @@
 const { test, expect } = require("@linebyline/test-helpers");
 
-test("sync-time", async ({ page, media }) => {
+test("sync-start-end", async ({ page, media }) => {
   await page
     .locator("#file-picker")
-    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
-  await page.keyboard.press("ArrowDown");
+    .setInputFiles([media("audio.mp3"), media("plain_english.lrc")]);
   await page.keyboard.press("w");
-  await expect(page.getByText("[00:00.00] That smell")).toBeVisible();
-});
-
-test("sync-time-end", async ({ page, media }) => {
-  await page
-    .locator("#file-picker")
-    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await expect(page.getByText("[00:00.00] I wish I could")).toBeVisible();
+  await page.keyboard.press("Space");
+  // Covers seamless trailing timestamp sync added in 0.37.0
+  await expect(page.getByText("0:020:13")).toBeVisible();
   await page.keyboard.press("t");
   await expect(
-    page.locator("div").filter({ hasText: /^\[00:00\.00\]$/ }),
+    page.getByRole("listitem").filter({ hasText: "[00:02" }),
   ).toBeVisible();
 });
 
@@ -133,6 +129,7 @@ test("replay-another-line", async ({ page, media }) => {
   await page.getByRole("checkbox", { name: "Playing another line" }).check();
   await page.keyboard.press("Escape");
   await page.getByText("[00:03.06] That smell").click();
+  await page.keyboard.press("Space"); //Not needed in real browser; purely to freeze state for screenshot
   await expect(page).toHaveScreenshot();
 });
 

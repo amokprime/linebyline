@@ -119,7 +119,7 @@ Tab, Enter, Escape are always blocked from being assigned as hotkeys because the
 
 App-level reserved keys
 
-Some apps pre-emptively reserve specific keys for fixed actions (isRestrictedForKey guards like "Ctrl+; is reserved for Save"). This pattern is usually not worth the friction — users who try to assign a key to action A and get a confusing "reserved for action B" error will be annoyed, even when they'd be fine with giving B a different key. Let the normal conflict flow (Replace button) handle it instead. The only exception is keys genuinely never remappable for any action (already handled by RESTRICTED_ALL).
+Some apps pre-emptively reserve specific keys for fixed actions (isRestrictedForKey guards like "Ctrl+; is reserved for Save"). This pattern is usually not worth the friction — users who try to assign a key to action A and get a confusing "reserved for action B" error will be annoyed, even when they'd be fine with giving B a different key. Let the normal conflict flow (Swap button) handle it instead. The only exception is keys genuinely never remappable for any action (already handled by RESTRICTED_ALL).
 
 ```js
 function isRestrictedForAll(ks) {
@@ -150,7 +150,7 @@ const ALPHA_NUM_SPACE_RE = /^(([A-Z]|[0-9]|Space)$|Shift\+[A-Z0-9]$)/;
 
 Settings UI — hotkey capture rows
 
-Each action gets a row: [label] [capture input] [clear button] [replace button] [reset button] [warning]
+Each action gets a row: [label] [capture input] [clear button] [swap button] [reset button] [warning]
 
 Capture input behavior
 
@@ -194,15 +194,15 @@ input.addEventListener('keydown', e => {
     return;
   }
 
-  // Enter = activate Replace button if visible (conflict pending), then advance focus.
+  // Enter = activate Swap button if visible (conflict pending), then advance focus.
   // If no conflict, just advance to next capture.
   if (e.key === 'Enter') {
     const allCaptures = () => Array.from(
       document.getElementById('hk-settings-rows').querySelectorAll('.hk-capture')
     );
     const curIdx = allCaptures().indexOf(input);
-    if (replaceBtn.classList.contains('visible')) {
-      replaceBtn.click();
+    if (swapBtn.classList.contains('visible')) {
+      swapBtn.click();
       const next = allCaptures()[curIdx + 1];
       if (next) next.focus(); else searchInput.focus();
     } else {
@@ -243,12 +243,13 @@ input.addEventListener('keydown', e => {
 });
 ```
 
-Conflict resolution — when a conflict is detected, show a "Replace" button that steals the key from the other action:
+Conflict resolution — when a conflict is detected, show a "Swap" button that swaps the two hotkeys (the current action gets the new key, the conflicting action gets the old key — no blank hotkeys left over):
 
 ```js
-replaceBtn.addEventListener('click', () => {
+swapBtn.addEventListener('click', () => {
   if (!conflictKey) return;
-  cfg.hotkeys[conflictKey] = '';
+  const oldKey = cfg.hotkeys[key] || '';
+  cfg.hotkeys[conflictKey] = oldKey;
   cfg.hotkeys[key] = pendingVal;
   saveCfg();
   rebuildHkRows();
@@ -262,12 +263,13 @@ Reset to default:
 ```js
 resetBtn.addEventListener('click', () => {
   const def = DEFAULT_CFG.hotkeys[key] || '';
-  // If another action currently holds this default value, blank it first —
-  // otherwise restoring the default silently creates a duplicate binding.
+  // If another action currently holds this default value, give it its own default
+  // (swap pattern — never silently blank a hotkey).
   if (def) {
     const holder = Object.entries(cfg.hotkeys).find(([k2, v]) => k2 !== key && v === def);
     if (holder) {
-      cfg.hotkeys[holder[0]] = '';
+      const holderDef = DEFAULT_CFG.hotkeys[holder[0]] || '';
+      cfg.hotkeys[holder[0]] = holderDef;
       saveCfg();
       rebuildHkRows(); // full rebuild so the other field's DOM updates too
       return;          // rebuildHkRows will re-render this row with the default set
@@ -542,21 +544,35 @@ if (d.hotkeys) {
 Summary checklist
 
 - keyStr(e) normalizes all key events to canonical strings
-- RESTRICTED_ALL blocks browser-reserved keys in Settings capture (includes Tab, Enter, Ctrl+D, Ctrl+M, Ctrl+O, and all Meta/Alt combos)
+- RESTRICTED_ALL blocks browser-reserved keys in Settings capture (includes Tab, Enter, Ctrl+D, Ctrl+M, Ctrl+O, and all Meta/Alt combos). Arrow keys are NOT in RESTRICTED_ALL — they are handled for navigation in Settings instead.
 - Per-action restrictions only for structural reasons (e.g. no letters for mode toggles); no pre-emptive per-key app reservations
-- Conflict detection with Replace button
-- Reset to default button blanks any other holder of that default first, then calls rebuildHkRows() for full DOM refresh
-- Capture input keydown: Tab first (e.preventDefault(); return;), then Shift+Backspace=clear, Backspace=default+advance, Enter=replace+advance, Escape=revert
+- Conflict detection with Swap button (swaps hotkeys between actions — no blanks)
+- Reset to default button gives any holder of that default its own default back (swap pattern), then calls rebuildHkRows() for full DOM refresh
+- Capture input keydown: Tab and arrow keys first (e.preventDefault(); return; — bubble to global handler for navigation), then Shift+Backspace=clear, Backspace=default+advance, Enter=swap+advance, Escape=revert
 - Focus stays on capture input after clean save (no input.blur()); user Tabs away when ready
 - Modal focus trap: enumerate focusable elements at Tab-time (not open-time), exclude transient buttons, use Math.max/Math.min stops (not circular wrap)
 - Collapsed panels use panel.inert = true to remove children from Tab order
-- Search field onkeydown has if (e.key === 'Tab') return; before any stopPropagation
+- Search field onkeydown has if (e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown') return; before any stopPropagation
 - role="dialog" aria-modal="true" aria-labelledby on modal window element
 - e.repeat guard in global handler: bail early for all non-nav keys; e.preventDefault() for mode-toggle keys even on repeat
 - Focused-UI-element guard: suppress hotkey dispatch when a button/input/select/a outside the content area has focus (unless ctrlKey/altKey)
-- Optional hotkey search in Settings
+- Arrow key navigation in Settings: ↑/↓ moves between all focusable elements (alternative to Tab/Shift+Tab); ArrowUp/ArrowDown on number inputs navigates instead of adjusting values
 - Global handler structured in layers (repeat guard → focused-UI guard → always-active → overlay guard → mode guard → actions)
 - Secondary textarea keydown handlers block HOTKEY_ONLY actions from bubbling
 - Controls panel rebuilt on every config or mode change
 - Dynamic tooltips updated after every config change
 - Migration logic in loadCfg() for any renamed/moved hotkeys
+
+---
+
+Typing-mode overlays in Controls panel
+
+Actions in the HOTKEY_ONLY set are normally dimmed when the app is in Typing mode. But some actions remain usable with different hotkeys in Typing mode — these are listed in TYPING_AVAILABLE and render with mode-specific overlays instead of being dimmed:
+
+| Action | Hotkey mode display | Typing mode display |
+|---|---|---|
+| play_pause | `Space` | `Ctrl+Space` (from play_pause_alt) |
+| prev_line | `Q` `↑` | `↑` only |
+| next_line | `E` `↓` | `↓` only |
+
+In Typing mode, ↑/↓ for prev/next line only activates when no textarea has focus (the user has blurred all inputs). Ctrl+Space for play/pause always works (it is dispatched from `_handleGlobalHotkeys`, which runs regardless of mode).

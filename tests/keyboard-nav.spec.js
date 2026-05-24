@@ -34,11 +34,11 @@ test("tab-settings", async ({ page }) => {
   ).toBeChecked();
   // Tab to Tiny interval input
   await tabUntilFocused(page, "#s-tiny");
-  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Control+a");
+  await page.getByRole("spinbutton", { name: "Tiny" }).fill("99");
   await expect(page.getByRole("spinbutton", { name: "Tiny" })).toHaveValue(
     "99",
   );
-  await expect(page.getByText("−99ms timeZ")).toBeVisible();
   // Tab to default metadata textarea
   await tabUntilFocused(page, "#s-default-meta");
   await page.keyboard.press("&");
@@ -55,4 +55,30 @@ test("tab-settings", async ({ page }) => {
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Backspace");
   await expect(page.locator(".hk-capture").first()).toHaveValue("Ctrl+;");
+});
+
+test("arrow-nav-settings", async ({ page }) => {
+  await page.keyboard.press("Control+,");
+  // Search field has focus by default — ArrowDown must break out of it
+  const search = page.getByRole("textbox", { name: "Search settings" });
+  await expect(search).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await expect(search).not.toBeFocused();
+  // ArrowDown navigates through Settings elements like Tab
+  // Arrow down until we reach a hotkey capture input
+  const firstCapture = page.locator(".hk-capture").first();
+  for (let i = 0; i < 50; i++) {
+    if (await firstCapture.evaluate((el) => el === document.activeElement))
+      break;
+    await page.keyboard.press("ArrowDown");
+  }
+  await expect(firstCapture).toBeFocused();
+
+  // ArrowDown on capture input navigates (doesn't assign arrow as hotkey)
+  await page.keyboard.press("ArrowDown");
+  await expect(firstCapture).not.toBeFocused();
+
+  // ArrowUp navigates back (like Shift+Tab)
+  await page.keyboard.press("ArrowUp");
+  await expect(firstCapture).toBeFocused();
 });
