@@ -1,0 +1,23 @@
+{
+  "rule": "javascript:S3358",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 2231,
+  "textRange": {
+    "startLine": 2231,
+    "endLine": 2231,
+    "startOffset": 54,
+    "endOffset": 84
+  },
+  "message": "Extract this nested ternary operation into an independent statement.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

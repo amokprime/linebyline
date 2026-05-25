@@ -1,0 +1,23 @@
+{
+  "rule": "javascript:S2486",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 507,
+  "textRange": {
+    "startLine": 507,
+    "endLine": 507,
+    "startOffset": 3,
+    "endOffset": 49
+  },
+  "message": "Handle this exception or don't catch it at all.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

@@ -1,0 +1,23 @@
+{
+  "rule": "javascript:S7735",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 1210,
+  "textRange": {
+    "startLine": 1210,
+    "endLine": 1210,
+    "startOffset": 56,
+    "endOffset": 65
+  },
+  "message": "Unexpected negated condition.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

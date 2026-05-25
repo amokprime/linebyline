@@ -3,18 +3,30 @@ name: sonarqube-workflow
 description: Process SonarQube Cloud issue exports for the LineByLine project and guide remediation. Use this skill whenever the user uploads a zip of SonarQube issues, asks about SonarQube findings, mentions rules like S3776/S2004/S7761, or needs help deciding whether to fix or mark as Won't Fix. Also use when planning a SonarQube remediation pass before writing any code.
 ---
 
-SonarQube Cloud scans run on every push via GitHub Actions. Issues are exported as a zip of subfolders (one per issue), each containing up to three files: `where.json`, `why.md`, `how.md`.
+SonarQube Cloud scans run on every push via GitHub Actions. Issues are exported into a per-version directory structure. Inside each version's `issues/` subfolder, issues are grouped by category — one folder per rule category containing `L{line}.json` files (one per instance) and shared `why.md`/`how.md`.
 
 ---
 
 Step 1: Parse the export
 
-Each subfolder name is the issue title (URL-encoded). Each folder contains:
-- `where.json` — rule ID, severity, line range, flow locations (nesting/complexity path)
-- `why.md` — rule rationale (same text for all instances of a rule — read once per unique rule)
-- `how.md` — fix guidance (present on complexity/structural rules; absent on simple ones)
+Directory layout (per version):
+```
+{version}/
+  issues/
+    Category_folder_name/
+      L1234.json      — one per issue instance, named by line number
+      L1234_2.json    — second issue on the same line
+      why.md          — rule rationale (shared — same for all instances of a rule)
+      how.md          — fix guidance (shared; absent on simple rules)
+    Another_category/
+      ...
+  linebyline-{version}.html
+  linebyline-{version}.md
+```
 
-Read the first instance of each unique rule to understand it; skip `why.md`/`how.md` for subsequent duplicates of the same rule. Extract line numbers and function names from `where.json` for each instance.
+Each `L{line}.json` contains the full issue data (rule, component, line, textRange, message, severity, type, cleanCodeAttribute, cleanCodeAttributeCategory, impacts, flows). Category folder names are trimmed: no `_1`/`_2` instance counters, no `_from_N_to_the_15_allo` complexity suffixes — all instances of the same rule are merged into one folder.
+
+Read `why.md`/`how.md` once per category folder (they are already deduplicated). Scan all `L*.json` files in the folder to get every instance — each file is a separate finding.
 
 ---
 
@@ -63,7 +75,7 @@ Group accepted fixes by section (use the linebyline-section-index skill to find 
 3. Helper extraction for nesting depth (S2004)
 4. Cognitive complexity reduction (S3776) — most invasive, do last
 
-For cognitive complexity, identify the function by its start line and name from `where.json`, then look up the section. High-CC functions that have already been reduced via helper extraction in a prior pass may have CC scores that are now lower than what the export shows — verify current state before writing any code.
+For cognitive complexity, identify the function by its start line and name from the `L{line}.json` file, then look up the section. High-CC functions that have already been reduced via helper extraction in a prior pass may have CC scores that are now lower than what the export shows — verify current state before writing any code.
 
 ---
 

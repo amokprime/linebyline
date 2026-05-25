@@ -1,0 +1,23 @@
+{
+  "rule": "javascript:S7721",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 1495,
+  "textRange": {
+    "startLine": 1495,
+    "endLine": 1495,
+    "startOffset": 0,
+    "endOffset": 26
+  },
+  "message": "Move function '_handleSecKeydown' to the outer scope.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

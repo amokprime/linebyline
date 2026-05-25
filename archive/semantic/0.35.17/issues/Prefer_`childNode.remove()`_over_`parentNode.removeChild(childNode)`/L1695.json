@@ -1,0 +1,23 @@
+{
+  "rule": "javascript:S7762",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 1695,
+  "textRange": {
+    "startLine": 1695,
+    "endLine": 1695,
+    "startOffset": 2,
+    "endOffset": 30
+  },
+  "message": "Prefer `childNode.remove()` over `parentNode.removeChild(childNode)`.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

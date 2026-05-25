@@ -1,0 +1,27 @@
+{
+  "rule": "javascript:S7773",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 574,
+  "textRange": {
+    "startLine": 574,
+    "endLine": 574,
+    "startOffset": 3,
+    "endOffset": 8
+  },
+  "message": "Prefer `Number.isNaN` over `isNaN`.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    },
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

@@ -1,0 +1,23 @@
+{
+  "rule": "javascript:S7784",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 509,
+  "textRange": {
+    "startLine": 509,
+    "endLine": 509,
+    "startOffset": 19,
+    "endOffset": 44
+  },
+  "message": "Prefer `structuredClone(…)` over `JSON.parse(JSON.stringify(…))` to create a deep clone.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

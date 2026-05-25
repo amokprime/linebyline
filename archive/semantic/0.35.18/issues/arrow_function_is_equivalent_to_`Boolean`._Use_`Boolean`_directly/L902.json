@@ -1,0 +1,23 @@
+{
+  "rule": "javascript:S7770",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 902,
+  "textRange": {
+    "startLine": 902,
+    "endLine": 902,
+    "startOffset": 55,
+    "endOffset": 57
+  },
+  "message": "arrow function is equivalent to `Boolean`. Use `Boolean` directly.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

@@ -1,0 +1,23 @@
+{
+  "rule": "Web:S6819",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 236,
+  "textRange": {
+    "startLine": 236,
+    "endLine": 236,
+    "startOffset": 4,
+    "endOffset": 74
+  },
+  "message": "Use <section> instead of the region role to ensure accessibility across all devices.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

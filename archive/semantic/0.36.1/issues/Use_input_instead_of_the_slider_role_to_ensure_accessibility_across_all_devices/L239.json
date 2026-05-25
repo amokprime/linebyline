@@ -1,0 +1,23 @@
+{
+  "rule": "Web:S6819",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 239,
+  "textRange": {
+    "startLine": 239,
+    "endLine": 239,
+    "startOffset": 6,
+    "endOffset": 161
+  },
+  "message": "Use <input> instead of the slider role to ensure accessibility across all devices.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

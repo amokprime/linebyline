@@ -1,0 +1,23 @@
+{
+  "rule": "Web:S6819",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 303,
+  "textRange": {
+    "startLine": 303,
+    "endLine": 303,
+    "startOffset": 6,
+    "endOffset": 68
+  },
+  "message": "Use <output> instead of the status role to ensure accessibility across all devices.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

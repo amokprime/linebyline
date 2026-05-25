@@ -1,0 +1,23 @@
+{
+  "rule": "Web:S6819",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 340,
+  "textRange": {
+    "startLine": 340,
+    "endLine": 340,
+    "startOffset": 4,
+    "endOffset": 79
+  },
+  "message": "Use <footer> instead of the contentinfo role to ensure accessibility across all devices.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

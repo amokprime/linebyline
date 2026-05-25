@@ -1,0 +1,23 @@
+{
+  "rule": "Web:S6825",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 348,
+  "textRange": {
+    "startLine": 348,
+    "endLine": 348,
+    "startOffset": 0,
+    "endOffset": 112
+  },
+  "message": "aria-hidden=\"true\" must not be set on focusable elements.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

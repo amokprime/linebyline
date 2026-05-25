@@ -53,7 +53,7 @@ When a folder of symlinks is zipped, the actual source files are copied inside a
 
 #### CI
 
-Any changes must pass CodeQL and SonarQube Cloud GitHub Actions. When Sonar issues are found, fetch them with the sonar-issues-extractor tool and put them in an "issues" folder inside the app version folder, minus the why.md and how.md files (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license).
+Any changes must pass CodeQL and SonarQube Cloud GitHub Actions. When Sonar issues are found, fetch them with the [sonar-issue-exporter](https://github.com/amokprime/sonar-issue-exporter) tool and put them in an "issues" folder inside the app version folder, minus the why.md and how.md files (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license).
 
 LineByLine has two types of QA tests: Playwright and [MANUAL.md.](https://github.com/amokprime/linebyline/tree/main/tests/MANUAL.md). You don't have to do either of these for now. Just leave the existing Playwright test files and folders (such as snapshots) alone so that I can access them on my end when I checkout your PR.
 

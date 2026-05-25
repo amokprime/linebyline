@@ -1,0 +1,23 @@
+{
+  "rule": "javascript:S6353",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 453,
+  "textRange": {
+    "startLine": 453,
+    "endLine": 453,
+    "startOffset": 35,
+    "endOffset": 40
+  },
+  "message": "Use concise character class syntax '\\d' instead of '[0-9]'.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

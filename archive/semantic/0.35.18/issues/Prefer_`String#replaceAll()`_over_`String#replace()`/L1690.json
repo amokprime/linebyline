@@ -1,0 +1,27 @@
+{
+  "rule": "javascript:S7781",
+  "component": "amokprime_linebyline:docs/index.html",
+  "line": 1690,
+  "textRange": {
+    "startLine": 1690,
+    "endLine": 1690,
+    "startOffset": 12,
+    "endOffset": 19
+  },
+  "message": "Prefer `String#replaceAll()` over `String#replace()`.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    },
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}
