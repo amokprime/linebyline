@@ -2,7 +2,7 @@ See this [Obsidian Share Note](https://share.note.sx/9wimmaly) for what's planne
 
 ### Architecture and environment
 
-LineByLine is a no-dependencies 2.7k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects and uses [these](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions) skills and instructions. Any comparable model that can work with files (i.e. GLM in [Z.ai](https://chat.z.ai/) Agent mode web chat that I currently use) should also be able to follow the skills and instructions. Use a Chromium-based browser like Helium with uBlock Origin, Microsoft Edge with uBlock Origin, or Google Chrome with Adguard Adblocker. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
+LineByLine is a no-dependencies 2.7k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects and uses [these](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions) skills and instructions. Any comparable model that can work with files (i.e. GLM in [Z.ai](https://chat.z.ai/) Agent mode web chat that I currently use) should also be able to follow the skills and instructions. Use a Chromium-based browser with uBlock Origin or Adguard Adblocker. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
 
 ### General workflow
 
