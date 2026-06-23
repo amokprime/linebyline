@@ -18,11 +18,6 @@ Put each new version of LineByLine and its companion .md file into its own seman
 | Refactoring that visibly breaks existing features                             | Major   | 0.34.9 → 1.0.0          |
 Rename the folder manually with the same number. If the AI forgets to update the version or does it wrong, edit the app's filename (i.e. linebyline-0.34.7.html) and the HTML `<title>` element (i.e. `<title>LineByLine 0.34.7</title>`).
 
-#### Working with Claude Sonnet (web chat/Claude Desktop)
-
-Warning: I stopped maintaining these after 0.35.19. You might have to backport some more updated information from GLM's instructions.
-claude.ai has extremely strict free plan 5-hour limits. Simply fill out the preferences and project instructions and add the skills, and turn on memory. Occasionally upload a zip of all chat logs since last skill update and ask Claude to update them or create new ones (it has a skill-creator skill).
-
 #### Working with GLM (web chat Agent mode)
 
 chat.z.ai's free tier is currently far more generous overall with some caveats:
@@ -31,39 +26,72 @@ chat.z.ai's free tier is currently far more generous overall with some caveats:
 - A captcha slider randomly pops up sometimes
 - Sessions now expire after 2 hours. After that, start a new Agent chat, because the originally uploaded files vanish and newly uploaded files fail to persist. Work around by typing something before it expires to reset the timer to another 2 hours.
 - Uploads may fail to update if certain filenames like file.md and Memory.md are re-uploaded without renaming them or zipping them in a uniquely named folder
-- Downgrade from GLM-5.1 to a lower model during peak hours (at least in the US, this feels very rare lately)
+- Downgrade from GLM-5.2 to a lower model, chats failing to submit or load or timing out, during peak hours
 
-There are also no built-in skills or memory scaffolding to enforce a large amount of recurring behaviors. The more competing demands, the less likely any of them are to be remembered, much less followed. My current workflow is to upload just-in-time, explicitly telling the agent what to read and follow on the spot without trusting its memory (Chat.md, project-workflow-SKILL.md).
+There are also no built-in skills or memory scaffolding to enforce a large amount of recurring behaviors. The more competing demands, the less likely any of them are to be remembered, much less followed. The latest planned workflow is to upload just-in-time, explicitly telling the agent what to read and follow on the spot without trusting its memory (Chat.md, project-workflow-SKILL.md).
 
-To make repetitive uploads easier, I create symlinks with a .bat script like below or Link File Extension on Windows.
+##### [Repomix](https://repomix.com/)
 
-```batch
-@echo off
-set "GLOBAL=C:\fullpathto\linebyline\tests"
-set "LOCAL=C:\fullpathto\linebyline\local\phases\3_pre-push\tests"
-for /d %%i in ("%GLOBAL%\*") do (
-    if not exist "%LOCAL%\%%~nxi" mklink /D "%LOCAL%\%%~nxi" "%%i"
-)
-for %%f in ("%GLOBAL%\*.*") do (
-    if not exist "%LOCAL%\%%~nxf" mklink "%LOCAL%\%%~nxf" "%%f"
-)
+This makes repetitive uploads more manageable than the zip folder of symlinks I used for a while. To prepare the global install I ran `npm config set prefix "~/.npm-global"` and added `set -x PATH $HOME/.npm-global/bin $PATH` to my `~/.config/fish.config`.
+`/**` = everything in the folder. If you rerun the command on the same output file the old one is overwritten. Example syntax:
+```sh
+repomix --output local/linebyline.xml \
+--include "ai/z-ai-glm/skills/**,archive/modular/**,docs/**,tests/**,\
+CONTRIBUTING.md,HELP.md,\
+package.json,playwright.config.js,README.md" \
+--ignore "ai/z-ai-glm/skills/chat/**,tests/prompts/**"
 ```
 
-When a folder of symlinks is zipped, the actual source files are copied inside as-is. This beats manually copying the source files and forgetting to update them, or hunting through folders to upload individual files. Delete unnecessary symlinks (this does not touch the source files) as everything uploaded bloats memory context in every subsequent turn whether the AI reads it or not. Search for keywords like `snapshots`, `*.html`, `media`, etc. (without backticks) to cut down upload size.
+##### [Espanso](https://espanso.org/docs/matches/extensions/#clipboard-extension)
+
+Use these to either run a command directly from a markdown editor like Obsidian and print output to a codeblock in the same file, or paste into a codeblock. Not recommended for Playwright tests with many screens of output. Syntax will vary if you're not on Fedora or don't use Fish shell (i.e. Bash would be `bash -c`). `ansi2txt` and `export` (which includes `unbuffer`) may need to be installed. Fancy output like Playwright tests and Python messages may look strange without them.
+
+File: `~.config/espanso/match/youreditor.yml`
+```yml
+global_vars:
+  - name: "printoutput"
+    type: "shell"
+    params:
+      cmd: 'unbuffer fish -c "$(wl-paste 2>/dev/null || echo '''')" 2>&1 | ansi2txt'
+      trim: true
+  - name: "pasteclipboard"
+    type: "clipboard"
+matches:
+  - trigger: "//.."
+    replace: "```sh\n{{printoutput}}\n```\n"
+  - trigger: "//sh"
+    replace: "```sh\n{{pasteclipboard}}\n```\n"
+```
+
+#### Fish shell config
+
+Like the Espanso `//..`snippet, but for logging very long output like Playwright tests. Type the abbreviation (`psl` in this case) to grab a copied command and append its output to a log file you can upload to the AI. You can also use the Bash compatible `alias "abbreviation" 'command'` syntax if you don't need to edit the log destination or filename.
+
+File: `~/.config/fish/config.fish`
+```fish
+if status is-interactive
+
+abbr --add psl 'unbuffer fish -c "$(wl-paste 2>/dev/null || echo '''')" 2>&1 | ansi2txt | tee -a local/output.log'
+
+end
+```
+
+#### Working with Claude Sonnet (web chat/Claude Desktop)
+
+Warning: I stopped maintaining these after 0.35.19. You might have to backport some more updated information from GLM's instructions.
+claude.ai has extremely strict free plan 5-hour limits. Fill out the preferences and project instructions and add the skills, and turn on memory. Occasionally upload a Repomix or zip of all chat logs since last skill update and ask Claude to update them or create new ones (it has a skill-creator skill).
 
 #### CI
 
-Any changes must pass CodeQL and SonarQube Cloud GitHub Actions. When Sonar issues are found, fetch them with the [sonar-issue-exporter](https://github.com/amokprime/sonar-issue-exporter) tool and put them in an "issues" folder inside the app version folder, minus the why.md and how.md files (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license).
+Any changes to the app code must pass CodeQL and SonarQube Cloud GitHub Actions. ⚠️These are currently broken pending review of a flag on my account.⚠️ When Sonar issues are found, fetch them with the [sonar-issue-exporter](https://github.com/amokprime/sonar-issue-exporter) tool and put them in an "issues" folder inside the app version folder, minus the why.md and how.md files (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license).
 
 LineByLine has two types of QA tests: Playwright and [MANUAL.md.](https://github.com/amokprime/linebyline/tree/main/tests/MANUAL.md). You don't have to do either of these for now. Just leave the existing Playwright test files and folders (such as snapshots) alone so that I can access them on my end when I checkout your PR.
 
 #### Running tests
 
-This section may be replaced by Playwright CI in the future.
+This section will be replaced by Playwright CI in the future.
 
-If you want to run the Playwright tests yourself, see [PLAYWRIGHT_SETUP.md](https://github.com/amokprime/linebyline/tree/main/tests/PLAYWRIGHT_SETUP.md). I am working from Windows and only test Firefox for now. For other platforms and browsers, you'd have to delete existing snapshots and generate your own (this mess is why I'm not asking people to do this for now). 
-
-The `ff` .bashrc alias in the setup file starts a local server from the highest-version semantic app version (which expects the naming convention in the Organization section), then checks every second for it to come online before starting `test --ui` and Codegen. You may need to customize it and other setup details if your platform and browser differ. Run all the tests from the Playwright Test window (it defaults to 4 workers at a time), then run them all again if any were missing snapshots. 
+If you want to run the Playwright tests yourself, see [PLAYWRIGHT_SETUP.md](https://github.com/amokprime/linebyline/tree/main/tests/PLAYWRIGHT_SETUP.md). 🚧I am in the process of starting to rebuild snapshots for Linux and refactor tests that break in headless mode.🚧
 
 Open a new Issue if you find:
 - Other latent bugs that also exist in the latest main branch version

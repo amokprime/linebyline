@@ -1,30 +1,57 @@
 // @ts-check
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
+
+/**
+ * Container-vs-host detection.
+ *
+ * The Podman fish functions (tst / tsta) set PW_CONTAINER=1 so we can
+ * branch here without filesystem heuristics. Inside the container the
+ * image is ubuntu-24.04 + all browser deps preinstalled, so we enable
+ * the webkit project (which is flaky/unsupported on Fedora host).
+ *
+ * CI (GitHub Actions ubuntu-latest) sets CI=1 — same effect for the
+ * webkit project, but with stricter settings (workers=1, retries=2,
+ * forbidOnly=true) which we don't want when running locally in the
+ * container.
+ */
+const inContainer = !!process.env.PW_CONTAINER;
+const inCI = !!process.env.CI;
+const enableWebkit = inContainer || inCI;
 
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  testDir: './tests',
+  testDir: "./tests",
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  forbidOnly: inCI,
+  retries: inCI ? 2 : 0,
+  workers: inCI ? 1 : undefined,
+  reporter: "html",
   use: {
-    baseURL: 'http://localhost:3004',
-    trace: 'on-first-retry',
+    baseURL: "http://localhost:3004",
+    trace: "on-first-retry",
   },
-  outputDir: './trash',
+  outputDir: "./trash",
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+    { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+    { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+    ...(enableWebkit
+      ? [{ name: "webkit", use: { ...devices["Desktop Safari"] } }]
+      : []),
   ],
 
   webServer: {
-    command: 'npx serve . -l 3004',
-    url: 'http://localhost:3004',
-    reuseExistingServer: !process.env.CI,
+    command: "npx serve . -l 3004",
+    url: "http://localhost:3004",
+    // Reuse existing server when running locally (host OR container).
+    // CI never reuses — each run boots its own.
+    reuseExistingServer: !inCI,
+  },
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixelRatio: 0.01,
+      animations: "disabled",
+    },
   },
 });

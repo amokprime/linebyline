@@ -1,6 +1,8 @@
 * text=auto eol=lf
-
+*.lrc text eol=lf
 *.png binary
 *.jpg binary
 *.mp3 binary
 *.zip binary
+*.svg binary
+*.woff2 binary

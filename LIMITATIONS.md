@@ -44,8 +44,6 @@ const RESTRICTED_ALL=new Set([
   'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12',
 ]);
 ```
-
-- Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) as of version 0.36.2
 - The unsaved work popup jumps to default "Leave page" button on Firefox but [not](https://github.com/amokprime/linebyline/blob/main/archive/semantic/0.36.1/linebyline-0.36.1.md) other browsers
 - Copying a Genius song to a text editor and then copying the contents of that file to LineByLine now adds this to the bottom:
 ```
@@ -53,3 +51,12 @@ somenumber
 Embed
 ```
 - There's no reason I can think of at this point why anyone should do that though. The live Genius website should always be trusted over a potentially stale mock.txt, which provides a persistent test file anyway.
+
+**These apply to Playwright tests as of version 0.37.1**
+- Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) as of version 0.36.2
+- The official Microsoft Playwright image pins an outdated version of npm that's hopefully compatible with the GitHub CI ubuntu-runner
+- Webkit tests crash after completion on Linux, which also triggers a coredump in the repo root and false positive SELinux AVC [warning](https://github.com/amokprime/linebyline/blob/main/archive/modular/plan/1-Playwright/2.md#3. SELinux AVC — NOT related to the cache folder mount). The SELinux alerts can be silenced with the below policy. I never got around to silencing the Webkit crash alerts and just added `my-systemdcoredum.*` to .gitignore.
+```sh
+sudo ausearch -c 'systemd-coredum' --raw | audit2allow -M my-systemdcoredum
+sudo semodule -X 300 -i my-systemdcoredum.pp
+```

@@ -1,40 +1,63 @@
-### Windows Terminal/Git Bash Profile
-1. Install fnm
-``` cmd
-winget install Schniz.fnm
+### Fedora 44
+1. Pull the official Microsoft Playwright Podman image
+```sh
+podman pull mcr.microsoft.com/playwright:v1.61.0-noble
 ```
-2. Add shell integration to Git Bash
-``` bash
-echo 'eval "$(fnm env --use-on-cd --shell bash)"' >> ~/.bashrc
-source ~/.bashrc
-fnm --version
+
+2. Run from repo folder root
+```sh
+# Headless
+podman run --rm -it --userns=keep-id \
+	-v $PWD:/workspace:z -w /workspace \
+	-e HOME=/tmp \
+	-e PW_CONTAINER=1 \
+	mcr.microsoft.com/playwright:v1.61.0-noble \
+	npx playwright test
+  
+# Onetime setup: Allow the container's UID to talk to your Wayland socket
+xhost +SI:localuser:$(whoami)
+
+# UI mode
+podman run --rm -it --userns=keep-id --security-opt label=disable \
+	--net=host --ipc=host \
+	-e DISPLAY=$DISPLAY -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+	-e XDG_RUNTIME_DIR=/tmp \
+	-v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY:z \
+	-v $XDG_RUNTIME_DIR/pipewire-0:/tmp/pipewire-0:z \
+	-v $PWD:/workspace:z -w /workspace \
+	-e HOME=/tmp \
+	-e PW_CONTAINER=1 \
+	mcr.microsoft.com/playwright:v1.61.0-noble \
+	npx playwright test --ui
 ```
-3. Install Node.js and npm
-``` bash
-fnm install --lts
-#close and reopen terminal window
-node --version
-npm --version
-```
-4. Install Playwright
-``` bash
-npm init playwright@latest
-```
-5. Relevant .bashrc lines (alias names don't matter and port can be whatever as long as it's consistent)
-``` bash
-eval "$(fnm env --use-on-cd --shell bash)"
-alias rld="source ~/.bashrc"
-alias bsr="nano ~/.bashrc"
-alias srv="npx serve . -l 3004"
-alias tsta="npx playwright test --ui --project=firefox"
-alias tst="npx playwright test --project=firefox"
-ff() {
-  npx serve . -l 3004 &
-  until curl -s http://localhost:3004 >/dev/null 2>&1; do
-    sleep 1
-  done
-  npx playwright test --ui --project=firefox &
-  local path=$(node -e "const{findLatestVersion}=require('@linebyline/test-helpers');process.stdout.write(findLatestVersion())")
-  npx playwright codegen "http://localhost:3004${path}" --browser firefox
-}
+
+3. Or run with Fish functions
+```sh
+# Setup
+function tst
+    podman run --rm -it --userns=keep-id \
+        -v $PWD:/workspace:z -w /workspace \
+        -e HOME=/tmp \
+        -e PW_CONTAINER=1 \
+        mcr.microsoft.com/playwright:v1.61.0-noble \
+        npx playwright test $argv
+end
+
+function tsta
+    podman run --rm -it --userns=keep-id --security-opt label=disable \
+        --net=host --ipc=host \
+        -e DISPLAY=$DISPLAY -e WAYLAND_DISPLAY=$WAYLAND_DISPLAY \
+        -e XDG_RUNTIME_DIR=/tmp \
+        -v $XDG_RUNTIME_DIR/$WAYLAND_DISPLAY:/tmp/$WAYLAND_DISPLAY:z \
+        -v $XDG_RUNTIME_DIR/pipewire-0:/tmp/pipewire-0:z \
+        -v $PWD:/workspace:z -w /workspace \
+        -e HOME=/tmp \
+        -e PW_CONTAINER=1 \
+        mcr.microsoft.com/playwright:v1.61.0-noble \
+        npx playwright test --ui $argv
+end
+
+funcsave tst
+funcsave tsta
+# Usage examples: tst, tsta, tst tests/fields-merge.spec.js --project firefox
 ```

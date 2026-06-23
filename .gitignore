@@ -28,6 +28,8 @@ npm-debug.log*
 
 # Offline
 .obsidian
+.trash
+.stversions
 *genius*
 ROADMAP.md
 why.md
@@ -42,3 +44,4 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
+my-systemdcoredum.*
