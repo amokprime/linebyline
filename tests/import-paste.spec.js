@@ -1,3 +1,4 @@
+
 const {
   test,
   expect,
@@ -65,15 +66,7 @@ test("import-corrupted-lyrics", async ({ page, media }) => {
   );
 });
 
-test("paste-plain-hotkey", async ({ page, context, readMedia }) => {
-  const browserName = context.browser()?.browserType()?.name();
-  if (browserName === "chromium") {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  }
-  test.skip(
-    browserName === "webkit",
-    "Webkit always generates empty snapshot from Contrl+V paste",
-  );
+test("paste-plain-hotkey", async ({ page, readMedia, workaroundPaste }) => {
   await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -84,15 +77,7 @@ test("paste-plain-hotkey", async ({ page, context, readMedia }) => {
   );
 });
 
-test("paste-synced-hotkey", async ({ page, context, readMedia }) => {
-  const browserName = context.browser()?.browserType()?.name();
-  if (browserName === "chromium") {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  }
-  test.skip(
-    browserName === "webkit",
-    "Webkit always generates empty snapshot from Contrl+V paste",
-  );
+test("paste-synced-hotkey", async ({ page, readMedia, workaroundPaste }) => {
   await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -103,15 +88,7 @@ test("paste-synced-hotkey", async ({ page, context, readMedia }) => {
   );
 });
 
-test("paste-plain-typing", async ({ page, context, readMedia }) => {
-  const browserName = context.browser()?.browserType()?.name();
-  if (browserName === "chromium") {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  }
-  test.skip(
-    browserName === "webkit",
-    "Webkit always generates empty snapshot from Contrl+V paste",
-  );
+test("paste-plain-typing", async ({ page, readMedia, workaroundPaste }) => {
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
@@ -123,15 +100,7 @@ test("paste-plain-typing", async ({ page, context, readMedia }) => {
   );
 });
 
-test("paste-synced-typing", async ({ page, context, readMedia }) => {
-  const browserName = context.browser()?.browserType()?.name();
-  if (browserName === "chromium") {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  }
-  test.skip(
-    browserName === "webkit",
-    "Webkit always generates empty snapshot from Contrl+V paste",
-  );
+test("paste-synced-typing", async ({ page, readMedia, workaroundPaste }) => {
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
@@ -143,15 +112,7 @@ test("paste-synced-typing", async ({ page, context, readMedia }) => {
   );
 });
 
-test("paste-secondary", async ({ page, context, readMedia }) => {
-  const browserName = context.browser()?.browserType()?.name();
-  if (browserName === "chromium") {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  }
-  test.skip(
-    browserName === "webkit",
-    "Webkit always generates empty snapshot from Contrl+V paste",
-  );
+test("paste-secondary", async ({ page, readMedia, workaroundPaste }) => {
   await page.keyboard.press("Control+4");
   await page.getByRole("textbox").click();
   await page.evaluate((text) => {
@@ -163,15 +124,7 @@ test("paste-secondary", async ({ page, context, readMedia }) => {
   );
 });
 
-test("paste-genius-hotkey", async ({ page, context, readMedia }) => {
-  const browserName = context.browser()?.browserType()?.name();
-  if (browserName === "chromium") {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  }
-  test.skip(
-    browserName === "webkit",
-    "Webkit always generates empty snapshot from Contrl+V paste",
-  );
+test("paste-genius-hotkey", async ({ page, readMedia, workaroundPaste }) => {
   await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -182,15 +135,7 @@ test("paste-genius-hotkey", async ({ page, context, readMedia }) => {
   );
 });
 
-test("paste-genius-typing", async ({ page, context, readMedia }) => {
-  const browserName = context.browser()?.browserType()?.name();
-  if (browserName === "chromium") {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  }
-  test.skip(
-    browserName === "webkit",
-    "Webkit always generates empty snapshot from Contrl+V paste",
-  );
+test("paste-genius-typing", async ({ page, readMedia, workaroundPaste }) => {
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
   await page.evaluate((text) => {

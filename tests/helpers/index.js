@@ -1,3 +1,4 @@
+
 // @ts-check
 "use strict";
 
@@ -62,6 +63,7 @@ const MEDIA_DIR = path.join(__dirname, "..", "media");
  * @property {(filename: string) => string} media - Resolves a media filename to an absolute path
  * @property {(filename: string) => string} readMedia - Reads a media file's contents as UTF-8
  * @property {(nth: number, filename: string) => Promise<void>} importSecondary - Opens nth 📂 button and sets files, then waits for the textarea to be populated
+ * @property {void} workaroundPaste - Auto-setup fixture for clipboard-paste tests. Grants `clipboard-read`/`clipboard-write` permissions on chromium (required for `navigator.clipboard.writeText` outside of secure contexts in headed/headless mode) and skips the test on webkit (clipboard write through `Control+v` is unreliable and produces empty snapshots). Add `workaroundPaste` to the test's destructured args to activate — the fixture has no value, its presence only triggers setup.
  */
 
 const test =
@@ -94,6 +96,19 @@ const test =
             ).toHaveValue(/./);
           },
         );
+      },
+      // Auto-setup fixture: include `workaroundPaste` in a test's destructured
+      // args to (1) skip the test on webkit and (2) grant clipboard-read/write
+      // permissions on chromium. See CustomFixtures typedef for details.
+      workaroundPaste: async ({ context, browserName }, use) => {
+        test.skip(
+          browserName === "webkit",
+          "Webkit always generates empty snapshot from Control+V paste",
+        );
+        if (browserName === "chromium") {
+          await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+        }
+        await use();
       },
     })
   );

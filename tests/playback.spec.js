@@ -1,3 +1,4 @@
+
 const {
   test,
   expect,
@@ -105,6 +106,10 @@ test("volume-mute-down", async ({ page }) => {
 });
 
 test("audio-missing-noop", async ({ page, media }) => {
+  test.skip(
+    !process.env.CI && !process.env.PW_CONTAINER,
+    "Font-fragile screenshot: #audio-box height depends on system-ui font metrics (x-height/ascender), which differ between Ubuntu container and Fedora host. Skipped in UI mode on host; still runs in CI and `tst` container where the baseline was generated.",
+  );
   await expect(page.getByText("Unknown Title Unknown Artist")).toHaveScreenshot(
     "audio-missing-load.png",
   );

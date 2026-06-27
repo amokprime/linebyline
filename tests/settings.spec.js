@@ -102,6 +102,10 @@ test("assign-ok-click", async ({ page }) => {
 });
 
 test("assign-reserved-click", async ({ page }) => {
+  test.skip(
+    !process.env.CI && !process.env.PW_CONTAINER,
+    "Font-fragile screenshot: .hk-row min-height:30.8px can grow when system-ui text height exceeds it; font metrics differ between Ubuntu container and Fedora host. Skipped in UI mode on host; still runs in CI and `tst` container where the baseline was generated.",
+  );
   await page.keyboard.press("Control+,");
   await page
     .getByRole("textbox", { name: "Search settings" })

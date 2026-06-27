@@ -1,3 +1,4 @@
+
 const {
   test,
   expect,
@@ -65,15 +66,7 @@ test("import-two-secondary", async ({ page, importSecondary }) => {
   ).toMatchSnapshot("import-two-2.txt");
 });
 
-test("paste-main", async ({ page, context, readMedia }) => {
-  const browserName = context.browser()?.browserType()?.name();
-  if (browserName === "chromium") {
-    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
-  }
-  test.skip(
-    browserName === "webkit",
-    "Webkit always generates empty snapshot from Contrl+V paste",
-  );
+test("paste-main", async ({ page, readMedia, workaroundPaste }) => {
   await page.locator("#main-lines").click();
   await page.evaluate(async (text) => {
     await navigator.clipboard.writeText(text);

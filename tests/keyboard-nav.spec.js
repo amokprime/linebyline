@@ -2,6 +2,10 @@
 const { test, expect, tabUntilFocused } = require("@linebyline/test-helpers");
 
 test("tab-font", async ({ page }) => {
+  test.skip(
+    !process.env.CI && !process.env.PW_CONTAINER,
+    "Font-fragile screenshot: #main-textarea width depends on #left-panel fit-content width, which varies with OS system-ui font rendering (Ubuntu container vs Fedora host). Skipped in UI mode on host; still runs in CI and `tst` container where the baseline was generated.",
+  );
   await tabUntilFocused(page, "#font-select");
   await page.locator("#font-select").press("ArrowDown");
   await expect(page.locator("#font-select")).toHaveValue("serif");

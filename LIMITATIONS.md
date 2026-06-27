@@ -61,7 +61,6 @@ sudo ausearch -c 'systemd-coredum' --raw | audit2allow -M my-systemdcoredum
 sudo semodule -X 300 -i my-systemdcoredum.pp
 ```
 - Many tests require gimmicky focus clicks on any part of the page or in a lyrics field. The real browsers shift focus automatically in ways Playwright browsers (especially headless) do not.
-
 ```js
 await page.locator("#left-panel-header").click();
 await page.locator("#main-textarea").click();
@@ -91,3 +90,4 @@ await page.getByRole("textbox", { name: "Main lyric text" }).click();
     "Webkit always generates empty snapshot from Contrl+V paste",
   );
 ```
+- I run UI tests with Playwright npm natively in Fedora, which has different OS font rendering than Ubuntu. This causes font-based screenshot [incompatibilities](https://github.com/amokprime/linebyline/blob/main/archive/modular/plan/1-Playwright/9.md) that must be worked around by skipping relevant tests or rewriting them to expect consistent elements or shared fonts
