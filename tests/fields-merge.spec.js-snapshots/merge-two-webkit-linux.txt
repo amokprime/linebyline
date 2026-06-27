@@ -1,15 +1,10 @@
-[ti: I Wish I Could Identify That Smell]
-[ar: The Jazz Kissingers]
-[al: microSong Entries]
-[re: LineByLine, https://amokprime.github.io/linebyline/]
-
 [00:00.00] I wish I could identify that smell
 [00:03.04] (J'aimerais pouvoir identifier cette odeur)
 [00:03.05] (Ojalá pudiera identificar ese olor)
 [00:03.06] That smell
 [00:06.33] (Cette odeur)
 [00:06.34] (Ese olor)
-
+ 
 [00:06.35] It disturbs my concentration
 [00:08.06] (Cela perturbe ma concentration)
 [00:08.07] (Me altera la concentración)

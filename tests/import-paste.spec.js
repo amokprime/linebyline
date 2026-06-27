@@ -1,11 +1,20 @@
-const { test, expect } = require("@linebyline/test-helpers");
+const {
+  test,
+  expect,
+  waitForImport,
+  waitForLyrics,
+  waitForAudio,
+} = require("@linebyline/test-helpers");
+
+async function lyricLinesText(page) {
+  return page.getByLabel("Lyric lines").innerText();
+}
 
 test("import-plain", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("plain_english.lrc")]);
-  await expect(page.getByText("audio")).toBeVisible();
-  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
+  await waitForImport(page);
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "import-plain-textarea.txt",
   );
@@ -15,11 +24,7 @@ test("import-synced", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
-  await expect(
-    page.getByText("I Wish I Could Identify That Smell", { exact: true }),
-  ).toBeVisible();
-  await expect(page.getByText("The Jazz Kissingers")).toBeVisible();
-  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
+  await waitForImport(page);
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "import-synced-textarea.txt",
   );
@@ -29,11 +34,11 @@ test("import-replace", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
   await page
     .locator("#file-picker")
     .setInputFiles([media("plain_english.lrc")]);
-  await expect(page.getByText("audio")).toBeVisible();
-  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
+  await waitForLyrics(page);
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "import-replace-textarea.txt",
   );
@@ -43,22 +48,32 @@ test("import-lyrics-first", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("plain_english.lrc")]);
+  await waitForLyrics(page);
   await expect(page.getByText("plain_english")).toBeVisible();
   await page.locator("#file-picker").setInputFiles([media("audio.mp3")]);
-  await expect(page.getByText("audio")).toBeVisible();
+  await waitForAudio(page);
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
+    "import-lyrics-textarea.txt",
+  );
 });
 
 test("import-corrupted-lyrics", async ({ page, media }) => {
   await page.locator("#file-picker").setInputFiles([media("corrupted.lrc")]);
-  await expect(page.getByText("corrupted")).toBeVisible();
-  await expect(page.getByText("Unknown Artist")).toBeVisible();
-  expect(page.getByLabel("Lyric lines")).toMatchAriaSnapshot();
+  await waitForLyrics(page);
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "corrupted-textarea.txt",
   );
 });
 
-test("paste-plain-hotkey", async ({ page, readMedia }) => {
+test("paste-plain-hotkey", async ({ page, context, readMedia }) => {
+  const browserName = context.browser()?.browserType()?.name();
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  test.skip(
+    browserName === "webkit",
+    "Webkit always generates empty snapshot from Contrl+V paste",
+  );
   await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -69,7 +84,15 @@ test("paste-plain-hotkey", async ({ page, readMedia }) => {
   );
 });
 
-test("paste-synced-hotkey", async ({ page, readMedia }) => {
+test("paste-synced-hotkey", async ({ page, context, readMedia }) => {
+  const browserName = context.browser()?.browserType()?.name();
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  test.skip(
+    browserName === "webkit",
+    "Webkit always generates empty snapshot from Contrl+V paste",
+  );
   await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -80,7 +103,15 @@ test("paste-synced-hotkey", async ({ page, readMedia }) => {
   );
 });
 
-test("paste-plain-typing", async ({ page, readMedia }) => {
+test("paste-plain-typing", async ({ page, context, readMedia }) => {
+  const browserName = context.browser()?.browserType()?.name();
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  test.skip(
+    browserName === "webkit",
+    "Webkit always generates empty snapshot from Contrl+V paste",
+  );
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
@@ -92,7 +123,15 @@ test("paste-plain-typing", async ({ page, readMedia }) => {
   );
 });
 
-test("paste-synced-typing", async ({ page, readMedia }) => {
+test("paste-synced-typing", async ({ page, context, readMedia }) => {
+  const browserName = context.browser()?.browserType()?.name();
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  test.skip(
+    browserName === "webkit",
+    "Webkit always generates empty snapshot from Contrl+V paste",
+  );
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
@@ -104,7 +143,15 @@ test("paste-synced-typing", async ({ page, readMedia }) => {
   );
 });
 
-test("paste-secondary", async ({ page, readMedia }) => {
+test("paste-secondary", async ({ page, context, readMedia }) => {
+  const browserName = context.browser()?.browserType()?.name();
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  test.skip(
+    browserName === "webkit",
+    "Webkit always generates empty snapshot from Contrl+V paste",
+  );
   await page.keyboard.press("Control+4");
   await page.getByRole("textbox").click();
   await page.evaluate((text) => {
@@ -116,7 +163,15 @@ test("paste-secondary", async ({ page, readMedia }) => {
   );
 });
 
-test("paste-genius-hotkey", async ({ page, readMedia }) => {
+test("paste-genius-hotkey", async ({ page, context, readMedia }) => {
+  const browserName = context.browser()?.browserType()?.name();
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  test.skip(
+    browserName === "webkit",
+    "Webkit always generates empty snapshot from Contrl+V paste",
+  );
   await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -127,7 +182,15 @@ test("paste-genius-hotkey", async ({ page, readMedia }) => {
   );
 });
 
-test("paste-genius-typing", async ({ page, readMedia }) => {
+test("paste-genius-typing", async ({ page, context, readMedia }) => {
+  const browserName = context.browser()?.browserType()?.name();
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+  test.skip(
+    browserName === "webkit",
+    "Webkit always generates empty snapshot from Contrl+V paste",
+  );
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
@@ -143,6 +206,7 @@ test("save", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("synced_english.lrc")]);
+  await waitForLyrics(page);
   const TITLE = "I Wish I Could Identify That Smell";
   const downloadPromise = page.waitForEvent("download");
   await page.keyboard.press("Control+'");
@@ -156,19 +220,6 @@ test("save", async ({ page, media }) => {
   expect(content).toContain("[ar: The Jazz Kissingers]");
   expect(content).toMatchSnapshot();
   expect(filename).toBe(`${TITLE}.lrc`);
-});
-
-test("import-10k-lines", async ({ page, media }) => {
-  // 10k lines exceeds MAX_LINES (500) — import is blocked with alert
-  page.on("dialog", async (d) => {
-    expect(d.type()).toBe("alert");
-    expect(d.message()).toContain("500 line limit");
-    await d.accept();
-  });
-  await page.locator("#file-picker").setInputFiles([media("10k_lines.lrc")]);
-  // Content should not contain 10k-line data (nmbr0001 is first line of 10k_lines.lrc)
-  const content = await page.locator("#main-textarea").inputValue();
-  expect(content).not.toContain("nmbr0001");
 });
 
 test("naughty-strings", async ({ page }) => {

@@ -31,7 +31,7 @@ function findLatestVersion(archiveRoot = "archive/semantic") {
       return { name: d.name, major, minor, patch };
     })
     .sort(
-      (a, b) => b.major - a.major || b.minor - a.minor || b.patch - a.patch,
+      (a, b) => b.major - a.major || b.minor - a.minor || b.patch - b.patch,
     );
 
   if (versions.length === 0) {
@@ -61,7 +61,7 @@ const MEDIA_DIR = path.join(__dirname, "..", "media");
  * @typedef {object} CustomFixtures
  * @property {(filename: string) => string} media - Resolves a media filename to an absolute path
  * @property {(filename: string) => string} readMedia - Reads a media file's contents as UTF-8
- * @property {(nth: number, filename: string) => Promise<void>} importSecondary - Opens nth 📂 button and sets files
+ * @property {(nth: number, filename: string) => Promise<void>} importSecondary - Opens nth 📂 button and sets files, then waits for the textarea to be populated
  */
 
 const test =
@@ -89,6 +89,9 @@ const test =
               page.getByRole("button", { name: "Import secondary lyrics file" }).nth(nth - 1).click(),
             ]);
             await fc.setFiles([media(filename)]);
+            await expect(
+              page.getByLabel(`Secondary ${nth} lyrics`),
+            ).toHaveValue(/./);
           },
         );
       },
@@ -116,4 +119,38 @@ async function tabUntilFocused(page, selector, options = {}) {
     `tabUntilFocused: ${selector}[${index}] not focused after ${maxTabs} Tabs`,
   );
 }
-module.exports = { findLatestVersion, test, expect, tabUntilFocused };
+
+/**
+ * Wait for lyrics import to settle (active line rendered).
+ * @param {import('@playwright/test').Page} page
+ */
+async function waitForLyrics(page) {
+  await expect(page.locator(".lrc-line.cursor")).toBeVisible();
+}
+
+/**
+ * Wait for audio metadata to load (duration no longer 0:00).
+ * @param {import('@playwright/test').Page} page
+ */
+async function waitForAudio(page) {
+  await expect(page.locator("#time-dur")).not.toHaveText("0:00");
+}
+
+/**
+ * Wait for both lyrics and audio import to settle.
+ * @param {import('@playwright/test').Page} page
+ */
+async function waitForImport(page) {
+  await waitForLyrics(page);
+  await waitForAudio(page);
+}
+
+module.exports = {
+  findLatestVersion,
+  test,
+  expect,
+  tabUntilFocused,
+  waitForLyrics,
+  waitForAudio,
+  waitForImport,
+};

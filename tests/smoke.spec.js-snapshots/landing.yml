@@ -1,19 +1,19 @@
 - navigation "Main toolbar":
-  - button "Open file"
-  - button "Save"
+  - button "Open file": 📂
+  - button "Save": 💾
   - button "Undo"
   - button "Redo"
   - combobox "Editor font":
     - option "System Sans" [selected]
     - option "System Serif"
-  - spinbutton "Font size"
+  - spinbutton "Font size": /\d+/
   - button "▲"
   - button "▼"
   - button "Add field"
   - button "Hide field" [disabled]
   - button "Merge fields" [disabled]
-  - button "Settings"
-  - button "Toggle theme"
+  - button "Settings": ⚙️
+  - button "Toggle theme": 🌙
   - link "?":
     - /url: https://github.com/amokprime/linebyline/blob/main/HELP.md
     - strong: "?"
@@ -27,41 +27,41 @@
   - region "Now playing":
     - text: Unknown Title Unknown Artist
     - slider "Playback position"
-    - text: ""
-    - spinbutton "Playback speed"
-    - text: ""
+    - text: /0:\d+ 0:\d+/
+    - spinbutton "Playback speed": "1"
+    - text: x
     - button "▲"
     - button "▼"
     - button "Seek back"
     - button "Play"
     - button "Seek forward"
-    - spinbutton "Seek offset in milliseconds"
-    - text: ""
+    - spinbutton "Seek offset in milliseconds": /-\d+/
+    - text: ms
     - button "▲"
     - button "▼"
     - button "Sync file": Sync file Ctrl+I
     - button "Mute"
-    - slider "Volume"
-    - text: ""
+    - slider "Volume": "1"
+    - text: /\d+%/
   - region "Controls":
     - text: ""
     - group "Controls":
       - button "Toggle offset mode": Offset time Shift+~
       - button "Toggle mode": "Hotkey mode `"
-      - button "Previous line": Previous line Q ↑
       - button "Play/pause": Play/pause Space
-      - button "Next line": Next line E ↓
       - button "Sync line start": Sync line W Enter
+      - button "Previous line": Previous line Q ↑
+      - button "Next line": Next line E ↓
       - button "Replay only"
-      - button "Sync line end"
-      - button "Back tiny amount"
-      - button "Forward tiny amount"
-      - button "Back small amount"
-      - button "Forward small amount"
-      - button "Back medium amount"
-      - button "Forward medium amount"
-      - button "Back large amount"
-      - button "Forward large amount"
+      - button "Sync line end": End line T
+      - button "Back tiny amount": /−\d+[hmsp]+ time Z/
+      - button "Forward tiny amount": /\+\d+[hmsp]+ time V/
+      - button "Back small amount": /−\d+[hmsp]+ time A/
+      - button "Forward small amount": /\+\d+[hmsp]+ time F/
+      - button "Back medium amount": /−\d+[hmsp]+ time S/
+      - button "Forward medium amount": /\+\d+[hmsp]+ time D/
+      - button "Back large amount": /−\d+[hmsp]+ time X/
+      - button "Forward large amount": /\+\d+[hmsp]+ time C/
   - text: Main
   - checkbox "( )" [checked]
   - text: ( )

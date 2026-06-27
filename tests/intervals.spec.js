@@ -1,35 +1,58 @@
-const { test, expect } = require("@linebyline/test-helpers");
+const {
+  test,
+  expect,
+  waitForImport,
+  waitForAudio,
+} = require("@linebyline/test-helpers");
+
+async function lyricLinesText(page) {
+  return page.getByLabel("Lyric lines").innerText();
+}
 
 test("intervals-large", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
   await page.keyboard.press("Control+,");
   await page.getByRole("spinbutton", { name: "Large" }).fill("2000");
+  await page
+    .getByRole("spinbutton", { name: "Large" })
+    .evaluate((e) => e.blur());
   await page.keyboard.press("Escape");
-  await expect(page.getByText("+2000ms timeC")).toBeVisible();
+  await page.locator("#main-lines").click();
+  await expect(
+    page.getByRole("button", { name: /Back large amount/ }),
+  ).toBeVisible();
   await page.keyboard.press("c");
-  await expect(page.getByText("[00:02.00] I wish I could")).toBeVisible();
+  const lines = await lyricLinesText(page);
+  expect(lines).toContain("[00:02.00] I wish I could");
 });
 
 test("seek-increment", async ({ page, media }) => {
   await page.locator("#file-picker").setInputFiles([media("audio.mp3")]);
+  await waitForAudio(page);
   await page.keyboard.press("Control+,");
-  await page.getByRole("spinbutton", { name: "Seek increment" }).fill("10");
+  await page.getByRole("spinbutton", { name: "Seek increment" }).fill("13");
   await page.keyboard.press("Escape");
+  await expect(page.locator("#settings-overlay")).not.toHaveClass(/open/);
+  await page.locator("#main-lines").click();
   await page.keyboard.press("ArrowRight");
-  await expect(page.getByText("0:100:13")).toBeVisible();
+  await expect(page.getByText("0:130:")).toBeVisible();
 });
 
 test("speed-ratio", async ({ page, media }) => {
   await page.locator("#file-picker").setInputFiles([media("audio.mp3")]);
+  await waitForAudio(page);
   await page.keyboard.press("Control+,");
-  await page.getByRole("spinbutton", { name: "Speed ratio" }).fill("1.50");
+  await page.getByRole("spinbutton", { name: "Speed ratio" }).fill("2");
   await page.keyboard.press("Escape");
+  await expect(page.locator("#settings-overlay")).not.toHaveClass(/open/);
+  await page.locator("#main-lines").click();
   await page.keyboard.press("Control+1");
   await expect(
     page.getByRole("spinbutton", { name: "Playback speed" }),
-  ).toHaveValue("0.67");
+  ).toHaveValue("0.50");
   await page.keyboard.press("Control+3");
   await expect(
     page.getByRole("spinbutton", { name: "Playback speed" }),
@@ -37,30 +60,43 @@ test("speed-ratio", async ({ page, media }) => {
   await page.keyboard.press("Control+2");
   await expect(
     page.getByRole("spinbutton", { name: "Playback speed" }),
-  ).toHaveValue("1.50");
+  ).toHaveValue("2.00");
 });
 
 test("volume-increment", async ({ page, media }) => {
   await page.locator("#file-picker").setInputFiles([media("audio.mp3")]);
+  await waitForAudio(page);
   await page.keyboard.press("Control+,");
   await page.getByRole("spinbutton", { name: "Volume increment" }).fill("20");
   await page.keyboard.press("Escape");
+  await expect(page.locator("#settings-overlay")).not.toHaveClass(/open/);
   await page.locator("#vol-slider").hover();
   await page.mouse.wheel(0, 120);
   await expect(page.locator("#vol-slider")).toHaveValue("0.8");
 });
 
 test("typing-debounce-1", async ({ page }) => {
-  await page.keyboard.press("Backquote");
   await page.keyboard.press("Control+,");
   await page.getByRole("spinbutton", { name: "Undo window" }).fill("1");
   await page.keyboard.press("Escape");
+  await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
+  await page.keyboard.press("Backquote");
+  await expect(
+    page.getByRole("textbox", { name: "Main lyric text" }),
+  ).toBeVisible();
   await page.locator("#main-textarea").click(); //Not needed in real browser; Playwright loses focus
   await page.keyboard.press("a");
+  const before =
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\na";
+  await expect(page.locator("#main-textarea")).toHaveValue(before); //Extra assertions for headless
   await page.keyboard.press("b");
-  await page.keyboard.press("c");
-  for (let i = 0; i < 2; i++) await page.keyboard.press("Control+z");
   await expect(page.locator("#main-textarea")).toHaveValue(
-    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\na",
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\nab",
   );
+  await page.keyboard.press("c");
+  await expect(page.locator("#main-textarea")).toHaveValue(
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\nabc",
+  );
+  for (let i = 0; i < 2; i++) await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(before);
 });

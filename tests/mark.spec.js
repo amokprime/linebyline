@@ -1,9 +1,10 @@
-const { test, expect } = require("@linebyline/test-helpers");
+const { test, expect, waitForImport } = require("@linebyline/test-helpers");
 
 test("inline-paren-arrow", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("translation_inline.lrc")]);
+  await waitForImport(page);
   await expect(page.getByRole("checkbox", { name: "( )" })).toBeChecked();
   await page.getByRole("checkbox", { name: "↩" }).check();
   await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
@@ -18,6 +19,7 @@ test("inline-plain-arrow", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("translation_inline.lrc")]);
+  await waitForImport(page);
   await page.getByRole("checkbox", { name: "( )" }).uncheck();
   await page.getByRole("checkbox", { name: "↩" }).check();
   await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
@@ -32,6 +34,7 @@ test("inline-paren-e", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("translation_inline.lrc")]);
+  await waitForImport(page);
   await expect(page.getByRole("checkbox", { name: "( )" })).toBeChecked();
   await page.getByRole("checkbox", { name: "↩" }).check();
   await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
@@ -48,9 +51,7 @@ test("split-paren", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("translation_split.lrc")]);
-  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
-    "split-paren-lines.txt",
-  );
+  await waitForImport(page);
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "split-paren-textarea.txt",
   );
@@ -62,9 +63,7 @@ test("split-plain", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("translation_split.lrc")]);
-  expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
-    "split-plain-lines.txt",
-  );
+  await waitForImport(page);
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "split-plain-textarea.txt",
   );

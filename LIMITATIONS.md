@@ -60,3 +60,34 @@ Embed
 sudo ausearch -c 'systemd-coredum' --raw | audit2allow -M my-systemdcoredum
 sudo semodule -X 300 -i my-systemdcoredum.pp
 ```
+- Many tests require gimmicky focus clicks on any part of the page or in a lyrics field. The real browsers shift focus automatically in ways Playwright browsers (especially headless) do not.
+
+```js
+await page.locator("#left-panel-header").click();
+await page.locator("#main-textarea").click();
+await page.getByRole("textbox", { name: "Main lyric text" }).click();
+```
+
+- The realistic paste method is only supported by Firefox
+```js
+  await page.locator("#main-lines").click();
+  await page.evaluate((text) => {
+    navigator.clipboard.writeText(text);
+  }, readMedia("lyrics file"));
+  await page.keyboard.press("Control+v");
+  expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot();
+```
+- Chromium generates an empty snapshot from pasted content unless clipboard permissions are granted:
+```js
+  const browserName = context.browser()?.browserType()?.name();
+  if (browserName === "chromium") {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  }
+```
+- Webkit doesn't have an equivalent so I'm just skipping it outright for paste tests:
+```js
+  test.skip(
+    browserName === "webkit",
+    "Webkit always generates empty snapshot from Contrl+V paste",
+  );
+```

@@ -3,17 +3,17 @@
   - group "Controls":
     - button "Toggle offset mode": Offset time Shift+~
     - button "Toggle mode": "Typing mode `"
-    - button "Previous line"
     - button "Play/pause": Play/pause Ctrl+Space
-    - button "Next line"
     - button "Sync line start" [disabled]: Sync line W Enter
+    - button "Previous line"
+    - button "Next line"
     - button "Replay only" [disabled]
-    - button "Sync line end" [disabled]
-    - button "Back tiny amount" [disabled]
-    - button "Forward tiny amount" [disabled]
-    - button "Back small amount" [disabled]
-    - button "Forward small amount" [disabled]
-    - button "Back medium amount" [disabled]
-    - button "Forward medium amount" [disabled]
-    - button "Back large amount" [disabled]
-    - button "Forward large amount" [disabled]
+    - button "Sync line end" [disabled]: End line T
+    - button "Back tiny amount" [disabled]: /−\d+[hmsp]+ time Z/
+    - button "Forward tiny amount" [disabled]: /\+\d+[hmsp]+ time V/
+    - button "Back small amount" [disabled]: /−\d+[hmsp]+ time A/
+    - button "Forward small amount" [disabled]: /\+\d+[hmsp]+ time F/
+    - button "Back medium amount" [disabled]: /−\d+[hmsp]+ time S/
+    - button "Forward medium amount" [disabled]: /\+\d+[hmsp]+ time D/
+    - button "Back large amount" [disabled]: /−\d+[hmsp]+ time X/
+    - button "Forward large amount" [disabled]: /\+\d+[hmsp]+ time C/

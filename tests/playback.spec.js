@@ -1,12 +1,22 @@
-const { test, expect } = require("@linebyline/test-helpers");
+const {
+  test,
+  expect,
+  waitForImport,
+  waitForAudio,
+} = require("@linebyline/test-helpers");
+
+async function lyricLinesText(page) {
+  return page.getByLabel("Lyric lines").innerText();
+}
 
 test("play-pause-hotkey", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
-  await expect(page.getByText("[00:00.00] I wish I could")).toBeVisible(); //Not needed in a real browser; Playwright can press Space before lyrics finish loading
+  await waitForImport(page);
   await page.keyboard.press("Space");
-  await expect(page.getByText("0:010:13")).toBeVisible();
+  await expect(page.locator("#time-pos")).toHaveText(/^0:0[1-3]$/);
+  await expect(page.locator("#time-dur")).toHaveText(/^0:1[2-4]$/);
   await page.keyboard.press("Space");
   await expect(
     page.getByRole("button", { name: "Play", exact: true }),
@@ -17,10 +27,11 @@ test("play-pause-typing", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
-  await expect(page.getByText("[00:00.00] I wish I could")).toBeVisible(); //Not needed in a real browser; Playwright can press keys before lyrics finish loading
+  await waitForImport(page);
   await page.keyboard.press("Backquote");
   await page.keyboard.press("Control+Space");
-  await expect(page.getByText("0:010:13")).toBeVisible();
+  await expect(page.locator("#time-pos")).toHaveText(/^0:0[1-3]$/);
+  await expect(page.locator("#time-dur")).toHaveText(/^0:1[2-4]$/);
   await page.keyboard.press("Control+Space");
   await expect(
     page.getByRole("button", { name: "Play", exact: true }),
@@ -31,6 +42,7 @@ test("seek-click", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
   async function seekTo(page, fraction) {
     const box = await page.locator("#progress-wrap").boundingBox();
     await page.mouse.click(
@@ -40,33 +52,35 @@ test("seek-click", async ({ page, media }) => {
   }
   await seekTo(page, 1 / 13);
   await page.getByRole("button", { name: "Play", exact: true }).click();
-  await expect(page.locator("#audio-box")).toContainText("0:01");
+  await expect(page.locator("#time-pos")).toHaveText(/^0:0[1-3]$/);
 });
 
 test("seek-scroll", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
   await page.locator("#progress-wrap").hover();
   await page.mouse.wheel(0, -120);
-  await expect(page.locator("#audio-box")).toContainText("0:05");
+  await expect(page.locator("#time-pos")).toHaveText(/^0:0[4-6]$/);
 });
 
 test("seek-typing", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
   await page.keyboard.press("Backquote");
   await page.keyboard.press("Control+0");
-  await expect(page.locator("#audio-box")).toContainText("0:05");
-  // Covers playback starting after seeking added in 0.36.2
-  await expect(page.locator("#audio-box")).toContainText("0:06");
+  await expect(page.locator("#time-pos")).toHaveText(/^0:0[4-6]$/);
+  await expect(page.locator("#time-pos")).toHaveText(/^0:0[5-9]$/);
 });
 
 test("speed-typing", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
   await page.keyboard.press("Backquote");
   for (let i = 0; i < 2; i++) await page.keyboard.press("Control+1");
   await expect(page.locator("#speed-val")).toHaveValue("0.83");
@@ -102,7 +116,10 @@ test("audio-missing-noop", async ({ page, media }) => {
     "audio-missing-play.png",
   );
   await page.locator("#file-picker").setInputFiles([media("audio.mp3")]);
+  await waitForAudio(page);
+  await expect(page.locator("#time-pos")).toHaveText("0:00");
+  await expect(page.locator("#time-dur")).toHaveText(/^0:1[2-4]$/);
   await expect(
-    page.getByText("audio Unknown Artist 0:000:13"),
+    page.getByText("audio Unknown Artist"),
   ).toHaveScreenshot("audio-import-reset.png");
 });

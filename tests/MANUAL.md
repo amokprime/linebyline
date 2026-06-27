@@ -7,6 +7,7 @@
 1. Latest /archive/semantic/X.XX.X/linebyline-X.XX.X.html
 2. /tests/media/audio.mp3
 3. /tests/media/synced_english.lrc
+4. /tests/media/10k_lines.lrc
 
 #### File picker window
 - [ ] Open test file 1 and verify that clicking the 📂 button opens a normal looking file picker window
@@ -49,8 +50,11 @@
 - [ ] Typing "a", then Enter, then "b", then Enter, then "c" slowly on newlines get undone and redone in five steps
 
 #### Unsaved work warning
-- Open test files and check the popup is triggered by:
+- Open test files and verify the popup is triggered by:
 - [ ] `Ctrl+W` / `Alt+F4` (some OSes might intercept this before the browser)
 - [ ] Middle click on LineByLine browser tab
 - [ ] Clicking the browser tab `x` close button
 - [ ] Clicking the browser close button
+
+#### Huge file import
+- [ ] Open test file 1 and 4 and verify a blocking popup appears and does not allow importing the 10,000 lines of lyrics

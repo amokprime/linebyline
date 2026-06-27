@@ -1,9 +1,15 @@
-const { test, expect } = require("@linebyline/test-helpers");
+const {
+  test,
+  expect,
+  waitForImport,
+  waitForLyrics,
+} = require("@linebyline/test-helpers");
 
 test("key-suppress", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
   await page.keyboard.down("w");
   for (let i = 0; i < 10; i++) {
     await page.evaluate((key) => {
@@ -25,6 +31,7 @@ test("key-suppress-leak", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
   await page.keyboard.down("Backquote");
   for (let i = 0; i < 10; i++) {
     await page.evaluate((key) => {
@@ -47,6 +54,7 @@ test("key-repeat", async ({ page, media }) => {
   await page
     .locator("#file-picker")
     .setInputFiles([media("plain_english.lrc")]);
+  await waitForLyrics(page);
   await page.keyboard.down("ArrowDown");
   for (let i = 0; i < 4; i++) {
     await page.evaluate((key) => {
