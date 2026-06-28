@@ -1,9 +1,4 @@
-
 const { test, expect, waitForImport } = require("@linebyline/test-helpers");
-
-async function lyricLinesText(page) {
-  return page.getByLabel("Lyric lines").innerText();
-}
 
 function wrapParensCheckbox(page) {
   return page
@@ -58,7 +53,11 @@ test("replace-secondary", async ({ page, importSecondary }) => {
   await expect(page.getByText(/Line count mismatch \(5 vs 0\)/)).toBeVisible();
 });
 
-test("paste-secondary-genius", async ({ page, readMedia, workaroundPaste }) => {
+test("paste-secondary-genius", async ({
+  page,
+  readMedia,
+  workaroundPaste: _workaroundPaste,
+}) => {
   await page.keyboard.press("Control+4");
   await page.getByRole("textbox").click();
   await page.evaluate((text) => {

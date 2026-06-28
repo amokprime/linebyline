@@ -55,7 +55,7 @@ Embed
 **These apply to Playwright tests as of version 0.37.1**
 - Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) as of version 0.36.2
 - The official Microsoft Playwright image pins an outdated version of npm that's hopefully compatible with the GitHub CI ubuntu-runner
-- Webkit tests crash after completion on Linux, which also triggers a coredump in the repo root and false positive SELinux AVC [warning](https://github.com/amokprime/linebyline/blob/main/archive/modular/plan/1-Playwright/2.md#3. SELinux AVC — NOT related to the cache folder mount). The SELinux alerts can be silenced with the below policy. I never got around to silencing the Webkit crash alerts and just added `my-systemdcoredum.*` to .gitignore.
+- Webkit tests crash after completion on Linux, which also triggers a coredump in the repo root and false positive SELinux AVC [warning](https://github.com/amokprime/linebyline/blob/main/tests/chat/0.37.1/2.md#3. SELinux AVC — NOT related to the cache folder mount). The SELinux alerts can be silenced with the below policy. I never got around to silencing the Webkit crash alerts and just added `my-systemdcoredum.*` to .gitignore.
 ```sh
 sudo ausearch -c 'systemd-coredum' --raw | audit2allow -M my-systemdcoredum
 sudo semodule -X 300 -i my-systemdcoredum.pp
@@ -90,4 +90,4 @@ await page.getByRole("textbox", { name: "Main lyric text" }).click();
     "Webkit always generates empty snapshot from Contrl+V paste",
   );
 ```
-- I run UI tests with Playwright npm natively in Fedora, which has different OS font rendering than Ubuntu. This causes font-based screenshot [incompatibilities](https://github.com/amokprime/linebyline/blob/main/archive/modular/plan/1-Playwright/9.md) that must be worked around by skipping relevant tests or rewriting them to expect consistent elements or shared fonts
+- I run UI tests with Playwright npm natively in Fedora, which has different OS font rendering than Ubuntu. This causes font-based screenshot [incompatibilities](https://github.com/amokprime/linebyline/blob/main/tests/chat/0.37.1/9.md) that must be worked around by skipping relevant tests or rewriting them to expect consistent elements or shared fonts

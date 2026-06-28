@@ -1,14 +1,9 @@
-
 const {
   test,
   expect,
   waitForImport,
   waitForAudio,
 } = require("@linebyline/test-helpers");
-
-async function lyricLinesText(page) {
-  return page.getByLabel("Lyric lines").innerText();
-}
 
 test("play-pause-hotkey", async ({ page, media }) => {
   await page
@@ -124,7 +119,7 @@ test("audio-missing-noop", async ({ page, media }) => {
   await waitForAudio(page);
   await expect(page.locator("#time-pos")).toHaveText("0:00");
   await expect(page.locator("#time-dur")).toHaveText(/^0:1[2-4]$/);
-  await expect(
-    page.getByText("audio Unknown Artist"),
-  ).toHaveScreenshot("audio-import-reset.png");
+  await expect(page.getByText("audio Unknown Artist")).toHaveScreenshot(
+    "audio-import-reset.png",
+  );
 });

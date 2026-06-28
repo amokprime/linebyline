@@ -2,6 +2,7 @@
 const { test, expect, waitForLyrics } = require("@linebyline/test-helpers");
 
 test("persistence", async ({ page, media }) => {
+  /** @param {string} name @param {string} v @param {boolean} [soft] */
   const exp = (name, v, soft) =>
     (soft ? expect.soft : expect)(
       page.getByLabel(name, { exact: true }),
@@ -129,7 +130,7 @@ test("assign-conflict-tab", async ({ page }) => {
   await page.keyboard.press("Shift+Tab");
   await expect(page.locator("#hk-capture-ts_back_large")).toHaveValue("X");
   await page.evaluate(() => {
-    document.getElementById("s-search").value = "";
+    /** @type {HTMLInputElement} */ (document.getElementById("s-search")).value = "";
     setSearchHkMode(false);
   });
   await expect(page.locator("#hk-capture-ts_fwd_large")).toBeVisible();

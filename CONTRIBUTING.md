@@ -34,13 +34,12 @@ There are also no built-in skills or memory scaffolding to enforce a large amoun
 
 This makes repetitive uploads more manageable than the zip folder of symlinks I used for a while. To prepare the global install I ran `npm config set prefix "~/.npm-global"` and added `set -x PATH $HOME/.npm-global/bin $PATH` to my `~/.config/fish.config`.
 `/**` = everything in the folder. If you rerun the command on the same output file the old one is overwritten. Example syntax:
+
 ```sh
 repomix --output "local/repomix-output.xml"\
 --include "ai/z-ai-glm/skills/**,archive/modular/**,docs/**,tests/**,\
 HELP.md,package.json,playwright.config.js,README.md" \
---ignore "ai/z-ai-glm/skills/chat/**,\
-tests/prompts/**,tests/media/10k_lines.lrc,\
-tests/media/naughty-strings.json,archive/modular/plan/1-Playwright/5.md"
+--ignore "ai/z-ai-glm/skills/chat/**,tests/chat/**"
 ```
 
 #### Working with Claude Sonnet (web chat/Claude Desktop)
@@ -113,11 +112,12 @@ test("mytest", async ({ page, media, readMedia, importSecondary})) => {
 });
 ```
 What they do:
-- `tabUntilFocused` holds `Tab` until a certain element is focused. It is only used in keyboard-nav.spec.js for now. It refers to elements either by their HTML fixed locator name or by a selector and index number for element names rebuilt dynamically when loaded (i.e. secondary fields, Settings window buttons).
-- These are only used in sync-adjust.spec.js for now:
+- `tabUntilFocused` holds `Tab` until a certain element is focused. It is only used in `keyboard-nav.spec.js` for now. It refers to elements either by their HTML fixed locator name or by a selector and index number for element names rebuilt dynamically when loaded (i.e. secondary fields, Settings window buttons).
+- These are only used in `sync-adjust.spec.js` for now:
 	- `waitForImport` waits for the main lyrics to load, the first line to become active (left blue border), and audio metadata to load
 	- `triggerTimeUpdate` forces the app to update the highlighted line and the time in the media box instead of waiting (which breaks in headless)
-- `lyricLinesText` replaces flaky ARIA snapshots that broke in headless with a capture of the main lyrics as a single string of list items and newlines
-- `media` is used to import audio and main field lyrics
-- `readMedia` loads a .lrc file to the clipboard for paste tests
-- `importSecondary` imports secondary field lyrics
+- `lyricLinesText` replaces flaky ARIA snapshots that broke in headless with a capture of the main lyrics as a single string of list items and newlines. This is used in `intervals.spec.js` and `sync-adjust.spec.js`.
+- These are used in multiple files:
+	- `media` imports audio and main field lyrics
+	- `readMedia` loads a .lrc file to the clipboard for paste tests
+	- `importSecondary` imports secondary field lyrics

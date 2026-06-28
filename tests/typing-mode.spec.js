@@ -58,9 +58,8 @@ test("meta-save-update", async ({ page, browserName }) => {
   if (browserName === "firefox") {
     await page.evaluate(() => {
       window.__saveCapture = null;
-      const orig = window.doSave;
       window.doSave = function () {
-        const text = document.getElementById("main-textarea").value;
+        const text = /** @type {HTMLInputElement} */ (document.getElementById("main-textarea")).value;
         const tiMatch = text.match(/^\[ti:\s*(.+)\]/m);
         const ti = tiMatch ? tiMatch[1].trim() : "";
         let stem = "lyrics";

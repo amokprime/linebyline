@@ -1,4 +1,3 @@
-
 const {
   test,
   expect,
@@ -6,10 +5,6 @@ const {
   waitForLyrics,
   waitForAudio,
 } = require("@linebyline/test-helpers");
-
-async function lyricLinesText(page) {
-  return page.getByLabel("Lyric lines").innerText();
-}
 
 test("import-plain", async ({ page, media }) => {
   await page
@@ -66,7 +61,11 @@ test("import-corrupted-lyrics", async ({ page, media }) => {
   );
 });
 
-test("paste-plain-hotkey", async ({ page, readMedia, workaroundPaste }) => {
+test("paste-plain-hotkey", async ({
+  page,
+  readMedia,
+  workaroundPaste: _workaroundPaste,
+}) => {
   await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -77,7 +76,11 @@ test("paste-plain-hotkey", async ({ page, readMedia, workaroundPaste }) => {
   );
 });
 
-test("paste-synced-hotkey", async ({ page, readMedia, workaroundPaste }) => {
+test("paste-synced-hotkey", async ({
+  page,
+  readMedia,
+  workaroundPaste: _workaroundPaste,
+}) => {
   await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -88,7 +91,11 @@ test("paste-synced-hotkey", async ({ page, readMedia, workaroundPaste }) => {
   );
 });
 
-test("paste-plain-typing", async ({ page, readMedia, workaroundPaste }) => {
+test("paste-plain-typing", async ({
+  page,
+  readMedia,
+  workaroundPaste: _workaroundPaste,
+}) => {
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
@@ -100,7 +107,11 @@ test("paste-plain-typing", async ({ page, readMedia, workaroundPaste }) => {
   );
 });
 
-test("paste-synced-typing", async ({ page, readMedia, workaroundPaste }) => {
+test("paste-synced-typing", async ({
+  page,
+  readMedia,
+  workaroundPaste: _workaroundPaste,
+}) => {
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
@@ -112,7 +123,11 @@ test("paste-synced-typing", async ({ page, readMedia, workaroundPaste }) => {
   );
 });
 
-test("paste-secondary", async ({ page, readMedia, workaroundPaste }) => {
+test("paste-secondary", async ({
+  page,
+  readMedia,
+  workaroundPaste: _workaroundPaste,
+}) => {
   await page.keyboard.press("Control+4");
   await page.getByRole("textbox").click();
   await page.evaluate((text) => {
@@ -124,7 +139,11 @@ test("paste-secondary", async ({ page, readMedia, workaroundPaste }) => {
   );
 });
 
-test("paste-genius-hotkey", async ({ page, readMedia, workaroundPaste }) => {
+test("paste-genius-hotkey", async ({
+  page,
+  readMedia,
+  workaroundPaste: _workaroundPaste,
+}) => {
   await page.locator("#main-lines").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -135,7 +154,11 @@ test("paste-genius-hotkey", async ({ page, readMedia, workaroundPaste }) => {
   );
 });
 
-test("paste-genius-typing", async ({ page, readMedia, workaroundPaste }) => {
+test("paste-genius-typing", async ({
+  page,
+  readMedia,
+  workaroundPaste: _workaroundPaste,
+}) => {
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
   await page.evaluate((text) => {
