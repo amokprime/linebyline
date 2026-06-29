@@ -206,7 +206,7 @@ test("naughty-strings", async ({ page }) => {
   ];
 
   await page.locator("#main-lines").click();
-  for (const [i, naughty] of NAUGHTY.entries()) {
+  for (const [, naughty] of NAUGHTY.entries()) {
     await page.evaluate((text) => {
       navigator.clipboard.writeText(text);
     }, naughty);

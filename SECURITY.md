@@ -2,33 +2,23 @@
 
 ## Supported Versions
 
-| Version                                                                                | Supported          |
-| -------------------------------------------------------------------------------------- | ------------------ |
-| [docs/index.html](https://github.com/amokprime/linebyline/blob/main/docs/index.html)   | :white_check_mark: |
-| [semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic)         | :x:                |
-| [pre-semantic](https://github.com/amokprime/linebyline/tree/main/archive/pre-semantic) | :x:                |
+| Version                                                                                | ESLint, CodeQL     | SonarCloud         |
+| -------------------------------------------------------------------------------------- | ------------------ | ------------------ |
+| [docs/index.html](https://github.com/amokprime/linebyline/blob/main/docs/index.html)   | :white_check_mark: | :white_check_mark: |
+| [semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic)         | :x:                | :x:                |
+| [pre-semantic](https://github.com/amokprime/linebyline/tree/main/archive/pre-semantic) | :x:                | :x:                |
+| [tests](https://github.com/amokprime/linebyline/blob/main/tests/)                      | :white_check_mark: | :x:                |
 
 ## Reporting a Vulnerability
 You can open a new [Issue](https://github.com/amokprime/linebyline/issues) or [report it privately](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/privately-reporting-a-security-vulnerability). There are many known [false positives](https://github.com/amokprime/linebyline/blob/main/SECURITY.md#false-positives) that boil down to these points:
 1. LineByLine is an offline app. Loading the GitHub Page is basically the same as downloading index.html and opening it in a browser.
-2. Scanners treat it like a website that stores and processes data server-side. SonarQube Cloud is especially spammy here. I'm using it more to check Claude's code quality as CodeQL already covers security.
+2. Scanners treat it like a website that stores and processes data server-side. SonarQube Cloud is especially spammy here. I'm using it more to check code quality (i.e. C.R.A.P.) as CodeQL already covers security.
 
 I am not a cybersecurity professional or security researcher. What I can do about any [true positives](https://github.com/amokprime/linebyline/blob/main/SECURITY.md#true-positives):
 1. Me asking AI - hopefully it's solved here🤷
 2. GitHub account compromise - I change all my passwords
 3. Code issue AI can't solve confined to recent version of the app - delete folder and commit
 4. Code issue AI can't solve affecting most versions of the app - archive whole repo
-
-## Deprecated tools
-I am switching to CodeQL + making PRs for future changes instead of directly committing.
-Opengrep Windows CMD check:
-``` cmd
-for /f "tokens=*" %v in ('opengrep --version') do @for /f "tokens=*" %r in ('curl -s https://api.github.com/repos/opengrep/opengrep/releases/latest ^| findstr "tag_name"') do @echo Installed: %v & echo Latest: %r
-```
-Opengrep/Semgrep scan
-```
-opengrep scan --config auto --taint-intrafile --exclude-rule html.security.audit.missing-integrity.missing-integrity
-```
 
 ## True positives
 - SonarQube Cloud warning "Change this code to not construct the path from user-controlled data" (affects abandoned Python code)

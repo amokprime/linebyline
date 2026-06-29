@@ -1,4 +1,3 @@
-
 // @ts-check
 "use strict";
 
@@ -32,7 +31,7 @@ function findLatestVersion(archiveRoot = "archive/semantic") {
       return { name: d.name, major, minor, patch };
     })
     .sort(
-      (a, b) => b.major - a.major || b.minor - a.minor || b.patch - b.patch,
+      (a, b) => b.major - a.major || b.minor - a.minor || b.patch - a.patch,
     );
 
   if (versions.length === 0) {
@@ -88,7 +87,10 @@ const test =
           async (/** @type {number} */ nth, /** @type {string} */ filename) => {
             const [fc] = await Promise.all([
               page.waitForEvent("filechooser"),
-              page.getByRole("button", { name: "Import secondary lyrics file" }).nth(nth - 1).click(),
+              page
+                .getByRole("button", { name: "Import secondary lyrics file" })
+                .nth(nth - 1)
+                .click(),
             ]);
             await fc.setFiles([media(filename)]);
             await expect(

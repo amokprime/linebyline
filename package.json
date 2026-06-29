@@ -21,9 +21,13 @@
   },
   "homepage": "https://github.com/amokprime/linebyline#readme",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@linebyline/test-helpers": "file:./tests/helpers",
     "@playwright/test": "^1.61.0",
     "@types/node": "^25.6.0",
+    "eslint": "^10.6.0",
+    "eslint-plugin-sonarjs": "^4.1.0",
+    "globals": "^17.7.0",
     "serve": "^14.2.6"
   },
   "dependencies": {

@@ -1,4 +1,3 @@
-
 const {
   test,
   expect,
@@ -7,7 +6,6 @@ const {
 } = require("@linebyline/test-helpers");
 const META =
   "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n";
-const ta = (page) => page.locator("#main-textarea");
 
 test("import-main", async ({ page, media }) => {
   await page
@@ -66,7 +64,11 @@ test("import-two-secondary", async ({ page, importSecondary }) => {
   ).toMatchSnapshot("import-two-2.txt");
 });
 
-test("paste-main", async ({ page, readMedia, workaroundPaste: _workaroundPaste }) => {
+test("paste-main", async ({
+  page,
+  readMedia,
+  workaroundPaste: _workaroundPaste,
+}) => {
   await page.locator("#main-lines").click();
   await page.evaluate(async (text) => {
     await navigator.clipboard.writeText(text);

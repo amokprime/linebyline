@@ -49,7 +49,7 @@ claude.ai has extremely strict free plan 5-hour limits. Fill out the preferences
 
 #### CI
 
-Any changes to the app code must pass CodeQL and SonarCloud GitHub Actions. ⚠️These are currently broken pending review of a flag on my account.⚠️ When Sonar issues are found, fetch them with the [sonar-issue-exporter](https://github.com/amokprime/sonar-issue-exporter) tool and put them in an "issues" folder inside the app version folder, minus the why.md and how.md files (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license).
+All code changes must pass [ESLint](https://github.com/amokprime/linebyline/tree/main/archive/modular/plan/2-Zed-ESLint.md) (i.e. `npx eslint . > local/log.txt 2>&1`). Any changes to app code must pass CodeQL and SonarCloud GitHub Actions. ⚠️These are currently broken pending review of a flag on my account.⚠️ When Sonar issues are found, fetch them with the [sonar-issue-exporter](https://github.com/amokprime/sonar-issue-exporter) tool and put them in an "issues" folder inside the app version folder, minus the why.md and how.md files (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license).
 
 LineByLine has two types of QA tests: Playwright and [MANUAL.md.](https://github.com/amokprime/linebyline/tree/main/tests/MANUAL.md). You don't have to do either of these for now. Just leave the existing Playwright test files and folders (such as snapshots) alone so that I can access them on my end when I checkout your PR.
 
