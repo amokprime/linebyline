@@ -3,10 +3,10 @@
   - group "Controls":
     - button "Toggle offset mode": Offset time Shift+~
     - button "Toggle mode": "Typing mode `"
-    - button "Play/pause": Play/pause Ctrl+Space
-    - button "Sync line start" [disabled]: Sync line W Enter
     - button "Previous line"
+    - button "Play/pause": Play/pause Ctrl+Space
     - button "Next line"
+    - button "Sync line start" [disabled]: Sync line W Enter
     - button "Replay only" [disabled]
     - button "Sync line end" [disabled]: End line T
     - button "Back tiny amount" [disabled]: /−\d+[hmsp]+ time Z/

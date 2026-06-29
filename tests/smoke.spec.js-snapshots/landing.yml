@@ -48,10 +48,10 @@
     - group "Controls":
       - button "Toggle offset mode": Offset time Shift+~
       - button "Toggle mode": "Hotkey mode `"
-      - button "Play/pause": Play/pause Space
-      - button "Sync line start": Sync line W Enter
       - button "Previous line": Previous line Q ↑
+      - button "Play/pause": Play/pause Space
       - button "Next line": Next line E ↓
+      - button "Sync line start": Sync line W Enter
       - button "Replay only"
       - button "Sync line end": End line T
       - button "Back tiny amount": /−\d+[hmsp]+ time Z/
