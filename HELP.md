@@ -1,4 +1,4 @@
-LineByLine is 🚨🌈VIBECODED🌈🚨 — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️
+The app code uses many of the same markdown icons in this page. Checkmarks = checked boxes.
 
 ### Settings⚙️
 - Default Settings hotkey (`Ctrl+,`); close with `Esc` or clicking outside the window

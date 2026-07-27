@@ -1,10 +1,7 @@
 # LineByLine
 
-### 🚧Account flag🚧
-This started around the time I migrated from Windows 11 to Fedora 44 KDE. It means: the GitHub Page, GitHub Actions (aka CI), GitHub Copilot, are all down for me. You can still download index.html and open it in a browser for now.
-I will still be committing updated Playwright test code (one of the reasons I moved to Linux in the first place) because it was never covered by SonarCloud scans, and because I can actually read it. But I will defer changes to app code until either the flag is lifted or I redeploy CI elsewhere.
 ### AI Disclosure
-I am not a developer. This is my first major🚨🌈VIBECODED🌈🚨project and first GitHub repo — ⚠️USE AT YOUR OWN RISK🗣️🗣️🗣️.
+I am not a developer. This is my first major vibecoded project and first GitHub repo.
 Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
 App prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive), test prompt history in [/tests/chat](https://github.com/amokprime/linebyline/tree/main/tests/chat), and AI scaffolding in [/ai/chat](https://github.com/amokprime/linebyline/tree/main/ai/chat). See what I'm working on [here](https://share.note.sx/9wimmaly). 
 ### About
