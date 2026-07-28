@@ -126,6 +126,15 @@ summary: <1-2 sentence summary of the companion file's contents>
 
 Append per turn (separate the user's text from yours with a `---` line): the turn number in a header, the user's prompts verbatim (including full contents of Prompt.md if uploaded), and all your non-file chat outputs that turn (including markdown tables and Mermaid diagrams). Use "about" to express approximation instead of "~".
 
+Number turns sequentially with integers throughout the entire companion file (Turn 1, Turn 2, Turn 3, …), continuing across sessions if the companion file already exists from a prior session. Do not switch to letter labels (Turn A, Turn B, …) mid-session — this creates inconsistent references and makes it hard for a human to follow the turn sequence. If a session spans multiple companion files (e.g. Phase 1 onboard in `linebyline-0.37.1.md`, then Phase 4 work in `linebyline-0.37.2.md`), the turn counter continues across files — the new file starts at the next turn number, not back at 1.
+
+Never quote potentially licensed content in the companion file. This includes song lyrics, artist names, song titles, album titles, and any other text that could be copyrighted or trademarked. When documenting a fix that involved real lyrics (e.g. a Genius paste extraction bug), replace all lyric text and identifying metadata with functional placeholders: `[intro vocalization]` for a dropped intro line, `[final lyric line]` for the last line, `[Verse 1: singers]` for section headers with real singer names, `[real artist] — [real song]` for the page title. The technical discussion should reference structural properties (line index, bracket format, blank-line position) rather than the actual content. The companion file lives in `download/` and may be visible to GitHub contributors — treat it as public.
+
+Drop these sections from every turn — they add clutter without helping the reader:
+
+- `## Deliverables this turn` — the reader (whether the user or a GitHub contributor) cannot see the agent's sandbox filesystem, so listing file paths there is useless. The companion file itself is the deliverable; the user can see what files were produced by looking at the `download/` directory or the commit.
+- `## Awaiting` — the next turn's verbatim user prompt already conveys what happened next, making this section redundant. If the user confirmed tests passed, that confirmation appears at the top of the next turn. If the user reported a new issue, that issue is the next turn's prompt.
+
 If the version is unchanged and the companion file already exists, update it rather than creating a new one.
 
 ---

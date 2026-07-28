@@ -27,11 +27,47 @@ CC accounting in SonarQube:
 - Method calls: 0 (free) — this is why extraction works
 
 Historical CC reduction in this project:
-- Global keydown handler: 138 → 14 → 25 (0.37.0 added Typing-mode arrow-key block) → 12 (0.37.1 extracted `_handleRepeatGuard`, `_handleTypingModeArrowKeys`)
+- Global keydown handler: 138 → 14 → 25 (0.37.0 added Typing-mode arrow-key block) → 12 (0.37.1 extracted `_handleRepeatGuard`, `_handleTypingModeArrowKeys`) → 8 (0.37.2 extracted `_handleGlobalHotkeyDispatch` table)
 - `insertEndLine`: 29 → 11 (extracted `_insertSyncTrailing`)
 - `buildHkRows`: 40 → ~15 (extracted `_handleSecKeydown`)
 - `rebuildHkPanel` forEach callback: 19 → ~4 (0.37.1 extracted `_renderHkCellContent`)
+- `_handleHotkeyModeKeys`: 63 → 8 (0.37.2 extracted `_handleHotkeyModeNav` + `_handleHotkeyModeReplay` + `_handleHotkeyModeArrows` + `_findNextNonMetaLine` + `_isAtBoundary`)
+- `_handleSettingsKeys`: 47 → 9 (0.37.2 extracted `_handleSettingsTabArrows` + `_handleSettingsHotkeyDispatch` + `_handleSettingsEscape` + `_getSettingsFocusable`)
+- `_migrateHotkeys`: 38 → 0 (0.37.2 split into `_migrateLegacyHotkeys` table-driven + `_ensureDefaultHotkeys`)
+- `_handleGlobalHotkeys`: 22 → 6 (0.37.2 extracted `_handleGlobalHotkeyDispatch` computed-key table)
 - Multiple handlers extracted to outer scope: `_handleSettingsSearchKeydown`, `_handleTextareaEnterTrim`, `_handleTextareaParenBracket`, `_handleGlobalHotkeys`, `_handleHotkeyModeKeys`
+
+---
+
+Dispatch-table CC reduction (S3776)
+
+When a function is a long chain of `if(hkMatch(ks,hk.X)){e.preventDefault();actionX();return true;}` lines, each `if` adds +1 CC (plus +1 for any `&&` guard like `hk.X && hkMatch(...)`). A 15-action dispatcher hits CC ~20-25.
+
+Convert to a computed-key dispatch table:
+
+```js
+function _handleGlobalHotkeyDispatch(e,ks,hk){
+  const map={
+    [hk.undo]:doUndo,
+    [hk.redo]:doRedo,
+    [hk.add_field]:addSecondary,
+    // ... more entries
+    [hk.toggle_mode]:()=>{hotkeyMode=!hotkeyMode;applyMode();},
+  };
+  const fn=map[ks];
+  if(!fn)return false;
+  e.preventDefault();fn();return true;
+}
+```
+
+The computed property key `[hk.undo]` evaluates `hk.undo` at object-literal time. If `hk.undo` is undefined (unassigned hotkey), the key becomes the string `"undefined"`, which will never match a real `ks` value — so the guard `hk.X && hkMatch(...)` is automatically handled. This is why the table approach eliminates both the `if` and the `&&` guard, dropping CC by ~2 per action.
+
+The dispatch table trades CC for indirection: debugging requires knowing that `map[ks]` is the lookup, not grepping for `if(hkMatch(...))`. Document the helper name in the section-index skill so future sessions can find it.
+
+When NOT to use this pattern:
+- When actions have different signatures or need different `e` handling beyond a uniform `e.preventDefault()` — keep those as explicit `if` branches before the table lookup.
+- When the number of actions is small (<5) — the table overhead isn't worth it.
+- When actions have side-effectful guards that must short-circuit — the table evaluates all keys eagerly (harmless, but can mislead readers).
 
 ---
 

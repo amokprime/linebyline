@@ -32,9 +32,10 @@ test("tab-lyrics", async ({ page }) => {
 
 test("tab-settings", async ({ page }) => {
   await page.keyboard.press("Control+,");
+  await expect(page.locator("#settings-overlay")).toHaveClass(/open/)
   await tabUntilFocused(page, "#s-replay-prev");
+  await expect(page.locator("#s-replay-prev")).toBeFocused()
   await page.keyboard.press("Space");
-  await page.waitForTimeout(50);
   await expect(
     page.getByRole("checkbox", { name: "Moving to previous line" }),
   ).toBeChecked();

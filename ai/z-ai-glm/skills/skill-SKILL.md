@@ -28,6 +28,8 @@ If you'd need to explain it to a fresh model in a new session and it's not speci
 
 When extracting from Memory.md into a skill, prune the Memory.md entry to a brief reference. Don't duplicate — Memory.md should point to the skill, not restate it.
 
+Within a single version's Memory.md section, write one bullet per parallel thread of work, not one bullet per turn. If a thread evolves across multiple turns (fix → regression catch → follow-up), update the existing bullet in-place to reflect the final state rather than appending a new bullet per turn — see "Thread discipline prevents Memory.md bloat" in Lessons from practice.
+
 ---
 
 Anatomy of a skill
@@ -116,5 +118,7 @@ Skills prevent re-discovery. Without `browser-hotkey-system-SKILL.md`, each new 
 General patterns emerge from specific incidents. The `single-file-html-app-SKILL.md` "single source of truth" section was extracted from three separate Memory.md entries: the masterVolume/masterMuted double-flag bug, the `_volWheeling` race condition, and the undo/redo double-push pattern. No single entry justified its own section, but together they pointed to a general principle: when two variables represent the same underlying state, they will eventually disagree.
 
 Verbose Memory entries signal skill gaps. When a Memory.md entry starts explaining how to do something rather than just what happened, that's a sign the knowledge belongs in a skill. Memory.md should say "Fixed X by doing Y (root cause: Z)." If it needs to say "When doing X, always do Y because Z, and here are the three cases to watch for," that's a skill.
+
+Thread discipline prevents Memory.md bloat. When a session iterates on the same change across multiple turns (Turn A fix → Turn B regression catch → Turn C follow-up), narrating each turn's state as a separate bullet duplicates earlier states of the same evolving change. The reader must mentally diff successive bullets to recover the current state. Instead, identify the unique parallel threads in the session (e.g. "SonarCloud remediation" vs "Genius paste cleanup" vs "test suite hardening") and write one bullet per thread, updated in-place to reflect its latest state. New turns that touch an existing thread edit the existing bullet rather than appending a new one. This keeps Memory.md a current-state snapshot, not a change log — the per-turn change log lives in the companion `.md` file. If a thread is still actively evolving at session end, the in-place bullet should describe the final state, with one cross-reference line pointing to the companion `.md` for the turn-by-turn evolution.
 
 Cross-skill consistency matters. The `browser-hotkey-system-SKILL.md` originally didn't include Ctrl+M in its `RESTRICTED_ALL` example, but the app had already learned this lesson the hard way. When updating skills from transcripts, check whether existing skills already cover the pattern — and if they don't, update them rather than just adding to Memory.md.

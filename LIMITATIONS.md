@@ -45,15 +45,9 @@ const RESTRICTED_ALL=new Set([
 ]);
 ```
 - The unsaved work popup jumps to default "Leave page" button on Firefox but [not](https://github.com/amokprime/linebyline/blob/main/archive/semantic/0.36.1/linebyline-0.36.1.md) other browsers
-- Copying a Genius song to a text editor and then copying the contents of that file to LineByLine now adds this to the bottom:
-```
-somenumber
-Embed
-```
-- There's no reason I can think of at this point why anyone should do that though. The live Genius website should always be trusted over a potentially stale mock.txt, which provides a persistent test file anyway.
 
-**These apply to Playwright tests as of version 0.37.1**
-- Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) as of version 0.36.2
+**These apply to Playwright tests as of version 0.37.2**
+- Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) as of version 0.37.2
 - The official Microsoft Playwright image pins an outdated version of npm that's hopefully compatible with the GitHub CI ubuntu-runner
 - Webkit tests crash after completion on Linux, which also triggers a coredump in the repo root and false positive SELinux AVC [warning](https://github.com/amokprime/linebyline/blob/main/tests/chat/0.37.1/2.md#3. SELinux AVC — NOT related to the cache folder mount). The SELinux alerts can be silenced with the below policy. I never got around to silencing the Webkit crash alerts and just added `my-systemdcoredum.*` to .gitignore.
 ```sh

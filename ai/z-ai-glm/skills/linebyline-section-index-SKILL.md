@@ -78,18 +78,22 @@ rg -n "^// ──|^  // ──" /path/to/linebyline-*.html
 
 Section list (reference)
 
-This is the current section structure as of v0.37.1. Actual line numbers must be found by grepping the file — this list documents the section structure and contents, not exact line numbers.
+This is the current section structure as of v0.37.2. Actual line numbers must be found by grepping the file — this list documents the section structure and contents, not exact line numbers.
 
 ```
-Config               — DEFAULT_CFG, HK_SECTIONS, HK_LABELS
+Config               — DEFAULT_CFG, HK_SECTIONS, HK_LABELS, _LEGACY_HOTKEY_MAP (table-driven
+                       hotkey migration: old value → new default, keyed by action)
 Hotkey rules         — RESTRICTED_ALL (no arrow keys), ALPHA_NUM_SPACE_RE, isRestrictedForKey
                        (arrow keys NOT restricted — handled for Settings navigation instead)
+Persistence          — loadCfg, saveCfg, _migrateHotkeys (delegates to _migrateLegacyHotkeys +
+                       _ensureDefaultHotkeys), _migrateLegacyHotkeys (iterates _LEGACY_HOTKEY_MAP),
+                       _ensureDefaultHotkeys (sets defaults for keys undefined in stored cfg),
+                       loadAutosave, doAutosave, _restoreSecondaryPool, takeSnapshot init
 Theme                — themeMode, cycleTheme, applyTheme
 Font settings        — editorFont/Size, saveEditorFont, applyEditorFont
 Dynamic tooltips     — updateDynamicTooltips
 State                — MAX_LINES (500), all let/const mutable state declarations
                        (_syncAutoAdvanced tracks sync→T trailing-ts flow)
-Persistence          — loadAutosave, doAutosave, takeSnapshot init
 Undo/redo            — pushSnapshot, doUndo, doRedo, applySnapshot
                        (single-push model: only post-change push; applySnapshot clears
                        extra secondaries beyond snapshot data)
@@ -98,18 +102,32 @@ Auto mode            — secondary field focus → auto switch to typing mode
 Helpers
   LRC parse          — TS_RE, META_RE, tsToMs, msToTs, isEndTs, replaceTs,
                        normalizeLrcTimestamps, getSeekOffset, stripSecLine,
-                       maybeAppendTrailingTs
+                       maybeAppendTrailingTs,
+                       _findPrevTsMs/_findNextTsMs/_findRunEnd (extracted from
+                       _assignInterpolatedTs in 0.37.2 — reusable timestamp scans)
   Paste/meta         — cleanPaste, ensureReTagDefault, mergeLrcMeta
-  Genius             — cleanGenius, markGeniusSource, extractGeniusMeta
+  Genius             — cleanGenius, markGeniusSource, extractGeniusMeta,
+                       _findGeniusLyricBounds (delegates to _findGeniusLyricStart +
+                       _findGeniusLyricEnd), _findGeniusLyricStart, _findGeniusLyricEnd,
+                       _filterYmal, _extractGeniusFields (delegates to
+                       _extractGeniusTitleAndArtist + _extractGeniusAlbum),
+                       _extractGeniusTitleAndArtist, _findArtistAfterTitle,
+                       _extractGeniusAlbum
                        (markGeniusSource prepends "Genius" to [re:] value, then
                        ensureReTagDefault appends the configured default)
   Render/UI          — renderMainLines, scrollToActive, main-lines paste handler,
-                       _announce
+                       _announce, _handleLineClick (delegates plain-click branch to
+                       _handleLineClickPlain), _handleLineClickPlain
 Audio                — audio element setup, playback controls, volume, seekbar
                        (auto-play on seek: doSeek and seekbar mouseup start playback)
 Sync/timestamp       — syncLine, insertEndLine, seekPrev/NextLine, replayActiveLine,
                        adjustTs, _peelLastParen, batchSplitParens, markAsTranslation,
-                       doSyncFile, tickSeekOffset, setOffsetMode
+                       doSyncFile, tickSeekOffset, setOffsetMode,
+                       _assignInterpolatedTs (uses _findPrevTsMs/_findNextTsMs/_findRunEnd;
+                       while-loop cursor advanced past processed runs without S2310),
+                       _advanceAfterSplit (delegates to _findNextUnprocessedSplit +
+                       _findNextNonMetaFromIdx), _findNextUnprocessedSplit,
+                       _findNextNonMetaFromIdx
                        (insertEndLine: T after W auto-advance sets prev line's trailing ts)
 Secondary fields     — addSecondary (max 10 fields), removeSecondary, secondary textarea keydown,
                        secondary import (file picker, middle-click)
@@ -123,19 +141,37 @@ Controls panel       — rebuildHkPanel, _renderHkCellContent, CTRL_ACTIONS, HOT
                        prev_line shows ↑ only, next_line shows ↓ only)
 Settings             — openSettings, closeSettings, saveSettingsNow, buildHkRows
                        (Swap button swaps hotkeys; Reset gives holder its default back)
-Settings search      — setSearchHkMode, applySettingsFilter, initSettingsSearch
+Settings search      — setSearchHkMode, applySettingsFilter, initSettingsSearch,
+                       _handleSettingsSearchKeydown (delegates to _handleSearchHkMode or
+                       _handleSearchNormalMode based on _sSearchHkMode flag),
+                       _handleSearchHkMode, _handleSearchNormalMode
                        (reset_defaults hotkey fires from search field)
                        (arrow keys pass through to global handler for navigation)
 Confirm dialog       — _resetConfirmPending, showResetConfirm, hideResetConfirm,
                        _doResetDefaults; inline Yes/No confirm UI in settings footer
 Keyboard
   Key normalization  — keyStr, hkMatch
-  Main textarea KD   — Enter trim, bracket/paren autocomplete
-  Overlay utilities  — arrowNavTimer declaration
+  Main textarea KD   — Enter trim, bracket/paren autocomplete,
+                       _handleTextareaEnterTrim, _handleTextareaParenBracket (delegates to
+                       _wrapSelectionWith + _handleParenAtLineStart), _wrapSelectionWith,
+                       _handleParenAtLineStart
+  Overlay utilities  — arrowNavTimer declaration,
+                       _getSettingsFocusable, _handleSettingsTabArrows (Tab + ArrowUp/Down),
+                       _handleSettingsHotkeyDispatch (settings/help/issues/theme/panel/reset),
+                       _handleSettingsEscape, _handleSettingsKeys (dispatcher)
                        (ArrowUp/ArrowDown navigate all Settings elements, not just captures)
-  Global KD          — document keydown handler (all hotkey dispatch)
-                       (_isRepeatAllowed, _handleRepeatGuard: repeat key guard)
-                       (_handleTypingModeArrowKeys: arrow keys for prev/next in Typing mode)
+  Global KD          — document keydown handler (all hotkey dispatch),
+                       _isRepeatAllowed, _handleRepeatGuard: repeat key guard,
+                       _handleTypingModeArrowKeys: arrow keys for prev/next in Typing mode,
+                       _isFocusedUIElement, _isPrevNextReplay,
+                       _handleGlobalHotkeys (delegates to _handleGlobalHotkeyDispatch for
+                       table-driven action dispatch), _handleGlobalHotkeyDispatch,
+                       _handleHotkeyModeKeys (delegates to _handleHotkeyModeNav +
+                       _handleHotkeyModeReplay), _handleHotkeyModeNav (Home/End/PageUp/PageDown/
+                       ArrowUp/ArrowDown; delegates ArrowUp/Down to _handleHotkeyModeArrows),
+                       _handleHotkeyModeArrows (uses _findNextNonMetaLine + _isAtBoundary),
+                       _handleHotkeyModeReplay (replay_line/replay_only/replay_end/shift+Enter/
+                       shift+Space), _findNextNonMetaLine, _isAtBoundary
                        (Esc blurs focused UI elements before isFocusedUI guard)
                        (Typing mode: ↑/↓ for prev/next line when no textarea focused)
 Unload warning       — beforeunload dirty check (includes secondary fields)
