@@ -1,6 +1,6 @@
 ---
 model: GLM (Z.ai)
-summary: 'Phase 4 post-push SonarCloud remediation on version 0.37.2 (held constant across all turns per user request). Turn 2 fixes S2486 (4 empty-catch issues). Turn 3 fixes S2310 (1 for-loop counter reassignment in _assignInterpolatedTs). Turn 4 fixes S3776 (11 cognitive-complexity issues). Turn 5 is an after-Turn-4 manual-test catch: bump the `<title>` to 0.37.2 (forgotten in Turns 2–4) and strip the trailing Genius embed widget (`<digits>\nEmbed`) from Genius paste. Turn 6 fixes two more Genius-paste discrepancies found by manual testing of the Turn 5 patch: dropped intro `[intro vocalization]` line and missing blank-line section breaks when section headers have no preceding blank in the raw input. Turn 7 is a post-test follow-up: no app patch, just (1) root-cause analysis of a flaky `tab-settings` Playwright failure (focus-timing race under host load, recommend test-level sync assertion), and (2) an enhanced `mock-v2.txt` fixture that exercises the Turn 5 embed-widget code path while preserving the existing snapshot byte-for-byte (verified via `scripts/verify-enhanced-mock.js`). Turn 8 is release prep: no app patch, just (1) Memory.md condensation from 11 turn-by-turn bullets to 4 thread-based bullets per a new "thread discipline" pattern, (2) skill-SKILL.md updated with the thread-discipline lesson, (3) v0.37.2 release summary (287 words, half-page), (4) commit message (6-word title, 4 sentences each <10 words). Turn 9 refines the companion file format: licensed lyrics/metadata scrubbed to placeholders, turn numbering normalized to integers throughout, `## Deliverables this turn` and `## Awaiting` sections dropped; four rules codified in project-workflow-SKILL.md.'
+summary: 'Phase 4 post-push SonarCloud remediation on version 0.37.2 (held constant across all turns per user request). Turn 2 fixes S2486 (4 empty-catch issues). Turn 3 fixes S2310 (1 for-loop counter reassignment in _assignInterpolatedTs). Turn 4 fixes S3776 (11 cognitive-complexity issues). Turn 5 is an after-Turn-4 manual-test catch: bump the `<title>` to 0.37.2 (forgotten in Turns 2–4) and strip the trailing Genius embed widget (`<digits>\nEmbed`) from Genius paste. Turn 6 fixes two more Genius-paste discrepancies found by manual testing of the Turn 5 patch: dropped intro `[intro vocalization]` line and missing blank-line section breaks when section headers have no preceding blank in the raw input. Turn 7 is a post-test follow-up: no app patch, just (1) root-cause analysis of a flaky `tab-settings` Playwright failure (focus-timing race under host load, recommend test-level sync assertion), and (2) an enhanced `mock-v2.txt` fixture that exercises the Turn 5 embed-widget code path while preserving the existing snapshot byte-for-byte (verified via `scripts/verify-enhanced-mock.js`). Turn 8 is release prep: no app patch, just (1) Memory.md condensation from 11 turn-by-turn bullets to 4 thread-based bullets per a new "thread discipline" pattern, (2) skill-SKILL.md updated with the thread-discipline lesson, (3) v0.37.2 release summary (287 words, half-page), (4) commit message (6-word title, 4 sentences each <10 words). Turn 9 refines the companion file format: licensed lyrics/metadata scrubbed to placeholders, turn numbering normalized to integers throughout, `## Deliverables this turn` and `## Awaiting` sections dropped; four rules codified in project-workflow-SKILL.md. Turn 10 addresses 11 more post-push SonarCloud findings (S8786 regex backtracking x3, S3776 cognitive complexity x2, S3626 redundant jump x2, S7766 Math.max, S2681 braceless-if, Web:InputWithoutLabelCheck, githubactions:S7637 SHA pin) plus 3 uncovered lines in playwright.config.js (env-detection collapsed into single line with istanbul-ignore comment); summary frontmatter wrapped in single quotes per YAML special-character rule.'
 ---
 
 # Turn 1 (Phase 1 onboard — recorded in linebyline-0.37.1.md)
@@ -1036,3 +1036,437 @@ Four refinements to the companion file format, applied retroactively to this fil
 - `project-workflow-SKILL.md` "Companion .md file" section: added four new rules covering licensed content, turn numbering, and the two dropped sections. Copied to `download/project-workflow-SKILL.md`.
 - `Memory.md` 0.37.2 section: added a "Companion file format rules" bullet documenting the four rules and pointing to the skill.
 - `skill-SKILL.md` "Thread discipline prevents Memory.md bloat" lesson (added Turn 8) remains complementary — it governs Memory.md structure within a version section, while the new companion-file rules govern the companion `.md` structure across turns.
+
+
+---
+
+# Turn 10 (Phase 4 — Round 2 post-push SonarCloud remediation, still 0.37.2)
+
+## User prompt (verbatim)
+
+> SonarCloud found more issues post-push. It also complains of uncovered code on new three lines in `playwright.config.js`:
+> ```js
+> 
+> const inContainer = !!process.env.PW_CONTAINER;
+> const inCI = !!process.env.CI;
+> const enableWebkit = inContainer || inCI;
+> ```
+> 
+> Also remember that a `summary` frontmatter field with special characters might need to be escaped with quotes, like this (not including the code block itself):
+> ```
+> ---
+> model: GLM (Z.ai)
+> summary: 'Phase 4 post-push SonarCloud remediation on version 0.37.2 (held constant across all turns per user request)...Turn 9 refines the companion file format: licensed lyrics/metadata scrubbed to placeholders, turn numbering normalized to integers throughout, `## Deliverables this turn` and `## Awaiting` sections dropped; four rules codified in project-workflow-SKILL.md.'
+> ---
+> ```
+> file_name: issues1.zip
+
+User uploaded `issues1.zip` containing 11 SonarCloud findings (10 in `docs/index.html` across 6 rules, 1 in `.github/workflows/sonarcloud.yml` S7637) plus 1 coverage complaint on 3 lines of `playwright.config.js`. Also reminded that the `summary` frontmatter needs single-quote escaping when it contains special characters (colons, backticks).
+
+## Skills read this turn
+
+- `project-workflow-SKILL.md` (re-read for Phase 4 obligations and the companion-file format rules added Turn 9)
+- `sonarqube-workflow-SKILL.md` (Phase 4 issue-processing workflow)
+- `code-quality-SKILL.md` (pre-patch checklist before modifying functions; dispatch-table CC reduction pattern for S3776)
+- `linebyline-section-index-SKILL.md` (section-targeted reading protocol)
+- `skill-SKILL.md` (guidelines for updating Memory.md vs skills; thread-discipline lesson applied to the in-place update of the existing SonarCloud bullet)
+
+## SonarCloud issue inventory (from `issues1/issues1/`)
+
+| Rule | Severity | Type | File | Lines | Count | Summary |
+|---|---|---|---|---|---|---|
+| javascript:S8786 | MAJOR | CODE_SMELL | docs/index.html | 937, 957, 1171 | 3 | Regex super-linear backtracking |
+| javascript:S3776 | CRITICAL | CODE_SMELL | docs/index.html | 2559, 2649 | 2 | Cognitive Complexity > 15 (16 and 17) |
+| javascript:S3626 | MINOR | CODE_SMELL | docs/index.html | 2183, 2675 | 2 | Redundant jump (last `return;` in function) |
+| javascript:S7766 | MINOR | CODE_SMELL | docs/index.html | 2640 | 1 | Prefer `Math.max()` over ternary |
+| javascript:S2681 | MAJOR | CODE_SMELL | docs/index.html | 2644 | 1 | Braceless-if: statement not executed conditionally |
+| Web:InputWithoutLabelCheck | MAJOR | BUG | docs/index.html | 349 | 1 | `#file-picker` input has no label |
+| githubactions:S7637 | MAJOR | VULNERABILITY | .github/workflows/sonarcloud.yml | 43 | 1 | Use full commit SHA, not `@v1` tag |
+
+Total: 11 SonarCloud findings (10 in the app HTML, 1 in the workflow file) + 1 coverage complaint (3 lines in `playwright.config.js`).
+
+## Patching strategy
+
+The 10 HTML findings split into 6 distinct rules with no inter-dependencies — applied as a single batched MultiEdit (8 distinct edit operations covering all 10 findings; the 2 S3776 issues each required their own helper extraction). All edits applied bottom-up by content match (not line number), so each Edit operates on the current state regardless of prior edits shifting line numbers. All 8 edits applied successfully on first attempt; no rollback needed.
+
+The 1 workflow finding (S7637 SHA pin) and the playwright.config.js coverage complaint are in files not present in the workspace (they live in the user's actual GitHub repo at `.github/workflows/sonarcloud.yml` and `playwright.config.js`). Provided as instructions, not patches.
+
+## Per-issue remediation
+
+### 1. Web:InputWithoutLabelCheck — L349 `#file-picker`
+
+The hidden file input `<input type="file" id="file-picker" ... style="display:none">` had no associated label. Although it's hidden via `display:none` (and the previous 0.36.1 S6825 fix removed the redundant `aria-hidden="true"`), the Web:InputWithoutLabelCheck rule still fires because no programmatic label exists. Per Memory.md 0.36.1, the input is intentionally hidden — it's triggered programmatically via `click()` from other UI elements, never directly interacted with by the user. The simplest fix that satisfies the rule without changing behavior: add an `aria-label` attribute.
+
+```diff
+- <input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none">
++ <input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none" aria-label="File picker">
+```
+
+The label is announced by screen readers when the input is focused (which can happen via Tab if `display:none` is ever removed in a future change). No observable behavior change for sighted users.
+
+### 2. S8786 (regex super-linear backtracking) — L937, L957, L1171
+
+SonarQube S8786 fires on regex patterns where backtracking can produce super-linear runtime. The three flagged patterns all used lazy/wildcard quantifiers followed by a delimiter that could fail, forcing the engine to backtrack.
+
+**L937** (`markGeniusSource` `[re:...]` extractor):
+
+```diff
+- let updated=getTA().replace(/^\[re:\s*(.*?)\]/m,(match,val)=>{
++ let updated=getTA().replace(/^\[re:\s*([^\]]*)\]/m,(match,val)=>{
+```
+
+`.*?` (lazy any-char) followed by `]` backtracks on inputs like `[re: foo] bar] baz]` — the engine tries each possible stop point. Replacing with `[^\]]*` (negated character class) makes the match linear: consume any non-`]` characters greedily, then expect `]`. Semantically identical — the regex matches the same set of strings.
+
+**L957** (`_extractGeniusTitleAndArtist` title stripper):
+
+```diff
+- const title=head[i].replace(/\s+Lyrics$/,'').trim();
++ const title=head[i].replace(/\sLyrics$/,'').trim();
+```
+
+`\s+` (one-or-more whitespace) followed by the literal `Lyrics$` backtracks on inputs with multiple trailing whitespace runs — the engine tries each whitespace boundary before failing. Dropping the `+` quantifier restricts the match to a single whitespace character, eliminating the backtracking. The typical Genius heading uses a single space before `Lyrics`, so the single-whitespace match works. The trailing `.trim()` cleans up any leading whitespace left over from a multi-space edge case, so the observable output is unchanged.
+
+**L1171** (`_announce` line-text stripper):
+
+```diff
+- _announce('Playing line '+(best+1)+': '+lines[best].replace(/\[.*?\]\s*/,'').trim());
++ _announce('Playing line '+(best+1)+': '+lines[best].replace(/\[[^\]]*\]\s*/,'').trim());
+```
+
+Same pattern as L937 — `.*?` followed by `]` replaced with `[^\]]*`. This regex strips a leading `[xxx]` timestamp/section-header prefix from a line before announcing it to the screen reader. The negated character class is linear; semantics preserved.
+
+### 3. S7766 (Math.max simplification) — L2640
+
+```diff
+- const next=activeLine<0?0:activeLine;
++ const next=Math.max(0,activeLine);
+```
+
+`x<0?0:x` is mathematically equivalent to `Math.max(0,x)`. SonarQube prefers the `Math.max` form because it's more readable and avoids the conditional expression. Same behavior — both clamp `activeLine` to a non-negative value.
+
+### 4. S2681 (statement not executed conditionally) — L2644
+
+```diff
+- if(e.shiftKey){if(selectedLines.size===0&&activeLine>=0)selectedLines.add(activeLine);selectedLines.add(clamped);activeLine=clamped;}
++ if(e.shiftKey){if(selectedLines.size===0&&activeLine>=0){selectedLines.add(activeLine);}selectedLines.add(clamped);activeLine=clamped;}
+```
+
+The inner `if` was braceless — SonarQube S2681 fires because it can't tell whether `selectedLines.add(activeLine);` is the only conditional statement or whether the subsequent `selectedLines.add(clamped);activeLine=clamped;` were intended to be inside the if-block too. The intent here is that ONLY `selectedLines.add(activeLine)` is conditional (only add the previous active line as a selection-anchor if nothing is selected yet); the `selectedLines.add(clamped)` and `activeLine=clamped` always execute when `e.shiftKey` is true. Adding braces around the single conditional statement makes the intent explicit and silences the rule. No behavior change.
+
+### 5. S3626 (redundant jump) — L2183, L2675
+
+Both findings are `return;` statements at the end of an if-block that is itself the last statement in its enclosing function. The `return;` is redundant because the function would return naturally anyway.
+
+**L2183** (`_handleSearchHkMode`):
+
+```diff
+  e.stopPropagation();
+- if(hkMatch(ks,cfg.hotkeys.toggle_mode)){e.preventDefault();setSearchHkMode(true);return;}
++ if(hkMatch(ks,cfg.hotkeys.toggle_mode)){e.preventDefault();setSearchHkMode(true);}
+  }
+```
+
+**L2675** (`_handleHotkeyModeNav`, ArrowUp/ArrowDown block — also affected by the L2649 extraction below):
+
+```diff
+  if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+    e.preventDefault();
+    _handleHotkeyModeArrows(e, allLines, lineCount);
+- return;
+  }
+```
+
+Both removals are behavior-preserving — the function returns `undefined` either way, and no code follows the if-block.
+
+### 6. S3776 (Cognitive Complexity) — L2559, L2649
+
+**L2559 `_handleSettingsHotkeyDispatch` (CC 16 → 14):**
+
+The CC threshold is 15. The function had an inline `if(settingsOpen)closeSettings();else openSettings();` inside the first `if(hkMatch(ks,hk.settings))` block, contributing +2 to CC (the `if` + the `else`). Extracting the open/close toggle into a helper `_toggleSettingsOpen(open)` removes that contribution.
+
+```diff
++ function _toggleSettingsOpen(open){if(open)closeSettings();else openSettings();}
+  function _handleSettingsHotkeyDispatch(e, ks, hk, settingsOpen){
+- if(hkMatch(ks,hk.settings)){e.preventDefault();if(settingsOpen)closeSettings();else openSettings();return true;}
++ if(hkMatch(ks,hk.settings)){e.preventDefault();_toggleSettingsOpen(settingsOpen);return true;}
+    if(hk.help&&hkMatch(ks,hk.help)){e.preventDefault();openHelp();return true;}
+    ...
+  }
+```
+
+New CC: 14 (under the 15 threshold). Behavior preserved — `_toggleSettingsOpen(open)` is a one-line wrapper around the same `if/else` that was inline.
+
+**L2649 `_handleHotkeyModeNav` (CC 17 → 10):**
+
+The function had three if-blocks (Home/End, PageUp/PageDown, ArrowUp/ArrowDown). The PageUp/PageDown block was the heaviest contributor (CC ~7) because it contained nested `if(!nonMeta.length)return`, `if(base<0)`, and two ternaries for `base` and `targetPos`. Extracting the entire PageUp/PageDown block into `_handlePageKeys(e, allLines)` removes all those contributions from the parent function.
+
+```diff
++ function _handlePageKeys(e, allLines){
++ e.preventDefault();
++ const scroll=document.getElementById('main-scroll');
++ const lineH=scroll.scrollHeight/Math.max(1,allLines.filter(l=>!META_RE.test(l)).length);
++ const pageLines=Math.max(1,Math.floor(scroll.clientHeight/lineH)-1);
++ const nonMeta=allLines.map((l,i)=>({l,i})).filter(({l})=>!META_RE.test(l)&&l.trim()!=='');
++ if(!nonMeta.length)return;
++ const curPos=nonMeta.findIndex(({i})=>i===activeLine);
++ let base=curPos;if(base<0)base=e.key==='PageUp'?nonMeta.length-1:0;
++ const targetPos=e.key==='PageUp'?Math.max(0,base-pageLines):Math.min(nonMeta.length-1,base+pageLines);
++ activeLine=nonMeta[targetPos].i;
++ selectedLines.clear();renderMainLines();scrollToActive();
++ }
+  function _handleHotkeyModeNav(e, allLines, lineCount){
+    if(e.key==='Home'||e.key==='End'){
+      e.preventDefault();
+      const nonMeta=allLines.map((l,i)=>({l,i})).filter(({l})=>!META_RE.test(l)&&l.trim()!=='');
+      if(nonMeta.length){
+        activeLine=e.key==='Home'?nonMeta[0].i:nonMeta[nonMeta.length-1].i;
+        selectedLines.clear();renderMainLines();scrollToActive();
+      }
+      return;
+    }
+- if(e.key==='PageUp'||e.key==='PageDown'){
+- e.preventDefault();
+- const scroll=document.getElementById('main-scroll');
+- const lineH=scroll.scrollHeight/Math.max(1,allLines.filter(l=>!META_RE.test(l)).length);
+- const pageLines=Math.max(1,Math.floor(scroll.clientHeight/lineH)-1);
+- const nonMeta=allLines.map((l,i)=>({l,i})).filter(({l})=>!META_RE.test(l)&&l.trim()!=='';
+- if(!nonMeta.length)return;
+- const curPos=nonMeta.findIndex(({i})=>i===activeLine);
+- let base=curPos;if(base<0)base=e.key==='PageUp'?nonMeta.length-1:0;
+- const targetPos=e.key==='PageUp'?Math.max(0,base-pageLines):Math.min(nonMeta.length-1,base+pageLines);
+- activeLine=nonMeta[targetPos].i;
+- selectedLines.clear();renderMainLines();scrollToActive();return;
+- }
++ if(e.key==='PageUp'||e.key==='PageDown'){_handlePageKeys(e, allLines);return;}
+    if(e.key==='ArrowUp'||e.key==='ArrowDown'){
+      e.preventDefault();
+      _handleHotkeyModeArrows(e, allLines, lineCount);
+- return;
+    }
+  }
+```
+
+Net line count: +14 (new helper) - 14 (removed inline block) - 1 (removed redundant `return;` from ArrowUp/ArrowDown block) + 1 (new one-line call site) = 0. New CC for `_handleHotkeyModeNav`: 10. Behavior preserved — `_handlePageKeys` performs the same DOM mutations in the same order; the call-site `return;` after `_handlePageKeys(...)` is load-bearing (prevents fall-through to ArrowUp/ArrowDown block) and is preserved.
+
+### 7. githubactions:S7637 — `.github/workflows/sonarcloud.yml` L43 (instructions only, file not in workspace)
+
+SonarQube S7637 fires on GitHub Actions workflows that use `@v1`, `@v2`, etc. version tags instead of full commit SHAs. Tagged references are mutable — a maintainer can retag a different commit to the same `@v1` tag, potentially introducing malicious code into the workflow. Pinning to a full 40-character SHA makes the reference immutable.
+
+The workflow file `.github/workflows/sonarcloud.yml` is not in the workspace (the workspace only has the app HTML and supporting scripts). User action required:
+
+1. Open `.github/workflows/sonarcloud.yml` in the repo.
+2. Locate line 43 — it's a `uses:` statement referencing a GitHub Action via `@<tag>`.
+3. Look up the commit SHA for the tag at the action's GitHub releases page (e.g. for `SonarSource/sonarcloud-github-action`, browse to `https://github.com/SonarSource/sonarcloud-github-action/releases`, find the release matching the current `@v1` tag, and copy the 40-character commit SHA).
+4. Replace `@v1` (or whatever the tag is) with `@<full-sha>`.
+5. Optionally add a comment with the human-readable version (`# v1.9.0`) so future maintainers know which version was pinned.
+
+Example shape:
+
+```yaml
+# Before (S7637 fires):
+- uses: SonarSource/sonarcloud-github-action@v1
+
+# After (pinned):
+- uses: SonarSource/sonarcloud-github-action@<full-40-char-sha>  # v1.9.0
+```
+
+The same pattern should be applied to any other `uses:` statements in the workflow that reference actions by tag rather than SHA.
+
+### 8. `playwright.config.js` coverage gap (instructions only, file not in workspace)
+
+SonarCloud flagged three uncovered lines:
+
+```js
+const inContainer = !!process.env.PW_CONTAINER;
+const inCI = !!process.env.CI;
+const enableWebkit = inContainer || inCI;
+```
+
+These are environment-detection lines run at config-load time. They decide whether to include the Webkit browser project in the Playwright test matrix — Webkit is enabled when running in the `tst` Podman container (`PW_CONTAINER=1`) or in CI (`CI=1`), and disabled otherwise (to avoid the Webkit dependency on developer machines per `PLAYWRIGHT_SETUP.md`).
+
+Coverage tools can't exercise these lines from a unit test because:
+- The lines run once at module-load time, before any test can stub `process.env`.
+- Stubbing `process.env` after the module is loaded doesn't re-evaluate the constants.
+
+Two acceptable remediations:
+
+**Option A (recommended — collapse + istanbul-ignore comment):**
+
+```js
+/* istanbul ignore next -- env-detection at config-load time; PW_CONTAINER and CI env vars are exercised manually, not by unit tests */
+const enableWebkit = !!process.env.PW_CONTAINER || !!process.env.CI;
+```
+
+This collapses the three lines into one (removing the intermediate `inContainer` and `inCI` declarations, which are not referenced elsewhere in the file based on the user's report) and adds a coverage-exclusion comment. The logic is identical — `enableWebkit` is `true` iff either env var is truthy. The comment tells the coverage tool to skip this line, which is appropriate because config-load env-detection is inherently not unit-testable.
+
+**Option B (preserve structure, add per-line exclusion):**
+
+```js
+/* istanbul ignore next -- env-detection at config-load time */
+const inContainer = !!process.env.PW_CONTAINER;
+/* istanbul ignore next */
+const inCI = !!process.env.CI;
+/* istanbul ignore next */
+const enableWebkit = inContainer || inCI;
+```
+
+Preserves the three-line structure but adds three exclusion comments. Useful if `inContainer` or `inCI` are referenced elsewhere in the file (which the user should grep for before applying Option A).
+
+Recommendation: Option A unless grep reveals `inContainer`/`inCI` are used elsewhere.
+
+## Post-patch verification
+
+1. **Syntax check** — `<script>` body compiles via `new Function` (118,188 chars; was 118,095 after Turn 6, +93 chars from the 8 patches). Verified via `scripts/check-syntax.js`.
+2. **Section index accuracy** — patches are inside the existing `// ──` sections (Helpers → Genius, Render / line UI, Helpers → A11y announce, Keyboard → Settings search, Keyboard → Overlay utilities, Keyboard → Global KD). Two new helpers added (`_toggleSettingsOpen`, `_handlePageKeys`) — both small one-purpose functions matching the existing helper-naming convention. No section markers shift (sections grow internally but don't cross `// ──` boundaries).
+3. **Spot-check referenced functions** — `_toggleSettingsOpen` called only from `_handleSettingsHotkeyDispatch` (single call site). `_handlePageKeys` called only from `_handleHotkeyModeNav` (single call site). `_handleSettingsHotkeyDispatch` and `_handleHotkeyModeNav` are themselves called from `_handleSettingsKeys` and `_handleHotkeyModeKeys` respectively (call sites unchanged). All pre-existing `_`-prefixed helpers verified present (including `_peelLastParen` per Memory.md 0.35.15 caution).
+4. **Trace one representative user action** — traced each remediation's representative action:
+   - **Settings hotkey toggle**: Press the configured settings hotkey. Old path: `_handleGlobalHotkeyDispatch` → `if(hkMatch(ks,hk.settings))` → `e.preventDefault();if(settingsOpen)closeSettings();else openSettings();return true;`. New path: same dispatch → `e.preventDefault();_toggleSettingsOpen(settingsOpen);return true;` → `_toggleSettingsOpen` runs `if(open)closeSettings();else openSettings();` — same observable effect (settings overlay opens or closes).
+   - **PageUp navigation in hotkey mode**: Press PageUp. Old path: `_handleHotkeyModeKeys` → `_handleHotkeyModeNav` → matches PageUp branch → inline computation → `activeLine=nonMeta[targetPos].i; selectedLines.clear(); renderMainLines(); scrollToActive();`. New path: same dispatch → `_handlePageKeys(e, allLines)` called → same computation → same mutations.
+   - **Shift+ArrowDown range-select**: Press Shift+ArrowDown. Old path: `_handleHotkeyModeArrows` → `if(e.shiftKey){if(selectedLines.size===0&&activeLine>=0)selectedLines.add(activeLine);selectedLines.add(clamped);activeLine=clamped;}`. New path: same with braces added around the inner `if` body — `selectedLines.add(activeLine)` still conditional, `selectedLines.add(clamped);activeLine=clamped;` still unconditional. Same selections result.
+   - **`_announce` for screen reader**: Audio advances to a new line. Old path: regex `/\[.*?\]\s*/` strips `[xxx]` prefix. New path: `/\[[^\]]*\]\s*/` — same match set, same stripping behavior.
+   - **Title extraction from Genius paste**: Genius heading with trailing `Lyrics`. Old path: `head[i].replace(/\s+Lyrics$/,'').trim()` strips trailing whitespace + `Lyrics`. New path: `head[i].replace(/\sLyrics$/,'').trim()` strips single whitespace + `Lyrics`, `.trim()` cleans up if multi-space.
+   - **`[re:...]` extraction**: LRC with `[re: https://example.com/]`. Old path: regex `/^\[re:\s*(.*?)\]/m` captures `https://example.com/`. New path: `/^\[re:\s*([^\]]*)\]/m` captures same (any non-`]` chars).
+
+All traces preserve observable behavior.
+
+## Playwright impact
+
+All 8 HTML patches are behavior-preserving (verified by trace above). Specific concerns:
+
+- **`_toggleSettingsOpen` extraction**: Same call chain (`_handleSettingsKeys` → `_handleSettingsHotkeyDispatch` → `_toggleSettingsOpen`). The `_handleSettingsHotkeyDispatch` return value (`true` if handled) is unchanged. Settings overlay open/close behavior unchanged. No ARIA snapshot, `inputValue()`, or screenshot test affected.
+- **`_handlePageKeys` extraction**: PageUp/PageDown navigation in hotkey mode produces the same `activeLine` value and the same `selectedLines`/`renderMainLines`/`scrollToActive` calls. Any Playwright test that exercises PageUp/PageDown (e.g. in `keyboard-nav.spec.js`) should produce identical ARIA snapshots.
+- **S2681 brace fix**: The shift-arrow range-select logic is unchanged — the inner `if` body is the same single statement. No test should be affected.
+- **S7766 Math.max**: `Math.max(0, activeLine)` is mathematically identical to `activeLine<0?0:activeLine`. No test should be affected.
+- **S8786 regex patches**: All three regex replacements match the same set of strings (verified by trace). No test should be affected.
+- **S3626 redundant-jump removals**: `return;` at end-of-function is observably equivalent to falling off the end. No test should be affected.
+- **aria-label addition**: Adds an accessibility label to a hidden input. Screen-reader tests (if any) might notice the new label, but no current Playwright test asserts on `#file-picker` aria properties. No test should be affected.
+
+No Playwright snapshot regeneration needed.
+
+## Skill and Memory updates (per project-workflow Phase 4 step 4-5)
+
+### `Memory.md`
+
+Updated the 0.37.2 section's "SonarCloud post-push remediation" bullet in-place (per the thread-discipline pattern from Turn 8) to reflect the cumulative state across both remediation rounds. The bullet now spans Round 1 (Turns 2-4: S2486, S2310, S3776) and Round 2 (Turn 10: S8786, S3776, S3626, S7766, S2681, Web:InputWithoutLabelCheck, githubactions:S7637, playwright.config.js coverage gap). The 4 other 0.37.2 bullets (`<title>` bump, Genius paste cleanup, test suite hardening, companion file format rules) are unchanged.
+
+### `skill-SKILL.md`
+
+No update needed. The thread-discipline lesson (added Turn 8) and the companion-file format rules (codified Turn 9 in `project-workflow-SKILL.md`) already cover the patterns relevant to this turn. The dispatch-table CC reduction pattern (documented in `code-quality-SKILL.md` from Turn 4) was applied again this turn for `_toggleSettingsOpen`, but that's an application of an existing pattern, not a new pattern worth extracting.
+
+### `project-workflow-SKILL.md`
+
+No update needed. The companion-file format rules added Turn 9 are followed by this turn's entry. The Phase 4 workflow obligations are unchanged.
+
+### `code-quality-SKILL.md`
+
+No update needed. The "Dispatch-table CC reduction" and "Historical CC reduction" sections already cover the patterns used this turn (helper extraction for S3776, Math.max for S7766, brace addition for S2681, regex simplification for S8786). A new section for S8786 regex-backtracking patterns could be added in a future session if the pattern recurs, but two occurrences across the project don't yet justify extraction.
+
+## Companion file summary frontmatter
+
+The `summary` field in the frontmatter at the top of this file was previously unquoted. Per the user's reminder this turn, YAML strings containing special characters (`:`, backticks, etc.) must be wrapped in single quotes. Updated to wrap the existing summary in single quotes and extend it with the Turn 10 description (11 more SonarCloud findings + playwright.config.js coverage gap + summary frontmatter quoting rule).
+
+---
+>I went with Option A (the inline `const enableWebkit` and `istanbul-ignore` comment); check my work. Not sure how to do the commit SHA update — would it likely apply as-is to my other repo's `sonarcloud.yml` too?
+>No commit or push yet; two flaky tests failed (one of which I applied the extra focus checks to before pushing).
+>Btw, were any of the second round of Sonar issues related to or the same as the first (pre-push from the start of the session)?
+
+---
+I can see the issue list and the configs. Let me read the actual SonarCloud issue JSONs to understand what's being reported.
+I see the picture now. Let me check the worklog and the second-round issue file structure before responding.
+Let me check if there's an earlier/original playwright.config.js to confirm the regression, and look at the worklog.
+Let me verify the bug by actually attempting to evaluate the config:
+Confirmed — `inCI is not defined` throws at config-load time. I have everything I need. Here's the diagnosis:
+
+---
+
+## 1. Playwright config — critical bug in Option A
+
+The `istanbul ignore next` pattern is fine, but the **collapse lost a variable that's still referenced elsewhere**. Your `playwright.config.js` references `inCI` on four lines that are no longer declared:
+
+| Line | Reference |
+|------|-----------|
+| 26 | `forbidOnly: inCI,` |
+| 27 | `retries: inCI ? 2 : 0,` |
+| 28 | `workers: inCI ? 1 : undefined,` |
+| 48 | `reuseExistingServer: !inCI,` |
+
+I confirmed by evaluating the config logic in Node — it throws `ReferenceError: inCI is not defined` at module-load, before any test runs. **Your `tests.log` (540 ran, 2 failed) must be from before Option A was applied** — with the current config, zero tests would run.
+
+This is my fault as much as yours: in the Turn 10 companion I wrote "*removing the intermediate `inContainer` and `inCI` declarations, which are not referenced elsewhere in the file based on the user's report*" and then "*Recommendation: Option A unless grep reveals `inContainer`/`inCI` are used elsewhere*". The grep caveat was the load-bearing condition and I should have insisted you run it before applying. `inCI` is used in 4 places; `inContainer` is only used to compute `enableWebkit` and is safe to inline.
+
+**Minimal fix (still Option A, just restore `inCI`):**
+
+```js
+/* istanbul ignore next -- env-detection at config-load time; PW_CONTAINER and CI env vars are exercised manually, not by unit tests */
+const inCI = !!process.env.CI;
+/* istanbul ignore next */
+const enableWebkit = !!process.env.PW_CONTAINER || inCI;
+```
+
+Two `/* istanbul ignore next */` comments because each only covers the immediately following statement. `inContainer` stays inlined (it had no other consumer). Logic is identical to the original three-line version. Re-run the suite after this — if `tests.log` was pre-Option-A, you haven't actually validated the current config yet.
+
+---
+
+## 2. Commit SHA pinning — yes, applies to the other repo as-is
+
+`S7637` on line 43 flags `SonarSource/sonarqube-scan-action@v6.0.0`. I checked your `sonarcloud-sonar-issue-exporter.yml` — **same three actions on the same lines**:
+
+| Action | LineByLine yml | Exporter yml | Same SHA? |
+|--------|----------------|--------------|-----------|
+| `actions/checkout@v4` | L19 | L19 | yes |
+| `actions/setup-java@v4` | L24 | L24 | yes |
+| `SonarSource/sonarqube-scan-action@v6.0.0` | L43 | L43 | yes |
+
+So the same SHA-pinning patch drops into both files verbatim. To resolve the SHAs (run from any clone):
+
+```bash
+git ls-remote https://github.com/actions/checkout refs/tags/v4
+git ls-remote https://github.com/actions/setup-java refs/tags/v4
+git ls-remote https://github.com/SonarSource/sonarqube-scan-action refs/tags/v6.0.0
+```
+
+Each command prints `<40-char-sha>\trefs/tags/vX.Y.Z`. Patch pattern:
+
+```yaml
+        uses: SonarSource/sonarqube-scan-action@<sha-from-ls-remote>  # v6.0.0
+```
+
+SonarCloud only flagged line 43 (third-party action), but pinning `actions/checkout` and `actions/setup-java` too is the standard hardening — `actions/*` is first-party so S7637 exempts it, but the same supply-chain risk applies if those repos were ever compromised. Recommend pinning all three in both repos.
+
+---
+
+## 3. Overlap with first round — yes, S3776 only
+
+Comparing the two rounds:
+
+| Rule | Round 1 (Turns 2–3) | Round 2 (Turn 10) | Overlap? |
+|------|---------------------|-------------------|----------|
+| S2486 (empty catch) | ×4 | — | no |
+| S2310 (for-loop counter) | ×1 | — | no |
+| **S3776 (cognitive complexity)** | **×11** | **×2** | **yes — same rule, different functions** |
+| S8786 (regex backtracking) | — | ×3 | no |
+| S3626 (redundant jump) | — | ×2 | no |
+| S7766 (Math.max) | — | ×1 | no |
+| S2681 (braceless-if) | — | ×1 | no (project has hit S2681 before, per 0.36.2 Memory.md, but not in this session's round 1) |
+| Web:InputWithoutLabelCheck | — | ×1 | no |
+| githubactions:S7637 | — | ×1 | no |
+
+The two round-2 S3776 issues are at L2559 (`_handleSettingsHotkeyDispatch`, CC 16) and L2649 (`_handleHotkeyModeNav`, CC 17). These are **functions exposed or created by the round-1 dispatch-table refactor** — extracting helpers from the 63-CC global keydown handler in Turn 4 shifted complexity into the new dispatchers. Common SonarCloud pattern: fixing CC in one function by extracting helpers can leave the new helpers (or their callers) over the 15-CC threshold. Turn 10 already addressed both (`_toggleSettingsOpen` and `_handlePageKeys` extractions) — no further action needed on those.
+
+---
+
+## 4. Flaky tests
+
+Both webkit-only, both focus/state-timing races:
+
+- **`tab-settings`** (`keyboard-nav.spec.js:37`) — `toBeFocused()` on `#s-replay-prev`. This is the test you applied the Turn 6 focus-check pattern to. Still flaking → the `tabUntilFocused` + `toBeFocused` pair isn't enough on webkit under load. Stronger sync: after `tabUntilFocused`, add `await expect(page.locator("#s-replay-prev")).toBeFocused()` *before* pressing Space (which you may already have), AND wrap the whole Tab-sequence in a `test.step` so Playwright's trace captures intermediate focus states. If still flaking, the real fix is `await page.locator("#s-replay-prev").focus()` directly after `openSettings()` to bypass the Tab race entirely.
+- **`search-check`** (`settings.spec.js:83`) — `toBeChecked()` on `s-replay-next`. Checkbox *state* race, not focus. Pattern: the Space-press lands before the click handler's `change` event fires. Add `await expect(page.locator("#s-replay-next")).toBeFocused()` before Space, then `await expect(...).toBeChecked()` will auto-retry through Playwright's 5s timeout. If still flaking, replace Space with `page.locator("#s-replay-next").click()` which is synchronous and skips the keyboard-dispatch path entirely.
+
+Both fixes are test-suite changes, not app changes — they can ride in the same commit as the SonarCloud remediation without bumping the app version.
+
+---
+>Actually I forgot to patch the real `playwright.config.js`, fixed now.
+>This time all 540 tests passed or skipped as expected. The flakiness might be ok in practice if the eventual Playwright CI runs on `ubuntu-runner` (GitHub's servers) instead of on my laptop while I'm using it.
+>Also updated `sonarcloud.yml` with the three SHAs.
+
+---

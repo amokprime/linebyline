@@ -346,7 +346,7 @@ body{font-family:system-ui,sans-serif;font-size:1rem;background:var(--bg);color:
     </footer>
   </div>
 </div>
-<input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none">
+<input type="file" id="file-picker" multiple accept="audio/*,.lrc,.txt" style="display:none" aria-label="File picker">
 <div id="a11y-announcer" aria-live="polite" aria-atomic="true" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;"></div>
 <script>
 'use strict';
@@ -934,7 +934,7 @@ function cleanGenius(text){
 function markGeniusSource(){
   if(_geniusDetectedThisSession)return;
   _geniusDetectedThisSession=true;
-  let updated=getTA().replace(/^\[re:\s*(.*?)\]/m,(match,val)=>{
+  let updated=getTA().replace(/^\[re:\s*([^\]]*)\]/m,(match,val)=>{
     const trimmed=val.trim();
     if(trimmed.includes('Genius'))return match; // already has Genius
     return '[re: Genius'+(trimmed?', '+trimmed:'')+']';
@@ -954,7 +954,7 @@ function _findArtistAfterTitle(head, fromIdx){
 function _extractGeniusTitleAndArtist(head, existingArtist){
   for(let i=0;i<head.length;i++){
     if(/\s+Lyrics$/.test(head[i])){
-      const title=head[i].replace(/\s+Lyrics$/,'').trim();
+      const title=head[i].replace(/\sLyrics$/,'').trim();
       const artist=existingArtist||_findArtistAfterTitle(head,i+1);
       return{title,artist};
     }
@@ -1168,7 +1168,7 @@ function updateActiveLineFromTime(posMs){
   const playingHasTs=playingLine>=0&&tsToMs(lines[playingLine])!==null;
   if(!playingHasTs&&playingLine>best)return;
   playingLine=best;renderMainLines();scrollToPlaying();syncSecScroll();
-  _announce('Playing line '+(best+1)+': '+lines[best].replace(/\[.*?\]\s*/,'').trim());
+  _announce('Playing line '+(best+1)+': '+lines[best].replace(/\[[^\]]*\]\s*/,'').trim());
 }
 function fmtTime(s){s=Math.floor(s);return`${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;}
 let lastPlayingLine=-1;
@@ -2180,7 +2180,7 @@ function _handleSearchNormalMode(e, inp){
     e.preventDefault();showResetConfirm();return;
   }
   e.stopPropagation();
-  if(hkMatch(ks,cfg.hotkeys.toggle_mode)){e.preventDefault();setSearchHkMode(true);return;}
+  if(hkMatch(ks,cfg.hotkeys.toggle_mode)){e.preventDefault();setSearchHkMode(true);}
 }
 function _handleSettingsSearchKeydown(e,inp){
   if(_sSearchHkMode)_handleSearchHkMode(e,inp);
@@ -2556,8 +2556,9 @@ function _handleSettingsTabArrows(e, settingsOpen){
   focusable[next].focus();
   return true;
 }
+function _toggleSettingsOpen(open){if(open)closeSettings();else openSettings();}
 function _handleSettingsHotkeyDispatch(e, ks, hk, settingsOpen){
-  if(hkMatch(ks,hk.settings)){e.preventDefault();if(settingsOpen)closeSettings();else openSettings();return true;}
+  if(hkMatch(ks,hk.settings)){e.preventDefault();_toggleSettingsOpen(settingsOpen);return true;}
   if(hk.help&&hkMatch(ks,hk.help)){e.preventDefault();openHelp();return true;}
   if(hk.issues&&hkMatch(ks,hk.issues)){e.preventDefault();window.open('https://github.com/amokprime/linebyline/issues','_blank');return true;}
   if(hk.theme_toggle&&hkMatch(ks,hk.theme_toggle)){e.preventDefault();cycleTheme();return true;}
@@ -2637,14 +2638,27 @@ function _handleHotkeyModeArrows(e, allLines, lineCount){
   if(!e.shiftKey&&!e.ctrlKey&&_isAtBoundary(isUp))return;
   suppressAuto();
   const dir=isUp?-1:1;
-  const next=activeLine<0?0:activeLine;
+  const next=Math.max(0,activeLine);
   let candidate=_findNextNonMetaLine(allLines, next+dir, dir, lineCount);
   if(candidate<0||candidate>=lineCount||META_RE.test(allLines[candidate])||allLines[candidate].trim()==='')candidate=next;
   const clamped=Math.max(0,Math.min(lineCount-1,candidate));
-  if(e.shiftKey){if(selectedLines.size===0&&activeLine>=0)selectedLines.add(activeLine);selectedLines.add(clamped);activeLine=clamped;}
+  if(e.shiftKey){if(selectedLines.size===0&&activeLine>=0){selectedLines.add(activeLine);}selectedLines.add(clamped);activeLine=clamped;}
   else if(e.ctrlKey){activeLine=clamped;}
   else{selectedLines.clear();activeLine=clamped;}
   renderMainLines();scrollToActive();
+}
+function _handlePageKeys(e, allLines){
+  e.preventDefault();
+  const scroll=document.getElementById('main-scroll');
+  const lineH=scroll.scrollHeight/Math.max(1,allLines.filter(l=>!META_RE.test(l)).length);
+  const pageLines=Math.max(1,Math.floor(scroll.clientHeight/lineH)-1);
+  const nonMeta=allLines.map((l,i)=>({l,i})).filter(({l})=>!META_RE.test(l)&&l.trim()!=='');
+  if(!nonMeta.length)return;
+  const curPos=nonMeta.findIndex(({i})=>i===activeLine);
+  let base=curPos;if(base<0)base=e.key==='PageUp'?nonMeta.length-1:0;
+  const targetPos=e.key==='PageUp'?Math.max(0,base-pageLines):Math.min(nonMeta.length-1,base+pageLines);
+  activeLine=nonMeta[targetPos].i;
+  selectedLines.clear();renderMainLines();scrollToActive();
 }
 function _handleHotkeyModeNav(e, allLines, lineCount){
   if(e.key==='Home'||e.key==='End'){
@@ -2656,23 +2670,10 @@ function _handleHotkeyModeNav(e, allLines, lineCount){
     }
     return;
   }
-  if(e.key==='PageUp'||e.key==='PageDown'){
-    e.preventDefault();
-    const scroll=document.getElementById('main-scroll');
-    const lineH=scroll.scrollHeight/Math.max(1,allLines.filter(l=>!META_RE.test(l)).length);
-    const pageLines=Math.max(1,Math.floor(scroll.clientHeight/lineH)-1);
-    const nonMeta=allLines.map((l,i)=>({l,i})).filter(({l})=>!META_RE.test(l)&&l.trim()!=='');
-    if(!nonMeta.length)return;
-    const curPos=nonMeta.findIndex(({i})=>i===activeLine);
-    let base=curPos;if(base<0)base=e.key==='PageUp'?nonMeta.length-1:0;
-    const targetPos=e.key==='PageUp'?Math.max(0,base-pageLines):Math.min(nonMeta.length-1,base+pageLines);
-    activeLine=nonMeta[targetPos].i;
-    selectedLines.clear();renderMainLines();scrollToActive();return;
-  }
+  if(e.key==='PageUp'||e.key==='PageDown'){_handlePageKeys(e, allLines);return;}
   if(e.key==='ArrowUp'||e.key==='ArrowDown'){
     e.preventDefault();
     _handleHotkeyModeArrows(e, allLines, lineCount);
-    return;
   }
 }
 function _handleHotkeyModeReplay(e, ks, hk){

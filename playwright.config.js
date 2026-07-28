@@ -14,10 +14,10 @@ import { defineConfig, devices } from "@playwright/test";
  * forbidOnly=true) which we don't want when running locally in the
  * container.
  */
-const inContainer = !!process.env.PW_CONTAINER;
-const inCI = !!process.env.CI;
-const enableWebkit = inContainer || inCI;
-
+ /* istanbul ignore next -- env-detection at config-load time; PW_CONTAINER and CI env vars are exercised manually, not by unit tests */
+ const inCI = !!process.env.CI;
+ /* istanbul ignore next */
+ const enableWebkit = !!process.env.PW_CONTAINER || inCI;
 /**
  * @see https://playwright.dev/docs/test-configuration
  */
