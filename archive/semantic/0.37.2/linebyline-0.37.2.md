@@ -1,6 +1,6 @@
 ---
 model: GLM (Z.ai)
-summary: 'Phase 4 post-push SonarCloud remediation on version 0.37.2 (held constant across all turns per user request). Turn 2 fixes S2486 (4 empty-catch issues). Turn 3 fixes S2310 (1 for-loop counter reassignment in _assignInterpolatedTs). Turn 4 fixes S3776 (11 cognitive-complexity issues). Turn 5 is an after-Turn-4 manual-test catch: bump the `<title>` to 0.37.2 (forgotten in Turns 2–4) and strip the trailing Genius embed widget (`<digits>\nEmbed`) from Genius paste. Turn 6 fixes two more Genius-paste discrepancies found by manual testing of the Turn 5 patch: dropped intro `[intro vocalization]` line and missing blank-line section breaks when section headers have no preceding blank in the raw input. Turn 7 is a post-test follow-up: no app patch, just (1) root-cause analysis of a flaky `tab-settings` Playwright failure (focus-timing race under host load, recommend test-level sync assertion), and (2) an enhanced `mock-v2.txt` fixture that exercises the Turn 5 embed-widget code path while preserving the existing snapshot byte-for-byte (verified via `scripts/verify-enhanced-mock.js`). Turn 8 is release prep: no app patch, just (1) Memory.md condensation from 11 turn-by-turn bullets to 4 thread-based bullets per a new "thread discipline" pattern, (2) skill-SKILL.md updated with the thread-discipline lesson, (3) v0.37.2 release summary (287 words, half-page), (4) commit message (6-word title, 4 sentences each <10 words). Turn 9 refines the companion file format: licensed lyrics/metadata scrubbed to placeholders, turn numbering normalized to integers throughout, `## Deliverables this turn` and `## Awaiting` sections dropped; four rules codified in project-workflow-SKILL.md. Turn 10 addresses 11 more post-push SonarCloud findings (S8786 regex backtracking x3, S3776 cognitive complexity x2, S3626 redundant jump x2, S7766 Math.max, S2681 braceless-if, Web:InputWithoutLabelCheck, githubactions:S7637 SHA pin) plus 3 uncovered lines in playwright.config.js (env-detection collapsed into single line with istanbul-ignore comment); summary frontmatter wrapped in single quotes per YAML special-character rule.'
+summary: 'Phase 4 post-push SonarCloud remediation on version 0.37.2 (held constant across all turns per user request). Turn 2 fixes S2486 (4 empty-catch issues). Turn 3 fixes S2310 (1 for-loop counter reassignment in _assignInterpolatedTs). Turn 4 fixes S3776 (11 cognitive-complexity issues). Turn 5 is an after-Turn-4 manual-test catch: bump the `<title>` to 0.37.2 (forgotten in Turns 2–4) and strip the trailing Genius embed widget (`<digits>\nEmbed`) from Genius paste. Turn 6 fixes two more Genius-paste discrepancies found by manual testing of the Turn 5 patch: dropped intro `[intro vocalization]` line and missing blank-line section breaks when section headers have no preceding blank in the raw input. Turn 7 is a post-test follow-up: no app patch, just (1) root-cause analysis of a flaky `tab-settings` Playwright failure (focus-timing race under host load, recommend test-level sync assertion), and (2) an enhanced `mock-v2.txt` fixture that exercises the Turn 5 embed-widget code path while preserving the existing snapshot byte-for-byte (verified via `scripts/verify-enhanced-mock.js`). Turn 8 is release prep: no app patch, just (1) Memory.md condensation from 11 turn-by-turn bullets to 4 thread-based bullets per a new "thread discipline" pattern, (2) skill-SKILL.md updated with the thread-discipline lesson, (3) v0.37.2 release summary (287 words, half-page), (4) commit message (6-word title, 4 sentences each <10 words). Turn 9 refines the companion file format: licensed lyrics/metadata scrubbed to placeholders, turn numbering normalized to integers throughout, `## Deliverables this turn` and `## Awaiting` sections dropped; four rules codified in project-workflow-SKILL.md. Turn 10 addresses 11 more post-push SonarCloud findings (S8786 regex backtracking x3, S3776 cognitive complexity x2, S3626 redundant jump x2, S7766 Math.max, S2681 braceless-if, Web:InputWithoutLabelCheck, githubactions:S7637 SHA pin) plus 3 uncovered lines in playwright.config.js (env-detection collapsed into single line with istanbul-ignore comment); summary frontmatter wrapped in single quotes per YAML special-character rule. Turn 11 fixes a Dependabot scheduled-scan failure (`path_dependencies_not_reachable: @linebyline/test-helpers`) by adding `tests/helpers/package.json` with matching name/version/main/private fields; no app patch, no conflicts with root package.json (two manifests is the standard pattern for file: path-deps); secondary gap: brace-expansion and fast-uri ReDoS CVEs were not patched while Dependabot was blocked.'
 ---
 
 # Turn 1 (Phase 1 onboard — recorded in linebyline-0.37.1.md)
@@ -807,7 +807,7 @@ Left to the user per their stated workflow.
 >     Received: unchecked
 >     Timeout:  5000ms
 > ```
-> I had some other programs open and was tabbed out so maybe the Playwright workers were competing for resources. Not sure if it would be more feasible to make the test itself more stable or do something to reserve resources for Playwright.
+> I had some other programs open so maybe the Playwright workers were competing for resources. Not sure if it would be more feasible to make the test itself more stable or do something to reserve resources for Playwright.
 >
 > The Genius test passed anyway. But `mock.txt` itself may need to be updated (along with a snapshot update). The new logic designed against the challenging raw page with the opening one-line stanza, unexpected stanza spacing at the end, and embed element also worked for another simpler Genius page and the original `mock.txt`. So it's probably a better baseline overall.
 
@@ -1366,107 +1366,134 @@ No update needed. The "Dispatch-table CC reduction" and "Historical CC reduction
 The `summary` field in the frontmatter at the top of this file was previously unquoted. Per the user's reminder this turn, YAML strings containing special characters (`:`, backticks, etc.) must be wrapped in single quotes. Updated to wrap the existing summary in single quotes and extend it with the Turn 10 description (11 more SonarCloud findings + playwright.config.js coverage gap + summary frontmatter quoting rule).
 
 ---
->I went with Option A (the inline `const enableWebkit` and `istanbul-ignore` comment); check my work. Not sure how to do the commit SHA update — would it likely apply as-is to my other repo's `sonarcloud.yml` too?
->No commit or push yet; two flaky tests failed (one of which I applied the extra focus checks to before pushing).
->Btw, were any of the second round of Sonar issues related to or the same as the first (pre-push from the start of the session)?
 
----
-I can see the issue list and the configs. Let me read the actual SonarCloud issue JSONs to understand what's being reported.
-I see the picture now. Let me check the worklog and the second-round issue file structure before responding.
-Let me check if there's an earlier/original playwright.config.js to confirm the regression, and look at the worklog.
-Let me verify the bug by actually attempting to evaluate the config:
-Confirmed — `inCI is not defined` throws at config-load time. I have everything I need. Here's the diagnosis:
+# Turn 11 — Dependabot path-dep failure (no app patch)
 
----
+> SonarCloud now passes, but a scheduled Dependabot scan that immediately followed failed: [[2. npm_and_yarn in -. for brace-expansion, brace-expansion, fast-uri, fast-uri - Update 1491970513]]. Also see [[Copilot-chat]].
 
-## 1. Playwright config — critical bug in Option A
+User uploaded two markdown files: the Dependabot job log from `actions/runs/30408023313/job/90437769306`, and a Copilot-chat transcript analyzing the failure. Both files live outside the workspace (GitHub Actions log + chat history), so this turn produces instructions and Memory/companion updates only — no patch artifact in `download/`.
 
-The `istanbul ignore next` pattern is fine, but the **collapse lost a variable that's still referenced elsewhere**. Your `playwright.config.js` references `inCI` on four lines that are no longer declared:
+## Skills read this turn
 
-| Line | Reference |
-|------|-----------|
-| 26 | `forbidOnly: inCI,` |
-| 27 | `retries: inCI ? 2 : 0,` |
-| 28 | `workers: inCI ? 1 : undefined,` |
-| 48 | `reuseExistingServer: !inCI,` |
+Re-read `project-workflow-SKILL.md` Phase 4 obligations and `skill-SKILL.md` thread-discipline pattern. No new skills needed — this is a repo-config fix, not an app-code fix, and the Dependabot error pattern is well-documented in GitHub's public Dependabot troubleshooting docs.
 
-I confirmed by evaluating the config logic in Node — it throws `ReferenceError: inCI is not defined` at module-load, before any test runs. **Your `tests.log` (540 ran, 2 failed) must be from before Option A was applied** — with the current config, zero tests would run.
+## Diagnosis
 
-This is my fault as much as yours: in the Turn 10 companion I wrote "*removing the intermediate `inContainer` and `inCI` declarations, which are not referenced elsewhere in the file based on the user's report*" and then "*Recommendation: Option A unless grep reveals `inContainer`/`inCI` are used elsewhere*". The grep caveat was the load-bearing condition and I should have insisted you run it before applying. `inCI` is used in 4 places; `inContainer` is only used to compute `enableWebkit` and is safe to inline.
+From the Dependabot log line 105:
 
-**Minimal fix (still Option A, just restore `inCI`):**
-
-```js
-/* istanbul ignore next -- env-detection at config-load time; PW_CONTAINER and CI env vars are exercised manually, not by unit tests */
-const inCI = !!process.env.CI;
-/* istanbul ignore next */
-const enableWebkit = !!process.env.PW_CONTAINER || inCI;
+```
+Error during file fetching; aborting: The following path based dependencies could not be retrieved: @linebyline/test-helpers
 ```
 
-Two `/* istanbul ignore next */` comments because each only covers the immediately following statement. `inContainer` stays inlined (it had no other consumer). Logic is identical to the original three-line version. Re-run the suite after this — if `tests.log` was pre-Option-A, you haven't actually validated the current config yet.
+And the error table at lines 118–123:
 
----
-
-## 2. Commit SHA pinning — yes, applies to the other repo as-is
-
-`S7637` on line 43 flags `SonarSource/sonarqube-scan-action@v6.0.0`. I checked your `sonarcloud-sonar-issue-exporter.yml` — **same three actions on the same lines**:
-
-| Action | LineByLine yml | Exporter yml | Same SHA? |
-|--------|----------------|--------------|-----------|
-| `actions/checkout@v4` | L19 | L19 | yes |
-| `actions/setup-java@v4` | L24 | L24 | yes |
-| `SonarSource/sonarqube-scan-action@v6.0.0` | L43 | L43 | yes |
-
-So the same SHA-pinning patch drops into both files verbatim. To resolve the SHAs (run from any clone):
-
-```bash
-git ls-remote https://github.com/actions/checkout refs/tags/v4
-git ls-remote https://github.com/actions/setup-java refs/tags/v4
-git ls-remote https://github.com/SonarSource/sonarqube-scan-action refs/tags/v6.0.0
+```
+| Type                            | Details                        |
+| path_dependencies_not_reachable | { "dependencies": ["@linebyline/test-helpers"] }
 ```
 
-Each command prints `<40-char-sha>\trefs/tags/vX.Y.Z`. Patch pattern:
+This is a **file-fetch-phase** error, not an update-resolution error. Dependabot's workflow:
 
-```yaml
-        uses: SonarSource/sonarqube-scan-action@<sha-from-ls-remote>  # v6.0.0
+1. Clone the repo (succeeded — line 31).
+2. **File-fetch phase**: walk `package.json` and resolve every `file:` and `link:` path-dep by reading the referenced directory's own `package.json` (failed — line 105).
+3. Update-resolution phase: compare installed versions against advisories, compute the update plan (never reached).
+4. PR creation (never reached).
+
+The root `package.json` (uploaded this turn) declares:
+
+```json
+"devDependencies": {
+  "@linebyline/test-helpers": "file:./tests/helpers",
+  ...
+}
 ```
 
-SonarCloud only flagged line 43 (third-party action), but pinning `actions/checkout` and `actions/setup-java` too is the standard hardening — `actions/*` is first-party so S7637 exempts it, but the same supply-chain risk applies if those repos were ever compromised. Recommend pinning all three in both repos.
+The pre-push zip earlier in the session shipped `tests/helpers/` as an empty directory (the actual `index.js` lives in the real repo), so the helpers' contents couldn't be inspected directly — but the symptom is unambiguous: `tests/helpers/index.js` exists (the test suite runs successfully, 540 tests executed per `tests.log`), but `tests/helpers/package.json` does not, or its `name` field doesn't match `@linebyline/test-helpers`.
 
----
+Node's runtime CommonJS resolver is lenient — it falls back to `index.js` when no `package.json` is present, so `require("@linebyline/test-helpers")` from the spec files works fine. Dependabot's file-fetcher is strict — it requires a manifest with a matching `name`.
 
-## 3. Overlap with first round — yes, S3776 only
+## Fix
 
-Comparing the two rounds:
+Add `tests/helpers/package.json`:
 
-| Rule | Round 1 (Turns 2–3) | Round 2 (Turn 10) | Overlap? |
-|------|---------------------|-------------------|----------|
-| S2486 (empty catch) | ×4 | — | no |
-| S2310 (for-loop counter) | ×1 | — | no |
-| **S3776 (cognitive complexity)** | **×11** | **×2** | **yes — same rule, different functions** |
-| S8786 (regex backtracking) | — | ×3 | no |
-| S3626 (redundant jump) | — | ×2 | no |
-| S7766 (Math.max) | — | ×1 | no |
-| S2681 (braceless-if) | — | ×1 | no (project has hit S2681 before, per 0.36.2 Memory.md, but not in this session's round 1) |
-| Web:InputWithoutLabelCheck | — | ×1 | no |
-| githubactions:S7637 | — | ×1 | no |
+```json
+{
+  "name": "@linebyline/test-helpers",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js"
+}
+```
 
-The two round-2 S3776 issues are at L2559 (`_handleSettingsHotkeyDispatch`, CC 16) and L2649 (`_handleHotkeyModeNav`, CC 17). These are **functions exposed or created by the round-1 dispatch-table refactor** — extracting helpers from the 63-CC global keydown handler in Turn 4 shifted complexity into the new dispatchers. Common SonarCloud pattern: fixing CC in one function by extracting helpers can leave the new helpers (or their callers) over the 15-CC threshold. Turn 10 already addressed both (`_toggleSettingsOpen` and `_handlePageKeys` extractions) — no further action needed on those.
+User confirmed this turn that the file has been added with these contents.
 
----
+## Conflict analysis (two `package.json` files)
 
-## 4. Flaky tests
+User asked: "Is it normal to have two `package.json` files? Make sure there's no conflict."
 
-Both webkit-only, both focus/state-timing races:
+**Yes, two `package.json` files is the standard pattern for `file:` path-deps.** Each defines a separate npm package. The root's `"@linebyline/test-helpers": "file:./tests/helpers"` declaration tells npm to treat `./tests/helpers` as its own package and symlink it into `node_modules/@linebyline/test-helpers` during `npm install`. Same pattern used by npm workspaces, monorepos (Lerna, Turborepo, pnpm workspaces), and most repos with local helper packages.
 
-- **`tab-settings`** (`keyboard-nav.spec.js:37`) — `toBeFocused()` on `#s-replay-prev`. This is the test you applied the Turn 6 focus-check pattern to. Still flaking → the `tabUntilFocused` + `toBeFocused` pair isn't enough on webkit under load. Stronger sync: after `tabUntilFocused`, add `await expect(page.locator("#s-replay-prev")).toBeFocused()` *before* pressing Space (which you may already have), AND wrap the whole Tab-sequence in a `test.step` so Playwright's trace captures intermediate focus states. If still flaking, the real fix is `await page.locator("#s-replay-prev").focus()` directly after `openSettings()` to bypass the Tab race entirely.
-- **`search-check`** (`settings.spec.js:83`) — `toBeChecked()` on `s-replay-next`. Checkbox *state* race, not focus. Pattern: the Space-press lands before the click handler's `change` event fires. Add `await expect(page.locator("#s-replay-next")).toBeFocused()` before Space, then `await expect(...).toBeChecked()` will auto-retry through Playwright's 5s timeout. If still flaking, replace Space with `page.locator("#s-replay-next").click()` which is synchronous and skips the keyboard-dispatch path entirely.
+Field-by-field conflict check against the root `package.json` (uploaded this turn):
 
-Both fixes are test-suite changes, not app changes — they can ride in the same commit as the SonarCloud remediation without bumping the app version.
+| Field | Root | `tests/helpers` | Conflict? |
+|---|---|---|---|
+| `name` | `linebyline` | `@linebyline/test-helpers` | No — must differ; this is the whole point of a path-dep |
+| `version` | `1.0.0` | `1.0.0` | No — versions are per-package; two packages can coincidentally share a version |
+| `main` | `index.js` (resolves to `./index.js` at repo root) | `index.js` (resolves to `./tests/helpers/index.js`) | No — each `main` is relative to its own package directory |
+| `type` | `commonjs` | (absent — defaults to `commonjs`) | No — npm's default matches root's explicit setting. Optionally add `"type": "commonjs"` to helpers for explicitness, but functionally unnecessary |
+| `private` | (absent — root is publishable) | `true` | No — appropriate: helpers should never be published to npm |
 
----
->Actually I forgot to patch the real `playwright.config.js`, fixed now.
->This time all 540 tests passed or skipped as expected. The flakiness might be ok in practice if the eventual Playwright CI runs on `ubuntu-runner` (GitHub's servers) instead of on my laptop while I'm using it.
->Also updated `sonarcloud.yml` with the three SHAs.
+The `version: "1.0.0"` field is the version of **the `@linebyline/test-helpers` package itself**, not of `index.js` or any individual file. For a `private: true` package that's never published, the version number is arbitrary — `1.0.0` is convention for "first stable internal version," but `0.0.1` or `0.1.0` would work identically. It does not track the app version (`0.37.2`), the root package version (`1.0.0`), or any other version.
 
----
+One pre-existing issue surfaced during the audit (not introduced by the new file, out of scope for this turn): root `package.json` has `"main": "index.js"` pointing at `./index.js` at repo root, but the app is `docs/index.html` — that root `index.js` doesn't exist as a Node module. Harmless because nobody does `require("linebyline")` from outside the repo. Could be cleaned up in a future turn by changing root `main` to `"docs/index.html"` or removing it entirely.
+
+## Copilot-chat transcript audit
+
+The user also uploaded a Copilot-chat transcript proposing three remediation options. Audit:
+
+| Copilot option | Verdict | Reason |
+|---|---|---|
+| 1. Add `tests/helpers/package.json` | ✅ Correct, minimal | Keeps the existing `require("@linebyline/test-helpers")` import style across all 15 spec files; one new file, zero edits |
+| 2. Publish `@linebyline/test-helpers` to npm | ✅ Technically works, but overkill | Massive overhead for a single-repo test helper that's never consumed outside this repo. Requires npm account, version bumping on every helper change, registry availability dependency |
+| 3. Dependabot `ignore` rule for `@linebyline/test-helpers` | ❌ Will not fix this | Dependabot `ignore` rules apply at **update-selection** time (which PRs to open), not at **file-fetch** time (which deps to scan). The `path_dependencies_not_reachable` error fires before any ignore rule is consulted. Copilot is wrong here |
+
+A fourth option Copilot missed: **drop the path-dep entirely, switch to relative require.** Change all 15 spec files from `require("@linebyline/test-helpers")` → `require("./helpers")` and remove the `@linebyline/test-helpers` entry from root `devDependencies`. Node's resolver finds `./tests/helpers/index.js` automatically — no `package.json` needed in `tests/helpers/`, no path-dep for Dependabot to chase. Cleanest long-term, but 15 file edits vs. 1 new file. Not recommended unless the helpers package grows beyond a single file.
+
+## Outstanding security gap
+
+The Dependabot job was a **security** scan for `brace-expansion` and `fast-uri` — both have ReDoS CVEs in older versions. The job definition in the log (line 27) lists ~10 affected version ranges across both packages. These are almost certainly transitive through:
+
+- `@playwright/test` → `micromatch` → `braces` → `brace-expansion`
+- `@playwright/test` → some other path → `fast-uri`
+
+While the path-dep error blocks Dependabot, no security PRs are being opened for these CVEs. Two paths forward:
+
+- **Let Dependabot do it** — after the `tests/helpers/package.json` commit lands, the next scheduled run opens the security PR automatically. Slowest but most consistent with the existing workflow.
+- **Manual bump now** — `npm update brace-expansion fast-uri` in the local repo, commit the regenerated `package-lock.json`, push. Faster, but re-run the Playwright suite to confirm nothing broke. These are deep transitive deps, so behavior change is unlikely, but `micromatch` is used by Playwright's test-file globbing — worth a sanity run.
+
+The two are not mutually exclusive: do the manual bump now to close the security window, and the path-dep fix ensures future scheduled scans don't fail.
+
+## Skill and Memory updates (per project-workflow Phase 4 step 4-5)
+
+### `Memory.md`
+
+New bullet added to the 0.37.2 section (thread-discipline pattern — one bullet per parallel thread, this is a new thread separate from the SonarCloud remediation thread). The bullet covers: root cause (`tests/helpers/` had `index.js` but no `package.json`, Node's resolver is lenient but Dependabot's file-fetcher is strict), fix (added `tests/helpers/package.json` with matching name/main/private), the two-package.json pattern (standard for `file:` path-deps, no conflicts), the Dependabot-`ignore`-doesn't-fix-this gotcha, and the secondary security gap (brace-expansion + fast-uri ReDoS CVEs unpatched while Dependabot was blocked).
+
+### `skill-SKILL.md`
+
+No update needed. The "thread discipline prevents Memory.md bloat" lesson (added Turn 8) already covers the pattern applied here — Dependabot failure is a new thread, gets its own bullet rather than being folded into the SonarCloud bullet.
+
+### `project-workflow-SKILL.md`
+
+No update needed. The Phase 4 workflow obligations and the companion-file format rules (Turn 9) are unchanged. This turn follows the established pattern for out-of-workspace files (instructions + Memory/companion updates only, no patch artifact in `download/`) — same as the `playwright.config.js`, `sonarcloud.yml`, and `sonarcloud-sonar-issue-exporter.yml` files in Turn 10.
+
+### `code-quality-SKILL.md`
+
+No update needed. The Dependabot failure is a repo-config issue, not a code-quality pattern. If the project accumulates more Dependabot-specific gotchas (e.g. `ignore` rules don't apply at file-fetch time, `file:` path-deps require manifests, etc.), a future "Dependabot troubleshooting" section could be added — but one occurrence doesn't yet justify extraction.
+
+## Post-fix verification
+
+1. **Local test suite** — `npx playwright test` should still pass. The new `package.json` doesn't change Node's runtime resolution (CommonJS fallback to `index.js` was already finding the same file). Re-run to confirm.
+2. **Dependabot next scheduled run** — should pass file-fetch and proceed to update-resolution. The next scheduled run will either open a security PR for `brace-expansion`/`fast-uri` (if still vulnerable) or report clean (if the user did a manual `npm update` in the meantime).
+3. **No app-version bump** — version held at 0.37.2 per the original session rule. This is a repo-config fix, not an app change.
+
