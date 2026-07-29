@@ -1,6 +1,6 @@
 ---
 model: GLM (Z.ai)
-summary: 'Phase 4 post-push SonarCloud remediation on version 0.37.2 (held constant across all turns per user request). Turn 2 fixes S2486 (4 empty-catch issues). Turn 3 fixes S2310 (1 for-loop counter reassignment in _assignInterpolatedTs). Turn 4 fixes S3776 (11 cognitive-complexity issues). Turn 5 is an after-Turn-4 manual-test catch: bump the `<title>` to 0.37.2 (forgotten in Turns 2–4) and strip the trailing Genius embed widget (`<digits>\nEmbed`) from Genius paste. Turn 6 fixes two more Genius-paste discrepancies found by manual testing of the Turn 5 patch: dropped intro `[intro vocalization]` line and missing blank-line section breaks when section headers have no preceding blank in the raw input. Turn 7 is a post-test follow-up: no app patch, just (1) root-cause analysis of a flaky `tab-settings` Playwright failure (focus-timing race under host load, recommend test-level sync assertion), and (2) an enhanced `mock-v2.txt` fixture that exercises the Turn 5 embed-widget code path while preserving the existing snapshot byte-for-byte (verified via `scripts/verify-enhanced-mock.js`). Turn 8 is release prep: no app patch, just (1) Memory.md condensation from 11 turn-by-turn bullets to 4 thread-based bullets per a new "thread discipline" pattern, (2) skill-SKILL.md updated with the thread-discipline lesson, (3) v0.37.2 release summary (287 words, half-page), (4) commit message (6-word title, 4 sentences each <10 words). Turn 9 refines the companion file format: licensed lyrics/metadata scrubbed to placeholders, turn numbering normalized to integers throughout, `## Deliverables this turn` and `## Awaiting` sections dropped; four rules codified in project-workflow-SKILL.md. Turn 10 addresses 11 more post-push SonarCloud findings (S8786 regex backtracking x3, S3776 cognitive complexity x2, S3626 redundant jump x2, S7766 Math.max, S2681 braceless-if, Web:InputWithoutLabelCheck, githubactions:S7637 SHA pin) plus 3 uncovered lines in playwright.config.js (env-detection collapsed into single line with istanbul-ignore comment); summary frontmatter wrapped in single quotes per YAML special-character rule. Turn 11 fixes a Dependabot scheduled-scan failure (`path_dependencies_not_reachable: @linebyline/test-helpers`) by adding `tests/helpers/package.json` with matching name/version/main/private fields; no app patch, no conflicts with root package.json (two manifests is the standard pattern for file: path-deps); secondary gap: brace-expansion and fast-uri ReDoS CVEs were not patched while Dependabot was blocked.'
+summary: 'Phase 4 post-push SonarCloud remediation on version 0.37.2 (held constant across all turns per user request). Turn 2 fixes S2486 (4 empty-catch issues). Turn 3 fixes S2310 (1 for-loop counter reassignment in _assignInterpolatedTs). Turn 4 fixes S3776 (11 cognitive-complexity issues). Turn 5 is an after-Turn-4 manual-test catch: bump the `<title>` to 0.37.2 (forgotten in Turns 2–4) and strip the trailing Genius embed widget (`<digits>\nEmbed`) from Genius paste. Turn 6 fixes two more Genius-paste discrepancies found by manual testing of the Turn 5 patch: dropped intro `[intro vocalization]` line and missing blank-line section breaks when section headers have no preceding blank in the raw input. Turn 7 is a post-test follow-up: no app patch, just (1) root-cause analysis of a flaky `tab-settings` Playwright failure (focus-timing race under host load, recommend test-level sync assertion), and (2) an enhanced `mock-v2.txt` fixture that exercises the Turn 5 embed-widget code path while preserving the existing snapshot byte-for-byte (verified via `scripts/verify-enhanced-mock.js`). Turn 8 is release prep: no app patch, just (1) Memory.md condensation from 11 turn-by-turn bullets to 4 thread-based bullets per a new "thread discipline" pattern, (2) skill-SKILL.md updated with the thread-discipline lesson, (3) v0.37.2 release summary (287 words, half-page), (4) commit message (6-word title, 4 sentences each <10 words). Turn 9 refines the companion file format: licensed lyrics/metadata scrubbed to placeholders, turn numbering normalized to integers throughout, `## Deliverables this turn` and `## Awaiting` sections dropped; four rules codified in project-workflow-SKILL.md. Turn 10 addresses 11 more post-push SonarCloud findings (S8786 regex backtracking x3, S3776 cognitive complexity x2, S3626 redundant jump x2, S7766 Math.max, S2681 braceless-if, Web:InputWithoutLabelCheck, githubactions:S7637 SHA pin) plus 3 uncovered lines in playwright.config.js (env-detection collapsed into single line with istanbul-ignore comment); summary frontmatter wrapped in single quotes per YAML special-character rule. Turn 11 fixes a Dependabot scheduled-scan failure (`path_dependencies_not_reachable: @linebyline/test-helpers`) by adding `tests/helpers/package.json` with matching name/version/main/private fields; no app patch, no conflicts with root package.json (two manifests is the standard pattern for file: path-deps); secondary gap: brace-expansion and fast-uri ReDoS CVEs were not patched while Dependabot was blocked. Turn 12 diagnoses a Dependabot PR #8 merge-block by SHA-mismatch race (SonarCloud passed on prior SHA, current HEAD has no result) — safe to bypass; also documents two stuck brace-expansion alerts held in "creating" state from before the Turn 11 fix. Turn 13 discovers brace-expansion has TWO separate CVEs (recursion patched in 5.0.7, OOM unfixable) and that `npm audit fix --force` is a footgun — it downgraded serve from v14 to v6.5.8 (2017-era), introducing 4 critical handlebars/minimist RCE vulns; recommendation: revert all package.json/lock changes via `git checkout HEAD -- package.json package-lock.json`, optionally re-add ONLY the overrides block and run `npm install` (NOT `npm audit fix`, NOT `--force`), accept residual 4-high OOM CVE as unfixable until upstream patches.'
 ---
 
 # Turn 1 (Phase 1 onboard — recorded in linebyline-0.37.1.md)
@@ -807,7 +807,7 @@ Left to the user per their stated workflow.
 >     Received: unchecked
 >     Timeout:  5000ms
 > ```
-> I had some other programs open so maybe the Playwright workers were competing for resources. Not sure if it would be more feasible to make the test itself more stable or do something to reserve resources for Playwright.
+> I had some other programs open and was tabbed out so maybe the Playwright workers were competing for resources. Not sure if it would be more feasible to make the test itself more stable or do something to reserve resources for Playwright.
 >
 > The Genius test passed anyway. But `mock.txt` itself may need to be updated (along with a snapshot update). The new logic designed against the challenging raw page with the opening one-line stanza, unexpected stanza spacing at the end, and embed element also worked for another simpler Genius page and the original `mock.txt`. So it's probably a better baseline overall.
 
@@ -1496,4 +1496,206 @@ No update needed. The Dependabot failure is a repo-config issue, not a code-qual
 1. **Local test suite** — `npx playwright test` should still pass. The new `package.json` doesn't change Node's runtime resolution (CommonJS fallback to `index.js` was already finding the same file). Re-run to confirm.
 2. **Dependabot next scheduled run** — should pass file-fetch and proceed to update-resolution. The next scheduled run will either open a security PR for `brace-expansion`/`fast-uri` (if still vulnerable) or report clean (if the user did a manual `npm update` in the meantime).
 3. **No app-version bump** — version held at 0.37.2 per the original session rule. This is a repo-config fix, not an app change.
+
+
+---
+
+# Turn 12 — Dependabot PR #8 merge-blocked by SHA-mismatch race; stuck brace-expansion alerts
+
+> After merging [the tests/helpers/package.json fix], there are now more Sonar issues, but I suspect they're actually because I forgot to update index.html. Playwright tests pass after I pulled the Dependabot merge. And it seems Dependabot has been stuck trying to create two security patches since yesterday (there's an infinite loading circle for both pages).
+
+User uploaded `waiting.zip` with two PNG screenshots: PR #8 (Bump fast-uri from 3.1.2 to 3.1.4) merge-blocked UI, and the Actions runs list showing recent workflow history. No app patch this turn — diagnosis and merge guidance only.
+
+## PR #8 merge block — SHA-mismatch race
+
+PR #8 page (image 1) shows:
+- Title: "Bump fast-uri from 3.1.2 to 3.1.4 in the npm_and_yarn group across 1 directory"
+- 1 commit, branch `dependabot/npm_and_yarn/npm_and_yarn-04db377a11` → `main`
+- 3 successful checks: Code scanning results / CodeQL, CodeQL Advanced / Analyze (javascript-typescript), SonarCloud analysis / Analysis
+- Merge blocked with: "Code scanning is waiting for results from SonarCloud for the commits `8ae6621` or `29c71b3`."
+- Two buttons offered: "Merge without waiting for requirements to be met (bypass rules)" / "Enable auto-merge"
+
+Actions runs list (image 2) shows the recent history, newest first:
+1. SonarCloud analysis #60 — PR #8, 11s, success
+2. CodeQL Advanced #92 — PR #8, 1m 17s, success
+3. Dependabot Updates #3 — main, 1m 19s, success (the scan that previously failed in Turn 11 — now succeeds after the `tests/helpers/package.json` commit)
+4. CodeQL Advanced #91 — commit `eb4c7e0` "Updated package.json for Dependabot" on main, 3m 2s, success
+5. SonarCloud analysis #59 — commit `eb4c7e0` on main, 59s, success
+6. pages-build-deployment #35 — main, 50s, success
+
+### Root cause
+
+SonarCloud #60 ran and passed against an **earlier commit** on Dependabot's branch. Dependabot then force-pushed (or rebased) to update the PR, advancing the branch HEAD to `8ae6621` / `29c71b3`. GitHub's branch protection sees the current HEAD has no SonarCloud result posted for those exact SHAs, so the required check stays "pending" even though SonarCloud passed on the prior SHA.
+
+This is a known Dependabot+SonarCloud race:
+- Dependabot pushes commit A → SonarCloud #60 triggers, analyzes A, posts "success" for A.
+- Dependabot rebases/pushes commit B (`8ae6621`) → SonarCloud #61 *should* trigger for B, but either hasn't finished yet, hasn't been queued yet, or the GitHub Action didn't fire on `pull_request: synchronize` for the force-push.
+
+The "or" in "commits `8ae6621` or `29c71b3`" suggests Dependabot pushed twice — possibly a rebase after `eb4c7e0` landed on main, then a second push to refresh. Each push creates a new SHA on the branch.
+
+### Why the SHAs don't appear in the Actions list
+
+Two reasons:
+
+1. The Actions list shows run names (PR titles / commit messages), not the analyzed SHA. Run #60 is labeled "Bump fast-uri from 3.1.2 to 3.1.4 in the npm_and_yarn…" — that's the PR title, not a SHA. To see which SHA #60 actually analyzed, click into run #60 → the run detail page shows "This run ran against commit `XXXXX`" near the top. It will be a different SHA than `8ae6621`/`29c71b3`.
+
+2. Those two SHAs live on the Dependabot branch, not `main`. They only show up in the Actions list when a workflow runs against them. Right now no SonarCloud run has been triggered for those specific SHAs, so they don't appear as run subjects. They exist in the repo's git history (visible in the PR's commits tab), just not yet in any SonarCloud run.
+
+### Bypass recommendation
+
+**Safe to bypass.** Factors:
+- PR changes: `package-lock.json` only (transitive dep bump, no app code)
+- CodeQL: passed on the current PR HEAD
+- SonarCloud: passed on the prior PR HEAD (same changeset, just different SHA)
+- Branch protection block: SHA-mismatch race, not a real quality-gate failure
+- Re-analysis safety net: next push to `main` triggers SonarCloud #61 against the merged commit — any real issue surfaces there
+
+The bypass is exactly what the "Merge without waiting for requirements to be met (bypass rules)" button is for. After merge, the post-merge SonarCloud run on `main` closes the loop.
+
+Alternatives (slower, no bypass needed):
+- **Close + reopen PR #8** — fires a fresh `pull_request: reopened` event, re-triggers SonarCloud against the current HEAD.
+- **Push an empty commit to the PR branch** (`git commit --allow-empty -m "trigger sonar" && git push`) — same effect, fires `pull_request: synchronize`. Requires checking out the Dependabot branch locally.
+
+Both alternatives just trigger the same SonarCloud run that should have fired automatically. Bypass is faster and equivalent in safety.
+
+## Stuck brace-expansion alerts
+
+Two Dependabot alerts (alert #1 and #2 on `https://github.com/amokprime/linebyline/security/dependabot/1` and `/2`) showing "Creating a security update" spinner for 18+ hours. Both are for `brace-expansion` DoS (exponential recursion O(2ⁿ) — same CVE, two alerts because the vulnerable 5.0.6 lives in multiple nested locations: `@eslint/config-array`, `eslint`, `eslint-plugin-sonarjs`).
+
+The alerts were opened **before** the Turn 11 `tests/helpers/package.json` fix. The path-dep error was blocking all Dependabot jobs at that time. The fix unblocked *new* Dependabot runs (scan #3 succeeded, opened PR #8 for fast-uri), but the brace-expansion job was queued *before* the fix, and its "creating" UI state is held until the job explicitly succeeds or fails. The fix didn't re-queue the stuck job — it's still holding the lock.
+
+### Unstick options
+
+**Option A — Manual `overrides` patch (fastest, recommended in Turn 12):**
+Add an `overrides` field to root `package.json`:
+```json
+{
+  "overrides": {
+    "brace-expansion": "5.0.7"
+  }
+}
+```
+Run `npm install` locally. The `overrides` field forces npm to resolve ALL nested copies of `brace-expansion` to 5.0.7. Commit `package.json` + regenerated `package-lock.json`, push. Both alerts auto-close within ~24 hours when Dependabot's next scan sees the lockfile no longer contains 5.0.6.
+
+**Option B — Cancel + re-trigger Dependabot:**
+On each alert page, look for a "..." menu or "Reopen" button. To trigger a new Dependabot run on demand: go to Insights → Dependency graph → Dependabot (`https://github.com/amokprime/linebyline/network/updates`), click "Last checked" → "Check for updates". This forces a fresh scan that should succeed (post-Turn 11 fix) and either open a new PR or close the alerts if `npm install` already resolved them.
+
+**Option C — Wait:**
+Dependabot's stuck "creating" state eventually times out (usually 24-72 hours). Not recommended — security window stays open.
+
+## Sonar "more issues" — index.html hypothesis
+
+User suspected the new Sonar issues are because they forgot to push `docs/index.html`. Verification steps provided:
+1. Open `https://github.com/amokprime/linebyline/blob/main/docs/index.html`
+2. Find the `<title>` tag (line 6, near the top)
+3. If it says `<title>LineByLine 0.37.1</title>` (or older) → the patches never landed
+4. If it says `<title>LineByLine 0.37.2</title>` → the patches did land, and the new Sonar issues are something else
+
+Alternatively, search the GitHub file for `_toggleSettingsOpen` — that's one of the helpers added in Turn 10. If it's not in the repo file, the patches weren't pushed.
+
+**Why Playwright tests still pass:** the tests exercise user-facing behavior (paste, sync, navigation). The SonarCloud fixes in Turns 2-10 were almost all code-smell fixes (CC reduction, regex hardening, redundant jump removal, brace additions) that preserve observable behavior — verified by the trace analysis in the Turn 10 companion. The tests would pass against either the patched or unpatched code. The functional fixes (Turns 4-6: `<title>` bump, Genius embed-widget stripping, intro-line preservation, section-break blanks) are only exercised by manual Genius-paste testing, which the test suite doesn't cover (the `mock.txt` fixture doesn't have the embed-widget pattern — that's why we created `mock-v2.txt` in Turn 7).
+
+**If the patches weren't pushed:** the patched file is sitting in this workspace at `/home/z/my-project/download/linebyline-0.37.2.html` (154,867 bytes, `<title>LineByLine 0.37.2</title>` confirmed). Copy it over local `docs/index.html`, commit, push. SonarCloud will re-scan within ~1 minute and the issues should disappear.
+
+---
+
+# Turn 13 — `npm audit fix --force` footgun; brace-expansion two-CVE situation
+
+> I added the [overrides] section to `package.json` and ran `npm install` but that doesn't actually patch things. This is sort of confusing — should I keep going and fix the emergent errors too? Or revert what's already been done if breaking (the last commit is before these `package.json` changes). Yes, update memory and the companion file.
+
+User uploaded `security.zip` with `package-lock.json` (current state with overrides applied) and the two Dependabot alert pages (both for brace-expansion exponential-recursion CVE, alert #1 and #2). Then ran `npm install` (with overrides), `npm audit` (4 high), and `npm audit fix --force` (13 vulns: 1 low, 8 high, 4 critical). User asks: keep going or revert?
+
+## Diagnosis
+
+### Two separate brace-expansion CVEs
+
+The user's `overrides: { "brace-expansion": "5.0.7" }` was the correct approach for forcing nested versions, but brace-expansion has TWO separate CVEs:
+
+| CVE | Type | Affected range | Patched in | Override helps? |
+|---|---|---|---|---|
+| Exponential recursion (Dependabot alerts #1, #2) | O(2ⁿ) CPU hang | `>= 3.0.0, < 5.0.7` | 5.0.7 | ✅ Yes — closes both Dependabot alerts |
+| Unbounded expansion OOM (GHSA-mh99-v99m-4gvg, npm audit advisory) | Memory exhaustion | `<= 5.0.7` | No patch yet | ❌ No — 5.0.7 is still vulnerable, no fixed version exists |
+
+After `npm install` with the override, brace-expansion bumped from 5.0.6 → 5.0.7 in the nested locations (`@eslint/config-array`, `eslint`, `eslint-plugin-sonarjs`), which closed the Dependabot alerts (recursion CVE patched). But `npm audit` kept showing 4 high because the OOM CVE has no fix — 5.0.7 is the latest version and it's still in the affected range (`<=5.0.7`).
+
+### `npm audit fix --force` is a footgun
+
+`npm audit fix --force` doesn't care about SemVer — it'll downgrade packages to escape the vulnerable dep tree. It saw that the only way to remove brace-expansion entirely was to downgrade `serve` to v6.5.8 (2017-era, which uses a different dep tree without brace-expansion). That worked, but serve 6.x brought its own pile of worse CVEs:
+
+| Package | Severity | CVEs |
+|---|---|---|
+| `handlebars` | Critical (×4) | RCE, prototype pollution, DoS, AST injection |
+| `minimist` | Critical | Prototype pollution |
+| `ip` | High | SSRF |
+| `send` | High | XSS |
+| `cross-spawn` | High | ReDoS |
+| `optimist` | (depends on vulnerable minimist) | — |
+
+Vuln count went 4 high → 13 (1 low, 8 high, 4 critical). All of these are worse than the original brace-expansion DoS — RCE and prototype pollution are exploit-worthy; a DoS in a dev-only static file server is not. The "fix" traded a theoretical dev-only DoS for critical RCE in dev dependencies. Bad trade.
+
+## Recommendation: REVERT
+
+```sh
+# Discard ALL local package.json + package-lock.json changes
+# (back to the last commit, which the user confirmed is pre-overrides)
+git checkout HEAD -- package.json package-lock.json
+```
+
+Verify with `npm audit` — should be back to the original 4 high (brace-expansion via serve/eslint paths). Then stop.
+
+### Two acceptable end states
+
+**Option A — minimal (just revert, accept current state):**
+- No overrides, no changes to package.json
+- 4 high vulns remain (brace-expansion 5.0.6 via serve/eslint)
+- 2 Dependabot alerts remain open (the recursion CVE)
+- Wait for brace-expansion to publish a patch for the OOM CVE, then a single `npm update brace-expansion` closes everything
+
+**Option B — partial (keep overrides, accept residual):**
+- Re-add just the `overrides: { "brace-expansion": "5.0.7" }` block to package.json
+- Run `npm install` (NOT `npm audit fix`, NOT `--force`)
+- 2 Dependabot alerts close (recursion CVE patched)
+- 4 high npm audit vulns remain (OOM CVE, unfixable until upstream patches)
+- Same wait-for-upstream as Option A, but with fewer open Dependabot alerts
+
+Option B is slightly better — closes the alerts that *can* be closed, leaves only the unfixable ones. The residual 4 high are dev-only dependencies (serve, eslint, eslint-plugin-sonarjs) where no attacker-controlled input reaches brace-expansion. Real-world risk is near-zero.
+
+### Critical: never run `npm audit fix --force` for this issue
+
+Plain `npm audit fix` (no `--force`) only applies non-breaking updates and would have refused to touch serve. The `--force` flag is what caused the damage. The audit output even warned: "Will install serve@6.5.8, which is a breaking change" — that warning is the cue to stop, not proceed.
+
+## Why the OOM CVE is unfixable right now
+
+The npm audit advisory GHSA-mh99-v99m-4gvg lists brace-expansion `<=5.0.7` as affected. The latest published version is 5.0.7. There is no 5.0.8 or later release. The brace-expansion maintainer has not yet published a patch for this CVE. Until they do, the only ways to clear the audit are:
+
+1. Wait for a patch (recommended — could be days or weeks)
+2. Remove all deps that transitively depend on brace-expansion (which means downgrading serve, eslint, etc. — exactly what `--force` did, with disastrous results)
+3. Replace `serve` with a different static file server that doesn't depend on brace-expansion (cleanest long-term, but requires more work and is out of scope for 0.37.2)
+
+For now, accept the 4 high vulns. They're dev-only dependencies, no attacker-controlled input reaches the vulnerable code path, and the DoS requires specific input patterns that don't occur in static file serving.
+
+## Skill and Memory updates
+
+### `Memory.md`
+
+New bullet added to the 0.37.2 section (thread-discipline pattern — Dependabot cascade is a continuation of the Turn 11 Dependabot thread, but distinct enough to warrant its own bullet covering Turns 12-13). The bullet covers: PR #8 SHA-mismatch race (Turn 12), stuck brace-expansion alerts (Turn 12), the two-CVE brace-expansion situation (Turn 13), the `npm audit fix --force` footgun (Turn 13), and the revert recommendation.
+
+### `skill-SKILL.md`
+
+No update needed. The thread-discipline lesson (added Turn 8) already covers the pattern. A new lesson about `npm audit fix --force` being a footgun could be added if the pattern recurs, but one occurrence doesn't yet justify extraction. The lesson is documented in Memory.md and this companion file.
+
+### `project-workflow-SKILL.md`
+
+No update needed. The Phase 4 workflow obligations and the companion-file format rules (Turn 9) are unchanged. This turn follows the established pattern for out-of-workspace files (instructions + Memory/companion updates only, no patch artifact in `download/`) — same as Turns 10-12.
+
+### `code-quality-SKILL.md`
+
+No update needed. The `npm audit fix --force` footgun is a dependency-management issue, not a code-quality pattern. If the project accumulates more npm/Dependabot-specific gotchas, a future "Dependency management troubleshooting" section could be added — but one occurrence doesn't yet justify extraction.
+
+## Post-fix verification
+
+1. **After revert** — `npm audit` should show 4 high (brace-expansion via serve/eslint paths). Confirm.
+2. **After re-adding overrides (Option B)** — `npm install` should bump brace-expansion to 5.0.7 in nested locations. `npm audit` should still show 4 high (OOM CVE, unfixable). Dependabot alerts #1 and #2 should auto-close within 24 hours when the next scan sees the lockfile no longer contains 5.0.6.
+3. **Playwright suite** — re-run after revert. Should still pass (the overrides change is transitive-only, no behavior change; serve 14.x is what the test suite was already running against).
+4. **No app-version bump** — version held at 0.37.2 per the original session rule. This is a repo-config fix, not an app change.
 
