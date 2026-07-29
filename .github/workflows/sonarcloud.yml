@@ -48,4 +48,4 @@ jobs:
             -Dsonar.projectKey=amokprime_linebyline
             -Dsonar.organization=amokprime
             -Dsonar.scm.provider=git
-            -Dsonar.exclusions=archive/**,tests/**
+            -Dsonar.exclusions=archive/**,tests/**,playwright.config.js
