@@ -2,13 +2,13 @@ See this [Obsidian Share Note](https://share.note.sx/9wimmaly) for what's planne
 
 ### Architecture and environment
 
-LineByLine is a no-dependencies 2.7k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects and uses [these](https://github.com/amokprime/linebyline/tree/main/archive/ai_instructions) skills and instructions. Any comparable model that can work with files (i.e. GLM in [Z.ai](https://chat.z.ai/) Agent mode web chat that I currently use) should also be able to follow the skills and instructions. Use a Chromium-based browser (e.g. Helium) with uBlock Origin or Adguard Adblocker. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
+LineByLine is a no-dependencies 2.7k+ LOC. .html file (with JavaScript and CSS all inside). It was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects. Any comparable model that can accept zip/code file uploads and generate code files for download should also work. Use a Chromium-based browser (e.g. Helium) with uBlock Origin or Adguard Adblocker. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
 
 ### General workflow for web app vibe coding
 
 The guidelines below are designed for a free account AI web chat without access to your filesystem. You may be able to install Claude Desktop on Windows, but I haven't had a good experience with the Filesystem or GitHub MCP connectors. If using Claude Code, OpenCode, etc., you might find it more efficient to just ask it to make all the changes directly.
 
-Put each new version of LineByLine and its companion .md file into its own semantically numbered folder in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic). Tell the [AI](https://github.com/amokprime/linebyline/tree/main/archive/ai) a version keyword to get it to automatically name the app version and .md file:
+Put each new version of LineByLine and the associated chat transcript into its own semantically numbered folder in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic). You can tell the AI a keyword for the next version to get it to automatically rename the folder, or fill out [ai/z-ai-glm/Build.md](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/Build) to help it [infer](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/skills/project-workflow-SKILL.md) the appropriate version.
 
 | Scope of your changes                                                         | Version | Resulting number change |
 | ----------------------------------------------------------------------------- | ------- | ----------------------- |
@@ -20,42 +20,32 @@ Rename the folder manually with the same number. If the AI forgets to update the
 
 #### Working with GLM (web chat Agent mode)
 
-chat.z.ai's free tier is currently far more generous overall with some caveats:
+chat.z.ai's free tier is currently far more generous overall (than claude.ai) with some caveats
 - I have noticed as many as 2k ads being blocked by uBlock Origin! It keeps ramping up over time.
 - The website itself is often unresponsive even in Chromium browsers (I wonder why??). It may help to close the browser window and reopen the page (just reloading or closing the browser tab isn't always enough)
 - A captcha slider randomly pops up sometimes
 - Sessions expire after 2 hours. After that, start a new Agent chat, because the originally uploaded files vanish and newly uploaded files fail to persist. Work around by typing something before it expires to reset the timer to another 2 hours.
 - Uploads may fail to update if certain filenames like file.md and Memory.md are re-uploaded without renaming them or zipping them in a uniquely named folder
-- Downgrade to a lower model, chats failing to submit or load or timing out, during peak hours (really just all the time now since GLM-5.2 release)
+- Downgrade to a lower model, chats failing to submit or load or timing out, during peak hours. Use the 'previous flagship model' during off-peak hours to mitigate these issues.
 
-There are also no built-in skills or memory scaffolding to enforce a large amount of recurring behaviors. The more competing demands, the less likely any of them are to be remembered, much less followed. The latest planned workflow is to upload just-in-time, explicitly telling the agent what to read and follow on the spot without trusting its memory (Chat.md, project-workflow-SKILL.md).
-
-##### [Repomix](https://repomix.com/)
-
-This makes repetitive uploads more manageable than the zip folder of symlinks I used for a while. To prepare the global install I ran `npm config set prefix "~/.npm-global"` and added `set -x PATH $HOME/.npm-global/bin $PATH` to my `~/.config/fish.config`.
-`/**` = everything in the folder. If you rerun the command on the same output file the old one is overwritten. Example syntax:
-
-```sh
-repomix --output "local/repomix-output.xml"\
---include "ai/z-ai-glm/skills/**,archive/modular/**,docs/**,tests/**,\
-HELP.md,package.json,playwright.config.js,README.md" \
---ignore "ai/z-ai-glm/skills/chat/**,tests/chat/**"
-```
+A few issues are compensated for by my current workflow (see [[ai/z-ai-glm/Repomix snippets|Repomix snippets]] and [[ai/z-ai-glm/Vibecoding workflow|Vibecoding workflow]]) designed for GLM-5.1:
+- For GLM-5.1 specifically, the ~200k context window means details may be swallowed in large uploads (e.g. a naive `repomix` of the whole repo, especially if not ignoring the massive `archive/`)
+- There are no built-in skills or memory scaffolding to enforce a large amount of recurring behaviors
 
 #### Working with Claude Sonnet (web chat/Claude Desktop)
 
-Warning: I stopped maintaining Claude's skills after 0.35.19. You might have to backport some more updated information from GLM's instructions.
-claude.ai has extremely strict free plan 5-hour limits. Fill out the preferences and project instructions and add the skills, and turn on memory. Use the Espanso and Fish helpers to share terminal output. Occasionally upload a Repomix or zip of all chat logs since last skill update and ask Claude to update them or create new ones (it has a skill-creator skill).
+Warning: I stopped maintaining Claude's skills after 0.35.19. You might have to backport (adapt to Claude) some more updated information from GLM's instructions.
+claude.ai has extremely strict free plan 5-hour limits but a higher 1M context window and better scaffolding support. Fill out the preferences and project instructions, add the backported skills, and turn on memory. Occasionally upload a Repomix or zip of all chat transcripts since the last skill update and ask Claude to update them or create new skills.
 
 #### CI
 
-All code changes must pass [ESLint](https://github.com/amokprime/linebyline/tree/main/archive/modular/plan/2-Zed-ESLint.md) (i.e. `npx eslint . > local/log.txt 2>&1`). Any changes to app code must pass CodeQL and SonarCloud GitHub Actions. ⚠️These are currently broken pending review of a flag on my account.⚠️ When Sonar issues are found, fetch them with the [sonar-issue-exporter](https://github.com/amokprime/sonar-issue-exporter) tool and put them in an "issues" folder inside the app version folder, minus the why.md and how.md files (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license).
+All code changes must pass [ESLint](https://github.com/amokprime/linebyline/tree/main/archive/modular/plan/2-Zed-ESLint.md) (i.e. `npx eslint . > local/log.txt 2>&1`) after the HTML modular [refactor](https://github.com/amokprime/linebyline/tree/main/archive/modular/plan/0-Roadmap.md) planned. Any changes to app code must pass CodeQL and SonarCloud GitHub Actions. When Sonar issues are found, fetch them with the [sonar-issue-exporter](https://github.com/amokprime/sonar-issue-exporter) tool and put them in an "issues" folder inside the app version folder, minus the why.md and how.md files (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license).
 
 LineByLine has two types of QA tests: Playwright and [MANUAL.md.](https://github.com/amokprime/linebyline/tree/main/tests/MANUAL.md). You don't have to do either of these for now. Just leave the existing Playwright test files and folders (such as snapshots) alone so that I can access them on my end when I checkout your PR.
 
 #### Running tests
 
-This section will be replaced by Playwright CI in the future. 🚧Tests/snapshots are being rewritten/regenerated for Linux and may change abruptly at this time.🚧
+This section will be replaced by Playwright CI in the near future.
 
 LineByLine uses a [split test architecture](https://github.com/amokprime/linebyline/tree/main/tests/PLAYWRIGHT_SETUP.md):
 - Podman container, headless: runs all 3 browsers (Chromium, Firefox, Webkit). Use to verify tests that have already been tested in UI Mode.

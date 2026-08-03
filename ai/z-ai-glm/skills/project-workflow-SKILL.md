@@ -1,63 +1,104 @@
 ---
 name: project-workflow
-description: Phased session bootstrapping, file navigation, and patch delivery workflow for the LineByLine app. Use this skill at the start of every app build session and whenever you receive a phase zip, need to locate project files, follow the build/patch workflow, version the app, update companion files, or decide whether Memory.md or a skill needs updating after a change.
+description: Phased session bootstrapping, file navigation, and patch delivery workflow for the LineByLine app. Use this skill at the start of every app build session, whenever you receive a Repomix snippet, need to locate project files, follow the build/patch workflow, version the app, update companion files, or decide whether Memory.md or a skill needs updating after a change. Also use when the user mentions a vibecoding step (Build, Review, Test, Skills, Propose), Repomix, or session wrap-up.
 ---
 
-The project uses a phased upload workflow: skills and project files arrive in stages so that only the context needed for the current phase occupies attention. A single-file HTML app must be patched with minimal diff, and a set of post-patch obligations (syntax check, re-index, Memory.md update, companion .md, download copy) must be followed. Following this workflow each turn prevents regressions and keeps session artifacts in sync.
+The project uses a Repomix-based workflow: context arrives as just-in-time Repomix snippets so that only the files needed for the current step occupy attention. A single-file HTML app must be patched with minimal diff, and a set of post-patch obligations (syntax check, re-index, Memory.md update, companion .md, download copy) must be followed. Following this workflow each turn prevents regressions and keeps session artifacts in sync.
 
 ---
 
-Session phases
+Re-read cadence
 
-Skills and project files arrive across up to four phases. Each phase adds files to the same project directory. The user uploads one zip per phase; the skill tells you what to do with the arriving files.
+Re-read this skill at the start of each new step (Build, Review, Test, Skills, Propose) and whenever the user announces a step change. The agent's context compacts over long sessions — early-turn workflow rules become less reliable later. Re-reading this skill at step boundaries is the countermeasure. Also re-read the web-channel skill at the same time, since its rules apply every turn and are equally vulnerable to compaction.
 
-Phase 1 — Onboard (1_onboard.zip)
+---
 
-Contains: project-workflow-SKILL.md, README.md.
+Session steps
+
+Every session starts with Onboard and ends with Wrap Up. Between them, the user chooses one or more work steps based on the vibecoding workflow. Each step has its own Repomix snippet that delivers the right context at the right time. The user tells you which step they're on; each step can span multiple turns, and the user will announce when they're changing steps.
+
+Step 1 — Onboard
+
+Repomix: `repomix-onboard.xml`. Contains: project-workflow-SKILL.md, README.md, Boilerplate.md, skill-SKILL.md, and archive/modular/plan/**.
 
 1. Read project-workflow-SKILL.md (this file) and README.md.
-2. Note the current app version from the user's chat message. They may state it directly ("Current version: 0.37.1") or as a filename ("The current app is linebyline-0.37.1.html") — extract the semver portion either way. This is the baseline; derive all version numbers from it rather than asking the user to type them again.
-3. Create the companion .md file in downloads if it is not already there (see Companion .md file section). Name it using the current version, not a placeholder.
-4. Do not begin coding — the app HTML and domain skills arrive in the next phase.
+2. Read the web-channel skill — it applies to every turn of the session, not just onboarding.
+3. Note the current app version. The user may state it directly ("Current version: 0.37.1") or as a filename ("The current app is linebyline-0.37.1.html"). If they don't state it, find it by grepping for the `<title>` tag in the latest HTML file in the project tree. Extract the semver portion either way — this is the baseline; derive all version numbers from it rather than asking the user to type them again.
+4. Create the companion .md file in downloads if it is not already there (see Companion .md file section). Name it using the current version, not a placeholder.
+5. Do not begin coding — the app HTML and domain skills arrive in the next step.
 
-Phase 2 — Work (2_work.zip + app HTML)
+Step 2 — Build
 
-Contains: domain skills (browser-hotkey-system-SKILL.md, linebyline-section-index-SKILL.md, single-file-html-app-SKILL.md), Memory.md, Prompt.md. The user also uploads the current app HTML file alongside this zip.
+Repomix: `repomix-build.xml`. Contains: linebyline-section-index-SKILL.md, single-file-html-app-SKILL.md, browser-hotkey-system-SKILL.md, Memory.md, and the current app HTML.
 
-1. Read Memory.md for development history, then Prompt.md for the current task.
+1. Read Memory.md for development history.
 2. Re-read project-workflow-SKILL.md to refresh the workflow rules.
-3. Read only the domain skills relevant to the current Prompt.md — use the description in each skill's frontmatter to decide. Use the linebyline-section-index skill to read only the sections of the app HTML you need, not the entire file.
-4. Follow Prompt.md requests that do not conflict with project-workflow-SKILL.md. Before writing any code, follow the Pre-patch checklist. After every patch, follow Post-patch verification and Post-patch updates.
+3. Read only the domain skills relevant to the current task — use the description in each skill's frontmatter to decide. Use the linebyline-section-index skill to read only the sections of the app HTML you need, not the entire file.
+4. Follow the user's requests that do not conflict with project-workflow-SKILL.md. Before writing any code, follow the Pre-patch checklist. After every patch, follow Post-patch verification and Post-patch updates.
 5. Document all your work in the companion .md file in downloads.
+6. If multiple features are requested, the user may bucket them into a single turn when they're minor or interdependent. If they're independent and substantial, address them sequentially.
+7. In Build.md (if provided), the highest existing version header inherently implies the next app version. No need for the user to keyword-hint the semver — derive it from the existing headers.
 
-Phase 3 — Pre-push audit (3_pre-push.zip)
+Step 3 — Review
 
-Contains: audit skills (code-quality-SKILL.md, aria-accessibility-SKILL.md, playwright-testing-SKILL.md) and test files (helpers/, MANUAL.md, *.spec.js — no media or prompts directories).
+Repomix: `repomix-review.xml`. Contains: aria-accessibility-SKILL.md, code-quality-SKILL.md, sonarqube-workflow-SKILL.md.
 
 1. Re-read project-workflow-SKILL.md.
-2. Read code-quality-SKILL.md, aria-accessibility-SKILL.md, and playwright-testing-SKILL.md in full. These are the skills most likely to be missed if read too early — reading them now, immediately before the audit, maximizes recall.
+2. Read the three audit skills in full. These are the skills most likely to be missed if read too early — reading them now, immediately before the audit, maximizes recall.
 3. Review the code changes you made earlier this session (documented in the companion .md). Audit those changes for the issues referenced in the three audit skills and make suggested fixes.
 4. Document all your fixes in the companion .md file in downloads.
 
-Phase 4 — Post-push (conditional)
+Step 4 — Test
 
-This phase runs after the pre-push audit. There are two paths:
+Repomix: `repomix-test.xml`. Contains: playwright-testing-SKILL.md, tests/**, playwright.config.js.
 
-If SonarQube issues are present (user uploads 4_post_push_issues.zip):
-Contains: skill-SKILL.md, sonarqube-workflow-SKILL.md, and an issues folder.
+1. Re-read project-workflow-SKILL.md.
+2. Read playwright-testing-SKILL.md in full.
+3. Patch failing tests, or generate new tests/helpers for new features added in the Build step.
+4. Document all your work in the companion .md file in downloads.
 
-1. Re-read project-workflow-SKILL.md to refresh deliverable obligations.
-2. Read sonarqube-workflow-SKILL.md and the issues folder. Fix SonarQube issues not caught previously.
-3. Document all your fixes in the companion .md file in downloads.
-4. Read skill-SKILL.md. Follow its guidelines to update Memory.md and/or uploaded skills.
-5. Update Memory.md with any skills you changed.
+Step 5 — Skills (meta-session)
 
-If the SonarQube scan was clean (user uploads 4_post_push_clean.zip):
-Contains: skill-SKILL.md
-1. Re-read project-workflow-SKILL.md to refresh deliverable obligations.
-2. Read skill-SKILL.md. Follow its guidelines to update Memory.md and/or uploaded skills.
-3. Update Memory.md with any skills you changed.
-4. Document any skill or Memory.md updates in the companion .md file in downloads.
+Repomix: `repomix-skills.xml`. Contains: all skills, Boilerplate.md, Memory.md, and the other `ai/z-ai-glm/` docs.
+
+1. Re-read project-workflow-SKILL.md.
+2. Read the relevant skills for the meta-work being done (e.g., skill-SKILL.md for creating/updating skills, sonarqube-workflow-SKILL.md for post-push remediation).
+3. Work on agent scaffolding — updating skills, pruning Memory.md, creating new skills, etc.
+4. Document all your work in the companion .md file in downloads.
+
+Step 6 — Propose / Investigate / Plan
+
+Repomix: `repomix-onboard.xml` (or a custom bundle). Used for high-level research and planning that may not produce code.
+
+1. Re-read project-workflow-SKILL.md.
+2. Read any relevant skills and project files for the investigation.
+3. Proposals may start with half-baked criteria and become more refined in follow-up turns. Investigations may need web searches to rule out alternatives. One idea often leads to another — this produces large buckets of proposed items to triage later.
+4. Document all findings and proposals in the companion .md file in downloads.
+
+Wrap Up
+
+Every session ends with Wrap Up, regardless of which steps were run. This is agent-directed — the agent must do it unprompted, not wait for the user to request it.
+
+1. Update Memory.md — add entries for any distinctive code changes, failures, or decisions made this session. If a thread evolved across multiple turns, write one bullet per thread updated in-place to its final state, not one bullet per turn.
+2. Read skill-SKILL.md. Follow its guidelines to update skills if any patches changed the architecture a skill documents. Don't update skills for pure bug fixes that don't change the documented architecture.
+3. Check cross-skill consistency — when updating skills from this session's work, check whether existing skills already cover the pattern. If they don't, update them rather than just adding to Memory.md.
+4. Prune Memory.md — if any entries were fully extracted to a skill this session, prune them to brief references. Memory.md should point to the skill, not restate it. Pruning means condensing within the current session's entries or replacing verbose entries with one-line references to the skill that now holds the knowledge. It does NOT mean deleting entries from past sessions — those are historical records that may be needed for regression investigation. Only prune entries you created or updated this session.
+5. Update the companion .md file — ensure all turns are documented and the frontmatter is current.
+6. Copy all updated files to the download directory (see Download copy).
+
+Update Memory + companion before every push, unprompted. The user shares chat transcripts in the repo for transparency, so the Memory + companion updates must be present at the matching turn or the audit trail breaks — a transcript that says "I updated memory and the companion file" without the artifact present is broken documentation. This is especially load-bearing when the user is a vibe coder who doesn't read the app code: the agent-generated documentation is the primary code-understanding surface for the next session. Apply this rule at the end of every turn that ends with a push, not just when the user explicitly asks for it. If the turn produces no app/code changes (pure diagnosis, instructions-only for out-of-workspace files), still update Memory + companion to record the diagnosis and the rationale — the next agent reading the transcript needs to know what was decided, not just what was patched.
+
+---
+
+Memory.md discipline
+
+Write one bullet per parallel thread of work, not one bullet per turn. When a session iterates on the same change across multiple turns (fix → regression catch → follow-up), narrating each turn's state as a separate bullet duplicates earlier states — the reader must mentally diff successive bullets to recover the current state. Instead, identify the unique parallel threads in the session (e.g. "SonarCloud remediation" vs "Genius paste cleanup" vs "test suite hardening") and write one bullet per thread, updated in-place to reflect its latest state. New turns that touch an existing thread edit the existing bullet rather than appending a new one. This keeps Memory.md a current-state snapshot, not a change log — the per-turn change log lives in the companion `.md` file. If a thread is still actively evolving at session end, the in-place bullet should describe the final state, with one cross-reference line pointing to the companion `.md` for the turn-by-turn evolution.
+
+Verbose Memory entries signal skill gaps. When a Memory.md entry starts explaining how to do something rather than just what happened, that's a sign the knowledge belongs in a skill. Memory.md should say "Fixed X by doing Y (root cause: Z)." If it needs to say "When doing X, always do Y because Z, and here are the three cases to watch for," that's a skill.
+
+Knowledge offload reduces Memory.md bloat. Extracting domain knowledge from Memory.md into a skill turns verbose per-version details into one-line references. Memory.md becomes a compact historical overview for regression investigation, not a how-to guide. The how-to guide lives in the skill.
+
+Pruning preserves history. Pruning a Memory.md entry means condensing it to a brief reference, not deleting it. Past session entries are historical records — they document what changed, why, and what went wrong, which is essential for regression investigation. A future session that encounters a similar bug needs to know it happened before and what the root cause was. Only prune entries you created or updated this session; leave past session entries intact unless they are now fully redundant with a skill (in which case, replace with a one-line reference pointing to that skill, not a deletion).
 
 ---
 
@@ -90,13 +131,12 @@ Post-patch updates
    - You finished a new, distinctive set of code changes — future sessions need to know what changed and why.
    - A code change failed in a way that would surprise a fresh model in a new chat if it wasn't documented — failures are the most valuable Memory.md entries because they prevent re-discovery.
 3. Update a skill when a patch changes the architecture the skill documents (e.g. extracting `handleSecKeydown` to outer scope changes the section index skill, adding a new restricted key changes the hotkey skill). Don't update a skill for a pure bug fix that doesn't change the documented architecture.
-4. Don't update a skill when the patch is a pure bug fix that doesn't change the documented architecture.
 
 ---
 
 Versioning
 
-The user states the current version in their first chat message, either directly ("Current version: 0.37.1") or as a filename ("linebyline-0.37.1.html"). Extract the semver portion and use it as the baseline. When the user requests a version change, apply semver rules:
+The user states the current version in their first chat message, either directly ("Current version: 0.37.1") or as a filename ("linebyline-0.37.1.html"). If they don't state it, find it by grepping for the `<title>` tag in the latest HTML file. Extract the semver portion and use it as the baseline. When the user requests a version change, apply semver rules:
 
 - Same: 0.34.9 → 0.34.9
 - Patch: 0.34.9 → 0.34.10
@@ -107,28 +147,32 @@ Don't change version without an explicit request from the user. Don't substitute
 
 Derive the target version from the stated baseline and semver rules — don't ask the user to type it separately. The user states the version once; you apply it consistently everywhere (HTML filename, companion .md filename, `<title>`, version comments).
 
+In Build.md, the highest existing version header with a real item inherently implies the next app version. No need for the user to keyword-hint the semver — derive it from the existing headers.
+
 ---
 
 Companion .md file
 
-For each code file version, create or update a companion `.md` file with the same base name (e.g. `linebyline-0.34.9.html` → `linebyline-0.34.9.md`). Derive the version from the stated baseline and semver rules.
+Every session gets a companion `.md` file — not just build sessions. The companion file is the chat transcript, documenting the reasoning behind decisions for any workflow step (Build, Review, Test, Skills, Propose). The user keeps a chat transcript for every session regardless of whether app code changes.
 
-Include each turn leading up to and working on that code file version only.
+For build sessions that produce a versioned app file, name the companion after the version (e.g. `linebyline-0.34.9.html` → `linebyline-0.34.9.md`). For non-build sessions (Skills, Review, Propose), use a descriptive name like `skills-session-YYYY-MM-DD.md` or follow the user's naming convention.
+
+Include each turn leading up to and working on that session's work.
 
 Prepend or update frontmatter at the start:
 
 ```md
 ---
-model: <model name>
-summary: <1-2 sentence summary of the companion file's contents>
+model: "GLM-5.1"
+summary: "<1-2 sentence summary of the companion file's contents>"
 ---
 ```
 
-Wrap the `summary` value in single quotes when it contains YAML-special characters (colons, backticks, em-dashes, etc.). Single-quoted YAML strings preserve these characters literally and require no escape sequences (the only special case is a literal single quote inside the string, which must be doubled as `''`). Example: `summary: 'Phase 4 post-push remediation on version 0.37.2. Turn 2 fixes S2486: ...'`. An unquoted summary containing a colon parses as a mapping key/value pair and corrupts the frontmatter.
+Wrap the `summary` value in double quotes. Escape nested double quotes as `\"`, nested single quotes as `\'`, and literal backslashes as `\\`. This ensures proper rendering in Obsidian. Example: `summary: "Phase 4 post-push remediation on version 0.37.2. Turn 2 fixes S2486: use structuredClone instead of JSON.parse."`. Default the model name to `GLM-5.1` unless the user provides a skeleton transcript with a different model like `GLM-5.2`.
 
 Append per turn (separate the user's text from yours with a `---` line): the turn number in a header, the user's prompts verbatim (including full contents of Prompt.md if uploaded), and all your non-file chat outputs that turn (including markdown tables and Mermaid diagrams). Use "about" to express approximation instead of "~".
 
-Number turns sequentially with integers throughout the entire companion file (Turn 1, Turn 2, Turn 3, …), continuing across sessions if the companion file already exists from a prior session. Do not switch to letter labels (Turn A, Turn B, …) mid-session — this creates inconsistent references and makes it hard for a human to follow the turn sequence. If a session spans multiple companion files (e.g. Phase 1 onboard in `linebyline-0.37.1.md`, then Phase 4 work in `linebyline-0.37.2.md`), the turn counter continues across files — the new file starts at the next turn number, not back at 1.
+Number turns sequentially with integers throughout the entire companion file (Turn 1, Turn 2, Turn 3, …), continuing across sessions if the companion file already exists from a prior session. Do not switch to letter labels (Turn A, Turn B, …) mid-session — this creates inconsistent references and makes it hard for a human to follow the turn sequence. If a session spans multiple companion files (e.g. Onboard in `linebyline-0.37.1.md`, then Build work in `linebyline-0.37.2.md`), the turn counter continues across files — the new file starts at the next turn number, not back at 1.
 
 Never quote potentially licensed content in the companion file. This includes song lyrics, artist names, song titles, album titles, and any other text that could be copyrighted or trademarked. When documenting a fix that involved real lyrics (e.g. a Genius paste extraction bug), replace all lyric text and identifying metadata with functional placeholders: `[intro vocalization]` for a dropped intro line, `[final lyric line]` for the last line, `[Verse 1: singers]` for section headers with real singer names, `[real artist] — [real song]` for the page title. The technical discussion should reference structural properties (line index, bracket format, blank-line position) rather than the actual content. The companion file lives in `download/` and may be visible to GitHub contributors — treat it as public.
 
@@ -141,16 +185,19 @@ Drop these sections from every turn — they add clutter without helping the rea
 
 If the version is unchanged and the companion file already exists, update it rather than creating a new one.
 
+Companion .md vs readme .md. The Boilerplate rule says "Pair each non-trivial name.ext source file with a name.md readme." The companion file is a chat transcript, not a readme — it documents the reasoning behind decisions, not how to use the file. These are different artifacts with different purposes. A readme explains intent, usage, and known limitations for a developer. A companion records the turn-by-turn conversation that produced the file. They can coexist for the same code file (e.g. `linebyline-0.37.2.md` companion alongside a `readme.md` for the same version). In practice, the LineByLine project uses companion files for all sessions and does not produce separate readmes for each version — the companion file serves as the primary code-understanding surface.
+
 ---
 
 Download copy
 
 Each turn, without prompting, copy only the files you created or updated that turn to the download directory. This includes:
 
-1. The versioned app HTML file.
+1. The versioned app HTML file (if produced this session).
 2. Any modified test files (`*.spec.js`) so they are visible alongside code changes.
 3. The companion `.md` file.
 4. Any skill files you created or updated that turn.
+5. Any other files the user would need to see (e.g., updated Memory.md, updated skills).
 
 This ensures the user can access all deliverables from the current session without searching the project tree.
 
@@ -158,8 +205,12 @@ This ensures the user can access all deliverables from the current session witho
 
 Cross-references
 
+- `web-channel` — behavioral rules for the chat.z.ai Agent web channel (applies every turn)
 - `linebyline-section-index` — how to read only the sections you need instead of the entire file
 - `skill` — when to create or update skills vs Memory.md entries
 - `code-quality` — patterns to follow and pitfalls to avoid when writing JavaScript
 - `single-file-html-app` — architectural patterns for the single-file constraint
 - `playwright-testing` — test impact awareness after code changes
+- `Vibecoding workflow` (ai/z-ai-glm/Vibecoding-workflow.md) — the human-directed session flow with step diagrams
+- `Repomix snippets` (ai/z-ai-glm/Repomix-snippets.md) — the Repomix commands and step-to-bundle mapping
+- `Diagrammo flowcharts` (ai/z-ai-glm/Diagrammo-flowcharts.md) — syntax reference for reading `dgmo` codeblocks in the Vibecoding workflow
