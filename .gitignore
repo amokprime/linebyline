@@ -31,6 +31,8 @@ npm-debug.log*
 .trash
 .stversions
 *genius*
+# Genius paste snapshot baselines must be tracked (un-ignored from *genius* above)
+!tests/*.spec.js-snapshots/*genius*.txt
 ROADMAP.md
 why.md
 how.md

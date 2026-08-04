@@ -89,19 +89,20 @@ test("typing-debounce-1", async ({ page }) => {
   const before =
     "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\na";
   await expect(page.locator("#main-textarea")).toHaveValue(before);
-  // Wait between keypresses so the 1ms undo debounce fires for each letter;
-  // without this all three land in one snapshot and 2x Control+z clears everything
-  await page.waitForTimeout(5);
+  // Wait between keypresses so the 1ms undo debounce fires for each letter.
+  // 20ms is well above the ~16ms rAF interval and ~10ms clock-tick resolution,
+  // ensuring separate snapshots even on a contended CI runner where 5ms was flaky.
+  await page.waitForTimeout(20);
   await page.keyboard.press("b");
   await expect(page.locator("#main-textarea")).toHaveValue(
     "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\nab",
   );
-  await page.waitForTimeout(5);
+  await page.waitForTimeout(20);
   await page.keyboard.press("c");
   await expect(page.locator("#main-textarea")).toHaveValue(
     "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\nabc",
   );
-  await page.waitForTimeout(5);
+  await page.waitForTimeout(20);
   for (let i = 0; i < 2; i++) await page.keyboard.press("Control+z");
   await expect(page.locator("#main-textarea")).toHaveValue(before);
 });
