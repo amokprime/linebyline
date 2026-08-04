@@ -101,25 +101,20 @@ test("volume-mute-down", async ({ page }) => {
 });
 
 test("audio-missing-noop", async ({ page, media }) => {
-  test.skip(
-    !process.env.CI && !process.env.PW_CONTAINER,
-    "Font-fragile screenshot: #audio-box height depends on system-ui font metrics (x-height/ascender), which differ between Ubuntu container and Fedora host. Skipped in UI mode on host; still runs in CI and `tst` container where the baseline was generated.",
-  );
-  await expect(page.getByText("Unknown Title Unknown Artist")).toHaveScreenshot(
-    "audio-missing-load.png",
-  );
+  await expect(page.getByText("Unknown Title")).toBeVisible();
+  await expect(page.getByText("Unknown Artist")).toBeVisible();
+  await expect(page.locator("#time-pos")).toHaveText("0:00");
+  await expect(page.locator("#time-dur")).toHaveText("0:00");
   await page.keyboard.press("Space");
   await page.keyboard.press("ArrowRight");
   await page.keyboard.press("Control+1");
   await page.locator("#progress-wrap").click();
-  await expect(page.getByText("Unknown Title Unknown Artist")).toHaveScreenshot(
-    "audio-missing-play.png",
-  );
+  await expect(page.locator("#time-pos")).toHaveText("0:00");
+  await expect(page.locator("#time-dur")).toHaveText("0:00");
   await page.locator("#file-picker").setInputFiles([media("audio.mp3")]);
   await waitForAudio(page);
   await expect(page.locator("#time-pos")).toHaveText("0:00");
   await expect(page.locator("#time-dur")).toHaveText(/^0:1[2-4]$/);
-  await expect(page.getByText("audio Unknown Artist")).toHaveScreenshot(
-    "audio-import-reset.png",
-  );
+  await expect(page.getByText("audio")).toBeVisible();
+  await expect(page.getByText("Unknown Artist")).toBeVisible();
 });

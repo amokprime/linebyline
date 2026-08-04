@@ -1,5 +1,9 @@
-
-const { test, expect, waitForLyrics } = require("@linebyline/test-helpers");
+const {
+  test,
+  expect,
+  waitForLyrics,
+  tabUntilFocused,
+} = require("@linebyline/test-helpers");
 
 test("persistence", async ({ page, media }) => {
   /** @param {string} name @param {string} v @param {boolean} [soft] */
@@ -75,9 +79,8 @@ test("search-check", async ({ page }) => {
   await page
     .getByRole("textbox", { name: "Search settings" })
     .pressSequentially("Moving to n");
-  for (let i = 0; i < 2; i++) await page.keyboard.press("Tab");
+  await tabUntilFocused(page, "#s-replay-next");
   await page.keyboard.press("Space");
-  await page.waitForTimeout(50);
   await expect(
     page.getByRole("checkbox", { name: "Moving to next line" }),
   ).toBeChecked();
@@ -103,10 +106,6 @@ test("assign-ok-click", async ({ page }) => {
 });
 
 test("assign-reserved-click", async ({ page }) => {
-  test.skip(
-    !process.env.CI && !process.env.PW_CONTAINER,
-    "Font-fragile screenshot: .hk-row min-height:30.8px can grow when system-ui text height exceeds it; font metrics differ between Ubuntu container and Fedora host. Skipped in UI mode on host; still runs in CI and `tst` container where the baseline was generated.",
-  );
   await page.keyboard.press("Control+,");
   await page
     .getByRole("textbox", { name: "Search settings" })
@@ -118,7 +117,9 @@ test("assign-reserved-click", async ({ page }) => {
     page.locator("#hk-settings-rows").getByRole("textbox"),
   ).toHaveValue("Shift+~");
   await page.getByRole("button", { name: "Reset hotkey for Toggle" }).click();
-  await expect(page.getByText("Hotkeys MenuOpen✕Swap↺")).toHaveScreenshot();
+  await expect(
+    page.locator("#hk-settings-rows").getByRole("textbox"),
+  ).toHaveValue("Shift+~");
 });
 
 test("assign-conflict-tab", async ({ page }) => {

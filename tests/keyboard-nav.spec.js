@@ -1,17 +1,15 @@
-
 const { test, expect, tabUntilFocused } = require("@linebyline/test-helpers");
 
 test("tab-font", async ({ page }) => {
-  test.skip(
-    !process.env.CI && !process.env.PW_CONTAINER,
-    "Font-fragile screenshot: #main-textarea width depends on #left-panel fit-content width, which varies with OS system-ui font rendering (Ubuntu container vs Fedora host). Skipped in UI mode on host; still runs in CI and `tst` container where the baseline was generated.",
-  );
   await tabUntilFocused(page, "#font-select");
   await page.locator("#font-select").press("ArrowDown");
   await expect(page.locator("#font-select")).toHaveValue("serif");
-  await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
+  await page.locator("#left-panel-header").click();
   await page.keyboard.press("Backquote");
-  await expect(page.locator("#main-textarea")).toHaveScreenshot();
+  await expect(page.locator("#main-textarea")).toHaveCSS(
+    "font-family",
+    "serif",
+  );
 });
 
 test("tab-lyrics", async ({ page }) => {
@@ -32,10 +30,11 @@ test("tab-lyrics", async ({ page }) => {
 
 test("tab-settings", async ({ page }) => {
   await page.keyboard.press("Control+,");
-  await expect(page.locator("#settings-overlay")).toHaveClass(/open/)
+  await expect(page.locator("#settings-overlay")).toHaveClass(/open/);
   await tabUntilFocused(page, "#s-replay-prev");
-  await expect(page.locator("#s-replay-prev")).toBeFocused()
+  await expect(page.locator("#s-replay-prev")).toBeFocused();
   await page.keyboard.press("Space");
+  await page.waitForTimeout(50);
   await expect(
     page.getByRole("checkbox", { name: "Moving to previous line" }),
   ).toBeChecked();

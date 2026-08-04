@@ -70,6 +70,7 @@ test("paste-plain-hotkey", async ({
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("plain_english.lrc"));
+  await page.waitForTimeout(50); // Let clipboard write settle before Control+v
   await page.keyboard.press("Control+v");
   expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
     "paste-plain-hotkey.txt",
@@ -85,6 +86,7 @@ test("paste-synced-hotkey", async ({
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("synced_english.lrc"));
+  await page.waitForTimeout(50);
   await page.keyboard.press("Control+v");
   expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
     "paste-synced-hotkey.txt",
@@ -101,6 +103,7 @@ test("paste-plain-typing", async ({
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("plain_english.lrc"));
+  await page.waitForTimeout(50);
   await page.keyboard.press("Control+v");
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "paste-plain-typing.txt",
@@ -117,6 +120,7 @@ test("paste-synced-typing", async ({
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("synced_english.lrc"));
+  await page.waitForTimeout(50);
   await page.keyboard.press("Control+v");
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "paste-synced-typing.txt",
@@ -129,12 +133,13 @@ test("paste-secondary", async ({
   workaroundPaste: _workaroundPaste,
 }) => {
   await page.keyboard.press("Control+4");
-  await page.getByRole("textbox").click();
+  await page.getByLabel("Secondary 1 lyrics").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("plain_french.lrc"));
+  await page.waitForTimeout(50);
   await page.keyboard.press("Control+v");
-  expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot(
+  expect(await page.getByLabel("Secondary 1 lyrics").inputValue()).toMatchSnapshot(
     "paste-secondary.txt",
   );
 });
@@ -148,6 +153,7 @@ test("paste-genius-hotkey", async ({
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("mock.txt"));
+  await page.waitForTimeout(50);
   await page.keyboard.press("Control+v");
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "paste-genius-hotkey.txt",
@@ -164,6 +170,7 @@ test("paste-genius-typing", async ({
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("mock.txt"));
+  await page.waitForTimeout(50);
   await page.keyboard.press("Control+v");
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "paste-genius-typing.txt",
@@ -210,6 +217,7 @@ test("naughty-strings", async ({ page }) => {
     await page.evaluate((text) => {
       navigator.clipboard.writeText(text);
     }, naughty);
+    await page.waitForTimeout(50);
     await page.keyboard.press("Control+v");
     await expect(page.locator("#main-lines")).toBeVisible();
     await page.keyboard.press("Control+a");

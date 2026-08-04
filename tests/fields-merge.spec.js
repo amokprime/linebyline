@@ -59,10 +59,11 @@ test("paste-secondary-genius", async ({
   workaroundPaste: _workaroundPaste,
 }) => {
   await page.keyboard.press("Control+4");
-  await page.getByRole("textbox").click();
+  await page.getByLabel("Secondary 1 lyrics").click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("mock.txt"));
+  await page.waitForTimeout(50); // Let clipboard write settle before Control+v
   await page.keyboard.press("Control+v");
   expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
     "paste-secondary-genius.txt",

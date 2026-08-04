@@ -79,24 +79,29 @@ test("typing-debounce-1", async ({ page }) => {
   await page.keyboard.press("Control+,");
   await page.getByRole("spinbutton", { name: "Undo window" }).fill("1");
   await page.keyboard.press("Escape");
-  await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
+  await page.locator("#left-panel-header").click();
   await page.keyboard.press("Backquote");
   await expect(
     page.getByRole("textbox", { name: "Main lyric text" }),
   ).toBeVisible();
-  await page.locator("#main-textarea").click(); //Not needed in real browser; Playwright loses focus
+  await page.locator("#main-textarea").click();
   await page.keyboard.press("a");
   const before =
     "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\na";
-  await expect(page.locator("#main-textarea")).toHaveValue(before); //Extra assertions for headless
+  await expect(page.locator("#main-textarea")).toHaveValue(before);
+  // Wait between keypresses so the 1ms undo debounce fires for each letter;
+  // without this all three land in one snapshot and 2x Control+z clears everything
+  await page.waitForTimeout(5);
   await page.keyboard.press("b");
   await expect(page.locator("#main-textarea")).toHaveValue(
     "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\nab",
   );
+  await page.waitForTimeout(5);
   await page.keyboard.press("c");
   await expect(page.locator("#main-textarea")).toHaveValue(
     "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\nabc",
   );
+  await page.waitForTimeout(5);
   for (let i = 0; i < 2; i++) await page.keyboard.press("Control+z");
   await expect(page.locator("#main-textarea")).toHaveValue(before);
 });
