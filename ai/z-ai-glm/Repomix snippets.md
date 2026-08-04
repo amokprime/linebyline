@@ -1,14 +1,15 @@
 ---
 summary: Modular slices of the LineByLine repo to combine into vibecoding workflows. Reduces context load compared to a naive `repomix` on the whole project.
-links: "[[ai/z-ai-glm/Vibecoding workflow|Vibecoding workflow]]"
+links:
+  - "[[ai/z-ai-glm/Vibecoding workflow|Vibecoding workflow]]"
 ---
 ### Onboard
 ```sh
-repomix --output "local/repomix-onboard.xml" \
+repomix --output "local/upload/repomix-onboard.xml" \
 --include-full-directory-structure \
 --include "package.json,README.md,\
-ai/z-ai-glm/Boilerplate.md,\
 ai/z-ai-glm/skills/project-workflow-SKILL.md,\
+ai/z-ai-glm/skills/web-channel-SKILL.md,\
 ai/z-ai-glm/skills/skill-SKILL.md,\
 archive/modular/plan/**"
 ```
@@ -20,7 +21,7 @@ Follow `*-SKILL.md` files as rules. This is the Onboard step.
 ---
 ### Skills
 ```sh
-repomix --output "local/repomix-skills.xml" \
+repomix --output "local/upload/repomix-skills.xml" \
 --include "CONTRIBUTING.md,ai/z-ai-glm/**"
 --ignore "ai/z-ai-glm/skills/project-workflow-SKILL.md,\
 ai/z-ai-glm/skills/skill-SKILL.md,\
@@ -34,7 +35,7 @@ Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files as rules. This wi
 ---
 ### Build
 ```sh
-repomix --output "local/repomix-build.xml" \
+repomix --output "local/upload/repomix-build.xml" \
 --include "ai/z-ai-glm/skills/linebyline-section-index-SKILL.md,\
 ai/z-ai-glm/skills/single-file-html-app-SKILL.md,\
 ai/z-ai-glm/skills/browser-hotkey-system-SKILL.md,\
@@ -46,7 +47,7 @@ ai/z-ai-glm/Memory.md,docs/index.html"
 ---
 ### Review
 ```sh
-repomix --output "local/repomix-review.xml" \
+repomix --output "local/upload/repomix-review.xml" \
 --include "ai/z-ai-glm/skills/aria-accessibility-SKILL.md,\
 ai/z-ai-glm/skills/code-quality-SKILL.md,\
 ai/z-ai-glm/skills/sonarqube-workflow-SKILL.md"
@@ -63,10 +64,10 @@ Re-read `project-workflow-SKILL.md` and the review skills. Follow `*-SKILL.md` f
 ---
 ### Test
 ```sh
-repomix --output "local/repomix-test.xml" \
+repomix --output "local/upload/repomix-test.xml" \
 --include "ai/z-ai-glm/skills/playwright-testing-SKILL.md,\
 tests/**,playwright.config.js" \
---ignore "tests/*snapshots/**
+--ignore "tests/*snapshots/**"
 ```
 - For longer requests zip a [[ai/z-ai-glm/Test|Test]] template along with the Repomix
 - Patch failing tests (including newly written) after the Build step and pre-commit:

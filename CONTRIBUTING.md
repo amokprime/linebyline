@@ -8,7 +8,7 @@ LineByLine is a no-dependencies 2.7k+ LOC. .html file (with JavaScript and CSS a
 
 The guidelines below are designed for a free account AI web chat without access to your filesystem. You may be able to install Claude Desktop on Windows, but I haven't had a good experience with the Filesystem or GitHub MCP connectors. If using Claude Code, OpenCode, etc., you might find it more efficient to just ask it to make all the changes directly.
 
-Put each new version of LineByLine and the associated chat transcript into its own semantically numbered folder in [/archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic). You can tell the AI a keyword for the next version to get it to automatically rename the folder, or fill out [ai/z-ai-glm/Build.md](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/Build) to help it [infer](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/skills/project-workflow-SKILL.md) the appropriate version.
+Put the associated chat transcript for new version of LineByLine into its own semantically numbered folder in [archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic). Overwrite [docs/index.html](https://github.com/amokprime/linebyline/tree/main/docs/index.html) with the actual `.html` file. You can tell the AI a keyword for the next version to get it to automatically rename the folder, or fill out [ai/z-ai-glm/Build.md](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/Build) to help it [infer](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/skills/project-workflow-SKILL.md) the appropriate version.
 
 | Scope of your changes                                                         | Version | Resulting number change |
 | ----------------------------------------------------------------------------- | ------- | ----------------------- |
@@ -32,6 +32,7 @@ A few issues are compensated for by my current workflow (see [[ai/z-ai-glm/Repom
 - For GLM-5.1 specifically, the ~200k context window means details may be swallowed in large uploads (e.g. a naive `repomix` of the whole repo, especially if not ignoring the massive `archive/`)
 - There are no built-in skills or memory scaffolding to enforce a large amount of recurring behaviors
 
+chat.z.ai also has a more recent bug where the same named zip file can persist across sandboxes. This prevents the agent from reading future uploaded zips of the same name. So I use [scripts](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/scripts/README.md) to generate the zip files with a unique name.
 #### Working with Claude Sonnet (web chat/Claude Desktop)
 
 Warning: I stopped maintaining Claude's skills after 0.35.19. You might have to backport (adapt to Claude) some more updated information from GLM's instructions.

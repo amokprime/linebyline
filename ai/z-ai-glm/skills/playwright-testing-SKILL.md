@@ -3,7 +3,7 @@ name: playwright-testing
 description: Write and maintain Playwright tests for the LineByLine single-file HTML app. Use this skill whenever writing or modifying test files (*.spec.js), when the user mentions Playwright, tests, snapshots, screenshots, axe-scan, test failures, or when making code changes that could affect existing tests. Use proactively — whenever you modify the app's HTML/JS, check if any test expectations need updating. This skill covers snapshot strategy, test helpers, common patterns, the impact of code changes on test validity, and the TypeScript/diagnostics setup that keeps Zed Project Diagnostics clean.
 ---
 
-This project uses Playwright with a custom test helper (`tests/helpers/index.js`) that provides fixtures for file import, media resolution, version auto-detection, and clipboard-paste workarounds. Tests run against the highest semver HTML file found in `archive/semantic/`.
+This project uses Playwright with a custom test helper (`tests/helpers/index.js`) that provides fixtures for file import, media resolution, version auto-detection, and clipboard-paste workarounds. Tests run against `docs/index.html`.
 
 ---
 

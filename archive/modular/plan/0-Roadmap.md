@@ -27,16 +27,17 @@ Items 1 and 2 can be done in parallel (or 1 first, then 2). Items 3→4→5→6 
 
 ## 1. Playwright CI + Local Workflow
 
+### Status: Implemented
 ### Why First
 
-Every subsequent refactor (modular stack, TypeScript, UI) will break things. You need automated verification before touching architecture. Right now the Playwright test suite is solid but only runs locally on Windows — CI catches regressions from pushes and PRs automatically.
+Every subsequent refactor (modular stack, TypeScript, UI) will break things. You need automated verification before touching architecture. Right now the Playwright test suite is solid but only runs locally — CI catches regressions from pushes and PRs automatically.
 
 ### CI Workflow (`.github/workflows/ci.yml`)
 
 - Triggers on push and PRs
 - Ubuntu runner with `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` (Node 20 removed from runners September 2026; this env var opts into Node 24 now)
 - Steps: `npm ci` → `npx playwright install --with-deps` → `npx playwright test` (Chromium + Firefox + WebKit)
-- Upload test results artifact on failure
+- Upload test results artifact on completion (always)
 - After modular refactor (item 3), tests point at the Vite built output served by a static server in CI instead of scanning `archive/semantic/`
 
 ### Deploy Workflow (`.github/workflows/deploy.yml`)
@@ -64,6 +65,8 @@ Every subsequent refactor (modular stack, TypeScript, UI) will break things. You
 ---
 
 ## 2. ESLint in Zed
+
+### Status: Implemented
 
 ### Why Second
 

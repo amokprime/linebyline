@@ -69,18 +69,29 @@ function tsta
   cd ~/GitHub/linebyline
   npx playwright test --ui $argv
 end
-function srv
-  cd ~/GitHub/linebyline
-  npx serve . -l 3004
-end
 function cgn
-  cd ~/GitHub/linebyline
-  set -l path (node -e "const{findLatestVersion}=require('@linebyline/test-helpers');process.stdout.write(findLatestVersion())")
-  npx playwright codegen "http://localhost:3004$path" $argv
+    cd ~/GitHub/linebyline
+    set -l need_cleanup false
+    # Ensure dev server is running on port 3004
+    if not ss -tlnq 2>/dev/null | grep -q ':3004 '
+        echo "cgn: starting dev server on :3004 …"
+        npx serve . -l 3004 >/dev/null 2>&1 &
+        set need_cleanup true
+        # Wait up to 5s for it to be ready
+        for i in (seq 1 20)
+            if ss -tlnq 2>/dev/null | grep -q ':3004 '
+                break
+            end
+            sleep 0.25
+        end
+    end
+    npx playwright codegen "http://localhost:3004/docs/index.html" $argv
+    # Kill the server we started; leave pre-existing ones alone
+    if test "$need_cleanup" = true
+        fuser -k 3004/tcp 2>/dev/null; or true
+    end
 end
-
 funcsave tsta
-funcsave srv
 funcsave cgn
 # Usage: tsta, cgn, cgn --browser firefox
 ```

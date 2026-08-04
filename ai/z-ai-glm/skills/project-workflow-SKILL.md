@@ -23,7 +23,7 @@ Repomix: `repomix-onboard.xml`. Contains: project-workflow-SKILL.md, README.md, 
 
 1. Read project-workflow-SKILL.md (this file) and README.md.
 2. Read the web-channel skill — it applies to every turn of the session, not just onboarding.
-3. Note the current app version. The user may state it directly ("Current version: 0.37.1") or as a filename ("The current app is linebyline-0.37.1.html"). If they don't state it, find it by grepping for the `<title>` tag in the latest HTML file in the project tree. Extract the semver portion either way — this is the baseline; derive all version numbers from it rather than asking the user to type them again.
+3. Note the current app version. The user may state it directly ("Current version: 0.37.1"). If they don't state it, find it by grepping for the `<title>` tag in `docs/index.html`. Extract the semver portion either way — this is the baseline; derive all version numbers from it rather than asking the user to type them again. The app always lives at `docs/index.html`; there are no versioned HTML files in `archive/semantic/`.
 4. Create the companion .md file in downloads if it is not already there (see Companion .md file section). Name it using the current version, not a placeholder.
 5. Do not begin coding — the app HTML and domain skills arrive in the next step.
 
@@ -128,15 +128,15 @@ Post-patch updates
 
 1. Re-index the section index — update `linebyline-section-index-SKILL.md` if line numbers shifted. The section structure (names and contents) is the durable part; line numbers are point-in-time references that must be refreshed after patches that insert or delete lines.
 2. Update Memory.md when:
-   - You finished a new, distinctive set of code changes — future sessions need to know what changed and why.
-   - A code change failed in a way that would surprise a fresh model in a new chat if it wasn't documented — failures are the most valuable Memory.md entries because they prevent re-discovery.
+ - You finished a new, distinctive set of code changes — future sessions need to know what changed and why.
+ - A code change failed in a way that would surprise a fresh model in a new chat if it wasn't documented — failures are the most valuable Memory.md entries because they prevent re-discovery.
 3. Update a skill when a patch changes the architecture the skill documents (e.g. extracting `handleSecKeydown` to outer scope changes the section index skill, adding a new restricted key changes the hotkey skill). Don't update a skill for a pure bug fix that doesn't change the documented architecture.
 
 ---
 
 Versioning
 
-The user states the current version in their first chat message, either directly ("Current version: 0.37.1") or as a filename ("linebyline-0.37.1.html"). If they don't state it, find it by grepping for the `<title>` tag in the latest HTML file. Extract the semver portion and use it as the baseline. When the user requests a version change, apply semver rules:
+The user states the current version in their first chat message, either directly ("Current version: 0.37.1") or by referencing `docs/index.html`. If they don't state it, find it by grepping for the `<title>` tag in `docs/index.html`. Extract the semver portion and use it as the baseline. The app file is always `docs/index.html` — the version is encoded in `<title>`, not in the filename. When the user requests a version change, apply semver rules:
 
 - Same: 0.34.9 → 0.34.9
 - Patch: 0.34.9 → 0.34.10
@@ -145,7 +145,7 @@ The user states the current version in their first chat message, either directly
 
 Don't change version without an explicit request from the user. Don't substitute version dots with spaces, underscores, or any other character — this applies to filenames passed to all tools, not just `<title>`.
 
-Derive the target version from the stated baseline and semver rules — don't ask the user to type it separately. The user states the version once; you apply it consistently everywhere (HTML filename, companion .md filename, `<title>`, version comments).
+Derive the target version from the stated baseline and semver rules — don't ask the user to type it separately. The user states the version once; you apply it consistently everywhere (`<title>` in `docs/index.html`, companion .md filename, version comments). The HTML file is always `docs/index.html` — overwrite it in place, don't create a versioned copy.
 
 In Build.md, the highest existing version header with a real item inherently implies the next app version. No need for the user to keyword-hint the semver — derive it from the existing headers.
 
@@ -155,7 +155,7 @@ Companion .md file
 
 Every session gets a companion `.md` file — not just build sessions. The companion file is the chat transcript, documenting the reasoning behind decisions for any workflow step (Build, Review, Test, Skills, Propose). The user keeps a chat transcript for every session regardless of whether app code changes.
 
-For build sessions that produce a versioned app file, name the companion after the version (e.g. `linebyline-0.34.9.html` → `linebyline-0.34.9.md`). For non-build sessions (Skills, Review, Propose), use a descriptive name like `skills-session-YYYY-MM-DD.md` or follow the user's naming convention.
+For build sessions that produce a versioned app file, name the companion after the version (e.g. version `0.34.9` → `linebyline-0.34.9.md`). The HTML file is always `docs/index.html` but the companion carries the version. For non-build sessions (Skills, Review, Propose), use a descriptive name like `skills-session-YYYY-MM-DD.md` or follow the user's naming convention.
 
 Include each turn leading up to and working on that session's work.
 
@@ -193,7 +193,7 @@ Download copy
 
 Each turn, without prompting, copy only the files you created or updated that turn to the download directory. This includes:
 
-1. The versioned app HTML file (if produced this session).
+1. The app HTML file, `docs/index.html` (if produced this session).
 2. Any modified test files (`*.spec.js`) so they are visible alongside code changes.
 3. The companion `.md` file.
 4. Any skill files you created or updated that turn.
