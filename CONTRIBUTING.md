@@ -24,7 +24,7 @@ chat.z.ai's free tier is currently far more generous overall (than claude.ai) wi
 - I have noticed as many as 2k ads being blocked by uBlock Origin! It keeps ramping up over time.
 - The website itself is often unresponsive even in Chromium browsers (I wonder why??). It may help to close the browser window and reopen the page (just reloading or closing the browser tab isn't always enough)
 - A captcha slider randomly pops up sometimes
-- Sessions expire after 2 hours. After that, start a new Agent chat, because the originally uploaded files vanish and newly uploaded files fail to persist. Work around by typing something before it expires to reset the timer to another 2 hours.
+- Sandboxes expire after 2 hours. Typing something before it expires resets the timer to another 2 hours. If you see the "All files in task" box after the 2-hour mark, produced and even uploaded files (that don't show in the list) may still be there. Try sending a message like "Continue" to resume a cutoff chat.
 - Uploads may fail to update if certain filenames like file.md and Memory.md are re-uploaded without renaming them or zipping them in a uniquely named folder
 - Downgrade to a lower model, chats failing to submit or load or timing out, during peak hours. Use the 'previous flagship model' during off-peak hours to mitigate these issues.
 
@@ -32,7 +32,8 @@ A few issues are compensated for by my current workflow (see [[ai/z-ai-glm/Repom
 - For GLM-5.1 specifically, the ~200k context window means details may be swallowed in large uploads (e.g. a naive `repomix` of the whole repo, especially if not ignoring the massive `archive/`)
 - There are no built-in skills or memory scaffolding to enforce a large amount of recurring behaviors
 
-chat.z.ai also has a more recent bug where the same named zip file can persist across sandboxes. This prevents the agent from reading future uploaded zips of the same name. So I use [scripts](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/scripts/README.md) to generate the zip files with a unique name.
+chat.z.ai also has a more recent bug where the same named zip file can persist across sandboxes. This prevents the agent from reading future uploaded zips of the same name. So I use [scripts](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/scripts/README.md) to generate the zip files with a unique name. Speculation: the bug could be related to being able to resume chats after 2 hours without losing files, which was not possible in the past.
+
 #### Working with Claude Sonnet (web chat/Claude Desktop)
 
 Warning: I stopped maintaining Claude's skills after 0.35.19. You might have to backport (adapt to Claude) some more updated information from GLM's instructions.

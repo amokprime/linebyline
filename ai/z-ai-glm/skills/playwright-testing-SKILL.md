@@ -111,6 +111,17 @@ await expect(page).toHaveScreenshot("font-hotkey.png");
 
 The project sets `maxDiffPixelRatio: 0.05` (5%) in `playwright.config.js` to tolerate minor rendering variance.
 
+### `.gitignore` interactions
+
+If a snapshot baseline test fails in CI with "A snapshot doesn't exist" but passes locally, check whether the baseline file is git-ignored. Broad `.gitignore` patterns (e.g., `*genius*`, `*mock*`) can catch snapshot `.txt`/`.png` files whose test names happen to contain the same substring. The `*genius*` pattern in this project's `.gitignore` once blocked all 6 Genius paste snapshot baselines because the test names (`paste-genius-hotkey`, `paste-genius-typing`, `paste-secondary-genius`) contain "genius."
+
+Fix with a negation pattern rather than `git add -f`, so future baseline regenerations are tracked automatically:
+```
+*genius*
+!tests/*.spec.js-snapshots/*genius*.txt
+```
+The negation works because `*genius*` matches the files directly (not their parent directories), so they can be re-included. Use a narrow negation — only un-ignore the specific snapshot extension (`.txt` or `.png`) in the specific snapshot directory (`tests/*.spec.js-snapshots/`).
+
 ---
 
 ## Font-fragile screenshots — root cause and fixes
@@ -125,6 +136,14 @@ The app uses `body{font-family:system-ui,sans-serif}`. Elements whose dimensions
 - `.hk-row{min-height:30.8px}` — grows when system-ui text height exceeds the min-height
 
 Elements with all-fixed-px dimensions (e.g. `#menu-bar{height:39.6px}`, `.mb-btn{height:28.6px}`) are immune — their screenshots pass across OSes.
+
+### Container vs CI divergence
+
+The `tst` Podman container (Ubuntu 24.04) and GitHub Actions `ubuntu-latest` are both Ubuntu, but they are different images with different `system-ui` font metrics. A font-fragile screenshot that passes in `tst` may still fail in CI with a dimension mismatch (not just a pixel diff). The `maxDiffPixelRatio: 0.05` tolerance does not help here — Playwright rejects screenshots with different dimensions before applying the pixel ratio.
+
+If a font-fragile screenshot passes in `tst` but fails in CI with a dimension mismatch, the two environments have diverged. Two options:
+1. Replace the screenshot with a structural assertion (`toHaveCSS`, `toBeVisible`, `toHaveText`, `toHaveValue`) that verifies the same behavior without font-rendering dependency. This is the preferred fix — it eliminates the environmental dependency entirely.
+2. Regenerate baselines directly on `ubuntu-latest` via a one-time CI regen job (run `npx playwright test --update-snapshots` in CI, commit the output). This keeps the screenshot but requires re-running the regen job whenever CI's font metrics change.
 
 ### Firefox form-control font gotcha
 
@@ -143,6 +162,15 @@ test("tab-font", async ({ page }) => {
 });
 ```
 This runs the test in `tst` (container, `PW_CONTAINER=1`) and CI (`CI=1`), skips it in `tsta` (host UI mode). No baseline regen needed.
+
+### Fix: Replace with structural assertions (CI-safe)
+
+When a font-fragile screenshot fails in CI due to container/CI divergence, the most robust fix is to replace it with a structural assertion that doesn't depend on font rendering. Examples:
+- Font selection test: replace `toHaveScreenshot()` with `toHaveCSS("font-family", "serif")` on the textarea.
+- Audio missing state: replace `toHaveScreenshot()` with `toBeVisible()` on text labels and `toHaveText("0:00")` on time elements.
+- Hotkey panel reset: replace `toHaveScreenshot()` with `toHaveValue("Shift+~")` on the hotkey capture field (verify the reset restored the default value).
+
+This eliminates the `test.skip` guard too — structural assertions pass in all environments.
 
 ---
 
@@ -191,6 +219,7 @@ test("paste-plain-hotkey", async ({ page, readMedia, workaroundPaste: _workaroun
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("plain_english.lrc"));
+  await page.waitForTimeout(50); // Let clipboard write settle before Control+v
   await page.keyboard.press("Control+v");
   expect(await page.locator("#main-lines").innerText()).toMatchSnapshot("paste-plain-hotkey.txt");
 });
@@ -198,7 +227,9 @@ test("paste-plain-hotkey", async ({ page, readMedia, workaroundPaste: _workaroun
 
 The `workaroundPaste: _workaroundPaste` rename is important: the underscore prefix silences tsserver's "declared but its value is never read" (TS6133) warning, since the fixture has no value — its presence only triggers setup. See "TypeScript diagnostics setup" below.
 
-If you write a new paste test, add `workaroundPaste: _workaroundPaste` to the destructured args. Do not inline the `context.grantPermissions` + `test.skip(webkit)` boilerplate — the fixture exists to keep that in one place.
+The `waitForTimeout(50)` between the clipboard write and `Control+v` is required on CI: `navigator.clipboard.writeText()` is async, and on fast CI runners (1 worker, no contention) the paste may read an empty clipboard if `Control+v` fires immediately after. 50ms is enough for the clipboard API to settle without slowing the suite meaningfully.
+
+If you write a new paste test, add `workaroundPaste: _workaroundPaste` to the destructured args and add `await page.waitForTimeout(50)` before `Control+v`. Do not inline the `context.grantPermissions` + `test.skip(webkit)` boilerplate — the fixture exists to keep that in one place.
 
 ### Switching modes
 ```js
@@ -313,7 +344,7 @@ Keep this file in sync with `docs/index.html`. If you add a new app function ref
 
 Import from `@linebyline/test-helpers`, not directly from `@playwright/test`. Use `media()` / `readMedia()` / `importSecondary()` fixtures, not hardcoded paths. Prefer `toMatchAriaSnapshot()` for structural assertions. Use `inputValue().toMatchSnapshot()` when exact content matters (timestamps, metadata, newlines). Use `toHaveScreenshot()` only when visual layout must be verified — and read the "Font-fragile screenshots" section first. Use `getByRole()` and `getByLabel()` selectors, not CSS selectors, when possible. Don't test for exact timestamp values in aria snapshots — they're regex-obfuscated. If testing across browsers, handle Firefox-specific limitations (download events, context teardown). Name shared snapshots with the `name:` option when multiple tests expect identical content.
 
-For any test that pastes via clipboard, add `workaroundPaste: _workaroundPaste` to the destructured args — don't inline the boilerplate.
+For any test that pastes via clipboard, add `workaroundPaste: _workaroundPaste` to the destructured args and `await page.waitForTimeout(50)` before `Control+v` — don't inline the boilerplate.
 
 For any test that calls app functions inside `page.evaluate()`, ensure the function is declared in `tests/app-globals.d.ts` — otherwise Zed diagnostics will flag it.
 
@@ -325,8 +356,10 @@ Don't add heavy comments to test files, especially ones that just remind a futur
 
 These tests pass in `tst` (container) but may intermittently fail or need extra care:
 
-- **`toHaveScreenshot` in UI mode** — font-fragile tests (see "Font-fragile screenshots"). Either skip with the `!CI && !PW_CONTAINER` guard or normalize font with `addStyleTag`.
+- **`toHaveScreenshot` in UI mode** — font-fragile tests (see "Font-fragile screenshots"). Either skip with the `!CI && !PW_CONTAINER` guard, normalize font with `addStyleTag`, or replace with structural assertions (`toHaveCSS`, `toBeVisible`, `toHaveValue`) which are CI-safe and don't need the skip guard.
 - **`speed-ratio`, `seek-increment`, `volume-increment`** (intervals.spec.js) — settings-save race: `Escape` doesn't guarantee settings saved before the next hotkey. Anchor with `await expect(page.locator("#settings-overlay")).not.toHaveClass(/open/)` after Escape.
-- **`typing-debounce-1`** (intervals.spec.js, chromium) — 1ms debounce + Playwright's <1ms keypresses → all letters land in one snapshot. Add `waitForTimeout(5)` between keypresses so the debounce fires separately for each.
-- **`search-check`, `tab-settings`** (webkit) — checkbox state not settled when asserted. Add `waitForTimeout(50)` after `Space`.
+- **`typing-debounce-1`** (intervals.spec.js, chromium) — 1ms debounce + Playwright's <1ms keypresses → all letters land in one snapshot. Add `waitForTimeout(20)` between keypresses so the debounce fires separately for each. 20ms is well above the ~16ms rAF interval and ~10ms clock-tick resolution, ensuring separate snapshots even on a contended CI runner. (5ms was sufficient locally but flaky on CI where the browser event loop is under contention.)
+- **`search-check`** (settings.spec.js, webkit) — hardcoded Tab count after search filter is fragile on webkit due to focus timing. Use `tabUntilFocused(page, "#s-replay-next")` instead of `for (let i=0; i<N; i++) Tab` — the helper guarantees focus before `Space`.
+- **`tab-settings`** (keyboard-nav.spec.js, webkit) — checkbox state not settled when asserted. Add `waitForTimeout(50)` after `Space`.
 - **`tab-lyrics`** (all browsers) — `Control+4` to add secondary field races with focus. Use `tabUntilFocused` to wait for the secondary textarea before typing.
+- **Ambiguous `getByRole("textbox")` after `Control+4`** — after adding a secondary field, there are 2 textareas on the page. `getByRole("textbox")` matches both, causing strict-mode violations or wrong-element resolution. Use `getByLabel("Secondary 1 lyrics")` instead.

@@ -11,7 +11,7 @@ repomix --output "local/upload/repomix-onboard.xml" \
 ai/z-ai-glm/skills/project-workflow-SKILL.md,\
 ai/z-ai-glm/skills/web-channel-SKILL.md,\
 ai/z-ai-glm/skills/skill-SKILL.md,\
-archive/modular/plan/**"
+ai/z-ai-glm/Memory.md,archive/modular/plan/**"
 ```
 - Workflows always start with the Onboard step, including dedicated sessions:
 ```
@@ -39,7 +39,7 @@ repomix --output "local/upload/repomix-build.xml" \
 --include "ai/z-ai-glm/skills/linebyline-section-index-SKILL.md,\
 ai/z-ai-glm/skills/single-file-html-app-SKILL.md,\
 ai/z-ai-glm/skills/browser-hotkey-system-SKILL.md,\
-ai/z-ai-glm/Memory.md,docs/index.html"
+docs/index.html"
 ```
 - Features created from this step should pass a superficial manual test
 - For longer requests zip a [[ai/z-ai-glm/Build|Build]] template along with the Repomix

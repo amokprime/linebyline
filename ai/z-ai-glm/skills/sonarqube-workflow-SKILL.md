@@ -34,6 +34,8 @@ Step 2: Categorize by rule
 
 Group findings before acting. Common rules in this project:
 
+JavaScript / TypeScript rules (target `docs/index.html` or test files):
+
 | Rule | Name | Typical fix | False positive risk |
 |---|---|---|---|
 | S3776 | Cognitive Complexity | Helper extraction, early return, optional chaining | Low — but check if SQ counts per-function independently (it does in JS) |
@@ -47,6 +49,13 @@ Group findings before acting. Common rules in this project:
 | S6443 | Use `String.raw` on regex | Almost always false positive for `/pattern/` literals | High |
 | S4023 | Prefer `Math.min`/`Math.max` | Only true min/max patterns; not all ternaries | Medium |
 | S3800 | Negate condition | Only when there is a meaningful `else` branch | Medium |
+
+GitHub Actions workflow rules (target `.github/workflows/*.yml`):
+
+| Rule | Name | Typical fix | False positive risk |
+|---|---|---|---|
+| `githubactions:S6505` | `npx`/`npm ci` supply-chain | Replace `npx <pkg>` with `./node_modules/.bin/<pkg>` (direct binary, no on-demand install); add `--ignore-scripts` to `npm ci` to prevent lifecycle scripts from running during install | Low — both fixes are mechanical and eliminate the attack surface without breaking functionality. The `npx` binary is already in `node_modules/.bin/` after `npm ci`, so the direct path works. `--ignore-scripts` is safe when the only postinstall that matters (e.g. Playwright browser download) is explicitly handled by a separate step. |
+| `githubactions:S8543` | Pin exact package version | Collapses into the S6505 fix — `./node_modules/.bin/<pkg>` runs the version pinned in `package.json`, so no on-demand install can pull an unverified release. For action pins (`actions/checkout@v4`), pin to the commit SHA (`actions/checkout@11d5960a...`) | Low — SHA-pinning is best practice. Version-tag pins (`@v4`) are mutable and can be re-pointed by the action maintainer. |
 
 ---
 
@@ -64,6 +73,10 @@ Math.min/max ternaries (S4023) — not every `a > b ? a : b` is a min/max replac
 
 Negated condition (S3800) — only invert the condition if there is a meaningful else or else if branch. A lone `if (!x) return` with no else is fine as-is; inverting it adds an empty block and reduces clarity. Mark as Won't Fix: "No else branch; inversion would reduce clarity."
 
+githubactions:S6505 (`npx` supply-chain) — always fix. Replace `npx <pkg>` with `./node_modules/.bin/<pkg>`. This is safe because `npm ci` (which runs before the `npx` call in CI) installs the package into `node_modules/.bin/`. The direct binary path eliminates the on-demand install path that `npx` would use if the package were missing. For `npm ci` findings, add `--ignore-scripts` — safe when the only postinstall that matters is handled by a separate explicit step (e.g. `playwright install --with-deps` handles browser download, so `npm ci --ignore-scripts` skipping `@playwright/test`'s postinstall is fine).
+
+githubactions:S8543 (pin exact version) — always fix for `npx` calls (collapsed into the S6505 fix — direct binary uses package.json-pinned version). For GitHub Actions (`actions/checkout@v4`), pin to commit SHA. No false positives observed.
+
 ---
 
 Step 4: Plan the remediation pass
@@ -74,6 +87,7 @@ Group accepted fixes by section (use the linebyline-section-index skill to find 
 2. for-of conversions (selective)
 3. Helper extraction for nesting depth (S2004)
 4. Cognitive complexity reduction (S3776) — most invasive, do last
+5. Workflow-file rules (S6505, S8543) — independent of app code, can be done in any order
 
 For cognitive complexity, identify the function by its start line and name from the `L{line}.json` file, then look up the section. High-CC functions that have already been reduced via helper extraction in a prior pass may have CC scores that are now lower than what the export shows — verify current state before writing any code.
 
