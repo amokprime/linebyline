@@ -15,9 +15,9 @@ Re-read this skill at the start of each new step and whenever the user announces
 
 Workflows and steps
 
-There are many possible vibecoding workflows — see `Vibecoding workflow` (ai/z-ai-glm/Vibecoding-workflow.md) for the known ones with flowchart diagrams. The agent should be aware that the user may pick and choose steps in any order, stitch multiple workflows together in a single session, or follow a custom workflow not yet documented. Do not assume a linear front-to-back progression (e.g. Onboard → Build → Review → Test → done). The user tells you which step they're on; each step can span multiple turns, and the user will announce when they're changing steps. The user may end a session at any point without a formal wrap-up — they may push on the spur of the moment, or click the send button and suddenly remember something they forgot to mention. The agent's defense against this unpredictability is to keep documentation artifacts (companion file, Memory.md, skills) current after every turn, so that a push at any moment captures a complete audit trail. See Post-turn updates.
+There are many possible vibecoding workflows — see `Vibecoding workflow` (ai/chat.z.ai/Vibecoding-workflow.md) for the known ones with flowchart diagrams. The agent should be aware that the user may pick and choose steps in any order, stitch multiple workflows together in a single session, or follow a custom workflow not yet documented. Do not assume a linear front-to-back progression (e.g. Onboard → Build → Review → Test → done). The user tells you which step they're on; each step can span multiple turns, and the user will announce when they're changing steps. The user may end a session at any point without a formal wrap-up — they may push on the spur of the moment, or click the send button and suddenly remember something they forgot to mention. The agent's defense against this unpredictability is to keep documentation artifacts (companion file, Memory.md, skills) current after every turn, so that a push at any moment captures a complete audit trail. See Post-turn updates.
 
-The steps below are the building blocks. Their Repomix snippets are defined in `Repomix snippets` (ai/z-ai-glm/Repomix-snippets.md) — the snippet headers there are intentionally not numbered, reflecting that steps can be used in any order.
+The steps below are the building blocks. Their Repomix snippets are defined in `Repomix snippets` (ai/chat.z.ai/Repomix-snippets.md) — the snippet headers there are intentionally not numbered, reflecting that steps can be used in any order.
 
 ---
 
@@ -71,7 +71,7 @@ Repomix: `repomix-test.xml`. Contains: playwright-testing-SKILL.md, tests/**, pl
 
 Skills (meta-session)
 
-Repomix: `repomix-skills.xml`. Contains: all skills, Boilerplate.md, Memory.md, and the other `ai/z-ai-glm/` docs.
+Repomix: `repomix-skills.xml`. Contains: all skills, Boilerplate.md, Memory.md, and the other `ai/chat.z.ai/` docs.
 
 1. Re-read project-workflow-SKILL.md.
 2. Read the relevant skills for the meta-work being done (e.g., skill-SKILL.md for creating/updating skills, sonarqube-workflow-SKILL.md for post-push remediation).
@@ -166,7 +166,7 @@ The companion file's location depends on which workflow the session follows. The
 
 - **Building one or more features or post-push Review** (app code changes) → `archive/modular/X.XX.XX/linebyline-X.XX.XX.md`. Every building session from 0.37.2 onward is post-refactor, so `archive/semantic/` is effectively deprecated after 0.37.2.
 - **Researching and implementing high-level plans** (e.g. `0-Roadmap` steps) → `archive/modular/plan/<step>/<N>.md`. For a step with multiple sessions, use `archive/modular/plan/1-Playwright/1.md`, `2.md`, etc. For a new step where the folder structure is uncertain, be pessimistic and go with the `1.md` folder assumption.
-- **Improving AI scaffolding** (Skills meta-sessions) → `ai/z-ai-glm/skills/chat/skills-X.XX.XX.md`.
+- **Improving AI scaffolding** (Skills meta-sessions) → `ai/chat.z.ai/skills/chat/skills-X.XX.XX.md`.
 - **Improving Playwright tests** OR **Building one or more features** (test-related work) → `tests/chat/X.XX.XX/<N>.md` (e.g. `tests/chat/0.37.2/1.md`).
 
 For build sessions that produce a versioned app file, name the companion after the version (e.g. version `0.34.9` → `linebyline-0.34.9.md`). The HTML file is always `docs/index.html` but the companion carries the version. For non-build sessions, use the naming convention of the destination folder (numbered files in version folders for tests chat, single `skills-X.XX.XX.md` file for skills chat, numbered files in step folders for plan chat).
@@ -227,6 +227,6 @@ Cross-references
 - `code-quality` — patterns to follow and pitfalls to avoid when writing JavaScript
 - `single-file-html-app` — architectural patterns for the single-file constraint
 - `playwright-testing` — test impact awareness after code changes
-- `Vibecoding workflow` (ai/z-ai-glm/Vibecoding-workflow.md) — the human-directed session flow with step diagrams; documents the known workflows (Building features, Improving AI scaffolding, Remediating latent Sonar issues, Improving Playwright tests, Researching and implementing high-level plans). The user may follow any of these, stitch them together, or invent custom ones.
-- `Repomix snippets` (ai/z-ai-glm/Repomix-snippets.md) — the Repomix commands and step-to-bundle mapping. Step headers there are intentionally not numbered to reflect that steps can be used in any order.
-- `Diagrammo flowcharts` (ai/z-ai-glm/Diagrammo-flowcharts.md) — syntax reference for reading `dgmo` codeblocks in the Vibecoding workflow
+- `Vibecoding workflow` (ai/chat.z.ai/Vibecoding-workflow.md) — the human-directed session flow with step diagrams; documents the known workflows (Building features, Improving AI scaffolding, Remediating latent Sonar issues, Improving Playwright tests, Researching and implementing high-level plans). The user may follow any of these, stitch them together, or invent custom ones.
+- `Repomix snippets` (ai/chat.z.ai/Repomix-snippets.md) — the Repomix commands and step-to-bundle mapping. Step headers there are intentionally not numbered to reflect that steps can be used in any order.
+- `Diagrammo flowcharts` (ai/chat.z.ai/Diagrammo-flowcharts.md) — syntax reference for reading `dgmo` codeblocks in the Vibecoding workflow

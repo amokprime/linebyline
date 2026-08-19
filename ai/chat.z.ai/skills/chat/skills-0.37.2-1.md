@@ -1,7 +1,7 @@
 ---
 model: GLM-5.1
 ---
-Read the README packed into the Repomix first. Follow the Boilerplate and `*-SKILL.md` files as rules (except the part about producing a code file, as we'll be working on scaffolding files this session). Specifically, work on the [[ai/z-ai-glm/Todo|Todo]]. Stop and ask if anything seems ambiguous or half-baked.
+Read the README packed into the Repomix first. Follow the Boilerplate and `*-SKILL.md` files as rules (except the part about producing a code file, as we'll be working on scaffolding files this session). Specifically, work on the [[ai/chat.z.ai/Todo|Todo]]. Stop and ask if anything seems ambiguous or half-baked.
 
 ---
 The file is very large. Let me read it in chunks to get the full content.
@@ -82,10 +82,10 @@ Also, the `GLM (Z.ai)` → `GLM-5.1` default is straightforward — add to the c
 I identified several issues:
 
 - **"Working with GLM (web chat Agent mode)"** section (lines 3384-3394) is outdated — it describes the old 4-phase zip workflow and doesn't mention Repomix at all. It should be replaced with a reference to `Repomix snippets.md` and `Vibecoding workflow.md`.
-- **The 4-phase zip workflow** (Chat.md) is still described in CONTRIBUTING.md but has been superseded by Repomix. The entire "Working with GLM" section should be condensed to: "Use Repomix snippets (see `ai/z-ai-glm/Repomix snippets.md`) for just-in-time context delivery. See `ai/z-ai-glm/Vibecoding workflow.md` for the step-by-step session flows."
+- **The 4-phase zip workflow** (Chat.md) is still described in CONTRIBUTING.md but has been superseded by Repomix. The entire "Working with GLM" section should be condensed to: "Use Repomix snippets (see `ai/chat.z.ai/Repomix snippets.md`) for just-in-time context delivery. See `ai/chat.z.ai/Vibecoding workflow.md` for the step-by-step session flows."
 - **"Running tests"** section (lines 3419-3426) says "This section will be replaced by Playwright CI in the future" and has a 🚧 warning — this is stale.
 - **The CI section** mentions "⚠️These are currently broken pending review of a flag on my account.⚠️" — this is a transient status that shouldn't be in a permanent doc.
-- **The "General workflow for web app vibe coding"** section is lengthy and could be condensed by linking to the `ai/z-ai-glm/` docs instead of restating their content.
+- **The "General workflow for web app vibe coding"** section is lengthy and could be condensed by linking to the `ai/chat.z.ai/` docs instead of restating their content.
 
 ---
 
@@ -285,7 +285,7 @@ Here's a summary of everything I did this session:
 Your edits look good — the key improvements are: removing the snarky peak-hours comment (replaced with constructive mitigation), removing the broken CI ⚠️ and 🚧 warnings, removing the version keyword instruction (now handled by Build.md), and condensing the Repomix section into Obsidian links. Three minor things to consider:
 1. The "companion .md file" reference on line 11 could be confused with the Boilerplate's readme .md rule — `project-workflow-SKILL.md` now has an explicit clarification, but CONTRIBUTING doesn't cross-reference it.
 2. The "Working with Claude Sonnet" section still has a stale reference to the old skills — consider updating to point to the GLM skills as the canonical source.
-3. The version table and test sections could link to their respective `ai/z-ai-glm/` docs instead of restating the rules.
+3. The version table and test sections could link to their respective `ai/chat.z.ai/` docs instead of restating the rules.
 
 ### Todo.md
 - Updated with all completed items and the CONTRIBUTING-v2 review notes.

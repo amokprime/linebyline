@@ -1,8 +1,8 @@
 ---
 summary: Vibecoding workflows for LineByLine that use two or more Repomix snippets. One workflow per session.
 links:
-  - "[[ai/z-ai-glm/Repomix snippets|Repomix snippets]]"
-  - "[[ai/z-ai-glm/Diagrammo flowcharts|Diagrammo flowcharts]]"
+  - "[[ai/chat.z.ai/Repomix snippets|Repomix snippets]]"
+  - "[[ai/chat.z.ai/Diagrammo flowcharts|Diagrammo flowcharts]]"
 ---
 ### Building one or more features
 - I submit more than one feature request to the agent per turn in a substantial bucket when:
@@ -21,7 +21,7 @@ direction-lr
 - Diagram summary: Start with Onboard, then Build, then Review, then Test. After testing, reflect: if more features are desired, loop back to Build. If done, push and check SonarCloud — if issues surfaced, Review again; if clean, Wrap Up.
 
 ### Improving AI scaffolding
-- Examples: [transcripts](https://github.com/amokprime/linebyline/tree/main/ai/z-ai-glm/skills/chat)
+- Examples: [transcripts](https://github.com/amokprime/linebyline/tree/main/ai/chat.z.ai/skills/chat)
 ```dgmo
 flowchart
 direction-lr

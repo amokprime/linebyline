@@ -12,7 +12,7 @@ Also, refine `project-workflow-SKILL`. Based on this session, it seems to lead t
 The companion file is similarly Building-biased. The agent should know that I distribute transcripts to multiple locations by topic:
 - Working on app code aka "Building one or more features" workflow → `archive/modular/X.XX.XX/linebyline-X.XX.XX.md` (every building session from here on out would be post-refactor, so `archive/semantic` is effectively deprecated after 0.37.2)
 - Working on `0-Roadmap` aka "Researching and implementing high-level plans" workflow → `archive/modular/plan/2-Zed-ESLint.md`, or if multiple sessions like `archive/modular/plan/1-Playwright/1.md`, `archive/modular/plan/1-Playwright/2.md`, etc. For a new step, be pessimistic and go with the `1.md` folder assumption.
-- Working on agent skills aka "Improving AI scaffolding" workflow → `ai/z-ai-glm/skills/chat/skills-X.XX.XX.md`
+- Working on agent skills aka "Improving AI scaffolding" workflow → `ai/chat.z.ai/skills/chat/skills-X.XX.XX.md`
 - Working on tests aka "Improving Playwright tests" or "Building one or more features" workflow
 
 I also edited Repomix snippets to incorporate `Memory.md` in the Onboard so every type of workflow would be able to contribute to it without a repeat upload like in this turn.
@@ -42,7 +42,7 @@ Three structural changes:
 **Documented transcript distribution scheme.** New "Companion .md file" section lists the four destinations by workflow topic:
 - Building features (app code) → `archive/modular/X.XX.XX/linebyline-X.XX.XX.md` (post-refactor; `archive/semantic/` deprecated after 0.37.2)
 - Researching/implementing high-level plans → `archive/modular/plan/<step>/<N>.md` (pessimistic: `1.md` folder assumption for new steps)
-- Improving AI scaffolding → `ai/z-ai-glm/skills/chat/skills-X.XX.XX.md`
+- Improving AI scaffolding → `ai/chat.z.ai/skills/chat/skills-X.XX.XX.md`
 - Improving Playwright tests or Building features (test work) → `tests/chat/X.XX.XX/<N>.md`
 
 Also notes that a session stitching multiple workflows may use the primary workflow's destination or split retroactively at workflow boundaries.
@@ -188,11 +188,11 @@ The `<title>` grep is not removed from the Versioning section's description of w
 
 | File | Destination | Content |
 |---|---|---|
-| `project-workflow-SKILL-v2.md` | `ai/z-ai-glm/skills/project-workflow-SKILL.md` | Workflow-neutral refinement (Turn 8); Memory.md no-turn-numbers rule (Turn 9); Wrap Up dropped, Post-turn updates replaces Post-patch updates, version discovery via archive folder grep (Turn 10) |
-| `playwright-testing-SKILL-v2.md` | `ai/z-ai-glm/skills/playwright-testing-SKILL.md` | typing-debounce 5ms→20ms, .gitignore caution, font-fragile container divergence (Turn 8) |
-| `sonarqube-workflow-SKILL-v2.md` | `ai/z-ai-glm/skills/sonarqube-workflow-SKILL.md` | S6505/S8543 workflow-file rules (Turn 8) |
+| `project-workflow-SKILL-v2.md` | `ai/chat.z.ai/skills/project-workflow-SKILL.md` | Workflow-neutral refinement (Turn 8); Memory.md no-turn-numbers rule (Turn 9); Wrap Up dropped, Post-turn updates replaces Post-patch updates, version discovery via archive folder grep (Turn 10) |
+| `playwright-testing-SKILL-v2.md` | `ai/chat.z.ai/skills/playwright-testing-SKILL.md` | typing-debounce 5ms→20ms, .gitignore caution, font-fragile container divergence (Turn 8) |
+| `sonarqube-workflow-SKILL-v2.md` | `ai/chat.z.ai/skills/sonarqube-workflow-SKILL.md` | S6505/S8543 workflow-file rules (Turn 8) |
 | `1-Playwright-2.md` | `archive/modular/plan/1-Playwright/2.md` | Turns 1-2: Onboard + CI-specific Review (Turn 9 split) |
 | `tests-chat-0.37.2-1.md` | `tests/chat/0.37.2/1.md` | Turns 3-7: Test step (Turn 9 split) |
-| `skills-chat-0.37.2.md` | `ai/z-ai-glm/skills/chat/skills-0.37.2.md` | Turns 8-10: this file |
+| `skills-chat-0.37.2.md` | `ai/chat.z.ai/skills/chat/skills-0.37.2.md` | Turns 8-10: this file |
 | `Memory.md` | `Memory.md` | 0.37.2 section: 5 new bullets + turn-reference cleanup (Turns 8-10) |
 | `linebyline-0.37.2.md` | (delete) | Superseded by the split files above |

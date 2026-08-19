@@ -29,6 +29,7 @@ npm-debug.log*
 # Offline
 .obsidian
 .trash
+.stfolder
 .stversions
 *genius*
 # Genius paste snapshot baselines must be tracked (un-ignored from *genius* above)

@@ -34,7 +34,7 @@ Within a single version's Memory.md section, write one bullet per parallel threa
 
 Anatomy of a skill
 
-File: `topic-SKILL.md` stored in `ai/z-ai-glm/skills/`. Frontmatter `name` matches the file prefix without `-SKILL` (e.g. `name: sonarqube-workflow`). Keep a chat log of skill creation/update sessions in `ai/z-ai-glm/skills/chat/`.
+File: `topic-SKILL.md` stored in `ai/chat.z.ai/skills/`. Frontmatter `name` matches the file prefix without `-SKILL` (e.g. `name: sonarqube-workflow`). Keep a chat log of skill creation/update sessions in `ai/chat.z.ai/skills/chat/`.
 
 Frontmatter `description` is the primary triggering mechanism — it determines whether the model consults this skill. Write it to be pushy: include both what the skill does and specific contexts for when to use it. List synonyms, related terms, and adjacent scenarios to combat undertriggering.
 

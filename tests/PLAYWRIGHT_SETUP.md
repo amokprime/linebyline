@@ -1,5 +1,5 @@
-### Fedora 44
-##### Headless
+## Fedora 44
+### Headless
 1. Pull the official Microsoft Playwright Podman image
 ```sh
 podman pull mcr.microsoft.com/playwright:v1.61.0-noble
@@ -42,7 +42,28 @@ funcsave tst
 # Usage examples: tst, tst tests/fields-merge.spec.js --project firefox
 ```
 
-##### UI mode
+4. Or with a bash script. This can be offloaded to a second machine (i.e. an old laptop) that syncs (i.e. with Syncthing) `tests/` and `node_modules/` (to skip `npm ci`), and started from the main computer over [SSH](https://github.com/amokprime/linebyline/tree/main/tests/SSH_SETUP.md). Not running tests on a PC in active use reduces test flakiness a lot, and a bash script is easier for agents to use to automatically test after building.
+```bash
+#!/usr/bin/env bash
+# ~/.local/bin/tst
+set -euo pipefail
+image=${TST_IMAGE:-mcr.microsoft.com/playwright:v1.61.0-noble}
+host_workspace=${TST_HOST_WS:-/home/user/GitHub/linebyline}
+if [ ! -f "$host_workspace/playwright.config.js" ]; then
+  echo "tst: $host_workspace/playwright.config.js not found" >&2
+  exit 1
+fi
+podman pull -q "$image" >/dev/null 2>&1 || true
+exec podman run --rm \
+  --userns=keep-id --security-opt label=disable \
+  -v "$host_workspace:/workspace" -w /workspace \
+  -e HOME=/tmp \
+  -e NPM_CONFIG_UPDATE_NOTIFIER=false -e PW_CONTAINER=1 \
+  "$image" npx playwright test "$@"
+```
+
+### UI mode
+
 ⚠️Webkit is disabled for host in `playwright.config.js` because it's unstable on Linux
 1. Install the npm version of Playwright from project root
 ```sh
