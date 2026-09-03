@@ -1,6 +1,8 @@
 ---
 name: code-quality
-description: Proactively avoid code quality issues and silent regressions in the LineByLine single-file HTML app. Use this skill whenever writing or modifying JavaScript in the app, especially when adding new functions, changing state management, modifying undo/redo behavior, altering config migration, or building new features. Also use when writing or modifying the Bash workflow scripts in ai/chat.z.ai/scripts. Also use when the user mentions SonarQube, cognitive complexity, S3776, S2004, S2681, code smells, ShellCheck, or when reviewing code for potential regressions. This skill prevents issues before they reach SonarQube scans and catches subtle bugs that have historically caused silent regressions in this project.
+description: Proactively avoid code quality issues and silent regressions in the LineByLine single-file HTML app. Use this skill whenever writing or modifying JavaScript in the app, especially when adding new functions, changing state management, modifying undo/redo behavior, altering config migration, or building new features. Also use when the user mentions SonarQube, cognitive complexity, S3776, S2004, S2681, code smells, or when reviewing code for potential regressions. This skill prevents issues before they reach SonarQube scans and catches subtle bugs that have historically caused silent regressions in this project.
+globs: ["docs/index.html", "tests/**/*.js"]
+alwaysApply: false
 ---
 
 Documents the code quality patterns that SonarQube Cloud has flagged repeatedly and the silent regressions that have occurred during development. Following these rules proactively prevents issues rather than fixing them after SonarQube flags them or users discover them.
@@ -26,16 +28,7 @@ CC accounting in SonarQube:
 - Nesting adds +1 per level for `if`/`for`/`while`/`catch`
 - Method calls: 0 (free) — this is why extraction works
 
-Historical CC reduction in this project:
-- Global keydown handler: 138 → 14 → 25 (0.37.0 added Typing-mode arrow-key block) → 12 (0.37.1 extracted `_handleRepeatGuard`, `_handleTypingModeArrowKeys`) → 8 (0.37.2 extracted `_handleGlobalHotkeyDispatch` table)
-- `insertEndLine`: 29 → 11 (extracted `_insertSyncTrailing`)
-- `buildHkRows`: 40 → ~15 (extracted `_handleSecKeydown`)
-- `rebuildHkPanel` forEach callback: 19 → ~4 (0.37.1 extracted `_renderHkCellContent`)
-- `_handleHotkeyModeKeys`: 63 → 8 (0.37.2 extracted `_handleHotkeyModeNav` + `_handleHotkeyModeReplay` + `_handleHotkeyModeArrows` + `_findNextNonMetaLine` + `_isAtBoundary`)
-- `_handleSettingsKeys`: 47 → 9 (0.37.2 extracted `_handleSettingsTabArrows` + `_handleSettingsHotkeyDispatch` + `_handleSettingsEscape` + `_getSettingsFocusable`)
-- `_migrateHotkeys`: 38 → 0 (0.37.2 split into `_migrateLegacyHotkeys` table-driven + `_ensureDefaultHotkeys`)
-- `_handleGlobalHotkeys`: 22 → 6 (0.37.2 extracted `_handleGlobalHotkeyDispatch` computed-key table)
-- Multiple handlers extracted to outer scope: `_handleSettingsSearchKeydown`, `_handleTextareaEnterTrim`, `_handleTextareaParenBracket`, `_handleGlobalHotkeys`, `_handleHotkeyModeKeys`
+Reduction patterns that have worked in this project: helper extraction (multiple handlers extracted to outer scope: `_handleSettingsSearchKeydown`, `_handleTextareaEnterTrim`, `_handleTextareaParenBracket`, `_handleGlobalHotkeys`, `_handleHotkeyModeKeys`), and dispatch-table pattern (see next section).
 
 ---
 
@@ -240,20 +233,6 @@ Inconsistent separator counts cause blank-line mismatches between main and secon
 
 ---
 
-Bash workflow scripts (ai/chat.z.ai/scripts)
-
-The same patterns apply to the Repomix zip scripts (`.base.sh` plus the `*.sh` wrappers). ShellCheck covers what SonarQube covers for JS here.
-
-- Strict mode — `.base.sh` sets `set -euo pipefail` right after being sourced. Any failing command (repomix, zip, cd) aborts the script before the destructive `rm -rf "$upload"/*` cleanup runs. Never place an unchecked command before a cleanup: a failed zip used to be followed by deleting the upload folder and wl-copy receiving a path to a zip that was never created.
-- Empty-variable guards on destructive globs — write `rm -rf "${upload:?}"/*` (ShellCheck SC2115) so an unset or empty variable can never expand the rm target to `/*`. Use the same `${var:?}` form on every rm whose path comes from a variable.
-- Braceless compounds — `[ cond ] && exit` is the bash equivalent of the braceless `if` (S2681): a second statement appended later runs unconditionally. Write `if [ cond ]; then ...; fi`, with an explicit `exit 1` and a stderr message.
-- Diagnostics and exit codes — error messages go to stderr (`echo "..." >&2`), and every `exit` carries an explicit status. A bare `exit` after a failed test exits 0 and silently hides the abort reason.
-- Config over constants — derive paths from `$HOME` and the `LINEBYLINE_ROOT` override instead of hardcoding `/home/user/...` (same rule as runtime `cfg` vs `DEFAULT_CFG`).
-- No line continuations inside quoted strings — `"...,\` + newline silently embeds the next line's leading indentation spaces into the value (`"a,\` + newline + `    b"` becomes `a,    b`). Build long `--include`/`--ignore` lists with `local` + `+=`, one pattern per line.
-- Dynamic source linting — precede `. "$(dirname ...)/.base.sh"` with `# shellcheck source=.base.sh` so ShellCheck lints the base file in the caller's context. ShellCheck resolves the directive path relative to the current working directory (not the checked file's directory), so lint from inside the scripts dir: `cd ai/chat.z.ai/scripts && shellcheck -x *.sh .base.sh` — the `*.sh` glob skips dotfiles, hence the explicit `.base.sh`. Run from anywhere else, `-x` alone cannot find `.base.sh` (SC1091) and the wrappers report SC2154 for `upload`.
-
----
-
 Pre-delivery code quality checklist
 
 Before delivering any patch, verify:
@@ -266,4 +245,3 @@ Before delivering any patch, verify:
 6. Helper extraction safety — if the patch extracts a helper, search the codebase for all pre-existing callees to confirm none were accidentally deleted.
 7. Existing Playwright test code does not conflict with new app code. Reconcile any conflicts found and warn the user of tests that require snapshot or screenshot regen.
 8. New app features are covered by Playwright tests. Expand test coverage conservatively as needed with comments like `// Covers playback starting after seeking added in 0.36.2`. Favor expanding existing <20 LOC tests over creating new tests. Favor adding new tests to existing <200 LOC test files over creating new test files.
-9. Bash scripts — for patches touching `ai/chat.z.ai/scripts/*.sh`: run `bash -n` on every touched file, then `cd ai/chat.z.ai/scripts && shellcheck -x *.sh .base.sh` (expect zero findings; note the glob skips dotfiles so `.base.sh` must be named explicitly), keep `${var:?}` guards on every rm with a variable path, keep error messages on stderr with explicit exit statuses, and never use line continuations inside double-quoted strings.

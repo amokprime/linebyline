@@ -8,20 +8,55 @@ ls ./config/omp && cp -a ./config/omp ~/.omp
 ```
 
 ### Config
-- Environment example for Fish (`~/.config/fish/config.fish`) and KWalletManager → "ksshaskpass" → "Passwords" → "Gratisfy" key:
+- Environment example for Fish (`~/.config/fish/config.fish`) and KWalletManager → "ksshaskpass" → "Passwords" → "KeyName" key:
 ```
 set -gx GRATISFY_PLATFORM_KEY (kwallet-query -f ksshaskpass -r Gratisfy kdewallet | string trim)
+set -gx FREEROUTER_API_KEY (kwallet-query -f ksshaskpass -r FreeRouter kdewallet | string trim)
 ```
-- In global `~/.omp/agent/config.yml`, set the following (the rest can be default). Or in an `omp` session type `/sett` → press Enter → type `secre` → click or arrow/Enter "Hide Secrets" to "true"
+- In global `~/.omp/agent/config.yml`, set the following (the rest can be default):
 ```yml
-secrets: 
+secrets: # This is supposed to redact secrets you accidentally paste into chat
+  enabled: true
+advisor: # About 20% of the main model usage. Less critical for slow SOTA models.
+  enabled: true
+task: # Free API providers can't handle the default 32
+  maxConcurrency: 4
+github: # Optional but lets the agent see failed GitHub Actions
   enabled: true
 ```
-- In global `~/.omp/agent/RULES.md`:
+- In global `~/.omp/agent/RULES.md` (remember to update the script path):
 ```md
 NEVER touch `.env` files in any location.
-NEVER run commands that could dump plaintext keys like `echo '$SOME_API_KEY'` or `kwallet-query...`.
-You are working from a `bwrap` sandbox: `$HOME/.bash/safe-omp.sh`. You may ONLY use SSH when LineByLine is the active project. You MUST NOT waste tool calls trying to access blocked files or folders. STOP WORK and notify the user immediately instead.
+NEVER empty `*trash*` or `.stversions` folders on your own initiative.
+You are working from a `bwrap` sandbox: `/path/to/script.sh`. You MUST read that file to understand your authorized working scope. You ONLY have user-level access to the device where OMP and the sandbox live. You should ONLY probe other user devices as project rules allow (if at all). 
+NEVER waste tool calls trying to access blocked files, folders, or devices, or to run `sudo` commands. Instead, give the user commands to paste and run themselves when work involves blocked areas.
+NEVER silently run `git` or `gh` commands that would result in permanent changes to commit history or the user's GitHub account. Reading commit history and GitHub jobs is allowed — writing or publishing REQUIRES user permission.
+```
+- Model roles and fallback chains:
+```yml
+modelRoles:
+  advisor: gratisfy/logfare/deepseek-v4-flash-0731:max
+  plan: gratisfy/logfare/glm-5.2:max
+  slow: gratisfy/logfare/glm-5.2:max
+  designer: gratisfy/logfare/minimax-m3:xhigh
+  task: gratisfy/logfare/gemma-4-26b:auto
+  tiny: gratisfy/logfare/glm-5.3-flash:auto
+  smol: gratisfy/logfare/gemma-4-26b:auto
+  commit: gratisfy/logfare/gemma-4-26b:auto
+  vision: gratisfy/mistral/mistral-medium-latest:high
+  default: gratisfy/logfare/deepseek-v4-pro-0813:max
+retry:
+  enabled: true
+  maxRetries: 25
+  baseDelayMs: 750
+  maxDelayMs: 0
+  modelFallback: true
+  fallbackRevertPolicy: cooldown-expiry
+  fallbackChains:
+    default:
+      - gratisfy/logfare/deepseek-v4-pro-0813:max
+      - gratisfy/logfare/deepseek-v4-flash-0731:max
+      - gratisfy/logfare/minimax-m3:xhigh
 ```
 
 ### Sandbox
@@ -52,8 +87,12 @@ fi
 # --- Build the bwrap command ---
 cmd=(
   bwrap
-  --ro-bind /usr /usr
-  --ro-bind /usr/bin /bin
+  --clearenv # block env secrets such as API keys
+  --setenv PATH "$PATH" # add path to run programs
+  --setenv HOME "$HOME" # add home folder
+  --setenv TERM "$TERM" # add terminal for fancy colors (probably optional)
+  --ro-bind /usr /usr # --ro means read only
+  --ro-bind /usr/bin /bin # bind mounts map source and destination paths
   --ro-bind /usr/lib /lib
   --ro-bind /usr/lib64 /lib64
   --ro-bind /etc /etc
@@ -73,14 +112,13 @@ cmd=(
 
 # --- Block sensitive files and directories ---
 cmd+=(
-  --ro-bind /dev/null "$HOME/.env" # --ro-bind /dev/null blocks files
+  --ro-bind /dev/null "$HOME/GitHub/linebyline/scratch/scratch.md" # /dev/null shows empty file 
   --ro-bind "$HOME/.omp/agent/RULES.md" "$HOME/.omp/agent/RULES.md"
-  --ro-bind "$HOME/GitHub/linebyline/.omp/RULES.md" "$HOME/GitHub/linebyline/.omp/RULES.md"
   --ro-bind "$HOME/.omp/agent/APPEND_SYSTEM.md" "$HOME/.omp/agent/APPEND_SYSTEM.md"
-  --ro-bind "$HOME/.omp/agent/models.yml" "$HOME/.omp/agent/models.yml"
-  --ro-bind "/path/to/thisscript.sh" "/path/to/thisscript.sh" # lets agents see what's blocked so they don't spiral diagnosing the environment
-  --tmpfs "$HOME/Documents" # --tmpfs blocks folders
-  --tmpfs "$HOME/.ssh" "$HOME/.ssh" # see SSH_SETUP.md for alternate bind
+  --ro-bind "/path/to/linebyline/.omp" "/path/to/linebyline/.omp"
+  --ro-bind "/path/to/this/script.sh" "/path/to/this/script.sh" # lets agents see what's blocked so they don't spiral diagnosing the environment
+  --tmpfs "$HOME/Documents" # --tmpfs shows empty folder
+  --tmpfs "$HOME/.ssh" # see SSH_SETUP.md for alternate bind
   --chdir "$PROJECT"
   --
   "$HOME/.local/bin/omp"
@@ -95,26 +133,46 @@ exec "${cmd[@]}"
 
 ### Plugins
 ```sh
-~/.local/bin/omp install npm:better-custom
 ~/.local/bin/omp install npm:pi-md-export
 sudo ln -s $(which wl-copy) /usr/local/bin/pbcopy #md-export clipboard dependency
 ~/.local/bin/omp install install npm:pi-trash
 ~/.local/bin/omp install npm:@baylarsadigov/omp-undo-redo
-~/.local/bin/omp install npm:smart-approve
-sudo dnf install rg fd # pi-reflag dependencies
-BUN_TMPDIR=/tmp ~/.local/bin/omp install npm:@piotr-oles/pi-reflag
 ```
-- `better-custom` adds custom providers to `models.yml`. It requires the raw API key to be entered to `~/.omp/agent/models.yml` to re-probe providers<sup>1</sup>. This is not required by OMP itself to access models, and can be skipped in `/better-custom` when adding new providers. An environment key can be subbed back in after re-probing a provider.
 - `pi-md-export` exports chats as clean markdown transcripts (no tool calls or thinking blocks). It's Mac native apparently, hence the symlink workaround for Fedora<sup>1</sup>.
 - `omp-undo-redo` adds `/undo` and `/redo` commands that roll back both session turns and associated code changes (at least ones confined to a git-tracked project folder)
 - `pi-trash` routes agent `rm` commands to trash to a `.pi/trash` folder in the project<sup>1</sup>
-- `pi-reflag` routes agent `grep` and `find` commands to the faster `rg` and `fd`<sup>1</sup>
-- `smart-approve` blocks dangerous Bash commands
 - <sup>1</sup> Plugins I plan to replace with scripts someday
 
 ### Providers
 
-This section covers free API providers that are OpenAI-endpoint compatible.
-- Use `better-custom` to set these up; they may not show up in OMP's Providers onboarding menu.
+This section covers free and nominally unlimited API providers that are OpenAI-endpoint compatible.
 - [Gratisfy](https://gratisfy.xyz/) can be used as a free provider router, or just as a [reference](https://gratisfy.xyz/providers)
 - Of the available providers, [Logfare](https://logfare.ai/) is the most usable for vibecoding (when [performance](https://logfare.ai/status) is not degraded). ⚠️ **You must opt into model data training to enable most models** — see their [privacy policy](https://logfare.ai/privacy). I consider this acceptable for LineByLine because it's already public and open source, right down to my chat transcripts. See the [sandbox](https://github.com/amokprime/linebyline/tree/main/ai/omp/OMP_SETUP.md#Sandbox) section again to exclude any personal files or folders.
+- [FreeRouter](https://freerouter.eu.cc/) most often provides subagent-tier models (i.e. 128K context windows). Their selection fluctuates dramatically from day to day. ⚠️ They don't seem to log your data themselves, but it's safe to assume the upstream providers train on your data.
+- Use `~/.omp/agent/models.yml` to set these up. They may not show up in OMP's Providers onboarding menu. Example syntax:
+```yml
+providers:
+  gratisfy:
+    baseUrl: https://api.gratisfy.xyz/v1
+    api: openai-completions
+    apiKey: GRATISFY_PLATFORM_KEY
+    models:
+      - id: logfare/deepseek-v4-flash-0731
+        input:
+          - text
+        reasoning: true
+        thinkingLevelMap:
+          xhigh: max
+  freerouter:
+    baseUrl: https://freerouter.eu.cc/v1
+    api: openai-completions
+    apiKey: FREEROUTER_API_KEY
+    models:
+      - id: qwen-3.8-27b
+        input:
+          - text
+          - image
+        reasoning: true
+        thinkingLevelMap:
+          xhigh: xhigh
+```

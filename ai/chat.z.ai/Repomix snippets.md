@@ -5,7 +5,7 @@ links:
 ---
 ### Onboard
 ```sh
-repomix --output "local/upload/repomix-onboard.xml" \
+repomix --output "scratch/upload/repomix-onboard.xml" \
 --include-full-directory-structure \
 --include "package.json,README.md,\
 ai/chat.z.ai/skills/project-workflow-SKILL.md,\
@@ -21,7 +21,7 @@ Follow `*-SKILL.md` files as rules. This is the Onboard step.
 ---
 ### Skills
 ```sh
-repomix --output "local/upload/repomix-skills.xml" \
+repomix --output "scratch/upload/repomix-skills.xml" \
 --include "CONTRIBUTING.md,ai/chat.z.ai/**"
 --ignore "ai/chat.z.ai/skills/project-workflow-SKILL.md,\
 ai/chat.z.ai/skills/skill-SKILL.md,\
@@ -35,7 +35,7 @@ Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files as rules. This wi
 ---
 ### Build
 ```sh
-repomix --output "local/upload/repomix-build.xml" \
+repomix --output "scratch/upload/repomix-build.xml" \
 --include "ai/chat.z.ai/skills/linebyline-section-index-SKILL.md,\
 ai/chat.z.ai/skills/single-file-html-app-SKILL.md,\
 ai/chat.z.ai/skills/browser-hotkey-system-SKILL.md,\
@@ -47,7 +47,7 @@ docs/index.html"
 ---
 ### Review
 ```sh
-repomix --output "local/upload/repomix-review.xml" \
+repomix --output "scratch/upload/repomix-review.xml" \
 --include "ai/chat.z.ai/skills/aria-accessibility-SKILL.md,\
 ai/chat.z.ai/skills/code-quality-SKILL.md,\
 ai/chat.z.ai/skills/sonarqube-workflow-SKILL.md"
@@ -64,7 +64,7 @@ Re-read `project-workflow-SKILL.md` and the review skills. Follow `*-SKILL.md` f
 ---
 ### Test
 ```sh
-repomix --output "local/upload/repomix-test.xml" \
+repomix --output "scratch/upload/repomix-test.xml" \
 --include "ai/chat.z.ai/skills/playwright-testing-SKILL.md,\
 tests/**,playwright.config.js" \
 --ignore "tests/*snapshots/**"

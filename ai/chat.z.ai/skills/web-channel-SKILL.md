@@ -12,7 +12,7 @@ File visibility
 The user can only see files inside `/home/z/my-project/download/`. Everything else (project tree, scripts, temp files) is invisible to them.
 
 - Copy every deliverable to `download/` — the user cannot access other folders.
-- Avoid subdirectories inside `download/` — the user cannot see them. Put files directly in `download/`.
+- Avoid subdirectories inside `download/` — the user cannot see them. Put files directly in `download/` or zip them.
 - Don't clutter `download/` with compiled temporary files like `*.pyc`.
 - Append a version number suffix (v1, v2…) to each unversioned artifact filename. The first unversioned upload is v1. This prevents accidental overwrites when the user re-downloads.
 - Avoid spaces in filenames. The download system URL-encodes spaces as `+`, which can cause "Failed to download file" errors. Use hyphens or underscores instead (e.g. `Vibecoding-workflow.md` not `Vibecoding workflow.md`).
@@ -46,4 +46,4 @@ Avoid 3+ consecutive lines of source comments, both inline and multiline blocks 
 
 Context compaction
 
-The agent has a large native context (~200k tokens) but may compact or re-read uploaded files in later turns. This skill is designed to be re-read mid-session when the agent notices it's uncertain about channel rules. If you find yourself re-reading uploaded files, also re-read this skill — the channel rules are just as likely to have been forgotten as the file contents.
+The agent has a large native context (~1M tokens) but may compact or re-read uploaded files in later turns. This skill is designed to be re-read mid-session when the agent notices it's uncertain about channel rules. If you find yourself re-reading uploaded files, also re-read this skill — the channel rules are just as likely to have been forgotten as the file contents.

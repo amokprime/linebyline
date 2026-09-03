@@ -23,7 +23,7 @@ The steps below are the building blocks. Their Repomix snippets are defined in `
 
 Onboard
 
-Repomix: `repomix-onboard.xml`. Contains: project-workflow-SKILL.md, README.md, Memory.md, skill-SKILL.md, web-channel-SKILL.md, and archive/modular/plan/**.
+Repomix: `repomix-onboard.xml`. Contains: project-workflow-SKILL.md, README.md, skill-SKILL.md, web-channel-SKILL.md, and archive/modular/plan/**.
 
 1. Read project-workflow-SKILL.md (this file), README.md, and Memory.md.
 2. Read the web-channel skill — it applies to every turn of the session, not just onboarding.

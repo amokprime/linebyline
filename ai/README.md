@@ -1,6 +1,6 @@
 ### General vibecoding workflow in OMP
 
-WIP
+See [[ai/omp/OMP_SETUP|OMP_SETUP]] and [[ai/omp/README|README]]. Skills and other context files are already included in the repo. The config I committed enables the `local` memory subsystem, which starts from zero and consolidates lessons from your sessions into a project-specific folder like `~/.omp/agent/memories/--path-to-linebyline--`. Copy [[ai/omp/learned|learned.md]] into that folder to seed the project memory with historical lessons.
 
 ### General vibecoding workflow in web chats
 
