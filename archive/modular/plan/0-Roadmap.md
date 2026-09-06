@@ -27,7 +27,7 @@ Items 1 and 2 can be done in parallel (or 1 first, then 2). Items 3→4→5→6 
 
 ## 1. Playwright CI + Local Workflow
 
-### Status: Implemented
+### Status: Implemented — CI only; the deploy workflow below is still planned (ships in item 3)
 ### Why First
 
 Every subsequent refactor (modular stack, TypeScript, UI) will break things. You need automated verification before touching architecture. Right now the Playwright test suite is solid but only runs locally — CI catches regressions from pushes and PRs automatically.
@@ -37,12 +37,14 @@ Every subsequent refactor (modular stack, TypeScript, UI) will break things. You
 - Triggers on push and PRs
 - Ubuntu runner with `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` (Node 20 removed from runners September 2026; this env var opts into Node 24 now)
 - Steps: `npm ci` → `npx playwright install --with-deps` → `npx playwright test` (Chromium + Firefox + WebKit)
-- Upload test results artifact on completion (always)
-- After modular refactor (item 3), tests point at the Vite built output served by a static server in CI instead of scanning `archive/semantic/`
+- Upload test results artifact on failure
+- After modular refactor (item 3), tests point at the Vite built output served by a static server in CI instead of `docs/index.html`
 
-### Deploy Workflow (`.github/workflows/deploy.yml`)
+### Deploy Workflow (`.github/workflows/deploy.yml`) — Planned, not yet created
 
-- Triggers on push to `main` after CI passes
+Status as of Sep 2026: only `codeql.yml`, `playwright.yml`, and `sonarcloud.yml` exist. This workflow ships in item 3 (scaffold it in Phase A, wire the real cutover in Phase E). Note `playwright.yml` already triggers on push/PR to **both `main` and `staging`**, so CI covers staging work natively.
+
+- Triggers on push to `main` after CI passes, plus `workflow_dispatch` so the Pages pipeline can be smoke-tested from `staging`
 - `npm run build` → deploy `dist/` to GitHub Pages via `actions/deploy-pages` (OIDC tokens, no personal access token needed)
 - Set Pages source to "GitHub Actions" in repo settings (not "Deploy from a branch")
 - On tag push (`v*.*.*`): also build with `vite-plugin-singlefile` and attach the single HTML file to a GitHub Release
@@ -57,9 +59,9 @@ Every subsequent refactor (modular stack, TypeScript, UI) will break things. You
 ### Critical Things a Fresh Chat Must Know
 
 - `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` env var required in all workflow files — CodeQL flagged Node 20 deprecation
-	- Only implemented for existing codeql.yml and sonarcloud.yml
+	- Done in all three current workflows (codeql.yml, sonarcloud.yml, playwright.yml — the latter also pins `node-version: 24`)
 - Firefox Playwright bug: context teardown after download events causes `Protocol error` — workaround documented in `playwright-testing-SKILL.md`
-- `findLatestVersion()` in `tests/helpers/index.js` currently scans `archive/semantic/` for the latest versioned HTML file — this breaks during the modular refactor and must be updated to point at the Vite build output
+- `findLatestVersion()` in `tests/helpers/index.js` currently returns `/docs/index.html` (it originally scanned `archive/semantic/` and was repointed since this plan was written). During the modular refactor it must be updated again to point at the Vite build output
 - All three browsers run in CI per preference; Firefox is the flakiest
 
 ---
@@ -89,7 +91,7 @@ Swap `@eslint/js` → `typescript-eslint` with `@typescript-eslint/*` rules.
 
 ### Why Third
 
-TypeScript conversion, component-library UI, and most security/maintainability fixes all assume a modular codebase. Doing them on a 2700-line monolith fights the architecture at every step. This is the biggest and riskiest change, so CI (item 1) and linting (item 2) must be in place first.
+TypeScript conversion, component-library UI, and most security/maintainability fixes all assume a modular codebase. Doing them on a ~2850-line monolith (2835 lines as of Sep 2026) fights the architecture at every step. This is the biggest and riskiest change, so CI (item 1) and linting (item 2) must be in place first.
 
 ### Architecture Choice: Why Vue + shadcn-vue
 
@@ -102,12 +104,17 @@ TypeScript conversion, component-library UI, and most security/maintainability f
 
 ### Phase A — Scaffold
 
-- `npm create vite@latest` with Vue + TypeScript template
+Work happens on `staging` (repo convention for app code). As of Sep 2026 `staging` and `main` point at the same commit, so branch from `staging` and merge back when the scaffold is verified.
+
+- Scaffold Vite + Vue + TypeScript into the repo root. `create-vite` won't scaffold into a non-empty directory non-interactively — generate into a temp dir and merge files up, keeping the existing `package.json` fields (`name`, `description`) and merging scripts/devDependencies
+- **Don't flip `"type": "commonjs"` to `"module"` yet** — the Playwright test helpers and specs are CommonJS. Vite doesn't care (it bundles `vite.config.ts` independently of package type). Decide the ESM flip during item 4 when tests convert
 - Install: `tailwindcss`, `@tailwindcss/vite` (Tailwind v4), `shadcn-vue` (`npx shadcn-vue@latest init`)
 - Install: `vite-plugin-singlefile` for release builds
-- Configure `vite.config.ts`: `base: '/linebyline/'`, singlefile plugin for release builds only
-- Verify the empty scaffold deploys to GitHub Pages before touching any LineByLine code
-- GitHub Pages still points at `docs/index.html` during migration — the monolith stays live as fallback
+- Configure `vite.config.ts`: `base: '/linebyline/'` (project-pages path), singlefile plugin for release builds only
+- Verify the scaffold builds and serves **locally**: `npm run build` → `npm run preview`. No Pages deploy happens in this phase
+- Create `deploy.yml` with `workflow_dispatch` so the Pages pipeline is ready, but leave Pages settings untouched for now
+
+**Why not deploy from staging now:** GitHub Pages is one site per repo (`https://amokprime.github.io/linebyline/`). Today it is a legacy branch deploy serving `main:/docs`. A `deploy-pages` run from any branch — staging included — *would* work, but it repoints the repo setting to "GitHub Actions" and immediately replaces the live site with the empty scaffold. There is no separate staging URL. The live site only changes when (a) `docs/index.html` changes on `main` or (b) the Pages source is switched to "GitHub Actions" — so as long as Pages settings stay untouched, all `staging` work is invisible to the public site and the monolith stays live as fallback. The real cutover is Phase E.
 
 ### Phase B — CSS → Tailwind Design Tokens
 
@@ -149,12 +156,16 @@ Vue uses `composables/` instead of `hooks/` (Vue convention for Composition API 
 
 ### Phase E — Verify and Swap
 
-- Run full Playwright suite against Vite dev server
-- Expect `.aria.yml` snapshot regen (Vue produces different DOM structure — same ARIA semantics, different element tree)
-- Update `findLatestVersion()` → point at Vite build output
-- Switch GitHub Pages from `docs/index.html` to the `deploy.yml` workflow
-- Add release workflow: tag push → build with singlefile → attach to GitHub Release
-- Delete `docs/index.html`
+Cutover happens on `main`, ordered so the live site never serves a broken build:
+
+1. Run full Playwright suite against the Vite build (still on `staging`)
+2. Expect `.aria.yml` snapshot regen (Vue produces different DOM structure — same ARIA semantics, different element tree)
+3. Update `findLatestVersion()` → point at Vite build output; get CI green on `staging`
+4. Merge to `main` — `docs/index.html` still ships to Pages, so the live site is unchanged
+5. Switch Pages source from "Deploy from a branch" (`main:/docs`) to "GitHub Actions" in repo settings — `deploy.yml` deploys the Vite `dist/`. This is the single moment the live site changes
+6. Add release workflow: tag push → build with singlefile → attach to GitHub Release
+7. Delete `docs/index.html`, but only after step 5 is verified
+
 - `archive/semantic/` stays for historical reference but is no longer part of the deploy or test cycle
 
 ### Critical Things a Fresh Chat Must Know
@@ -280,6 +291,8 @@ Git tags + GitHub Releases. This is the standard pattern for professional web pr
 3. GitHub Actions builds the single-file HTML and creates a Release automatically
 4. GitHub Pages deploys from the same build
 
+*Example numbers were written at app version 0.37.x. As of Sep 2026 the app is at **0.37.2**, so the next minor is still v0.38.0 — shift the examples up as releases accrue.*
+
 **Version comparison:**
 - Source diff: `git diff v0.37.1..v0.38.0`
 - Browse Release artifacts for built output comparison
@@ -294,3 +307,5 @@ Git tags + GitHub Releases. This is the standard pattern for professional web pr
 ## Hosting
 
 GitHub Pages via the `actions/deploy-pages` workflow (OIDC tokens, no PAT needed). This is sufficient for modern webpages — the Vite-built output is static HTML/CSS/JS with no server-side requirements. Cloudflare Pages is a viable alternative if needed later, but GitHub Pages is simpler since the repo is already on GitHub.
+
+Current state (Sep 2026): legacy branch deploy serving `main:/docs` (`docs/index.html`). The switch to the workflow happens in item 3 Phase E — until then, do not touch the Pages source setting, since that alone repoints the live site.
