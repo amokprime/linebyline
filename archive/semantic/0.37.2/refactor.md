@@ -243,3 +243,43 @@ Fixed and verified. One important correction to the diagnosis first: the garbage
 **Verification:** the side file refuses with exit 1 and no file created; the roadmap session's export is byte-identical to the pre-patch baseline with all 5 of its genuine steering blocks intact; this session's export loses the bogus Turn 1 block while still rendering your real mid-turn steering (the docs link and quote) correctly; `bash -n` clean. The README's "Transcript export" section now documents both behaviors.
 
 Changed files: `ai/zcode/transcript.sh` and `ai/zcode/README.md` — uncommitted on staging alongside the Phase A work, but self-contained enough to commit separately if you'd rather keep the scaffold commit clean. When you want a fresh `refactor.md`, re-run the export after this session ends (exporting mid-turn would capture a truncated final turn): `ai/zcode/transcript.sh -o archive/semantic/0.37.2/refactor.md sess_206ec48f`.
+
+---
+
+## Turn 4
+
+### User:
+
+I pushed and opened a PR: https://github.com/amokprime/linebyline/pull/11. Future staging pushes for the refactor should end up there. Sonar found new issues — I saved to `archive/semantic/0.37.2/issues/`:
+`Move_this_read_permission_from_workflow_level_to_job_level/`
+`Move_this_write_permission_from_workflow_level_to_job_level/`
+`Omitting_--ignore-scripts_allows_lifecycle_scripts_to_run_during_package_install/`
+
+---
+
+### Agent:
+
+Sonar findings from the PR scan — the `sonarqube-workflow` skill governs processing these. Loading it first:
+
+The skill maps all three to known GitHub Actions rules targeting the new `deploy.yml`. Parsing the export:
+
+All four instances are in `deploy.yml` (the Phase A scaffold's first Sonar contact, via the PR scan): S8264/S8233 want the workflow-level permissions split to job level, and S6505 wants `--ignore-scripts` on `npm ci`. All four are mechanical fixes — no false positives. The one thing to verify is that the Vite build still works without lifecycle scripts (esbuild/tailwind native binaries must resolve from their platform packages). Applying:
+
+Now the critical verification — that `npm run build` works after a `--ignore-scripts` install (the exact CI sequence, proving no dependency needs a lifecycle script):
+
+Build passes with `--ignore-scripts` (974 ms — native binaries resolve fine). The YAML check just failed on a stale working directory — re-running with an absolute path:
+
+All four findings resolved. Recording the pass in the durable memory seed per the skill's delivery step:
+
+All four Sonar findings are fixed in `.github/workflows/deploy.yml`, verified locally, ready for you to push to staging so PR #11 picks them up and Sonar re-scans.
+
+**What changed:**
+
+- **S8264 + S8233 ×2 (permissions at workflow level)** — the workflow-level `permissions:` block is gone. The `build` job now gets `contents: read` only; the `deploy` job gets `pages: write` + `id-token: write` (the OIDC pair that `deploy-pages` actually needs). Least-privilege per job, which is exactly what the rule asks for.
+- **S6505 (`npm ci` without `--ignore-scripts`)** — now `npm ci --ignore-scripts`, matching playwright.yml's existing idiom.
+
+**Verification:** I ran the exact CI sequence locally — `npm ci --ignore-scripts` followed by `npm run build`. The build passes (974 ms), which proves nothing in the dependency tree depends on install lifecycle scripts: esbuild, Tailwind's oxide, and the rest resolve their native binaries from platform packages rather than postinstall scripts. The YAML also parses clean.
+
+**One honest caveat, flagged for Phase E:** the Pages pipeline can't be smoke-tested until the cutover (it's `workflow_dispatch`-only by design). I scoped the `build` job to `contents: read` following GitHub's hardened split — `configure-pages` and `upload-pages-artifact` should only read/upload metadata — but if that first real dispatch ever 403s in the build job, the fix is adding `pages: write` to that job, which stays rule-compliant. I've noted this in the root `MEMORY.md` so it isn't rediscovered from scratch.
+
+Changed files: `.github/workflows/deploy.yml` and `MEMORY.md` (one disposition line). No version bump, no app code touched — consistent with the Phase A versioning decision.
