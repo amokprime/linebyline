@@ -252,6 +252,12 @@ NOTIFICATION = re.compile(r"(?s)<task-notification>.*?</task-notification>\s*")
 CONTINUE_ONLY = re.compile(
     r"^\s*(?:continue(?: from cutoff| from where (?:you|we) left off| working|,? please)?"
     r"|go on|keep going|[.?!]+)[.!?]*\s*$", re.I)
+# Auto-compaction injects the prior-context summary as a user message ("This
+# session is being continued..."). It duplicates turns already in the log and
+# is harness context, not user intent — exclude it entirely (its quoted marker
+# syntax also false-matches IMG_SRC, seeding garbage attachments).
+CONTINUATION = re.compile(
+    r"^This session is being continued from a previous conversation")
 ATTACH = re.compile(r"(?s)Contents of (.+?)\s*\n(.*)")
 IMG_EXT = (".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp")
 DATA_URI = re.compile(r"!\[[^\]]*\]\(\s*data:[^)]+\)|data:(?:image|application)/[a-z+]+;base64,[A-Za-z0-9+/=]+")
@@ -338,8 +344,9 @@ for rec in records:
     typed_users = []
     for msg in users:
         typed, files, blocks = user_content(msg)
-        if typed:
-            typed_users.append((typed, files, blocks))
+        if not typed or CONTINUATION.match(typed):
+            continue   # reminder-only, or auto-compaction context
+        typed_users.append((typed, files, blocks))
     if t["user"] is None and typed_users:
         t["user"], t["files"], t["blocks"] = typed_users[-1]   # last real user message wins; reminder-only ones skipped
         t["seen"] = {text for text, _, _ in typed_users}

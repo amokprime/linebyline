@@ -181,6 +181,10 @@ export default [
     rules: {
       ...sonarjs.configs.recommended.rules,
       "sonarjs/cognitive-complexity": "warn",
+      // Ported verbatim from the monolith — ReDoS findings are "Won't Fix" per
+      // Roadmap item 5 (client-side processing on user-supplied lyrics).
+      "sonarjs/super-linear-regex": "off",
+      "sonarjs/empty-string-repetition": "off",
     },
   },
 
@@ -196,6 +200,9 @@ export default [
     rules: {
       ...sonarjs.configs.recommended.rules,
       "sonarjs/cognitive-complexity": "warn",
+      // Ported verbatim from the monolith — see the item 5 note above.
+      "sonarjs/super-linear-regex": "off",
+      "sonarjs/empty-string-repetition": "off",
     },
   },
 
@@ -207,6 +214,22 @@ export default [
       ecmaVersion: "latest",
       sourceType: "module",
       globals: { ...globals.node },
+    },
+  },
+
+  {
+    // Phase C unit tests for the ported modules (vitest runner, node env)
+    files: ["tests/unit/**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.node },
+    },
+    plugins: { sonarjs },
+    rules: {
+      ...sonarjs.configs.recommended.rules,
+      "sonarjs/cognitive-complexity": "warn",
     },
   },
 ];

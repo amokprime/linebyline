@@ -2,7 +2,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 import tailwindcss from '@tailwindcss/vite'
 import vue from '@vitejs/plugin-vue'
-import { defineConfig } from 'vite'
+import { defineConfig } from 'vitest/config'
 import { viteSingleFile } from 'vite-plugin-singlefile'
 
 // SINGLEFILE=1 npm run build:single → self-contained one-file HTML for
@@ -18,5 +18,11 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
+  },
+  // Phase C verification bridge: unit specs pin the ported modules' behavior
+  // while the Playwright suite still runs against docs/index.html (until Phase E)
+  test: {
+    include: ['tests/unit/**/*.test.ts'],
+    environment: 'node',
   },
 })

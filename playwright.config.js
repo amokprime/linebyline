@@ -23,6 +23,10 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./tests",
+  // Playwright specs are *.spec.js; *.test.ts under tests/unit/ belongs to the
+  // vitest unit bridge (npm run test:unit) and must not be collected here —
+  // the default testMatch would pick *.test.ts up and fail on the vitest import.
+  testMatch: "**/*.spec.js",
   fullyParallel: true,
   forbidOnly: inCI,
   retries: inCI ? 2 : 0,

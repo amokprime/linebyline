@@ -131,7 +131,13 @@ Work happens on `staging` (repo convention for app code). As of Sep 2026 `stagin
 
 ### Phase C — HTML → Vue Components
 
-Using the section index as the extraction roadmap:
+**In progress — tranche 1 done 2026-09-06** (pure leaf modules + a vitest unit-test bridge). Tranche plan, following the leaf-first migration order:
+
+- **Tranche 1 (done)**: `src/config.ts` (DEFAULT_META, DEFAULT_CFG, HK_SECTIONS, HK_LABELS, LEGACY_HOTKEY_MAP + `migrateLegacyHotkeys`/`ensureDefaultHotkeys`/`migrateHotkeys`), `src/hotkeys/restrictedKeys.ts` (RESTRICTED_ALL, `isRestrictedForAll/ForKey`), `src/hotkeys/keyUtils.ts` (`normKey`/`keyStr`/`hkMatch`), `src/utils/lrcParser.ts` (TS_RE/META_RE, `tsToMs`/`msToTs`/`isEndTs`/`isHeader`/`replaceTs`/`normalizeLrcTimestamps`/`stripSecLine`/`collapseBlanks`/`findLastMetaIdx`/`lrcHasTi`), `src/utils/pasteHandlers.ts` (`cleanPaste`/`ensureReTagDefault`/`mergeLrcMeta`), `src/utils/geniusExtractor.ts` (the pure Genius helpers incl. `cleanGenius`/`extractGeniusFields`). DOM/state-coupled functions (`getSeekOffset`, `hasLyricContent`, `maybeAppendTrailingTs`, `suppressAuto`, `advanceActiveLine`, `markGeniusSource`, `extractGeniusMeta`) stay in the monolith for the Phase D composables.
+- **Verification bridge**: `vitest` (devDep) + `tests/unit/*.test.ts` via `npm run test:unit` — pins every ported module's behavior while the Playwright suite still targets the monolith (until Phase E). 47 specs. **playwright.config.js got `testMatch: "**/*.spec.js"`** — the default testMatch also matches `*.test.ts`, so the Server/CI suite collected the vitest files and failed on the import; unit tests and Playwright specs are now disjoint by extension. Unit tests documented 6 monolith quirks worth knowing: `TS_RE` is `^`-anchored (mid-line timestamps don't parse); `normKey('Escape')` → `'Esc'` so `hkMatch`'s `'Escape'` branch is unreachable via `keyStr`; `findArtistAfterTitle` breaks entirely on a `Producer` line; `ensureReTagDefault` fills empty tags as `[re:VALUE]` (no space); `normalizeLrcTimestamps` truncates exactly-3 decimals (4-decimal untouched); `migrateLegacyHotkeys` only rewrites values present in the legacy map.
+- **PORT DELTAS** (documented in module headers): `ensureReTagDefault(text, defaultMeta)` and `mergeLrcMeta(lrcText, defaultMeta)` take the meta text as a parameter (monolith reads the `cfg` global) — Phase D's config composable binds the live value; `_`-prefixed helpers dropped the underscore as module exports; monolith function bodies are otherwise verbatim.
+- **Later tranches**: ThemeProvider/FontSelector + menu bar shell → main layout (panels, editor columns, lyric area with `.lrc-line` CSS ported as scoped/app CSS, rewriting `var(--accent)`→`var(--primary)` and `[data-theme="dark"]`→`.dark`) → ControlsPanel/HotkeyCell → SettingsDialog (shadcn-vue `Dialog`) → **global keyboard handler last**.
+
 
 | Current Section | Vue Module |
 |---|---|

@@ -11,7 +11,8 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "build:single": "SINGLEFILE=1 npm run build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:unit": "vitest run"
   },
   "repository": {
     "type": "git",
@@ -44,6 +45,7 @@
     "typescript": "~6.0.2",
     "vite": "^8.2.2",
     "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^5.0.0",
     "vue-eslint-parser": "^10.4.1",
     "vue-tsc": "^3.3.11"
   },

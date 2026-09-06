@@ -25,8 +25,15 @@ const swatches = [
       <span class="font-semibold text-primary">GitHub Light/Dark tokens</span>
     </p>
     <div class="flex flex-wrap items-center justify-center gap-3">
-      <div v-for="t in swatches" :key="t.label" class="flex flex-col items-center gap-1">
-        <div class="h-12 w-16 rounded-md border border-border" :class="t.cls" />
+      <div
+        v-for="t in swatches"
+        :key="t.label"
+        class="flex flex-col items-center gap-1"
+      >
+        <div
+          class="h-12 w-16 rounded-md border border-border"
+          :class="t.cls"
+        />
         <span class="text-xs text-muted-foreground">{{ t.label }}</span>
       </div>
     </div>

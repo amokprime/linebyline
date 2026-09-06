@@ -498,3 +498,202 @@ Docs and memory updated. Blocking on the full suite before the final report:
 One scoping note: the roadmap's "migrate layout CSS to Tailwind utilities" bullet is deferred into Phase C per component — the monolith's HTML is frozen, so there's nothing to migrate until components extract; the roadmap now says so explicitly.
 
 Changed files: `src/style.css`, `src/App.vue`, roadmap, `MEMORY.md`. Ready to commit and push to staging whenever you are — and Phase C (component extraction, leaf-first) is next.
+
+---
+
+## Turn 9
+
+### User:
+
+Checks passed — now phase C.
+
+---
+
+### Agent:
+
+Phase C — the big one. The roadmap's migration order is leaf-first: pure utility modules before components, global keyboard handler last. One turn can't port all ~2850 lines responsibly, so this tranche is the **pure leaf modules** (config, hotkey utils, LRC parser, paste/meta, Genius extractor) plus the verification bridge they need — since the Playwright suite stays pointed at the monolith until Phase E, the ported modules need their own unit tests. Setting up:
+
+Config, hotkey rules, and the migration helpers captured (loadCfg/saveCfg stay for Phase D — they touch localStorage/globals). Now the LRC parse, paste/meta, Genius, and key-normalization sections:
+
+All sections captured. The pure/impure split is clear — `getSeekOffset`, `hasLyricContent`, `maybeAppendTrailingTs`, `markGeniusSource`, `extractGeniusMeta` touch DOM/globals (Phase D); the rest port cleanly. One missing piece: `keyStr` calls `_normKey` — locating it:
+
+`_normKey` found — pure, goes to keyUtils. One last check on `cleanPaste` context values before writing the modules:
+
+Only `'paste'` remains as a live context. Writing the six modules — bodies verbatim from the monolith, signatures typed, and the two `cfg`-dependent functions parameterized (marked as PORT DELTA):
+
+One deviation slipped in — the monolith's `_migrateHotkeys` has no `if (c.hotkeys)` guard (the field is required). Fixing to verbatim:
+
+Now the Genius extractor:
+
+All six modules are in. Now the verification bridge — vitest so the ported pure modules get behavioral unit tests while the Playwright suite stays on the monolith:
+
+Now the unit specs — pinning the ported behavior with values derived from the monolith's semantics:
+
+ESLint block for the new TS unit tests, then the full verification run:
+
+First failure is the test's expectation, not the port — the monolith's `ensureReTagDefault` fills an empty tag as `[re:` + value + `]` with no space (the `\s*` is consumed). The port is verbatim-correct; my expectation guessed wrong. That's the unit bridge doing its job. Let me see all 6 failures:
+
+All 6 failures are **my test expectations being wrong about monolith semantics** — the ports are verbatim-faithful:
+
+1. `TS_RE` is `^`-anchored — `tsToMs` only matches line-start timestamps (my "mid-line" case returns null)
+2. `normalizeLrcTimestamps` truncates exactly-3 decimals; 4-decimal stamps don't match the pattern
+3. `stripSectionHeaders` won't double-blank when the previous line is already blank
+4. `findArtistAfterTitle` **breaks entirely** on a `Producer` line — no artist found after it
+5. `migrateLegacyHotkeys` never overwrites non-legacy values — my test mutated the default clone instead
+6. `ensureReTagDefault` fills empty tags as `[re:` + value + `]` — no space (the `\s*` is consumed)
+
+Exactly what this bridge is for. Correcting the expectations to pin actual monolith behavior:
+
+Three fix groups: (1) the `test` key needs `defineConfig` from `vitest/config`, not a triple-slash reference in current vitest; (2) the `sonarjs/super-linear-regex` errors are the **same regexes** the monolith carries under an existing Won't-Fix disposition (client-side, user-supplied lyrics — roadmap item 5) — the src blocks I wrote just didn't inherit that override; (3) App.vue formatting is auto-fixable. Fixing all three, then the last test failure:
+
+My earlier edit fixed the wrong occurrence — the mid-line assertion lives in the first `it` block. Fixing:
+
+All 47 unit tests pass, build and lint clean. Full agent-tst suite in the background while I update the roadmap:
+
+The suite log shows an error — the Server-side run picked up the new `tests/unit/*.test.ts` files. Reading the log and the Playwright config:
+
+Found it: `testDir: "./tests"` with Playwright's **default testMatch**, which matches `*.test.ts` too — so the Server-side suite tried to run the vitest files as Playwright tests and failed on the `vitest` import. This would also break CI on push. The fix: narrow Playwright's testMatch to the `*.spec.js` convention every existing spec already uses:
+
+Still the same failure — exit code 0 is just `tail`'s exit code masking it; the run itself died during collection. The config change didn't take effect on the Server side. Let me read the local wrapper to understand how it syncs the working tree:
+
+The wrapper is a thin SSH — sync mechanics live in the Server-side `tst`. Let me look at the full re-run log for clues about what was actually collected:
+
+Both logs are just 3-line tails of the same collection error (my `| tail` pipe masked the real exit code). The fast diagnostic the AGENTS.md prescribes: `--list` — it shows what the Server actually collects now:
+
+`--list` is clean — zero unit files collected. The config fix works; the re-run simply raced the working-tree sync to the Server (started seconds after the edit). Now that the sync demonstrably caught up, re-running the full suite:
+
+While the suite runs, updating the harness memory with the tranche-1 state:
+
+Blocking on the full suite:
+
+The config fix worked — collection is clean — with 530 passed and a single **webkit-only** failure on `seek-increment`, a timing-sensitive test unrelated to anything this session touched (monolith untouched; Phase B's full run was 531/0). Reproducing with a scoped run per AGENTS.md:
+
+3/3 passed on the scoped re-run — the webkit `seek-increment` failure was a timing flake (webkit is the known-flaky browser in this repo), not a regression. Everything is green. Final todo update and report:
+
+**Phase C tranche 1 is done** — the six pure leaf modules are ported from the monolith with a real verification layer behind them, everything is green, and the monolith remains untouched. Phase C is deliberately spread across tranches; this is the roadmap's "leaf components first" step, and the full-app port continues in the next turns.
+
+**What landed:**
+
+- **Six modules, function bodies verbatim from the monolith:** `src/config.ts` (DEFAULT_CFG, hotkey sections/labels, legacy migration helpers), `src/hotkeys/restrictedKeys.ts` + `src/hotkeys/keyUtils.ts` (restricted-key rules, `keyStr`/`hkMatch`), `src/utils/lrcParser.ts` (timestamps, headers, normalization), `src/utils/pasteHandlers.ts` (`cleanPaste`, `ensureReTagDefault`, `mergeLrcMeta`), `src/utils/geniusExtractor.ts` (bounds finding, YMAL filter, section stripping, metadata fields). DOM/state-coupled functions (`getSeekOffset`, `maybeAppendTrailingTs`, `markGeniusSource`, …) deliberately stay in the monolith for Phase D's composables.
+- **A vitest unit bridge** (`npm run test:unit`, 47 specs in `tests/unit/`) — this is the piece that makes Phase C safe: the Playwright suite stays pointed at the monolith until Phase E, so the ported modules needed their own behavioral net. It earned its keep immediately, catching **6 of my wrong assumptions about monolith semantics** — e.g. `TS_RE` is `^`-anchored so mid-line timestamps never parse, `ensureReTagDefault` fills empty tags as `[re:VALUE]` with no space, and `findArtistAfterTitle` breaks its scan entirely on a `Producer` line. All are now pinned as tests, and the quirks are written down in the roadmap so Phase D doesn't trip on them.
+- **One required infra fix:** `playwright.config.js` got `testMatch: "**/*.spec.js"`. Playwright's default match also collects `*.test.ts`, so the Server/CI suite tried to run the vitest files and aborted on the import. This would have gone red on your next push.
+- Two documented **PORT DELTAS**: `ensureReTagDefault` and `mergeLrcMeta` take the default-meta text as a parameter instead of reading the `cfg` global (Phase D's config composable will bind the live value).
+
+**Verification:** 47/47 unit specs, `vue-tsc` + `vite build` clean, ESLint clean. Full agent-tst suite: 530 passed + one **webkit-only flake** on `seek-increment` (a timing test untouched by this work) that passed 3/3 on the scoped re-run — same flake family the repo already sees on WebKit. If you'd like a fully clean full pass before pushing, say the word; otherwise this is ready for PR #11.
+
+One honest note: `sonarjs/super-linear-regex` is now disabled for `src/**` too — the ported regexes carry the same client-side Won't-Fix disposition the monolith's already have (roadmap item 5 may revisit with bounded parsers).
+
+**Next tranche:** ThemeProvider/FontSelector plus the menu-bar shell — the first real Vue components — then the main layout, panels, Settings dialog, and the global keyboard handler last.
+
+---
+
+## Turn 10
+
+### User:
+
+I just noticed a few Sonar maintainability issues from the last commit affecting `src/style.css` (maintainability issues are non-blocking). As a ZCode capability test, see if you can access the 2 new issues (https://sonarcloud.io/project/issues?id=amokprime_linebyline&pullRequest=11&s=IMPACT_RANK&sinceLeakPeriod=true&issueStatuses=OPEN%2CCONFIRMED) with the web reader tool, identify their links, and use `sonar-export "LINK"` (on my PATH) to generate the issues (default -> `~/Downloads/` so fold them into `archive/semantic/0.37.2/issues/`).
+
+> **Steering:** If the web reader tool isn't working you could also try my local npm Playwright (lives /home/user/.cache/ms-playwright)
+
+---
+
+### Agent:
+
+A SonarCloud access test via the web reader, then export with `sonar-export`. SonarCloud is a client-rendered SPA, so let me see what the reader actually gets from that URL first:**Output:**
+**webReader_result_summary:** [{"text": "MCP error -400: Please Enter the Correct URL Format！", "type": "text"}]
+                                                The reader rejected that query-heavy URL. Trying a simplified project-issues URL, then the public API endpoint:**Output:**
+**webReader_result_summary:** [{"text": "MCP error -400: Please Enter the Correct URL Format！", "type": "text"}]
+                                                The web reader is rejecting the URL format (likely the query-string encoding) — let me test with the plain project URL to isolate the issue:**Output:**
+**webReader_result_summary:** [{"text": {"title": "SonarQube Cloud", "url": "https://sonarcloud.io/project/issues?id=amokprime_linebyline", "content": "SonarQube Cloud\n\n```\n  ██████╗ ██╗   ██╗████████╗██████╗  █████╗ ████████╗███████╗██████╗     ██████╗ ██████╗  ██████╗ ██╗    ██╗███████╗███████╗██████╗\n ██╔═══██╗██║   ██║╚═...
+                                                The web reader hits SonarCloud's SPA shell — the issues page is client-rendered, so no issue data comes through (and its URL validator rejects the query-param-heavy links outright). That's the honest limit of that tool here. Trying the `sonar-export` CLI to see what it can do directly:
+
+`sonar-export` isn't in the non-interactive shell's PATH — checking the usual user-local locations, like `agent-tst`:
+
+Found it at `~/.local/bin/sonar-export`. Checking its usage:
+
+It parses Sonar issue URLs with `id` and `open` parameters — no `--help` flag, and it reads a `BEARER_TOKEN` env var with unauthenticated fallback. Now I need the two issue keys. The SPA shell blocked the reader, but SonarCloud's public JSON API might pass through it (this URL form avoids the `%2C` encoding that tripped the validator):**Output:**
+**webReader_result_summary:** [{"text": {"title": "SonarQube Cloud", "url": "https://sonarcloud.io/api/issues/search?componentKeys=amokprime_linebyline&pullRequest=11&issueStatuses=OPEN&s=IMPACT_RANK&sinceLeakPeriod=true", "content": "```\n{\n  \"total\": 3,\n  \"p\": 1,\n  \"ps\": 100,\n  \"paging\": {\n    \"pageIndex\": 1,\n    \"pageSize\": 100,\n    \"total\": 3\n  },\n  \"effortTotal\": 30,\n  \"debtTotal\": 30,\n  \"issues\": [\n    {\n      \"key\": \"AZ0-...```
+
+The API works through the reader. Let me get the full JSON to extract the issue keys and links:
+
+No need — the web reader did get through in the end. The SPA page itself won't render for a static reader, but pointing the reader at SonarCloud's public JSON API (`/api/issues/search?...`) returned the full issue list. Both new issues are already identified:
+
+- `src/style.css:146` — **css:S4666** Duplicate selector `:root`, first used at line 68
+- `src/style.css:159` — **css:S4666** Duplicate selector `.dark`, first used at line 104
+
+Both MAJOR code smells from today's commit — that's the Phase B theme work (shadcn `:root`/`.dark` token blocks colliding with the monolith ported blocks). Now exporting with `sonar-export`:
+
+Both exports succeeded. Now let me verify the JSON content, look at the actual duplication in `src/style.css`, and fold the exports into `archive/`:
+
+Confirmed — the duplication is the deliberate Phase B structure: the shadcn-generated `:root`/`.dark` token blocks (lines 68, 104) and the hand-maintained LineByLine app-token blocks (lines 146, 159), separated so shadcn tooling never owns the app tokens. Folding the exports into `archive/`:
+
+The `tail -4` just missed them alphabetically — verifying the two new folders landed:
+
+Both exports are folded in. Recording the durable tooling facts (sonar-export's full-path invocation, the web-reader/API workaround) in the memory seed:
+
+Now recording the durable facts — the S4666 disposition rationale in the memory seed, plus the tooling gotchas:
+
+Done — capability test passed, both issues exported and folded. Here's the rundown:
+
+**Getting the issues.** The web reader hit a wall on the page you linked — SonarCloud's issues page is a client-rendered SPA, so a static reader gets an empty shell (and the tool's URL validator also rejected the `%2C`-encoded query strings). Rather than fall back to Playwright, I pointed the reader at SonarCloud's **public JSON API** instead (`/api/issues/search?...pullRequest=11`), which passes through cleanly and returned both issues. No Playwright needed.
+
+**The 2 issues** — both `css:S4666` (Duplicate selector), MAJOR code smells, maintainability-impact, created by today's push:
+
+| Line | Issue | Duplicate of |
+|---|---|---|
+| `src/style.css:146` | Duplicate selector `:root` | line 68 |
+| `src/style.css:159` | Duplicate selector `.dark` | line 104 |
+
+**Export + fold.** One gotcha: `sonar-export` isn't on ZCode's non-interactive PATH — it's at `~/.local/bin/sonar-export`, so I invoked it by full path (like `agent-tst`). Both exports ran unauthenticated, defaulted to `~/Downloads/issues/`, and are now folded into [archive/semantic/0.37.2/issues/](/home/user/GitHub/linebyline/archive/semantic/0.37.2/issues/): `Duplicate_selector_root,_first_used_at_line/L146.json` and `Duplicate_selector_.dark,_first_used_at_line/L159.json`. The `why.md`/`how.md` tabs were skipped by the tool — css:S4666 genuinely has no content there on SonarCloud.
+
+**My assessment:** these two are **intentional by design** and I'd recommend marking them False Positive. The `:root`/`.dark` blocks at lines 68/104 are the shadcn-generated token sets; the ones at 146/159 are the LineByLine app tokens, deliberately kept in their own blocks (the comment at line 140 says as much) so a future `shadcn-vue` regeneration rewrites only its own tokens and can't clobber `--active-*`, `--warn-*`, etc. Merging the blocks to silence the smell would remove exactly that protection. Since they're maintainability-only they don't gate the PR — the disposition is yours to click, with the reason text above. I've recorded all of this in the memory seed ([MEMORY.md](/home/user/GitHub/linebyline/MEMORY.md) now has an "Agent tooling" section with the full-path invoke + API-workflow notes).
+
+---
+
+## Turn 11
+
+### User:
+
+In lines 596-684 of refactor.md (just updated) the earlier context (presumably auto-compacted?) got duplicated. That duplicated part and line 685 don't really add value for public reviewers. Also the attachments in lines 689+ got malformed.
+
+> **Steering:** Don't hand edit — fix what can reasonably be patched script-side since it will just be regenerated again
+
+---
+
+### Agent:
+
+Let me look at the damage in the freshly regenerated transcript:
+
+I can see all three problems. The compaction summary (the harness's context-continuation blob) got rendered as a `> **Steering:**` blockquote duplicating turns 1–9, its tail instruction landed as line 685, and the attachment extraction false-matched on the literal regex text quoted inside that summary — `` `([^\` `` is a mangled fragment of `[Image: source: ([^\]]*)]`. Let me look at transcript.sh and the raw session JSONL to fix this at the source rather than hand-editing:
+
+Agreed — script-side fix and regenerate. First let me confirm the data: find the rollout, and see exactly how the compaction message enters the turn history and what produces those two garbage attachment entries (`…` and `([^\`):
+
+The compaction message (msg1) is the source of both garbage attachment matches. Now I need to see which message became the turn body and what msg0/msg2-8 actually are, to make sure excluding the banner message doesn't break the last-wins selection:
+
+The turn structure is now clear. The banner message (msg1) is the sole source of both garbage attachments, and the real turn body (the Sonar request) comes from the pre-compaction records earlier in the same file — so excluding banner messages from user selection is safe. Let me pinpoint the `…` match inside the banner text to be sure:
+
+Both garbage entries are confirmed as the banner message quoting its own marker formats — ``[Image: source: …]`` (prose description with a literal ellipsis) and the regex literal ``[Image: source: ([^\]]*)]``. Excluding the banner message kills both. Patching the script:
+
+Now shellcheck and a stdout smoke run to verify the fix before touching the real transcript:
+
+All green: no banner text anywhere, the garbage attachment entries survive only inside my own quoted prose in Turn 11 (legitimate agent output), and legitimate `**Attachments:**` blocks remain in earlier turns. Spot-checking Turn 10's new rendering:
+
+Turn 10 is clean now — real user body, one legitimate steer, no summary blockquote, no attachments block. One pre-existing cosmetic artifact I'm deliberately leaving: the web-reader `**Output:**` payload narration inside agent text (present in the old file too, and you didn't flag it — the existing SERVER_OUT stripper only catches that marker at line-start).
+
+Now the README docs:
+
+Docs updated. Now regenerate the real transcript and diff against the current version:
+
+The diff is exactly the intended scope — two removal hunks only (the 91-line compaction blockquote including line 685, and the malformed attachments block), with Turn 11 added as the legitimate new content. Turns 1–9 are untouched. Final structural check of the regenerated file:
+
+All verified. Marking the work done:
+
+Fixed script-side and regenerated — [refactor.md](/home/user/GitHub/linebyline/archive/semantic/0.37.2/refactor.md) is clean now.
+
+**Root cause.** When ZCode auto-compacts mid-session, it injects the prior-context summary as a *user message* ("This session is being continued from a previous conversation…") and keeps the same turn ID, so transcript.sh classified it as a mid-turn steer and blockquoted all ~90 lines of it (your 596–684, with the tail instruction as line 685). The malformed attachments were a bonus bug from the same message: it quotes the script's own marker syntax, and the attachment extractor's `[Image: source: ([^\]]*)]` regex matched those literals — `…` came from the prose description, `([^\` from the regex itself. Your real Sonar request was never at risk; it lives in the pre-compaction records and stayed the turn body.
+
+**The fix** ([transcript.sh](/home/user/GitHub/linebyline/ai/zcode/transcript.sh)): user messages matching the continuation banner are excluded from turn/steer/attachment selection entirely — same role-aware approach as the side-conversation guard, so quoting the phrase in prose can't trip it. One-line comment in the script explains why.
+
+**Verification.** shellcheck clean; a stdout smoke run showed zero banner text and zero garbage attachments while legitimate `**Attachments:**` blocks in earlier turns survived. Then I regenerated the real file and diffed against a backup of the version you saw: exactly two removal hunks (the compaction block and the `**Attachments:**`/`` `…` ``/`` `([^\` `` block), Turns 1–9 byte-identical, and the file now ends with a proper Turn 11 (your report message + this fix work, which will fill out on the next regeneration).
+
+Also updated [ai/zcode/README.md](/home/user/GitHub/linebyline/ai/zcode/README.md) to document the exclusion. I deliberately left one pre-existing cosmetic artifact out of scope: the web-reader `**Output:**` payload narration interleaved in agent prose (old lines 697+) — it was in your current file too and reads as noise rather than breakage; say the word if you want the server-tool stripper extended to catch it.
