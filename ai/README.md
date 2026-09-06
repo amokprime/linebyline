@@ -1,8 +1,12 @@
-### General vibecoding workflow in OMP
+### ZCode
+
+See [[ai/zcode/README|README]]. The generic root-level AGENTS.md and README.md may be adopted for other environments in the future.
+
+### OMP
 
 See [[ai/omp/OMP_SETUP|OMP_SETUP]] and [[ai/omp/README|README]]. Skills and other context files are already included in the repo. The config I committed enables the `local` memory subsystem, which starts from zero and consolidates lessons from your sessions into a project-specific folder like `~/.omp/agent/memories/--path-to-linebyline--`. Copy [[ai/omp/learned|learned.md]] into that folder to seed the project memory with historical lessons.
 
-### General vibecoding workflow in web chats
+### Web chats
 
 LineByLine was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects. Any comparable model that can accept zip/code file uploads and generate code files for download should also work. Use a Chromium-based browser (e.g. Helium) with uBlock Origin or Adguard Adblocker. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
 

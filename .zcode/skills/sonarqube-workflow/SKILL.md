@@ -1,0 +1,125 @@
+---
+name: sonarqube-workflow
+description: Process SonarQube Cloud issue exports for the LineByLine project and guide remediation. Use this skill whenever the user uploads a zip of SonarQube issues, asks about SonarQube findings, mentions rules like S3776/S2004/S7761, or needs help deciding whether to fix or mark as Won't Fix. Also use when planning a SonarQube remediation pass before writing any code.
+---
+
+SonarQube Cloud scans run on every push via GitHub Actions. Issues are exported into a per-version directory structure. Inside each version's `issues/` subfolder, issues are grouped by category — one folder per rule category containing `L{line}.json` files (one per instance) and shared `why.md`/`how.md`.
+
+---
+
+Step 1: Parse the export
+
+Directory layout (per version):
+```
+{version}/
+  issues/
+    Category_folder_name/
+      L1234.json      — one per issue instance, named by line number
+      L1234_2.json    — second issue on the same line
+      why.md          — rule rationale (shared — same for all instances of a rule)
+      how.md          — fix guidance (shared; absent on simple rules)
+    Another_category/
+      ...
+  linebyline-{version}.html
+  linebyline-{version}.md
+```
+
+Each `L{line}.json` contains the full issue data (rule, component, line, textRange, message, severity, type, cleanCodeAttribute, cleanCodeAttributeCategory, impacts, flows). Category folder names are trimmed: no `_1`/`_2` instance counters, no `_from_N_to_the_15_allo` complexity suffixes — all instances of the same rule are merged into one folder.
+
+Read `why.md`/`how.md` once per category folder (they are already deduplicated). Scan all `L*.json` files in the folder to get every instance — each file is a separate finding.
+
+---
+
+Step 2: Categorize by rule
+
+Group findings before acting. Common rules in this project:
+
+JavaScript / TypeScript rules (target `docs/index.html` or test files):
+
+| Rule | Name | Typical fix | False positive risk |
+|---|---|---|---|
+| S3776 | Cognitive Complexity | Helper extraction, early return, optional chaining | Low — but check if SQ counts per-function independently (it does in JS) |
+| S2004 | Nesting depth >4 | Extract inner callbacks/arrow fns as named helpers | Low |
+| S7761 | Prefer `.dataset` | Replace `getAttribute/setAttribute('data-*')` with `.dataset.x` | Low |
+| S1940 | Use `Array.from` / spread | Replace `Array.prototype.slice.call(...)` etc. with `Array.from` | Low |
+| S6606 | Prefer `Number.isNaN` | Replace `isNaN()` with `Number.isNaN()` | Low |
+| S6666 | Prefer `Object.hasOwn` | Replace `obj.hasOwnProperty(x)` with `Object.hasOwn(obj, x)` | Low |
+| S4138 | Prefer `for-of` | Only convert when index is unused | High — see caution below |
+| S1321 | Prefer `replaceAll` | Only when replacing a fixed string, not a regex with quantifiers | Medium |
+| S6443 | Use `String.raw` on regex | Almost always false positive for `/pattern/` literals | High |
+| S4023 | Prefer `Math.min`/`Math.max` | Only true min/max patterns; not all ternaries | Medium |
+| S3800 | Negate condition | Only when there is a meaningful `else` branch | Medium |
+
+GitHub Actions workflow rules (target `.github/workflows/*.yml`):
+
+| Rule | Name | Typical fix | False positive risk |
+|---|---|---|---|
+| `githubactions:S6505` | `npx`/`npm ci` supply-chain | Replace `npx <pkg>` with `./node_modules/.bin/<pkg>` (direct binary, no on-demand install); add `--ignore-scripts` to `npm ci` to prevent lifecycle scripts from running during install | Low — both fixes are mechanical and eliminate the attack surface without breaking functionality. The `npx` binary is already in `node_modules/.bin/` after `npm ci`, so the direct path works. `--ignore-scripts` is safe when the only postinstall that matters (e.g. Playwright browser download) is explicitly handled by a separate step. |
+| `githubactions:S8543` | Pin exact package version | Collapses into the S6505 fix — `./node_modules/.bin/<pkg>` runs the version pinned in `package.json`, so no on-demand install can pull an unverified release. For action pins (`actions/checkout@v4`), pin to the commit SHA (`actions/checkout@11d5960a...`) | Low — SHA-pinning is best practice. Version-tag pins (`@v4`) are mutable and can be re-pointed by the action maintainer. |
+
+---
+
+Step 3: Assess each finding individually
+
+Never apply a rule category wholesale. Assess each instance:
+
+for-of conversion (S4138) — convert only when the loop index is not used for accumulation via index, output assignment keyed to index, indexed mutation of a parallel array, or any expression involving i other than arr[i]. When in doubt, skip and document as Won't Fix — a broken for-of conversion is worse than a SonarQube warning.
+
+replaceAll (S1321) — convert only when the search value is a fixed string. Skip if the regex has quantifiers (+, *, ?, {n}), character classes, or anchors — replaceAll with a regex argument behaves the same as replace with /g, which SonarQube already accepted.
+
+String.raw on regex literals (S6443) — almost always false positive. SonarQube flags regex literals like `/\d+/` as needing String.raw, but String.raw applies to template literals, not regex literals. Mark as Won't Fix: "False positive: rule does not apply to regex literal syntax."
+
+Math.min/max ternaries (S4023) — not every `a > b ? a : b` is a min/max replacement. If the ternary involves side effects, string coercion, or a non-numeric comparison, skip it.
+
+Negated condition (S3800) — only invert the condition if there is a meaningful else or else if branch. A lone `if (!x) return` with no else is fine as-is; inverting it adds an empty block and reduces clarity. Mark as Won't Fix: "No else branch; inversion would reduce clarity."
+
+githubactions:S6505 (`npx` supply-chain) — always fix. Replace `npx <pkg>` with `./node_modules/.bin/<pkg>`. This is safe because `npm ci` (which runs before the `npx` call in CI) installs the package into `node_modules/.bin/`. The direct binary path eliminates the on-demand install path that `npx` would use if the package were missing. For `npm ci` findings, add `--ignore-scripts` — safe when the only postinstall that matters is handled by a separate explicit step (e.g. `playwright install --with-deps` handles browser download, so `npm ci --ignore-scripts` skipping `@playwright/test`'s postinstall is fine).
+
+githubactions:S8543 (pin exact version) — always fix for `npx` calls (collapsed into the S6505 fix — direct binary uses package.json-pinned version). For GitHub Actions (`actions/checkout@v4`), pin to commit SHA. No false positives observed.
+
+---
+
+Step 4: Plan the remediation pass
+
+Group accepted fixes by section (use the linebyline-section-index skill to find sections). Plan one category of change per turn to reduce regression risk. Typical order:
+
+1. Simple substitutions first (`.dataset`, `Number.isNaN`, `Object.hasOwn`, `replaceAll`)
+2. for-of conversions (selective)
+3. Helper extraction for nesting depth (S2004)
+4. Cognitive complexity reduction (S3776) — most invasive, do last
+5. Workflow-file rules (S6505, S8543) — independent of app code, can be done in any order
+
+For cognitive complexity, identify the function by its start line and name from the `L{line}.json` file, then look up the section. High-CC functions that have already been reduced via helper extraction in a prior pass may have CC scores that are now lower than what the export shows — verify current state before writing any code.
+
+---
+
+Step 5: Won't Fix rationale
+
+Document Won't Fix decisions in the durable project memory seed (`MEMORY.md` at the project root) — it is git-tracked, harness-agnostic, and outlives harness switches; the active harness memory may also carry them. Standard rationales:
+
+- False positive (S6443 / regex literal): "False positive: String.raw applies to template literals, not regex literal syntax (/pattern/)."
+- for-of index used: "Won't Fix: loop index used for [accumulation / output assignment / indexed mutation]."
+- replaceAll quantifier: "Won't Fix: regex contains quantifiers; replaceAll with regex is equivalent to replace(/pattern/g) already accepted by SonarQube."
+- Negated condition, no else: "Won't Fix: no else branch; negation would invert to an empty block and reduce clarity."
+- Math.min/max non-numeric: "Won't Fix: ternary is not a pure numeric min/max pattern."
+- Deferred (major refactor scope): "Deferred: function complexity requires structural redesign; out of scope for patch release. Tracked for next major version."
+
+---
+
+Step 6: Version and delivery
+
+SonarQube remediation passes are patch releases (e.g. 0.35.17 → 0.35.18). No checklist file required for pure quality passes with no functional change — state this explicitly in the same hand-curated project memory file.
+
+After delivery, SonarQube will re-scan on the next push. New findings may appear if a refactor introduced new patterns (e.g. helper extraction can create new functions SonarQube evaluates independently).
+
+---
+
+False positive summary
+
+| Pattern | Rule | Action |
+|---|---|---|
+| `/regex/` literal flagged for String.raw | S6443 | Won't Fix — false positive |
+| Math.max(a, b) already written correctly | S4023 | Won't Fix — false positive |
+| for loop where index used | S4138 | Won't Fix — unsafe conversion |
+| Negated condition with no else | S3800 | Won't Fix — clarity |
+| replace(/pat+/g, ...) flagged for replaceAll | S1321 | Won't Fix — quantifier present |

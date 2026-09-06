@@ -1,0 +1,265 @@
+---
+name: code-quality
+description: Proactively avoid code quality issues and silent regressions in the LineByLine single-file HTML app. Use this skill whenever writing or modifying JavaScript in the app, especially when adding new functions, changing state management, modifying undo/redo behavior, altering config migration, or building new features. Also use when writing or modifying Bash scripts (e.g. ai/zcode/transcript.sh) or any inline Bash, and when the user mentions ShellCheck. Also use when the user mentions SonarQube, cognitive complexity, S3776, S2004, S2681, code smells, or when reviewing code for potential regressions. This skill prevents issues before they reach SonarQube scans and catches subtle bugs that have historically caused silent regressions in this project.
+---
+
+Documents the code quality patterns that SonarQube Cloud has flagged repeatedly and the silent regressions that have occurred during development. Following these rules proactively prevents issues rather than fixing them after SonarQube flags them or users discover them.
+
+---
+
+Cognitive Complexity (S3776) — threshold 15
+
+The maximum allowed cognitive complexity per function is 15. SonarQube evaluates each function independently.
+
+Primary reduction techniques, in order of preference:
+
+1. Extract helper functions — method calls are free in CC calculation. The `_isFocusedUIElement(ae)` extraction removed 2 CC points from the global keydown handler by moving `&&`/`||` operator mixing into a separate function.
+2. Early returns — process exceptional cases first and return, reducing nesting depth and avoiding `else` blocks.
+3. Optional chaining — `obj?.prop?.method()` replaces null-check chains that add CC points.
+4. Extract complex conditions — `if(isEligibleForDiscount(user))` instead of `if(user.hasMembership && user.orders > 10 && !user.hasDiscount || user.orders === 1)` — the `&&`/`||` mixing in a single condition adds +1 for each operator change.
+
+CC accounting in SonarQube:
+- `if`, `else if`, `else`: +1 each
+- `for`, `while`: +1 each
+- `&&`, `||`: +1 for each change of operator in a condition (i.e. `a && b && c` = +1, but `a && b || c` = +2)
+- `? :` ternary: +1
+- Nesting adds +1 per level for `if`/`for`/`while`/`catch`
+- Method calls: 0 (free) — this is why extraction works
+
+Reduction patterns that have worked in this project: helper extraction (multiple handlers extracted to outer scope: `_handleSettingsSearchKeydown`, `_handleTextareaEnterTrim`, `_handleTextareaParenBracket`, `_handleGlobalHotkeys`, `_handleHotkeyModeKeys`), and dispatch-table pattern (see next section).
+
+---
+
+Dispatch-table CC reduction (S3776)
+
+When a function is a long chain of `if(hkMatch(ks,hk.X)){e.preventDefault();actionX();return true;}` lines, each `if` adds +1 CC (plus +1 for any `&&` guard like `hk.X && hkMatch(...)`). A 15-action dispatcher hits CC ~20-25.
+
+Convert to a computed-key dispatch table:
+
+```js
+function _handleGlobalHotkeyDispatch(e,ks,hk){
+  const map={
+    [hk.undo]:doUndo,
+    [hk.redo]:doRedo,
+    [hk.add_field]:addSecondary,
+    // ... more entries
+    [hk.toggle_mode]:()=>{hotkeyMode=!hotkeyMode;applyMode();},
+  };
+  const fn=map[ks];
+  if(!fn)return false;
+  e.preventDefault();fn();return true;
+}
+```
+
+The computed property key `[hk.undo]` evaluates `hk.undo` at object-literal time. If `hk.undo` is undefined (unassigned hotkey), the key becomes the string `"undefined"`, which will never match a real `ks` value — so the guard `hk.X && hkMatch(...)` is automatically handled. This is why the table approach eliminates both the `if` and the `&&` guard, dropping CC by ~2 per action.
+
+The dispatch table trades CC for indirection: debugging requires knowing that `map[ks]` is the lookup, not grepping for `if(hkMatch(...))`. Document the helper name in the section-index skill so future sessions can find it.
+
+When NOT to use this pattern:
+- When actions have different signatures or need different `e` handling beyond a uniform `e.preventDefault()` — keep those as explicit `if` branches before the table lookup.
+- When the number of actions is small (<5) — the table overhead isn't worth it.
+- When actions have side-effectful guards that must short-circuit — the table evaluates all keys eagerly (harmless, but can mislead readers).
+
+---
+
+Braceless if statements (S2681)
+
+Always add braces to single-line `if`/`else` bodies, even though JavaScript allows omitting them. SonarQube flags every instance.
+
+The following code looks like two statements are conditional, but only the first is:
+```js
+if(audioEl)audioEl.playbackRate=1;
+localStorage.setItem('lbl_speed','1'); // always executes
+```
+
+This ambiguity is the reason for the rule. Always write:
+```js
+if(audioEl){audioEl.playbackRate=1;}
+```
+
+---
+
+State management — single source of truth
+
+When two variables represent the same underlying state (e.g. `masterVolume` + `masterMuted`), they can disagree, causing subtle bugs. The fix: pick one as authoritative and derive everything else.
+
+The pattern: `masterVolume` is always the actual volume (0 when muted). The mute button, slider position, and percentage label all read from it directly — no conditional branching, no state sync to forget.
+
+Before (buggy):
+```js
+let masterVolume = 1;
+let masterMuted = false; // can disagree with volume
+```
+
+After (correct):
+```js
+let masterVolume = 1; // always actual volume (0 when muted)
+let _preMuteVolume = 1; // stored only during mute, not a parallel state
+```
+
+Apply this pattern to any UI state where two variables track the same concept.
+
+---
+
+Undo/redo — single-push model
+
+The old pattern was `pushSnapshot(); mutate; pushSnapshot()` — one push before mutation (to save pre-change state for undo) and one after (to save post-change state for redo). This created a duplicate snapshot that caused `syncLine`/`adjustTs` to require two Ctrl+Z presses to undo.
+
+The correct model: single post-change push.
+```js
+mutate();
+pushSnapshot(); // only this push needed
+```
+
+The pre-change state is already on the stack from the previous operation's post-change push. Only push after the change.
+
+Exception: for wholesale content replacement (import, merge, paste), push once before and once after:
+```js
+pushSnapshot();  // save pre-change for undo
+setContent(newContent);
+pushSnapshot();  // save post-change for redo
+```
+
+applySnapshot must clear extra secondaries — when undoing to a snapshot that had fewer secondary fields than currently visible, `applySnapshot` must clear the extra textareas:
+```js
+function applySnapshot(snap) {
+  // ... restore main and captured secondaries ...
+  for(let i=snap.secondaries.length; i<secondaryCols.length; i++){
+    secondaryCols[i].linesEl.value='';
+  }
+}
+```
+
+Without this, undoing to a pre-add snapshot leaves stale content in the still-visible textarea.
+
+---
+
+Config migration patterns
+
+When a config key is renamed between versions, users with old `localStorage` data won't have the new key. The old key sits unread, the new key falls back to default. Fix this with explicit migration in loadCfg:
+
+```js
+// Inside loadCfg(), after Object.assign:
+if(d.hotkeys?.save === 'Ctrl+S') c.hotkeys.save = 'Ctrl+;';
+if(d.old_key !== undefined && c.new_key === undefined) c.new_key = d.old_key;
+if(c.hotkeys.mute) delete c.hotkeys.mute; // remove deprecated
+if(!c.hotkeys.theme_toggle) c.hotkeys.theme_toggle = 'Ctrl+.'; // add missing
+```
+
+The cleared-hotkeys bug: `_migrateHotkeys` used `!c.hotkeys.X` which treats `''` (empty string, meaning deliberately unassigned) as falsy — resetting intentionally-cleared hotkeys back to defaults. Fix: check `=== undefined` instead of falsy:
+```js
+if(c.hotkeys[key] === undefined) c.hotkeys[key] = DEFAULT_CFG.hotkeys[key];
+```
+
+---
+
+Dynamic config reads vs hardcoded constants
+
+`ensureReTagDefault` was reading `DEFAULT_META` (a hardcoded constant) instead of `cfg.default_meta` (the live user-configured value). This meant changing the setting had no effect.
+
+The rule: any setting that can be changed in the UI must be read from the `cfg` object at runtime, not from the `DEFAULT_CFG` constant. `DEFAULT_CFG` is only for initial values and reset-to-default.
+
+---
+
+for-of conversion safety (S4138)
+
+Only convert `for` loops to `for-of` when the loop index is not used for:
+- Accumulation: `result[i] = ...`
+- Output assignment keyed to index
+- Indexed mutation of a parallel array
+- Any expression involving `i` other than `arr[i]`
+
+When in doubt, keep the `for` loop. SonarQube's suggestion is often wrong for this codebase.
+
+---
+
+String.raw false positive (S6443)
+
+SonarQube flags regex literals like `/\d+/` as needing `String.raw`. This is always a false positive — `String.raw` applies to template literals, not regex literal syntax. Mark as Won't Fix: "False positive: rule does not apply to regex literal syntax."
+
+---
+
+Helper extraction safety
+
+When extracting helpers during refactoring, pre-existing callees can be accidentally deleted. In this project, `_peelLastParen` was deleted during Stage C refactoring, breaking `batchSplitParens` and `markAsTranslation` at runtime.
+
+After extracting any helper function, audit all pre-existing callees that were in the section being refactored. Search the codebase for function names that should still exist.
+
+---
+
+String assembly with conditional content
+
+`tsPrefix + ' ' + content` with `.replace(/^ /,'')` stripped the space from `[mm:ss.cc] text` when `content` was non-empty but there were no paren groups. Fix: conditional concatenation:
+```js
+tsPrefix + (tsPrefix && content ? ' ' + content : content)
+```
+
+This pattern applies whenever you conditionally prepend a prefix + separator to content that may be empty.
+
+---
+
+beforeunload must check all content areas
+
+The dirty-work warning must check not just the main textarea but all secondary textareas:
+```js
+window.addEventListener('beforeunload', e => {
+  if(mainTextarea.value.trim() !== '' ||
+     secondaryCols.some(c => c.linesEl.value.trim() !== '')) {
+    e.preventDefault(); e.returnValue = '';
+  }
+});
+```
+
+Forgetting secondaries means the user can lose secondary work without warning.
+
+---
+
+Speed and seek offset persistence
+
+`currentSpeed` must be loaded from `localStorage.getItem('lbl_speed')` on init and saved in `changeSpeed()` and the speed-val change handler. `_doResetDefaults()` must reset speed: `currentSpeed=1`, update `#speed-val` display, reset `audioEl.playbackRate`, persist to localStorage. Seek offset must persist across sync operations — `doSyncFile` never resets it.
+
+---
+
+Newline convention in LRC assembly
+
+All four assembly sites (import, paste, merge, sync) must use exactly one blank separator line:
+```js
+mergedMeta.trimEnd() + '\n\n' + lyrics
+```
+
+Inconsistent separator counts cause blank-line mismatches between main and secondary fields.
+
+---
+
+Bash workflow scripts (ai/zcode/)
+
+The same standards apply to the project's Bash tools in `ai/zcode/` (e.g. `transcript.sh`) and to any Bash written into a turn. `shellcheck` IS on this machine's PATH (`/usr/sbin/shellcheck`) and is the Bash analog of the SonarQube gate for scripts: expect zero findings.
+
+- Strict mode with ordering — every script starts with `set -euo pipefail`. Any failing command aborts the script, so never place an unchecked command before a destructive step: the failure must abort before cleanup or writes run.
+- Empty-variable guards on variable paths — `${var:?}` (SC2115) so an unset or empty variable can never expand to the wrong target: `rm -rf "${upload:?}"/*`, and on option values too — `-o) out="${2:?usage: -o needs a path}";;` — so a missing option argument fails with a readable message instead of `set -u`'s `$2: unbound variable`.
+- Braceless compounds — `[[ cond ]] && action` is the bash equivalent of the braceless `if` (S2681): a statement appended after the `;` runs unconditionally, and a failed `A && B; return 0` still returns success. Write `if [[ cond ]]; then ...; fi` for anything load-bearing. Braced guard clauses (`[[ -f "$f" ]] || { echo ... >&2; exit 1; }`) are fine — the braces are present.
+- Diagnostics and exit codes — error messages go to stderr (`echo "..." >&2`), and every `exit` carries an explicit status. A bare `exit` after a failed test exits 0 and silently hides the abort reason.
+- Config over constants — derive paths and presets from `$HOME`, the script's own location, and env-overridable variables at the top of the script (same rule as runtime `cfg` vs `DEFAULT_CFG`).
+- No line continuations inside quoted strings — `"...\` + newline silently embeds the next line's leading indentation into the value. Build long lists with `local` + `+=`, one item per line.
+- Don't parse ls (SC2010/SC2012) — iterate globs (`for f in dir/*.md` with a `[[ -f ]]` guard) and pick newest files with `-nt` comparisons, so filenames with spaces or newlines can't break the logic.
+- Base-10 arithmetic on extracted numbers — `$((var + 1))` treats leading zeros as octal (08/09 abort the script under `set -e`). Force `$((10#var + 1))` whenever the number was extracted from text (filenames, sort output).
+- CLI help is written, not scraped — reference implementation: `usage()`/`flag_help()` in `ai/zcode/transcript.sh`. Build help from explicit heredocs; grepping `^#` comments re-dumps the whole file (and the shebang) as a wall of text. `--help`/`-h` wins anywhere in argv; options that take a value accept `-o --help` for per-flag detail. Keep the main help to one line per flag — specifics go in per-flag help and the script's README section.
+- Clipboard path input follows `clean_path()` in `ai/zcode/transcript.sh` — primary selection first, then clipboard; take the first non-empty line (uri-lists), strip CR/surrounding quotes/`file://`, trim whitespace, expand `~`.
+- Clipboard content never creates or clobbers — a clipboard-resolved destination must already exist (leaf-dir creation is for explicit `-d` only), and destination-generated output names are refused when they already exist. Reference: `resolve_dest()`/`pick_output()` in `ai/zcode/transcript.sh`.
+- shellcheck mechanics — run `bash -n <file> && shellcheck <file>` on every touched script before delivering. `# shellcheck source=` directive paths resolve from the current working directory, not the script's own directory; the current `ai/zcode/` scripts source nothing — keep it that way unless a directive is added deliberately.
+
+---
+
+Pre-delivery code quality checklist
+
+Before delivering any patch, verify:
+
+1. CC of modified functions — estimate the cognitive complexity of any function you changed. If it exceeds 15, extract helpers or use early returns before delivering. Do not wait for SonarQube to flag it.
+2. Braceless-if — check every `if`/`else` in the patch for missing braces. Single-line bodies must still have `{}`.
+3. State management — if the patch adds a new state variable, verify it does not duplicate an existing one that tracks the same concept (single source of truth).
+4. Undo/redo — if the patch changes content-mutating logic, verify the pushSnapshot() call follows the single-push model (post-change only, except for wholesale replacement which needs pre + post).
+5. Config reads — if the patch references a user-configurable setting, verify it reads from `cfg` at runtime, not `DEFAULT_CFG`.
+6. Helper extraction safety — if the patch extracts a helper, search the codebase for all pre-existing callees to confirm none were accidentally deleted.
+7. Existing Playwright test code does not conflict with new app code. Reconcile any conflicts found and warn the user of tests that require snapshot or screenshot regen.
+8. New app features are covered by Playwright tests. Expand test coverage conservatively as needed with comments like `// Covers playback starting after seeking added in 0.36.2`. Favor expanding existing <20 LOC tests over creating new tests. Favor adding new tests to existing <200 LOC test files over creating new test files.
+9. Bash scripts — for patches touching `ai/zcode/**/*.sh` or any inline Bash: run `bash -n <file> && shellcheck <file>` (zero findings; shellcheck is on PATH), keep `${var:?}` guards on destructive variable paths and option values, write load-bearing compounds as `if/then` (braced guards are fine), keep error messages on stderr with explicit exit statuses, and never use line continuations inside double-quoted strings.
