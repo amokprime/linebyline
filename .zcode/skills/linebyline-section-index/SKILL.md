@@ -20,6 +20,10 @@ Sections already ported live in `src/` modules: read the module first (its `test
 - Theme → `src/composables/useTheme.ts` + `src/components/ThemeProvider.vue` (`.dark` class toggle, not `[data-theme]`)
 - Font settings → `src/composables/useEditorFont.ts` + `src/components/FontSelector.vue`
 - Button wiring (menu-bar slice) → `src/components/MenuBar.vue`
+- Left panel collapse → `src/composables/usePanelCollapse.ts` (reactive state + focus refs; `applyPanelCollapse`/`autoCollapseIfNeeded` live in App.vue's lifecycle)
+- Left panel / audio box / controls box (structure) → `src/components/LeftPanel.vue` (controls inert until Phase D; hk-grid empty until ControlsPanel)
+- Editor area / main field column / lyric-area + `.lrc-line` CSS → `src/components/EditorArea.vue` (line rendering, textarea, checkboxes unbound until Phase D)
+- Body + `#main` frame CSS → `src/App.vue` scoped styles; shared `.fs-spinner`/`.fs-tick` → `src/style.css`
 
 Everything else (State, Persistence, Undo/redo, Mode switching, Render/UI, Audio, Sync/timestamp, Secondary fields, Line counts/merge, Title, Import, Controls panel, Settings, Settings search, Confirm dialog, Keyboard handlers, Unload, Init) is still monolith-only until Phases C/D port it.
 

@@ -109,36 +109,4 @@ function onSizeEnter(e: KeyboardEvent) {
 #font-size-inp::-webkit-outer-spin-button {
   -webkit-appearance: none;
 }
-.fs-spinner {
-  display: flex;
-  flex-direction: column;
-  width: 16px;
-  height: 28.6px;
-  border: 1px solid var(--input);
-  border-radius: var(--radius);
-  overflow: hidden;
-  background: transparent;
-  flex-shrink: 0;
-}
-.fs-tick {
-  flex: 1;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  cursor: pointer;
-  color: var(--foreground);
-  font-size: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  line-height: 1;
-  outline: none;
-}
-.fs-tick:focus-visible {
-  box-shadow: inset 0 0 0 2px var(--primary);
-}
-.fs-tick:first-child {
-  border-bottom: 1px solid var(--input);
-}
 </style>

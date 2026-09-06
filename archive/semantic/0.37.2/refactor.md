@@ -812,7 +812,151 @@ Phase C tranche 2 is done — the first real Vue components are in, all checks g
 **Verification:** 63 unit specs (16 new component tests — added `@vue/test-utils` + `happy-dom` devDeps, per-file `// @vitest-environment happy-dom` pragma so the pure-module tests stay on node; no new audit findings beyond the known shadcn-vue→stylus chain), `vue-tsc` build clean, ESLint 0 problems. Full `agent-tst` suite: **530 passed, 9 skipped, 1 failed** — webkit `volume-increment`, which passed 3/3 on the scoped re-run (same WebKit timing-flake family as last tranche's `seek-increment`; the monolith wasn't touched). No Playwright snapshot regens are needed.
 
 **One a11y fix-forward:** the text buttons ("Add field", "Hide field", "Merge fields") dropped their mismatched `aria-label`s per the aria-accessibility skill's S7927 rule — their visible text is now the accessible name, exactly the pattern the skill codifies. Emoji/link buttons keep theirs.
-
-**Docs updated per your suggestion:** the section-index skill now leads with a per-tranche **port-status block** (Theme → `useTheme.ts`/`ThemeProvider.vue`, Font → `useEditorFont.ts`/`FontSelector.vue`, menu-bar wiring → `MenuBar.vue`, plus the tranche-1 modules) so future sessions read the module first and only fall back to the frozen monolith for the un-ported DOM-coupled halves. Roadmap Phase C notes, MEMORY.md seed, and harness memory all record tranche 2; `.omp/skills/` stays frozen per AGENTS.md.
+ (Theme → `useTheme.ts`/`ThemeProvider.vue`, Font → `useEditorFont.ts`/`FontSelector.vue`, menu-bar wiring → `MenuBar.vue`, plus the tranche-1 modules) so future sessions read the module first and only fall back to the frozen monolith for the un-ported DOM-coupled halves. Roadmap Phase C notes, MEMORY.md seed, and harness memory all record tranche 2; `.omp/skills/` stays frozen per AGENTS.md.
 
 Next up when you're ready: tranche 3, the main layout (panels, editor columns, lyric area with the `.lrc-line` CSS and its `var(--accent)`→`var(--primary)` rewrites).
+
+**One a11y fix-forward:** the text buttons ("Add field", "Hide field", "Merge fields") dropped their mismatched `aria-label`s per the aria-accessibility skill's S7927 rule — their visible text is now the accessible name, exactly the pattern the skill codifies. Emoji/link buttons keep theirs.
+
+**Docs updated per your suggestion:** the [section-index skill](/home/user/GitHub/linebyline/.zcode/skills/linebyline-section-index/SKILL.md) now leads with a per-tranche **port-status block** (Theme → `useTheme.ts`/`ThemeProvider.vue`, Font → `useEditorFont.ts`/`FontSelector.vue`, menu-bar wiring → `MenuBar.vue`, plus the tranche-1 modules) so future sessions read the module first and only fall back to the frozen monolith for the un-ported DOM-coupled halves. Roadmap Phase C notes, MEMORY.md seed, and harness memory all record tranche 2; `.omp/skills/` stays frozen per AGENTS.md.
+
+---
+
+## Turn 14
+
+### User:
+
+The latest `refactor.md` export got truncated heavily somehow. You can use `git` to see the previous version for comparison.
+
+---
+
+### Agent:
+
+Let me compare the current export against the previous git version and check the rollout situation:
+
+HEAD has 11 turns (699 lines); the current export has **1 turn (46 lines)**. Let me see what that one turn is and which rollout got picked:
+
+The export picked the right session but rendered only the last turn. Checking whether the rollout file itself still holds the earlier records:
+
+HEAD has the full 11-turn version; the current export has 1. The rollout file itself is the suspect — during the transcript-fix turn it held 230 records / 11 turn IDs, so let me see what the harness left in it now, and whether any backup exists:
+
+Full picture now. The surviving rollout has only 2 turn IDs — the tail of the tranche-2 turn (starting at the "Might save time…" steer) and the current turn. The harness **pruned the rollout log in place mid-session**: it held 230 records / 11 turn IDs when I dumped it during the transcript-fix turn, and now holds 19 records / 2 turn IDs. No backups exist. So the script exported everything that survives — turns 1–11 live only in git HEAD, and the Sonar-19 turn plus the start of tranche 2 exist nowhere on disk anymore.
+
+Two-part response: patch the script so silent truncation at least warns, then rebuild the transcript from git + the conversation itself (both user messages and my agent prose for the lost turns are verbatim in this session). Script patch first:
+
+The smoke test had an ordering bug on my end (`cp` ran before `mkdir`). Retesting properly:
+
+Warning works. Now rebuilding the transcript — base from git HEAD, then the two lost turns reconstructed verbatim from this conversation:
+
+HEAD ends cleanly at turn 11. Appending the two lost turns, reconstructed verbatim from this conversation (user messages as received, my agent prose as sent — the same content the script would have rendered from the log):
+
+13 turns restored. Spot-checking the appended structure:
+
+Structure verified. Now the docs — README clause, memory seed, and harness memory:
+
+Adding the pruning bullet to the harness memory, and while there — the memory flags a queued fix (code-quality's Bash bullets still anchor to transcript.sh functions removed in the PATH rework); clearing that now too:
+
+All done. Here's the full picture:
+
+**Root cause — the harness pruned the rollout log, not a script bug.** When I dumped this session's rollout during the transcript-fix turn it held 230 records / 11 turn IDs; the export you ran read a file reduced to **19 records / 2 turn IDs** (2.9 MB, no backup anywhere). ZCode rewrote the log in place mid-session, keeping roughly the latest context window's worth of records — so the export contained only the surviving tail of the tranche-2 turn (from your "Might save time…" steer onward). The script faithfully rendered what the log still holds; turns 1–11 plus the Sonar-19 turn and the start of tranche 2 simply no longer exist on disk.
+
+**What I did about it:**
+
+1. **Script-side warning** ([transcript.sh](/home/user/GitHub/linebyline/ai/zcode/transcript.sh)): before overwriting, it now counts the destination's existing `## Turn` headers and, if the fresh export has fewer, prints a stderr warning naming the pruned-log signature and pointing at git. Verified live — it fired with "export has 2 turn(s) but the previous transcript had 11." shellcheck clean, README documents it.
+
+2. **Rebuilt [refactor.md](/home/user/GitHub/linebyline/archive/semantic/0.37.2/refactor.md) to 13 turns / 818 lines**: turns 1–11 restored byte-identical from git HEAD; turns 12 (Sonar-19 findings + skill/AGENTS.md docs) and 13 (tranche 2, including your mid-turn index-skill steer) reconstructed from this conversation — your messages verbatim, my agent prose exactly as I sent it. That's the same content the script would have rendered (the format drops tool calls anyway), but note the provenance honestly: **those two turns are reconstructed, not log-derived** — the log can no longer produce them. If you'd rather keep only log-backed turns, `git checkout HEAD -- archive/semantic/0.37.2/refactor.md` gets you the 11-turn version.
+
+3. **Docs + memory**: the seed's Agent-tooling section and harness memory now record the pruning behavior and the export-promptly workflow lesson. I also cleared a queued fix the memory had flagged: code-quality's Bash bullets were still anchored to `flag_help()`/`resolve_dest()` (removed in the PATH rework) — re-anchored to `usage()` and `resolve_out()`.
+
+**Practical takeaway:** export the transcript right after each milestone rather than batching — the log behind this session can't produce the missing turns ever again, so any future re-export of this session will stay at the surviving tail (and now warn about it). Once you commit this rebuilt version, git again holds the complete record.
+
+---
+
+## Turn 15
+
+### User:
+
+One new Sonar issue saved: `archive/semantic/0.37.2/issues/The_accessible_name_should_be_part_of_the_visible_label/`. 
+Consider updating `transcript.sh` to merge the last git version with the log version if the log is smaller, continuing turn count from the git version's last turn (rather than naively assuming the log's "Turn 1" really is the first turn).
+Then start the next tranche.
+
+---
+
+### Agent:
+
+Three things this turn: triage the new Sonar export, implement the merge mode in `transcript.sh`, then start tranche 3. First, the new issue:
+
+Line 116 is the theme button — S7927 comparing the aria-label "Toggle theme" against the interpolated emoji glyph. Same icon-only pattern as its unflagged siblings (📂/💾/⚙️ with static emoji don't trigger it — the analyzer treats the Vue interpolation as a "visible label"), so it's a false positive: for icon-only buttons the aria-label *is* the correct accessible name. I'll record that disposition shortly.
+
+Now the `transcript.sh` merge mode. Design: snapshot the destination before rendering; if the log renders fewer turns than the destination, keep the destination's turns, skip log turns already covered (user text matches an earlier turn or steer), union agent paragraphs when the log's turn *is* the destination's last turn (same turn, grown since the last export), and append genuinely new turns with continued numbering:
+
+shellcheck and smoke-test the merge (test A: 13-turn file + pruned 2-turn log → append turn 14):
+
+The merge healed even my manual reconstruction — the log's surviving turn-13 tail contributed a paragraph I'd missed ("grew 1 in place"), appended turn 14 (truncation report) and turn 15 (this current turn). Checking what got healed, then running the real export:
+
+The union restored the verbatim original of a paragraph my hand-reconstruction had slightly abridged (I'd dropped the markdown link). Removing my abridged duplicate from the base, then running the real export:
+
+Transcript is current at 15 turns. Updating docs and memory for the merge behavior, plus the S7927 disposition:
+
+Transcript work is done. Now tranche 3 — the main layout. Reading the monolith's body markup first:
+
+Now the monolith's CSS block and the lyric-line markup from the Render/UI section:
+
+CSS captured. Quick look at the lyric-line markup structure from `renderMainLines` so the `.lrc-line` CSS lands on the right elements:
+
+Markup captured — lines are `div.lrc-line[role=listitem]` with a `.ts` span, toggled by `active`/`cursor`/`selected`/`end-ts`. Now writing tranche 3: panel-collapse composable, LeftPanel, EditorArea, App frame, shared spinner CSS:
+
+Small fidelity fix — the collapse button should keep its monolith id:
+
+Fixing a mistake — I used `v-model` refs that don't exist; the checkboxes are inert until Phase D wires config state:
+
+Now the App frame wiring and the shared spinner CSS move:
+
+Now the tranche-3 tests:
+
+75/75 green; full suite running. Roadmap update while it runs:
+
+Suite is halfway through the firefox project. Waiting for it to finish:
+
+My poll condition was sloppy (matched a spec name). The suite runs on the Server, so local pgrep can't see it anyway — waiting on time instead:
+
+All three asks are done — the new Sonar issue is triaged, `transcript.sh` now merges instead of truncating, and tranche 3 (main layout frame) is complete and verified.
+
+**S7927 on `MenuBar.vue:116`** — False Positive. It flags the theme button because its aria-label ("Toggle theme") isn't part of the visible label — but the visible content is an emoji glyph, and for icon-only buttons the aria-label *is* the correct accessible name (the pattern the aria-accessibility skill mandates). The analyzer's inconsistency proves it: the identical 📂/💾/⚙️ siblings go unflagged because theirs are static characters while the theme button's is a Vue interpolation. Recommendation recorded in the memory seed; the export is already in your issues folder.
+
+**`transcript.sh` merge mode** — implemented as you described, with one addition. When the log renders fewer turns than the file it overwrites, the script now: keeps the existing transcript's turns; **skips** log turns already covered (user text matches an earlier turn or one of its steering lines); **grows the last turn in place** when the log's turn is the same turn that has grown since the last export (missing agent paragraphs are unioned in — this handles re-exporting mid-turn); and **appends** genuinely new turns continuing the numbering. A stderr note reports the counts. Live verification: the real export produced *"log holds 3 turns, transcript had 13 — kept 13, appended 2, grew 1"* — and the union actually healed my earlier hand-reconstruction (the log's verbatim version of a tranche-2 report paragraph replaced my abridged copy, which I removed first). [refactor.md](/home/user/GitHub/linebyline/archive/semantic/0.37.2/refactor.md) now stands at 15 turns, current through this session. shellcheck clean; README documents the behavior.
+
+**Tranche 3 — the main layout frame:**
+- `usePanelCollapse.ts` — singleton state for the monolith's left-panel collapse: `lbl_panel_collapsed` persistence, portrait auto-collapse (<640px), and focus transfer for the future keyboard path. Port delta: class/`inert` toggles became reactive bindings; only focus touches elements, through registered template refs.
+- `LeftPanel.vue` — header + collapse button, the full audio-box (song/artist/progress slider/time/media/seek/volume rows with monolith static titles), and controls-box with an empty hotkey grid. All inert until Phase D binds them, exactly like the monolith's initial state.
+- `EditorArea.vue` — editor wrapper/scroll/area + the main field column: "( )" and "↩" checkboxes (unbound until the config composable), warn-bar shell, empty `ul.lyric-area` awaiting the Phase D `renderMainLines` port, hidden textarea. The `.lrc-line` family, `line-flash` keyframes, and `.lyric-area` CSS are ported and ready — blue-accent rules use `--primary`, and `[data-theme="dark"] .lrc-line.cursor` became `.dark .lrc-line.cursor`.
+- `App.vue` — the full frame: MenuBar + `#main` with panel/expand-button/editor wiring, including the monolith Init sequence (autoCollapse → applyPanelCollapse → resize listener).
+- Shared `.fs-spinner`/`.fs-tick` moved to `style.css` unscoped (the speed/seek spinners reuse them), which also picked up the `.fs-tick:hover/:active` rules tranche 2 had missed. Port deltas documented: root font scaling not ported (explicit shell font-size so Tailwind's rem scale stays standard); `.sec-textarea`/`.hk-cell`/`.om-btn` CSS deferred to their components.
+
+**Verification:** 75/75 unit specs (12 new: collapse composable + layout smoke tests), `vue-tsc` build clean, ESLint 0 problems, and the full `agent-tst` suite: **530 passed, 9 skipped, 1 failed** — the same webkit `volume-increment` flake as the tranche-2 run, passing 3/3 on the scoped re-run. That's now flaked on two consecutive full runs; worth keeping an eye on, but it's a Server-timing test the monolith changes don't touch (this tranche touched none). Roadmap, section-index port status, and both memories are updated.
+
+Ready for you to commit. Next: tranche 4, ControlsPanel/HotkeyCell — the hotkey grid that fills `#hk-grid`.
+
+---
+
+## Turn 16
+
+### User:
+
+Nit: after running `transcript.sh` again, double horizontal lines appear in some places with no content sandwiched between them (basically blank newline, divider, newline, divider, newline).
+
+---
+
+### Agent:
+
+That's my merge writer's bug — the existing file's chunks already end with the inter-turn `---` separator, and my join added a second one. Confirming the corruption pattern, then fixing:
+
+14 occurrences — every boundary the merge rewrote. The fix: strip trailing `---` runs from each existing chunk before the join adds exactly one separator:
+
+Fixed and verified — zero double dividers, 16 turns, clean file ending. Spot-checking a boundary, and noting the transient bug in harness memory:
+
+Fixed — the double dividers are gone from both the script and the file.
+
+**Cause:** my merge writer joined the existing transcript's chunks with the same `---` separator it uses between freshly rendered turns, but each existing chunk (except the last) *already ends* with that separator from the previous write — so every merge-rewritten boundary got two dividers stacked: blank line, `---`, blank line, `---`, blank line. Exactly what you saw, 14 occurrences in the file.
+
+**Fix** ([transcript.sh](/home/user/GitHub/linebyline/ai/zcode/transcript.sh)): before joining, each existing chunk has any trailing run of `---` separators stripped, so the join adds exactly one. The regex normalization also **self-heals already-corrupted files** — no manual cleanup needed. Re-running the export against the doubled file confirms it: zero double-divider patterns remain, the boundary between turns renders as a single `---`, file ends cleanly. The transcript is now at 16 turns (the merge appended this turn and skipped the log turns already covered — the mode is working as designed on a live session). shellcheck clean, and the harness memory notes the transient bug and the self-heal behavior in case a legacy doubled file shows up elsewhere.

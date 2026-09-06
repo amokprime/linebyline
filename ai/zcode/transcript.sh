@@ -210,18 +210,22 @@ if [[ -n "$out" && $noclobber -eq 1 && -e "$out" ]]; then
   exit 1
 fi
 
-old_turns=0
+prev_file=""
 if [[ -n "$out" ]]; then
-  [[ -f "$out" ]] && old_turns=$(grep -c '^## Turn ' "$out" || true)
+  if [[ -f "$out" ]]; then
+    prev_file="$(mktemp)"
+    cp "$out" "$prev_file"
+  fi
   echo "transcript.sh: writing to $out" >&2
   exec >"$out"
 fi
 
 ROLLOUT_DIR="$ROLLOUT_DIR" MODEL="$MODEL" PROVIDER="$PROVIDER" HARNESS="$HARNESS" \
-ATTACH_MAX_CHARS="$ATTACH_MAX_CHARS" python3 - "$sess" <<'PY'
+ATTACH_MAX_CHARS="$ATTACH_MAX_CHARS" python3 - "$sess" "$prev_file" <<'PY'
 import json, os, re, sys
 
 path = sys.argv[1]
+prev_path = sys.argv[2] if len(sys.argv) > 2 else ""
 model_cfg = os.environ["MODEL"]
 provider = os.environ["PROVIDER"]
 harness = os.environ["HARNESS"]
@@ -385,42 +389,72 @@ model = model_cfg or next(
     ((r.get("model") or {}).get("modelId") for r in records if (r.get("model") or {}).get("modelId")),
     "unknown")
 
-print("---")
-print(f"model: {model}")
-print(f"provider: {provider}")
-print(f"harness: {harness}")
-print("---")
-for i, t in enumerate(merged, 1):
-    print(f"\n## Turn {i}\n")
-    print("### User:\n")
-    print(demote(t["user"]))
+def render_block(idx, t):
+    parts = [f"## Turn {idx}\n\n### User:\n\n", demote(t["user"]), "\n"]
     for s in t["steers"]:
-        body = demote(s).split("\n")
-        print("\n" + "\n".join(("> **Steering:** " if j == 0 else "> ") + ln for j, ln in enumerate(body)))
+        lines = demote(s).split("\n")
+        parts.append("\n" + "\n".join(("> **Steering:** " if j == 0 else "> ") + ln for j, ln in enumerate(lines)) + "\n")
     if t["files"]:
-        print("\n**Attachments:**")
+        parts.append("\n**Attachments:**\n")
         for f in t["files"]:
-            print(f"`{f}`")
+            parts.append(f"`{f}`\n")
     for b in t["blocks"]:
-        print("\n" + b)
-    print("\n---\n")
-    print("### Agent:\n")
-    body = "\n\n".join(demote(a) for a in t["agent"])
-    print(body if body else "*(interrupted — no captured agent output)*")
-    if i < len(merged):
-        print("\n---")
+        parts.append("\n" + b + "\n")
+    agent = "\n\n".join(demote(a) for a in t["agent"])
+    parts.append("\n---\n\n### Agent:\n\n" + (agent if agent else "*(interrupted — no captured agent output)*"))
+    return "".join(parts)
+
+frontmatter = "---\n" + f"model: {model}\nprovider: {provider}\nharness: {harness}\n---"
+blocks = [render_block(i, t) for i, t in enumerate(merged, 1)]
+
+# The harness prunes rollout logs in place mid-session, so the log can hold
+# fewer turns than a previously exported transcript. In that case the log's
+# "Turn 1" is NOT the session's first turn: merge instead of overwrite. Log
+# turns already covered by the existing transcript (user text matches an
+# earlier turn or one of its steering lines) are skipped; if a log turn's user
+# text matches the transcript's LAST turn, it is the same turn grown since the
+# last export — its not-yet-present agent paragraphs are unioned in; anything
+# else is appended with the turn count continuing from the existing transcript.
+prev_text = ""
+if prev_path and os.path.exists(prev_path):
+    prev_text = open(prev_path, encoding="utf-8").read().rstrip("\n")
+chunks = re.split(r"(?m)^(?=## Turn \d+\n)", prev_text) if prev_text else None
+if chunks is not None and len(chunks) - 1 > len(blocks):
+    # Each previously-written chunk (except the last) still ends with the
+    # inter-turn "---" separator — strip any trailing hr run from it so the
+    # join below adds exactly one (this also cleans up files written by the
+    # earlier double-separator bug).
+    kept = [re.sub(r"(?:\n+---\n*)+\s*$", "", c).rstrip() for c in chunks[1:]]
+    appended = unioned = skipped = 0
+    for t in merged:
+        if t["user"] and t["user"] in kept[-1]:
+            head, sep, agent = kept[-1].partition("\n\n---\n\n### Agent:\n\n")
+            if sep:
+                paras = agent.split("\n\n")
+                before = len(paras)
+                for p in "\n\n".join(demote(a) for a in t["agent"]).split("\n\n"):
+                    if p not in paras:
+                        paras.append(p)
+                if len(paras) > before:
+                    kept[-1] = head + sep + "\n\n".join(paras)
+                    unioned += 1
+            continue
+        if t["user"] and t["user"] in prev_text:
+            skipped += 1
+            continue
+        kept.append(render_block(len(kept) + 1, t))
+        appended += 1
+    sys.stdout.write(chunks[0].rstrip("\n") + "\n\n" + "\n\n---\n\n".join(kept) + "\n")
+    print(f"note: rollout log holds {len(merged)} turn(s), existing transcript had {len(chunks) - 1} "
+          f"(log likely pruned mid-session) — merged: kept {len(chunks) - 1}, "
+          f"appended {appended}, grew {unioned} in place, skipped {skipped} already covered",
+          file=sys.stderr)
+else:
+    sys.stdout.write(frontmatter + "\n\n" + "\n\n---\n\n".join(blocks) + "\n")
 PY
 
-# The harness prunes rollout logs in place mid-session (a log that held 11
-# turns was reduced to 2). A fresh export with fewer turns than the file it
-# overwrites is that signature — say so instead of silently truncating.
-if [[ -n "$out" ]] && (( old_turns > 0 )); then
-  new_turns=$(grep -c '^## Turn ' "$out" || true)
-  if (( new_turns < old_turns )); then
-    echo "warning: export has $new_turns turn(s) but the previous transcript had $old_turns." >&2
-    echo "         The rollout log was likely pruned by the harness mid-session; the" >&2
-    echo "         earlier turns survive only in git history / the live conversation." >&2
-  fi
+if [[ -n "$prev_file" ]]; then
+  rm -f "$prev_file"
 fi
 
 if [[ -n "$out" ]] && command -v notify-send >/dev/null 2>&1; then
