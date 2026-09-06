@@ -35,6 +35,10 @@ Do not violate.
 - beforeunload must check all secondary textareas, not just the main one, or secondary work is lost without warning.
 - All four LRC assembly sites (import, paste, merge, sync) use mergedMeta.trimEnd() + '\n\n' + lyrics for exactly one blank separator. Inconsistent separator counts cause blank-line mismatches between main and secondary fields.
 
+## CI & repo automation
+
+- sync-staging.yml (Sep 2026) auto-merges main into staging: fires on workflow_run completion of the three CI workflows (Playwright Tests, CodeQL Advanced, SonarCloud analysis), gates on all three succeeding for the same head_sha, then merges that verified SHA into staging. Safe by construction: a workflow_run workflow only ever fires from its default-branch copy (staging's copy is inert), the bot's GITHUB_TOKEN push to staging triggers no CI (no recursion), and the gate filters by main's head_sha so staging runs never influence it. The gate's workflow-name list must track the CI workflows' `name:` fields — renaming one makes the gate fail with 'missing' until the list is updated.
+
 ## Project invariants
 
 - All app code lives at docs/index.html. No build step, no external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.

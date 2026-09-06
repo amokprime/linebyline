@@ -1,0 +1,75 @@
+name: Sync staging with main
+
+# Merges a CI-verified main commit into staging. Triggered by workflow_run
+# (not push) so it can only run after CI finishes; the gate step refuses to
+# merge unless all three CI workflows succeeded for that exact commit SHA.
+
+on:
+  workflow_run:
+    workflows:
+      - Playwright Tests
+      - CodeQL Advanced
+      - SonarCloud analysis
+    types:
+      - completed
+    branches:
+      - main
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: sync-staging
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Gate on all CI workflows passing
+        id: gate
+        run: |
+          runs="$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100")"
+          pending=""
+          for wf in "Playwright Tests" "CodeQL Advanced" "SonarCloud analysis"; do
+            conclusion="$(jq -r --argjson runs "$runs" --arg wf "$wf" '
+              ($runs.workflow_runs | map(select(.name == $wf)) | sort_by(.run_number) | last)
+              | if . == null then "missing" else (.conclusion // .status) end')"
+            case "$conclusion" in
+              success|skipped)
+                echo "$wf: $conclusion" ;;
+              in_progress|queued|pending|requested|waiting)
+                echo "$wf: still $conclusion"
+                pending=1 ;;
+              *)
+                echo "::error::$wf for $HEAD_SHA concluded '$conclusion' — staging will NOT be synced"
+                exit 1 ;;
+            esac
+          done
+          if [ -n "$pending" ]; then
+            echo "Some CI workflows are still running for $HEAD_SHA; sync deferred until they complete."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "All CI workflows passed for $HEAD_SHA."
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check out staging
+        if: steps.gate.outputs.ready == 'true'
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 #v4
+        with:
+          ref: staging
+          fetch-depth: 0
+
+      - name: Merge verified main into staging
+        if: steps.gate.outputs.ready == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-edit -m "Sync staging with main (CI green at ${HEAD_SHA:0:7})" "$HEAD_SHA"
+          git push origin staging

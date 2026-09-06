@@ -162,7 +162,7 @@ Cutover happens on `main`, ordered so the live site never serves a broken build:
 2. Expect `.aria.yml` snapshot regen (Vue produces different DOM structure — same ARIA semantics, different element tree)
 3. Update `findLatestVersion()` → point at Vite build output; get CI green on `staging`
 4. Merge to `main` — `docs/index.html` still ships to Pages, so the live site is unchanged
-5. Switch Pages source from "Deploy from a branch" (`main:/docs`) to "GitHub Actions" in repo settings — `deploy.yml` deploys the Vite `dist/`. This is the single moment the live site changes
+5. Switch Pages source from "Deploy from a branch" (`main:/docs`) to "GitHub Actions" in repo settings — `deploy.yml` deploys the Vite `dist/`. This is the single moment the live site changes. Also decide whether "Deploy to GitHub Pages" should join sync-staging.yml's gate list (deploy failure blocking staging sync) or stay CI-only
 6. Add release workflow: tag push → build with singlefile → attach to GitHub Release
 7. Delete `docs/index.html`, but only after step 5 is verified
 
