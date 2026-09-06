@@ -148,3 +148,59 @@ All 15 findings are processed: **9 fixed, 6 dismissed with documented rationale 
 **Also updated:** the `sonarqube-workflow` skill gained a shell-rules table (S7679/S7682/S7688/S1066), both new dispositions, and a note that shellcheck's SC2154/SC1091 warnings on the chat.z.ai scripts are invocation artifacts. The harness memory for the CI sync was refreshed with the on-main check.
 
 Everything is uncommitted and ready for your review; the export directory itself is untracked as you left it. One housekeeping note: the smoke-test output sits at `/tmp/transcript-smoke/1.md` — ephemeral, no action needed.
+
+---
+
+## Turn 4
+
+### User:
+
+Anything to be concerned about from the various failed runs for sync-staging? That is, they were expected to fail because of the Sonar issues, but is 6 times normal (I forgot to mark Won't Fix at one point but did by now), and why did it end on `Playwright Tests for 81a49ad3ff95f7a0936ae5d5f692f4628ea89683 concluded '' — staging will NOT be synced` when the SonarCloud Code Analysis was what failed?
+Btw the Sonar scans did fail initially, but they seemed to pass almost retroactively (literally: red cross to green checkmark) after one security issue was fixed and I marked the other False Positive (there is no "Won't Fix" option)
+
+---
+
+### Agent:
+
+Good questions — let me pull the actual run data for that SHA and the sync run history rather than guess, then explain.
+
+The run history is revealing — and it contradicts the expected story: **for `81a49ad`, all three CI workflows actually passed** (SonarCloud shows `success`), yet all 3 sync runs failed. None of the 6 were legitimate "Sonar failed" reds. Let me pull the gate logs and the second SHA's data to see what the gate actually read.
+
+The logs tell the full story — and it's not the one either of us expected. **Your Sonar findings never failed anything: SonarCloud analysis passed on both commits.** All 6 sync failures are one bug in my gate, hitting an API consistency race. Let me fix the gate properly, then explain everything.
+
+Gate validated. Let me dry-run the gate's jq logic against the real API data for `81a49ad` to prove it now reads the settled runs correctly:
+
+`''` — **the bug just reproduced locally on long-settled data!** So my eventual-consistency theory is wrong — this is a systematic bug in my jq pipeline, not an API race. Debugging it stage by stage:
+
+The raw data is perfect (`Playwright Tests | concl=success`) — yet my pipeline returned `''`. That means the bug is in **my jq invocation**, and I see it now: `jq -r --argjson runs "$runs" '...'` with **no `-n` flag** — jq reads **stdin** by default, and in a workflow step stdin is empty. Zero input documents means the filter **never executes**: exit 0, zero output → empty string. Every single read returned `''` from the very first run. This was never an API race, and never a Sonar failure. Fixing with the one-flag fix plus corrected fallback semantics:
+
+Now executing the actual gate script (the lesson shellcheck couldn't teach) — against live data for `81a49ad`, plus two fixture tests for the failure and defer paths:
+
+TEST 1 passes end-to-end — the fixed gate reads all three conclusions correctly from live data and produces `ready=true`. TEST 2's fixture wiring got tangled; let me do it cleanly by swapping only the API call for fixture files:
+
+Fake token broke the compare check — rerunning the fixtures with real credentials:
+
+All three paths behave correctly now: a real Sonar failure goes red (`::error`, exit 1), while `in_progress` **and** the exact `''` input that caused all six false reds defer green with `ready=false`. Recording the root cause and corrected semantics in the durable memories:
+
+That detail actually resolves the whole picture — and it exposes a real gap versus your original requirement. Two different "Sonar" indicators are in play, and they behave oppositely:
+
+- **The SonarCloud GitHub App's commit check** ("SonarCloud Code Analysis" — the red cross → green checkmark you watched) reflects the **quality gate** and is recomputed retroactively when you resolve issues, no new scan needed. That's the flip you saw.
+- **The Actions workflow** (`sonarcloud.yml`) only *submits* the analysis — `sonarqube-scan-action` exits 0 regardless of gate state, which is why the API showed `success` on both commits even while the gate was red.
+
+The consequence: your sync gate reads the Actions workflow conclusion, so **a red quality gate currently does NOT block staging sync** — the exact scenario you asked to prevent ("if a push to main fails Sonar… I don't want it contaminating staging"). Let me fix that by making the workflow actually fail on a red gate. First, verifying the quality-gate action's current identity, inputs, and pin SHA:
+
+The action is current and active (v1.2.1, Aug 2026), needs no metadata-path input when following the scan action directly. Getting the pin SHA:
+
+YAML validates with the new step in place. Updating the durable memories to capture the two-indicator distinction and the new blocking behavior:
+
+You're right, and that observation closes the loop on the whole mystery — it also exposed that your original requirement wasn't actually implemented. Here's the corrected picture and what I changed:
+
+**Why the check flipped green retroactively.** There are two separate "Sonar" indicators. The **SonarCloud GitHub App's commit check** ("SonarCloud Code Analysis" — your red cross → green checkmark) is a *recomputed* verdict: it tracks the quality gate against the current issue state, so fixing one security issue and marking the other False Positive flips it green with no new scan. The **Actions workflow** (`sonarcloud.yml`) is different: `sonarqube-scan-action` only submits the analysis and exits 0 *regardless of gate state*. That's why the API showed `success` for both commits even while the gate was red — and why the sync failures were the jq bug, not Sonar.
+
+**The gap, now fixed.** Since the sync gate reads the Actions workflow conclusion, a red quality gate was invisible to it — a push with uncurated Sonar issues would have contaminated staging after all. `sonarcloud.yml` now ends with a quality-gate step (`sonarqube-quality-gate-action`, pinned to commit `7a5fffe8… #v1.2.1`, same `has_token` guard as the scan step, 300 s poll timeout): a red gate now **fails the workflow**, the sync gate goes red naming "SonarCloud analysis", and staging stays put. That's the behavior you asked for on day one.
+
+**Going forward, when the gate goes red on a push:** fix or mark the issues as you did, then either re-run the SonarCloud workflow from the Actions tab (`workflow_dispatch` is already enabled) or just push again — both make the gate pass and let staging sync. One consequence to be aware of: any new uncurated issue now blocks sync until triaged, which matches how you already work, but it's a deliberate policy choice you can revisit.
+
+Also noted in memory and the skill: the SonarCloud UI offers **False Positive / Accept** (no "Won't Fix" label — the skill's vocabulary maps to those).
+
+Current uncommitted state, ready for you to review: `sonarcloud.yml` (gate step), `sync-staging.yml` (jq `-n` fix), `MEMORY.md`, and the skill. Don't bother re-running the six failed sync runs — they'd execute the buggy workflow file from those commits and fail again. The next push to main carries the fixes, self-heals staging (currently 3 commits behind), and from then on the sync runs should look like: two green defers + one merge per push, with reds reserved for genuinely failing CI.

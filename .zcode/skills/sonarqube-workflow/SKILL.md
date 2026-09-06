@@ -111,7 +111,7 @@ For cognitive complexity, identify the function by its start line and name from 
 
 Step 5: Won't Fix rationale
 
-Document Won't Fix decisions in the durable project memory seed (`MEMORY.md` at the project root) — it is git-tracked, harness-agnostic, and outlives harness switches; the active harness memory may also carry them. Standard rationales:
+Document Won't Fix decisions in the durable project memory seed (`MEMORY.md` at the project root) — it is git-tracked, harness-agnostic, and outlives harness switches; the active harness memory may also carry them. Note the SonarCloud UI terminology (Sep 2026): issue resolutions are "False Positive" and "Accept" — there is no "Won't Fix" label; map these dispositions to whichever of the two fits. Standard rationales:
 
 - False positive (S6443 / regex literal): "False positive: String.raw applies to template literals, not regex literal syntax (/pattern/)."
 - for-of index used: "Won't Fix: loop index used for [accumulation / output assignment / indexed mutation]."

@@ -50,3 +50,14 @@ jobs:
             -Dsonar.organization=amokprime
             -Dsonar.scm.provider=git
             -Dsonar.exclusions=archive/**,tests/**,playwright.config.js
+
+      # The scan alone exits 0 regardless of the quality gate; this step is what
+      # makes a red gate fail the workflow (and thereby block the staging sync).
+      - name: Fail on red quality gate
+        if: steps.check_token.outputs.has_token == 'true'
+        uses: SonarSource/sonarqube-quality-gate-action@7a5fffe8e523c40e0c740b6bc2712ab503e52efa #v1.2.1
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          pollingTimeoutSec: 300
+        timeout-minutes: 5

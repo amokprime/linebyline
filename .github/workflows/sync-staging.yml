@@ -41,25 +41,26 @@ jobs:
               echo "::error::$HEAD_SHA is not on main (compare status: $on_main) — refusing to sync"
               exit 1 ;;
           esac
+
           runs="$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100")"
           pending=""
           for wf in "Playwright Tests" "CodeQL Advanced" "SonarCloud analysis"; do
-            conclusion="$(jq -r --argjson runs "$runs" --arg wf "$wf" '
+            conclusion="$(jq -rn --argjson runs "$runs" --arg wf "$wf" '
               ($runs.workflow_runs | map(select(.name == $wf)) | sort_by(.run_number) | last)
               | if . == null then "missing" else (.conclusion // .status) end')"
             case "$conclusion" in
               success|skipped)
                 echo "$wf: $conclusion" ;;
-              in_progress|queued|pending|requested|waiting)
-                echo "$wf: still $conclusion"
-                pending=1 ;;
-              *)
+              failure|cancelled|timed_out|startup_failure|stale|action_required)
                 echo "::error::$wf for $HEAD_SHA concluded '$conclusion' — staging will NOT be synced"
                 exit 1 ;;
+              *)
+                echo "$wf: not settled ('$conclusion') — sync deferred until its CI completes"
+                pending=1 ;;
             esac
           done
           if [ -n "$pending" ]; then
-            echo "Some CI workflows are still running for $HEAD_SHA; sync deferred until they complete."
+            echo "Some CI workflows are not settled for $HEAD_SHA; sync deferred until they complete."
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "All CI workflows passed for $HEAD_SHA."
