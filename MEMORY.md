@@ -4,6 +4,7 @@ Harness-agnostic, git-tracked memory for AI coding agents. ZCode bootstraps its 
 
 ## Architectural decisions
 
+- Modular stack scaffold (item 3 Phase A, Sep 2026): Vite 8 + Vue 3.5 + TS 6 + Tailwind v4 + shadcn-vue 2.8 (reka-nova style, neutral base) scaffolded at repo root — src/, vite.config.mts, tsconfig{,.app,.node}.json, components.json, deploy.yml (workflow_dispatch ONLY until the Phase E cutover). package.json keeps "type": "commonjs" until item 4 converts the CJS Playwright tests, hence vite.config.mts (ESM per-file). shadcn init's Google Fonts (Geist) import was removed — no external fonts; re-delete it if `shadcn-vue add` re-adds one. The shadcn-vue CLI (devDep) carries 7 moderate npm-audit findings via vue-metamorph→stylus→decode-uri-component — dismiss Dependabot alerts on it as dev dependency. Status + gotchas: archive/modular/plan/0-Roadmap.md item 3, "Phase A implementation notes".
 - activeLine / playingLine split (0.35.13): activeLine = navigation cursor (.cursor class), playingLine = audio highlight (.active class). Navigation moves the cursor; only sync, play, and click set the playing highlight. updateActiveLineFromTime places the highlight when audio reaches lineTs.
 - insertEndLine three-tier logic (0.35.13): (1) if activeLine is a trailing ts, update in place; (2) if the next non-blank line after activeLine is a trailing ts, update in place; (3) otherwise insert new.
 - TYPING_AVAILABLE set (0.37.0): keeps play_pause, prev_line, next_line enabled in Typing mode with mode-specific hotkey displays. play_pause shows Space in hotkey mode, Ctrl+Space (from play_pause_alt) in typing mode. prev_line shows Q ↑ in hotkey mode, ↑ only in typing mode. next_line shows E ↓ in hotkey mode, ↓ only in typing mode.
@@ -51,7 +52,7 @@ Do not violate.
 
 ## Project invariants
 
-- All app code lives at docs/index.html. No build step, no external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.
+- All app code lives at docs/index.html until the item-3 modular cutover (Phase E); src/ is scaffold-only until Phase C. No external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.
 - The app version is encoded in title, not in the filename. Patching script alone is incomplete — the version bump must land in both title and the script body.
 - The app is LRC-focused, but has Genius paste. Genius scraping is delegated to a browser extension (cross-origin blocks prevent in-app fetching); in-app extraction is structural parsing of pasted text.
 - No external fonts. Google Fonts was removed in 0.34.5. system-ui, sans-serif resolves differently across OSes and is the source of font-fragile screenshot tests.

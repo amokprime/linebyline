@@ -89,6 +89,8 @@ Swap `@eslint/js` → `typescript-eslint` with `@typescript-eslint/*` rules.
 
 ## 3. Modular Stack Refactor (Vite + Vue + Tailwind + shadcn-vue)
 
+### Status: In progress — Phase A scaffold done 2026-09-06; Phases B-E pending
+
 ### Why Third
 
 TypeScript conversion, component-library UI, and most security/maintainability fixes all assume a modular codebase. Doing them on a ~2850-line monolith (2835 lines as of Sep 2026) fights the architecture at every step. This is the biggest and riskiest change, so CI (item 1) and linting (item 2) must be in place first.
@@ -175,6 +177,15 @@ Cutover happens on `main`, ordered so the live site never serves a broken build:
 - **`vite-plugin-singlefile` inlines JS and CSS but NOT external assets.** LineByLine uses inline SVG and system fonts, so this is fine. If custom fonts/images are added later, they'll need base64 encoding.
 - **`archive/semantic/` is no longer the deployment mechanism.** Versioning moves to Git tags (`git tag v0.38.0 && git push --tags`). The archive can be kept as historical reference or eventually pruned.
 - **shadcn-vue `Dialog` replaces the custom Settings overlay entirely** — no more manual focus trap code, no more `_topmostOverlay` / `_bringToFront` management. Significant simplification.
+
+### Phase A implementation notes (2026-09-06)
+
+- Versions landed: Vite 8.2, Vue 3.5, TS ~6.0, Tailwind v4.1 (`@tailwindcss/vite`), shadcn-vue 2.8 (`reka-nova` style, neutral base color), vite-plugin-singlefile 2.3, eslint-plugin-vue 10
+- `shadcn-vue init` prepends a **Google Fonts import (Geist)** and points `--font-sans` at it — this was removed (system-fonts invariant; single-file builds cannot inline remote assets). If a future `shadcn-vue add` re-adds the import, delete it again
+- `shadcn-vue` CLI is a **devDependency**; it brings 7 moderate npm-audit findings via `vue-metamorph → stylus → decode-uri-component` (build-tool-only exposure). If Dependabot flags it, dismiss as dev dependency
+- package.json stays `"type": "commonjs"`, so the Vite config is **`vite.config.mts`** (ESM per-file) — keeps vue-tsc and Vite 8's native config loader happy without flipping the package to ESM
+- TypeScript 6 deprecates `baseUrl` — the `@/*` paths alias works without it in both tsconfig.app.json and the root tsconfig (paths resolve relative to the tsconfig)
+- deploy.yml was created with **workflow_dispatch as the only trigger** (see its header comment); the `push: main` trigger gets added at the Phase E cutover
 
 ### Skills That Need Updating After This Refactor
 

@@ -50,3 +50,7 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 my-systemdcoredum.*
+
+# Vite (roadmap item 3)
+dist/
+*.local

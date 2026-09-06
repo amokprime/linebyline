@@ -139,6 +139,37 @@ fi
 if [[ "$sess" != /* ]]; then sess="$PWD/$sess"; fi
 [[ -f "$sess" ]] || { echo "error: not a file: $sess" >&2; exit 1; }
 
+# Side-conversation rollouts carry an injected banner as a user message; per
+# the docs (zcode.z.ai/en/docs/agents#side-conversation) side conversations
+# are deliberately temporary, so they're excluded from transcript exports.
+# Role-aware python (a main-session log can quote the banner inside tool
+# output), run before the output file is opened so a refusal strands no file.
+if python3 - "$sess" <<'PY'
+import json, sys
+BANNER = "The preceding conversation was inherited from the parent task"
+for line in open(sys.argv[1]):
+    try:
+        rec = json.loads(line)
+    except json.JSONDecodeError:
+        continue
+    if not isinstance(rec, dict):
+        continue
+    for m in (rec.get("request") or {}).get("messages", []):
+        if m.get("role") != "user":
+            continue
+        c = m.get("content")
+        text = c if isinstance(c, str) else (
+            "".join(p.get("text", "") for p in c if isinstance(p, dict))
+            if isinstance(c, list) else "")
+        if text.lstrip().startswith(BANNER):
+            sys.exit(0)   # side conversation detected
+sys.exit(1)
+PY
+then
+  echo "error: side-conversation rollout, excluded from transcript exports: $sess" >&2
+  exit 1
+fi
+
 if [[ -z "$out" && -n "$destdir" ]]; then
   dest="$(resolve_dest "$destdir" strict)" || { echo "error: cannot resolve destination dir: $destdir" >&2; exit 1; }
   out="$(pick_output "$dest")"; generated=1
@@ -194,6 +225,9 @@ if not records:
     sys.exit("error: no main-turn model calls found in " + path)
 
 REMINDER = re.compile(r"(?s)<system-reminder>.*?</system-reminder>\s*")
+# Harness-injected background-task notices ride in turn history as bare user
+# messages; without stripping, the mid-turn classifier mistakes them for steering.
+NOTIFICATION = re.compile(r"(?s)<task-notification>.*?</task-notification>\s*")
 CONTINUE_ONLY = re.compile(
     r"^\s*(?:continue(?: from cutoff| from where (?:you|we) left off| working|,? please)?"
     r"|go on|keep going|[.?!]+)[.!?]*\s*$", re.I)
@@ -250,7 +284,8 @@ def user_content(msg):
                     attaches.append(f"**{base}:** *(attachment dropped: {len(fcontent)} chars)*")
                 else:
                     attaches.append(f"**{base}:**\n{demote(fcontent)}")
-        texts.append(DATA_URI.sub("**[image attachment]**", REMINDER.sub("", raw)).strip())
+        texts.append(DATA_URI.sub("**[image attachment]**",
+                                  NOTIFICATION.sub("", REMINDER.sub("", raw))).strip())
     typed = "\n\n".join(t for t in texts if t)
     return typed, attaches
 

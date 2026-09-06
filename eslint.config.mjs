@@ -1,17 +1,18 @@
 // eslint.config.js — ESLint 9 flat config
 //
-// Roadmap context (archive/modular/plan/0-Roadmap.md, item 2):
-//   - This file will be reconfigured twice:
-//     1. After item 3 (Vite + Vue refactor): add eslint-plugin-vue, point
-//        files at src/** instead of docs/index.html
-//     2. After item 4 (TypeScript conversion): swap @eslint/js →
-//        typescript-eslint and add a `files: ["**/*.ts"]` block
-//   - Until then, this is intentionally minimal: @eslint/js recommended
-//     + eslint-plugin-sonarjs recommended, with cognitive complexity
-//     as a warning (not error) so vibe-coding isn't blocked.
+// Roadmap context (archive/modular/plan/0-Roadmap.md, items 2-4):
+//   - Item 3 Phase A (2026-09-06) added the Vite + Vue blocks below
+//     (sections 5-6): eslint-plugin-vue for src/**/*.vue, with
+//     @typescript-eslint/parser for <script lang="ts"> and plain .ts.
+//     The docs/index.html monolith ignore stays until Phase E deletes it.
+//   - Item 4 will deepen this: full typescript-eslint ruleset and the
+//     test suite blocks move to .spec.ts (globals list below shrinks).
 
+import tsParser from "@typescript-eslint/parser";
 import js from "@eslint/js";
+import pluginVue from "eslint-plugin-vue";
 import sonarjs from "eslint-plugin-sonarjs";
+import vueParser from "vue-eslint-parser";
 import globals from "globals";
 
 export default [
@@ -57,6 +58,9 @@ export default [
       // Linting a 2700-line HTML file is noise; the modular refactor will
       // extract its JS into lintable modules.
       "docs/index.html",
+
+      // Built Vite output (roadmap item 3) — never lint
+      "dist/**",
 
       // AI workflow metadata (skills, plans) — documentation, not code
       "ai/**",
@@ -148,6 +152,61 @@ export default [
       "sonarjs/super-linear-regex": "off",
       "sonarjs/empty-string-repetition": "off",
       "no-empty-pattern": "off", // ← NEW: Playwright fixture idiom
+    },
+  },
+
+  // ────────────────────────────────────────────────────────────
+  // 5. Vite + Vue app modules (roadmap item 3 Phase A). The flat
+  //    recommended array carries the vue/* template+script rules for
+  //    .vue files; the two blocks after it wire the parsers —
+  //    vue-eslint-parser reads the template and delegates <script> to
+  //    @typescript-eslint/parser. Plain .ts needs the TS parser itself.
+  //    Full typescript-eslint rules land in item 4.
+  // ────────────────────────────────────────────────────────────
+  ...pluginVue.configs["flat/recommended"],
+
+  {
+    files: ["src/**/*.vue"],
+    languageOptions: {
+      parser: vueParser,
+      parserOptions: {
+        parser: tsParser,
+        ecmaVersion: "latest",
+        sourceType: "module",
+        extraFileExtensions: [".vue"],
+      },
+      globals: { ...globals.browser },
+    },
+    plugins: { sonarjs },
+    rules: {
+      ...sonarjs.configs.recommended.rules,
+      "sonarjs/cognitive-complexity": "warn",
+    },
+  },
+
+  {
+    files: ["src/**/*.ts"],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.browser },
+    },
+    plugins: { sonarjs },
+    rules: {
+      ...sonarjs.configs.recommended.rules,
+      "sonarjs/cognitive-complexity": "warn",
+    },
+  },
+
+  {
+    // Vite/TS config files run in Node under ESM (e.g. vite.config.mts)
+    files: ["*.mts"],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.node },
     },
   },
 ];
