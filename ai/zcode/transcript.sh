@@ -258,16 +258,26 @@ turns, order = {}, []
 for rec in records:
     tid = rec["turnId"]
     if tid not in turns:
-        turns[tid] = {"user": None, "attaches": [], "agent": []}
+        turns[tid] = {"user": None, "steers": [], "attaches": [], "seen": None, "agent": []}
         order.append(tid)
     t = turns[tid]
-    if t["user"] is None:
-        users = [m for m in rec["request"].get("messages", []) if m.get("role") == "user"]
-        for msg in reversed(users):          # last real user message wins; reminder-only ones skipped
-            typed, attaches = user_content(msg)
-            if typed:
-                t["user"], t["attaches"] = typed, attaches
-                break
+    users = [m for m in rec["request"].get("messages", []) if m.get("role") == "user"]
+    typed_users = []
+    for msg in users:
+        typed, attaches = user_content(msg)
+        if typed:
+            typed_users.append((typed, attaches))
+    if t["user"] is None and typed_users:
+        t["user"], t["attaches"] = typed_users[-1]   # last real user message wins; reminder-only ones skipped
+        t["seen"] = {text for text, _ in typed_users}
+    elif t["seen"]:
+        # later model calls of the same turn replay history; a user message that
+        # was not in the first call's list was steered in mid-turn
+        for text, attaches in typed_users:
+            if text not in t["seen"]:
+                t["seen"].add(text)
+                t["steers"].append(text)
+                t["attaches"].extend(attaches)
     text = (rec.get("response") or {}).get("text") or ""
     if text.strip():
         t["agent"].append(strip_server_tools(text))
@@ -299,6 +309,9 @@ for i, t in enumerate(merged, 1):
     print(f"\n## Turn {i}\n")
     print("### User:\n")
     print(demote(t["user"]))
+    for s in t["steers"]:
+        body = demote(s).split("\n")
+        print("\n" + "\n".join(("> **Steering:** " if j == 0 else "> ") + ln for j, ln in enumerate(body)))
     for a in t["attaches"]:
         print("\n" + a)
     print("\n---\n")

@@ -60,6 +60,8 @@ Since staging and main point at the same commit (`0edb45c`), you can start the r
 
 I want to auto-merge staging when pushing to main. See [[scratch/auto-merge#Option 1 The "Merge Branch" Action (Easiest Setup)|auto-merge]], but ensure any such file follows coding quality practices (i.e. uses pinned hashes like other workflows), and runs as a dependency of the other workflows passing (if a push to main fails Sonar for example, I don't want it contaminating staging too).
 
+> **Steering:** Wait — is the staging sync workflow *itself* synced to staging? I imagine that could create problems
+
 ---
 
 ### Agent:
@@ -156,7 +158,8 @@ Everything is uncommitted and ready for your review; the export directory itself
 ### User:
 
 Anything to be concerned about from the various failed runs for sync-staging? That is, they were expected to fail because of the Sonar issues, but is 6 times normal (I forgot to mark Won't Fix at one point but did by now), and why did it end on `Playwright Tests for 81a49ad3ff95f7a0936ae5d5f692f4628ea89683 concluded '' — staging will NOT be synced` when the SonarCloud Code Analysis was what failed?
-Btw the Sonar scans did fail initially, but they seemed to pass almost retroactively (literally: red cross to green checkmark) after one security issue was fixed and I marked the other False Positive (there is no "Won't Fix" option)
+
+> **Steering:** Btw the Sonar scans did fail initially, but they seemed to pass almost retroactively (literally: red cross to green checkmark) after one security issue was fixed and I marked the other False Positive (there is no "Won't Fix" option)
 
 ---
 
@@ -204,3 +207,39 @@ You're right, and that observation closes the loop on the whole mystery — it a
 Also noted in memory and the skill: the SonarCloud UI offers **False Positive / Accept** (no "Won't Fix" label — the skill's vocabulary maps to those).
 
 Current uncommitted state, ready for you to review: `sonarcloud.yml` (gate step), `sync-staging.yml` (jq `-n` fix), `MEMORY.md`, and the skill. Don't bother re-running the six failed sync runs — they'd execute the buggy workflow file from those commits and fail again. The next push to main carries the fixes, self-heals staging (currently 3 commits behind), and from then on the sync runs should look like: two green defers + one merge per push, with reds reserved for genuinely failing CI.
+
+---
+
+## Turn 5
+
+### User:
+
+CI passed. Staging auto-merged for the first time! It might be worth enhancing `transcript.sh` to export steering messages along with their originating prompt. I did it manually for this session last commit as an example (archive/semantic/0.37.2/issues.md "Btw..."). I intentionally didn't use `/btw` as that seemed for side conversations, not steering.
+
+> **Steering:** (I wasn't sure where to put the steering message so I just dumped it below the main one; there might be a cleaner way)
+
+---
+
+### Agent:
+
+First milestone achieved — nice. Let me look at your manual example and at how steering messages actually appear in the rollout log, then design the enhancement.
+
+The example file is a full transcript. Let me find exactly how you formatted the steering message, and how the "Btw..." record looks in the rollout log:
+
+The raw log confirms the mechanics: a steering message keeps the **same `turnId`** as the originating turn and rides along as a user message appended to the request history in the turn's *later* records — so the current script (which only reads the first record's last user message) never sees it. Also important: your manual example pastes the steering text directly under the originating prompt, single newline apart, no marker. One more check — the README's transcript docs — then I'll implement.
+
+Fair — and knowing the mechanics now, a cleaner representation is possible: a labeled blockquote keeps steering visually distinct from the originating prompt (and can't collide with the transcript's header hierarchy the way a `#### Steering:` label would). I'll render each mid-turn message as `> **Steering:** …` under the prompt, in send order. Implementing:
+
+Now the README contract line, then the full verification battery — including executing against the real log and a synthetic fixture:
+
+The live run is surgical — exactly three steering blockquotes added (turns 2, 4, and 5), zero other changes, and the old script confirms `Btw` was previously dropped entirely. Bonus: it captured **three** steering messages, including your "Wait — is the staging sync workflow itself synced?" (which was indeed mid-turn, not a new turn) and your current parenthetical. Now a synthetic fixture for the edge cases the live log doesn't cover — multi-paragraph steering, two steers in one turn, header demotion inside a steer:
+
+Edge cases all pass: multi-paragraph steers become multi-line blockquotes, multiple steers render in send order without duplicates from history replay, and a header inside a steer is demoted to `####` so it can't collide with the turn hierarchy. The enhancement is done and verified.
+
+**What the script does now:** a steering message keeps the originating turn's ID and arrives in the *later* model calls of that turn (it rides in the request history). The distiller snapshots the user messages it saw in the turn's first model call; any user message that appears only in later calls is mid-turn steering. Each renders under the originating prompt as a `> **Steering:**` blockquote — visually distinct from the prompt (answering your "cleaner way" hope), and it can't collide with the transcript's `### User:` / `### Agent:` hierarchy the way a heading label would.
+
+**Verified by execution, not just linting** (the jq lesson): `bash -n` + shellcheck clean, then a live run against this very session's log, then the committed (pre-change) script on the same log, then a synthetic fixture. The old-vs-new diff on this session is exactly three insertions — three steering blockquotes — and nothing else; the old script dropped all of them (`Btw` count: 0). Notably it recovered **three** steering messages, including your "Wait — is the staging sync workflow itself synced to staging?" (that one was genuinely mid-turn, not a new turn — it now correctly sits under the auto-merge prompt it was about) and your current parenthetical from this turn.
+
+Also updated: the `ai/zcode/README.md` transcript contract paragraph now documents the steering behavior. Both files are uncommitted for your review. No app code touched, so no version bump or test-suite implications.
+
+One optional follow-up, your call: your hand-curated `archive/semantic/0.37.2/issues.md` could be regenerated with the script now (`ai/zcode/transcript.sh -o archive/semantic/0.37.2/issues.md sess_090883d1`) — it would reproduce your file in the cleaner blockquote format, though it would also include everything after your commit point, so you may prefer to leave it as the historical manual artifact.
