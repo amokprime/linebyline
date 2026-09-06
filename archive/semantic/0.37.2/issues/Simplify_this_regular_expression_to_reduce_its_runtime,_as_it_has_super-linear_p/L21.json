@@ -1,0 +1,23 @@
+{
+  "rule": "typescript:S8786",
+  "component": "amokprime_linebyline:src/utils/pasteHandlers.ts",
+  "line": 21,
+  "textRange": {
+    "startLine": 21,
+    "endLine": 21,
+    "startOffset": 39,
+    "endOffset": 57
+  },
+  "message": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

@@ -1,0 +1,23 @@
+{
+  "rule": "typescript:S8786",
+  "component": "amokprime_linebyline:src/utils/lrcParser.ts",
+  "line": 72,
+  "textRange": {
+    "startLine": 72,
+    "endLine": 72,
+    "startOffset": 22,
+    "endOffset": 41
+  },
+  "message": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

@@ -210,7 +210,9 @@ if [[ -n "$out" && $noclobber -eq 1 && -e "$out" ]]; then
   exit 1
 fi
 
+old_turns=0
 if [[ -n "$out" ]]; then
+  [[ -f "$out" ]] && old_turns=$(grep -c '^## Turn ' "$out" || true)
   echo "transcript.sh: writing to $out" >&2
   exec >"$out"
 fi
@@ -408,6 +410,18 @@ for i, t in enumerate(merged, 1):
     if i < len(merged):
         print("\n---")
 PY
+
+# The harness prunes rollout logs in place mid-session (a log that held 11
+# turns was reduced to 2). A fresh export with fewer turns than the file it
+# overwrites is that signature — say so instead of silently truncating.
+if [[ -n "$out" ]] && (( old_turns > 0 )); then
+  new_turns=$(grep -c '^## Turn ' "$out" || true)
+  if (( new_turns < old_turns )); then
+    echo "warning: export has $new_turns turn(s) but the previous transcript had $old_turns." >&2
+    echo "         The rollout log was likely pruned by the harness mid-session; the" >&2
+    echo "         earlier turns survive only in git history / the live conversation." >&2
+  fi
+fi
 
 if [[ -n "$out" ]] && command -v notify-send >/dev/null 2>&1; then
   notify-send -a "transcript.sh" "Transcript written" "$out" 2>/dev/null || true

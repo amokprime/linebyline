@@ -7,6 +7,20 @@ SonarQube Cloud scans run on every push via GitHub Actions. Issues are exported 
 
 ---
 
+Step 0: Fetch the issues directly (agent-side — no zip, no sonar-watch link copying)
+
+The project is public on SonarCloud, so the agent can enumerate and export issues itself:
+
+1. **Enumerate** via the public JSON API (no auth needed; Bash `curl -s` — the web reader tool also passes it through, but its URL validator rejects `%2C`-encoded commas, so write `issueStatuses=OPEN,CONFIRMED` with literal commas there):
+   `https://sonarcloud.io/api/issues/search?componentKeys=amokprime_linebyline&pullRequest=11&issueStatuses=OPEN&sinceLeakPeriod=true`
+   Omit `pullRequest` for main-branch scans. Each hit's `key` identifies the issue.
+2. **Build the issue link** (sonar-export requires `id` and `open` params):
+   `https://sonarcloud.io/project/issues?id=amokprime_linebyline&pullRequest=11&issues=KEY&open=KEY`
+3. **Export each**: `~/.local/bin/sonar-export "LINK"` — full path, it is not on ZCode's non-interactive PATH (same as agent-tst). Unauthenticated works for public projects; set `BEARER_TOKEN` for private ones. Exports land in `~/Downloads/issues/<message-slug>/L{line}.json` plus `why.md`/`how.md` when SonarCloud has tab content (css: rules have none). Same-message instances of a rule merge into one folder, one `L{line}.json` per instance.
+4. **Fold into the archive**: `mv ~/Downloads/issues/* archive/semantic/<version>/issues/` using the version directory currently in triage — then continue with Step 1.
+
+---
+
 Step 1: Parse the export
 
 Directory layout (per version):
@@ -42,7 +56,10 @@ JavaScript / TypeScript rules (target `docs/index.html` or test files):
 | S2004 | Nesting depth >4 | Extract inner callbacks/arrow fns as named helpers | Low |
 | S7761 | Prefer `.dataset` | Replace `getAttribute/setAttribute('data-*')` with `.dataset.x` | Low |
 | S1940 | Use `Array.from` / spread | Replace `Array.prototype.slice.call(...)` etc. with `Array.from` | Low |
-| S6606 | Prefer `Number.isNaN` | Replace `isNaN()` with `Number.isNaN()` | Low |
+| S6679 | Prefer `Number.isNaN` | Replace `isNaN()` with `Number.isNaN()` | Low |
+| S6606 | Prefer `??=` (nullish coalescing) | NOT a safe mechanical fix — `??=` also coalesces `null`, while the monolith checked `=== undefined` explicitly. On verbatim monolith ports mark Accept, don't convert | High on verbatim ports — see Step 3 |
+| S6594 | Prefer `RegExp.exec()` over `String.match()` | Equivalent for non-global regexes, but diverges from verbatim monolith bodies | Medium on verbatim ports — see Step 3 |
+| S8786 | Super-linear regex backtracking | Same disposition as the eslint-off `sonarjs/super-linear-regex` for `src/**` — inputs are bounded (MAX_LINES=500, per-line strings); roadmap item 5 may add bounded parsers post-cutover | High on verbatim ports |
 | S6666 | Prefer `Object.hasOwn` | Replace `obj.hasOwnProperty(x)` with `Object.hasOwn(obj, x)` | Low |
 | S4138 | Prefer `for-of` | Only convert when index is unused | High — see caution below |
 | S1321 | Prefer `replaceAll` | Only when replacing a fixed string, not a regex with quantifiers | Medium |
@@ -74,6 +91,8 @@ Note on `ai/chat.z.ai/scripts/`: shellcheck can't resolve the `# shellcheck sour
 Step 3: Assess each finding individually
 
 Never apply a rule category wholesale. Assess each instance:
+
+Modular-port context (Phase C, Sep 2026) — `src/` modules are verbatim ports of monolith functions with behavior pinned by vitest specs. Stylistic modernization findings (S6606 `??=`, S6594 `exec()`, S8786 regex backtracking) deviate from the port and can change semantics (`??=` widens the coalesce from `=== undefined` to include `null`). Prefer Accept over conversion for these on ported code; convert only in a deliberate post-cutover cleanup pass (roadmap item 5).
 
 for-of conversion (S4138) — convert only when the loop index is not used for accumulation via index, output assignment keyed to index, indexed mutation of a parallel array, or any expression involving i other than arr[i]. When in doubt, skip and document as Won't Fix — a broken for-of conversion is worse than a SonarQube warning.
 
@@ -119,6 +138,7 @@ Document Won't Fix decisions in the durable project memory seed (`MEMORY.md` at 
 - Negated condition, no else: "Won't Fix: no else branch; negation would invert to an empty block and reduce clarity."
 - Math.min/max non-numeric: "Won't Fix: ternary is not a pure numeric min/max pattern."
 - Deferred (major refactor scope): "Deferred: function complexity requires structural redesign; out of scope for patch release. Tracked for next major version."
+- Verbatim monolith port (S6594/S6606/S8786 on src/, Phase C): "Accept: ported verbatim from the monolith; behavior pinned by unit specs; conversion risks semantic drift (e.g. `??=` coalesces null too). Modernization deferred to post-cutover cleanup (roadmap item 5)."
 
 ---
 

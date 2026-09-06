@@ -1,0 +1,23 @@
+{
+  "rule": "typescript:S6594",
+  "component": "amokprime_linebyline:src/utils/pasteHandlers.ts",
+  "line": 21,
+  "textRange": {
+    "startLine": 21,
+    "endLine": 21,
+    "startOffset": 33,
+    "endOffset": 38
+  },
+  "message": "Use the \"RegExp.exec()\" method instead.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

@@ -1,0 +1,23 @@
+{
+  "rule": "typescript:S6594",
+  "component": "amokprime_linebyline:src/utils/lrcParser.ts",
+  "line": 72,
+  "textRange": {
+    "startLine": 72,
+    "endLine": 72,
+    "startOffset": 16,
+    "endOffset": 21
+  },
+  "message": "Use the \"RegExp.exec()\" method instead.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

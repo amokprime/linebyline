@@ -83,6 +83,15 @@ This file sits in the conventional project-root `AGENTS.md` slot; ZCode loads it
   (`gh run list --status failure`), and Dependabot alerts
   (`gh api repos/amokprime/linebyline/dependabot/alerts/<number>`).
 
+## SonarCloud
+
+- The project is public — enumerate open issues via the JSON API
+  (`https://sonarcloud.io/api/issues/search?componentKeys=amokprime_linebyline&pullRequest=N&issueStatuses=OPEN`)
+  and export each with `~/.local/bin/sonar-export "LINK"` (full path, not on ZCode's
+  PATH; exports land in `~/Downloads/issues/`, fold them into
+  `archive/semantic/<version>/issues/`). Exact workflow: sonarqube-workflow skill, Step 0 —
+  faster than running `sonar-watch` and copying links manually.
+
 ## Deletions
 
 - Prefer `trash-put <path>` (at `/usr/sbin/trash-put`) over `rm` so deletions are recoverable.

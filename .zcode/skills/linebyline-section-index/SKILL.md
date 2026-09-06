@@ -7,6 +7,24 @@ The app HTML is about 2700 lines. Loading it whole costs about 50k tokens. Most 
 
 ---
 
+Port status (modular refactor — updated per tranche; the monolith is frozen until Phase E)
+
+Sections already ported live in `src/` modules: read the module first (its `tests/unit/` specs pin the behavior), and fall back to the monolith section only for the DOM-coupled halves that remain there.
+
+- Config → `src/config.ts`
+- Hotkey rules → `src/hotkeys/restrictedKeys.ts`
+- Keyboard → Key normalization → `src/hotkeys/keyUtils.ts`
+- LRC parse (pure helpers) → `src/utils/lrcParser.ts` (getSeekOffset / hasLyricContent / maybeAppendTrailingTs / suppressAuto / advanceActiveLine remain monolith-only)
+- Paste/meta → `src/utils/pasteHandlers.ts` (ensureReTagDefault / mergeLrcMeta take the meta text as a parameter — PORT DELTA)
+- Genius (pure helpers) → `src/utils/geniusExtractor.ts` (markGeniusSource / extractGeniusMeta remain monolith-only)
+- Theme → `src/composables/useTheme.ts` + `src/components/ThemeProvider.vue` (`.dark` class toggle, not `[data-theme]`)
+- Font settings → `src/composables/useEditorFont.ts` + `src/components/FontSelector.vue`
+- Button wiring (menu-bar slice) → `src/components/MenuBar.vue`
+
+Everything else (State, Persistence, Undo/redo, Mode switching, Render/UI, Audio, Sync/timestamp, Secondary fields, Line counts/merge, Title, Import, Controls panel, Settings, Settings search, Confirm dialog, Keyboard handlers, Unload, Init) is still monolith-only until Phases C/D port it.
+
+---
+
 Step 1: Read the section markers — grep for `// ──`
 
 The app no longer embeds a SECTIONS index comment. Instead, grep for section markers:

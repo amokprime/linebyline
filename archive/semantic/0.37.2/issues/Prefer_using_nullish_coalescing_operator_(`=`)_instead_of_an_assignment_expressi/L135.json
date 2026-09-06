@@ -1,0 +1,23 @@
+{
+  "rule": "typescript:S6606",
+  "component": "amokprime_linebyline:src/config.ts",
+  "line": 135,
+  "textRange": {
+    "startLine": 135,
+    "endLine": 135,
+    "startOffset": 2,
+    "endOffset": 71
+  },
+  "message": "Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read.",
+  "severity": "MINOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

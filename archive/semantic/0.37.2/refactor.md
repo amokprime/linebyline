@@ -697,3 +697,122 @@ Fixed script-side and regenerated — [refactor.md](/home/user/GitHub/linebyline
 **Verification.** shellcheck clean; a stdout smoke run showed zero banner text and zero garbage attachments while legitimate `**Attachments:**` blocks in earlier turns survived. Then I regenerated the real file and diffed against a backup of the version you saw: exactly two removal hunks (the compaction block and the `**Attachments:**`/`` `…` ``/`` `([^\` `` block), Turns 1–9 byte-identical, and the file now ends with a proper Turn 11 (your report message + this fix work, which will fill out on the next regeneration).
 
 Also updated [ai/zcode/README.md](/home/user/GitHub/linebyline/ai/zcode/README.md) to document the exclusion. I deliberately left one pre-existing cosmetic artifact out of scope: the web-reader `**Output:**` payload narration interleaved in agent prose (old lines 697+) — it was in your current file too and reads as noise rather than breakage; say the word if you want the server-tool stripper extended to catch it.
+
+---
+
+## Turn 12
+
+### User:
+
+Sonar found 19 New (non-blocking) issues: https://sonarcloud.io/project/issues?id=amokprime_linebyline&pullRequest=11&issueStatuses=OPEN,CONFIRMED&sinceLeakPeriod=true
+Consider documenting your API-based approach to reading the links, where the fetched files land, and where to move them in the Sonar skill and/or AGENTS.md. It's probably more efficient than me manually starting `sonar-watch` and copying 19+ links manually.
+
+---
+
+### Agent:
+
+Fetching the 19 new issues via the public API first, so we know what we're dealing with:
+
+All 19 are in the ported Phase C modules — three rules: S8786 super-linear regex (MAJOR ×6), S6606 `??=` preference (MINOR ×7), S6594 `RegExp.exec` preference (MINOR ×6). Let me ground the triage in the actual code, then batch-export:
+
+All 19 exported into 3 rule folders (6 + 7 + 6 L-files). Folding them into the archive:
+
+All 19 folded — archive now has 13 rule folders. Now the documentation the user asked for. Reading the skill first:
+
+The skill's rule table has a landmine worth fixing while I'm here: it maps S6606 to "Prefer Number.isNaN", but SonarCloud's live message says S6606 is the `??=` rule. Verifying rule identities via the API before correcting:
+
+S6606 confirmed as the nullish-coalescing rule (the table's "Number.isNaN" mapping was wrong), and S2685 is *not* the isNaN rule — let me find the right key rather than guess:
+
+S6679 is the Number.isNaN rule. Now fixing the skill's table and adding the verbatim-port triage context:
+
+Now the AGENTS.md pointer. Reading the relevant section first:
+
+Now recording the triage recommendation in the memory seed:
+
+All 19 issues are exported, folded, and triaged — and the workflow is now documented in both places you suggested.
+
+**The 19 findings**, all in the Phase C tranche 1 ported modules, all on verbatim monolith code:
+
+| Rule | Count | Sites | My recommendation |
+|---|---|---|---|
+| `typescript:S8786` super-linear regex (MAJOR) | 6 | `lrcParser.ts:72`, `pasteHandlers.ts:21/24/35/39/48` | **Accept** — same Won't-Fix family as the `sonarjs/super-linear-regex` rule already off in eslint for `src/**`; inputs are bounded by MAX_LINES=500 |
+| `typescript:S6606` prefer `??=` (MINOR) | 7 | `config.ts:133–140` (`ensureDefaultHotkeys`) | **Accept** — not a safe mechanical fix: `??=` also coalesces `null`, while the code checks `=== undefined` explicitly; converting changes semantics on corrupted-config values |
+| `typescript:S6594` prefer `RegExp.exec()` (MINOR) | 6 | `lrcParser.ts:72`, `pasteHandlers.ts:21/35/39/48/51` | **Accept** — equivalent for non-global regexes but diverges from verbatim monolith bodies mid-port |
+
+The unifying rationale: these are style/modernization findings on code deliberately ported verbatim with behavior pinned by the 47 unit specs; modernization belongs in a deliberate post-cutover pass (roadmap item 5), not mid-Phase-C churn. Exports are in archive/semantic/0.37.2/issues/ — 13 rule folders now, the 19 new ones merged into 3 folders (6 + 7 + 6 `L{line}.json`). The dispositions themselves are yours to click in the SonarCloud UI.
+
+**Documentation added:**
+- **sonarqube-workflow skill** — new **Step 0: Fetch the issues directly** covering the whole loop: enumerate via `/api/issues/search` (public, no auth; literal commas not `%2C` if going through the web reader), build the `id`+`open` link, run `~/.local/bin/sonar-export` by full path, exports land in `~/Downloads/issues/<message-slug>/`, fold with `mv` into `archive/semantic/<version>/issues/`. Also: fixed a wrong mapping in the skill's rule table (S6606 was listed as "Prefer Number.isNaN" — it's actually the nullish-coalescing rule; the isNaN rule is S6679, verified against SonarCloud's API), added S6594/S8786/S6679 rows, and recorded the verbatim-port triage policy in Steps 3 and 5.
+- **AGENTS.md** — new short "SonarCloud" section with the same pointer, so the workflow surfaces even before the skill triggers.
+- **MEMORY.md** — disposition entry for all 19 with the rationale, matching the seed's existing convention.
+
+Per AGENTS.md I left the `.omp/skills/` copies frozen — the skill content syncs there only if OMP gets re-promoted.
+
+---
+
+## Turn 13
+
+### User:
+
+Since they're nonblocking and postponed for phase E, just start the next tranche and I'll commit after that. If the same issues become blocking later we can consider whether to mark as Accept or move up breakdown of the verbatim code.
+
+> **Steering:** Might save time updating the index skill as you go as it's for the monolith
+
+---
+
+### Agent:
+
+Starting Phase C tranche 2 (ThemeProvider/FontSelector + menu-bar shell — the first real Vue components). Loading the required skills first:
+
+Roadmap scope confirmed: ThemeProvider/FontSelector + menu-bar shell, with the full menu-bar markup ported and theme/font wired. Loading the two remaining relevant skills, then pulling the monolith's menu-bar CSS and token definitions:
+
+All monolith details in hand. Quick check of the Phase B mapping table for the documented token correspondences (`--surface`, `--border-mid`):
+
+Good call — I'll update the section-index skill at the end of this tranche to record which monolith sections now live in `src/` modules, so future sessions read the module first instead of the frozen monolith. First, the Phase B mapping table my last grep missed:
+
+Mapping confirmed (`--surface→--card`, `--border-mid→--input`, `.mb-btn.accent`/`.fs-tick:focus-visible` in the `--accent→--primary` rewrite list). Now writing the components — composables first (singleton state, so the Phase D hotkey dispatcher can reuse `cycleTheme`), then the views:
+
+Components done. Installing the component-test deps and writing the tests:
+
+The 7 moderate advisories are the pre-existing shadcn-vue→stylus→decode-uri-component devDependency chain already documented in Phase A — no new ones from these two packages. Checking existing test style, then writing the three component test files:
+
+Now the verification chain — unit tests, type-check build, lint:
+
+Build and tests green, but eslint flags something. Let me see the full picture:
+
+The error is legit — my test file has a stale static import of `MenuBar` (I switched to dynamic imports for `resetModules`, leaving the top-level import unused). Removing it and auto-fixing the formatting warnings:
+
+All green: lint 0 problems, 63/63 unit tests, build clean. Spot-checking the eslint-fixed template didn't mangle the SVG block, then kicking off the full Playwright suite in the background (hard rule before you commit) while I update the docs:
+
+Only 3 paths where there should be 15 — verifying the SVG paths all survived:
+
+False alarm — `grep -c` counts lines, not matches; each SVG's multiple paths sit on one line (undo 2, redo 2, issues 11 — all intact). Kicking off the full Playwright suite in the background, then updating docs while it runs:
+
+Suite running. Now the roadmap update — marking tranche 2 done with its implementation notes:
+
+Now the section-index skill — adding the port-status block (updated per tranche, as you suggested):
+
+Now the memory seed:
+
+Harness memory updated. Checking on the background Playwright suite:
+
+530 passed, 1 webkit failure on `volume-increment` (the intervals flake family again, different test than last time). Confirming with a scoped re-run:
+
+All 3 pass scoped — same WebKit timing-flake family documented in previous tranches, and the monolith was untouched by this work. Finalizing:
+
+Phase C tranche 2 is done — the first real Vue components are in, all checks green, and the working tree is ready for you to commit to PR #11.
+
+**What was built** (all ported from the monolith's Theme / Font settings / menu-bar slices):
+
+- **`src/composables/useTheme.ts`** + **`ThemeProvider.vue`** — theme state as a module-level singleton ref so the Phase D `theme_toggle` hotkey dispatch shares it with the menu bar; `lbl_theme` localStorage key kept for cutover continuity; port delta: toggles the `.dark` class instead of `[data-theme]`, per the Phase B CSS decision.
+- **`src/composables/useEditorFont.ts`** + **`FontSelector.vue`** — font select, size input with Enter-commit, ▲/▼ ticks. Both monolith quirks are preserved *and pinned by tests*: the input path applies `|| 14` before clamping (so "0" and garbage become 14), while the ticks clamp only the side they step toward (a stored out-of-range value survives downward ticks until it re-enters range). JS default stays 14 — the 13.2px CSS token is the pre-JS fallback, same as the monolith.
+- **`src/components/MenuBar.vue`** — the full monolith button set with the focus-prevention mousedown ported verbatim. Theme + font are wired; import/save/undo/redo/add-field/hide-field/merge/settings render inert with `<!-- Phase D -->` comments marking where their composables plug in; static titles until the dynamic-tooltips tranche (needs the config composable). Menu-bar CSS ported with verbatim values as scoped styles, using the Phase B token mapping — including the documented `--accent` flip (monolith blue → `--primary`) in `.mb-btn.accent` and the tick focus ring.
+- **`App.vue`** — Phase B swatch page replaced by ThemeProvider → MenuBar + empty `<main>` placeholder for the layout tranche.
+
+**Verification:** 63 unit specs (16 new component tests — added `@vue/test-utils` + `happy-dom` devDeps, per-file `// @vitest-environment happy-dom` pragma so the pure-module tests stay on node; no new audit findings beyond the known shadcn-vue→stylus chain), `vue-tsc` build clean, ESLint 0 problems. Full `agent-tst` suite: **530 passed, 9 skipped, 1 failed** — webkit `volume-increment`, which passed 3/3 on the scoped re-run (same WebKit timing-flake family as last tranche's `seek-increment`; the monolith wasn't touched). No Playwright snapshot regens are needed.
+
+**One a11y fix-forward:** the text buttons ("Add field", "Hide field", "Merge fields") dropped their mismatched `aria-label`s per the aria-accessibility skill's S7927 rule — their visible text is now the accessible name, exactly the pattern the skill codifies. Emoji/link buttons keep theirs.
+
+**Docs updated per your suggestion:** the section-index skill now leads with a per-tranche **port-status block** (Theme → `useTheme.ts`/`ThemeProvider.vue`, Font → `useEditorFont.ts`/`FontSelector.vue`, menu-bar wiring → `MenuBar.vue`, plus the tranche-1 modules) so future sessions read the module first and only fall back to the frozen monolith for the un-ported DOM-coupled halves. Roadmap Phase C notes, MEMORY.md seed, and harness memory all record tranche 2; `.omp/skills/` stays frozen per AGENTS.md.
+
+Next up when you're ready: tranche 3, the main layout (panels, editor columns, lyric area with the `.lrc-line` CSS and its `var(--accent)`→`var(--primary)` rewrites).
