@@ -436,3 +436,65 @@ Done — attachments now render exactly as your example, and the double-renderin
 `README.md` updated to document the format — including, after an edit mishap on my part, the still-true side-conversation refusal sentence, which I caught and restored before delivering.
 
 Your re-export flow for the archive stays what it became last change: `ai/zcode/transcript.sh archive/semantic/0.37.2/refactor.md` — now with clean attachment summaries in the output.
+
+---
+
+## Turn 8
+
+### User:
+
+All checks passed! You can start Phase B now.
+
+---
+
+### Agent:
+
+Phase B it is — CSS → Tailwind design tokens. Per the roadmap: map the monolith's `--bg/--surface/…` variables onto the shadcn variable system so the GitHub Light/Dark look becomes the theme in `src/style.css`, preserving the current appearance. The monolith itself stays frozen. Setting up the phase tasks, then loading the section-index skill before touching the app HTML:
+
+The skill's map covers JS sections — the CSS lives in a `<style>` block. Locating it and the variable definitions:
+
+Style block is lines 8–193, and the theme mechanism is a `[data-theme="dark"]` attribute (shadcn convention is the `.dark` class — noted for the mapping). Reading the full block:
+
+I have the full CSS — GitHub Primer palette, `data-theme="dark"` attribute switching, plus app-specific tokens (active-line highlight, warnings, hotkey caps, editor font) that have no shadcn equivalent and must be carried as app tokens. Three quick facts to confirm before writing the mapping — where `data-theme` is set, whether `--text-faint` is used at all, and how the editor font vars are applied:
+
+Facts confirmed: `data-theme` sits on `<html>` (set by `applyTheme()` — Phase C will switch it to the `.dark` class convention), and `--text-faint` is defined but has **zero usages** — dead token, dropped with a note. Now writing the mapped theme:
+
+One gap I caught reviewing the variable list: `--accent-border` (#54aeff/#1f6feb — accent button borders) isn't mapped anywhere. Adding it to the app tokens, plus `@theme` mappings so app tokens become Tailwind utilities (`bg-warn-bg` etc. — Phase C components will want those):
+
+Now a token-swatch placeholder in App.vue so the theme is actually verifiable in the browser (replaced wholesale in Phase C):
+
+Build passes. Now the visual check in a real browser — loading the browser skill (main-agent-only per its rules):
+
+Browser ready. Checking current tabs first per protocol:
+
+Light theme: every computed value matches the monolith's `:root` exactly. Now dark:
+
+All dark values match the monolith exactly. Now the visual confirmation — loading screenshot guidance and capturing both themes:
+
+Both themes render exactly as the monolith's GitHub Light/Dark palettes — visual and computed verification both pass. Cleaning up the preview, kicking off the full suite in the background, and updating the docs:
+
+Odd — no output at all. Re-running the scoped test separately:
+
+Suite running. Now the roadmap status and Phase B notes:
+
+The memory file gained new paragraphs since my last write (version policy, PR #11, Sonar gate — recorded mid-session). Preserving those and updating only the status parts:
+
+Docs and memory updated. Blocking on the full suite before the final report:
+
+**Phase B is done and verified** — the monolith's GitHub Light/Dark palette now lives as shadcn tokens in `src/style.css`, with computed values in the browser matching every monolith hex in both themes, and the full Playwright suite green (531 passed, 9 skipped) since the monolith itself is untouched.
+
+**What landed:**
+
+- **`src/style.css`** — three clearly separated blocks: the shadcn token blocks mapped 1:1 from the monolith (`--bg`→`--background`, `--surface`→`--card`, `--text`→`--foreground`, `--accent-bg` tint→`--accent`, `--border-mid`→`--input`, `--hk-key-bg`→`--secondary`, radius 6px), and a marked **"LineByLine app tokens"** block for everything with no shadcn equivalent — the playing-line trio (`--active-*`), warning trio (`--warn-*`), `--hk-key-bg`, `--accent-border`, and the runtime-controlled `--editor-font/size`. Keeping app tokens in their own block matters: shadcn tooling rewrites the standard token sections, and this block survives that. All tokens are also exposed as Tailwind utilities via `@theme inline` (`bg-warn-bg`, `text-active-ts`, …), which Phase C components will use.
+- **`src/App.vue`** — a temporary swatch page (12 color chips + three button styles + a key cap) so the theme is eyeball-verifiable; Phase C replaces it wholesale.
+
+**Verification:** `vue-tsc` + `vite build` clean; computed CSS variables read in the in-app browser matched all ~24 tokens exactly in light mode and after toggling the `.dark` class; screenshots of both themes show correct GitHub Light/Dark rendering. Scoped theme-font tests passed, then the full suite.
+
+**Two decisions recorded in the roadmap notes** (worth knowing before Phase C):
+
+1. **The `--accent` name flips meaning** — shadcn's `--accent` is a tint *background* (the monolith's `--accent-bg`), while the monolith's blue `--accent` becomes `--primary`. Only ~7 ported CSS rules use the blue directly, and they must be rewritten to `var(--primary)` during extraction. This is the Phase C gotcha.
+2. **Theme mechanism switch**: the monolith sets `[data-theme="dark"]` on `<html>`; the new theme uses the `.dark` class, so `ThemeProvider.vue` in Phase C implements the class toggle with the same `lbl_theme` localStorage key. Also: `--text-faint` was dead (zero usages) and dropped, and a dark `--destructive` (`#f85149`) was added since the monolith never styled that state in dark.
+
+One scoping note: the roadmap's "migrate layout CSS to Tailwind utilities" bullet is deferred into Phase C per component — the monolith's HTML is frozen, so there's nothing to migrate until components extract; the roadmap now says so explicitly.
+
+Changed files: `src/style.css`, `src/App.vue`, roadmap, `MEMORY.md`. Ready to commit and push to staging whenever you are — and Phase C (component extraction, leaf-first) is next.

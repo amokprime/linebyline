@@ -89,7 +89,7 @@ Swap `@eslint/js` → `typescript-eslint` with `@typescript-eslint/*` rules.
 
 ## 3. Modular Stack Refactor (Vite + Vue + Tailwind + shadcn-vue)
 
-### Status: In progress — Phase A scaffold done 2026-09-06; Phases B-E pending
+### Status: In progress — Phases A+B done 2026-09-06; Phases C-E pending
 
 ### Why Third
 
@@ -120,10 +120,14 @@ Work happens on `staging` (repo convention for app code). As of Sep 2026 `stagin
 
 ### Phase B — CSS → Tailwind Design Tokens
 
-- Map current CSS variables (`--bg`, `--surface`, `--border`, `--text`, `--accent`, etc.) to shadcn/ui's variable system (`--background`, `--foreground`, `--primary`, etc.)
-- The existing GitHub Light/Dark theme becomes the initial `globals.css` theme (preserves current look)
-- Migrate layout CSS to Tailwind utilities: `flex`, `gap-2`, `p-4`, `overflow-hidden`, etc.
-- Domain-specific styles (`.lrc-line`, `.lyric-area`, `.hk-cell`) stay as CSS — they're app-specific, not generic layout
+**Done 2026-09-06.** The mapped theme lives in `src/style.css` (shadcn token blocks + a marked "LineByLine app tokens" block). Implementation notes:
+
+- Full mapping table is commented in `src/style.css`. Highlights: `--bg→--background`, `--surface→--card`, `--text→--foreground`, `--accent(blue)→--primary`, `--accent-bg(tint)→--accent`, `--border-mid→--input`, `--hk-key-bg→--secondary`. **The `--accent` name collision is the gotcha**: shadcn's accent is a tint background, the monolith's is the blue — ported CSS using `var(--accent)` for the blue must become `var(--primary)` during Phase C extraction (only a handful of rules: `.mb-btn.accent`, `.om-ts`, `#progress-fill`, `.lrc-line.cursor` border, `#vol-slider`, `#s-search:focus`, `.fs-tick:focus-visible`).
+- App tokens with no shadcn equivalent live in a separate block (survives shadcn tooling rewrites): `--active-bg/text/ts` (playing line), `--warn-*` (warning trio), `--hk-key-bg`, `--accent-border`, `--editor-font/size` (runtime-controlled by the font selector). All are exposed to Tailwind as utilities via `@theme inline` (`bg-warn-bg`, `text-active-ts`, …).
+- Dropped: `--text-faint` (defined in the monolith, zero usages). Added: a dark `--destructive` (`#f85149`, GitHub dark danger — the monolith never styled destructive in dark). `--primary-foreground` stays `#ffffff` in both themes (app precedent: line-flash uses white on accent).
+- **Layout-to-Tailwind migration is deferred into Phase C** per component: the monolith's HTML stays frozen, so there is nothing to migrate yet — each extracted component converts its layout to utilities as it moves. Domain CSS (`.lrc-line`, `.lyric-area`, `.hk-cell`, …) also moves with Phase C, porting `var(--accent)`→`var(--primary)` and `[data-theme="dark"]` selectors→`.dark`.
+- Theme mechanism switch recorded for Phase C: monolith sets `[data-theme="dark"]` on `<html>` (`applyTheme()`); the new theme uses the `.dark` class (`@custom-variant dark (&:is(.dark *))`). `ThemeProvider.vue` implements the class toggle + `lbl_theme` localStorage.
+- Verified: `vue-tsc`+`vite build` clean; computed token values in the browser match every monolith hex in both themes (`.dark` class toggled on `<html>`); swatch placeholder in `App.vue` renders GitHub Light/Dark correctly.
 
 ### Phase C — HTML → Vue Components
 
