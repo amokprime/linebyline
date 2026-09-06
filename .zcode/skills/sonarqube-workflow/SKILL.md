@@ -56,6 +56,18 @@ GitHub Actions workflow rules (target `.github/workflows/*.yml`):
 |---|---|---|---|
 | `githubactions:S6505` | `npx`/`npm ci` supply-chain | Replace `npx <pkg>` with `./node_modules/.bin/<pkg>` (direct binary, no on-demand install); add `--ignore-scripts` to `npm ci` to prevent lifecycle scripts from running during install | Low — both fixes are mechanical and eliminate the attack surface without breaking functionality. The `npx` binary is already in `node_modules/.bin/` after `npm ci`, so the direct path works. `--ignore-scripts` is safe when the only postinstall that matters (e.g. Playwright browser download) is explicitly handled by a separate step. |
 | `githubactions:S8543` | Pin exact package version | Collapses into the S6505 fix — `./node_modules/.bin/<pkg>` runs the version pinned in `package.json`, so no on-demand install can pull an unverified release. For action pins (`actions/checkout@v4`), pin to the commit SHA (`actions/checkout@11d5960a...`) | Low — SHA-pinning is best practice. Version-tag pins (`@v4`) are mutable and can be re-pointed by the action maintainer. |
+| `githubactions:S7631` | Untrusted code from a fork | Harden event-data use before dismissing — see the sync-staging disposition below | Medium |
+
+Shell script rules (target `ai/**/*.sh`; verify with `shellcheck` and `bash -n`, smoke-test the script live where possible):
+
+| Rule | Name | Typical fix | False positive risk |
+|---|---|---|---|
+| `shelldre:S7679` | Assign positional parameter to a local | One `local var="$1"` per function, then use `$var` everywhere — collapses all instances in that function into a single fix | Low |
+| `shelldre:S7682` | Explicit return at end of function | Often Won't Fix — see disposition below | High |
+| `shelldre:S7688` | Prefer `[[ ]]` over `[` | Safe when the shebang is bash; check for POSIX `sh` consumers first | Low |
+| `shelldre:S1066` | Merge if with enclosing | Fold an inner `if cmd` into the outer condition with `&&` when short-circuit order is preserved | Low |
+
+Note on `ai/chat.z.ai/scripts/`: shellcheck can't resolve the `# shellcheck source=.base.sh` directive from the repo root and reports SC2154 (`$upload`) / SC1091 on every script — invocation artifact, not a code problem; `$upload` is assigned in `.base.sh` before `snippet` runs.
 
 ---
 
@@ -76,6 +88,10 @@ Negated condition (S3800) — only invert the condition if there is a meaningful
 githubactions:S6505 (`npx` supply-chain) — always fix. Replace `npx <pkg>` with `./node_modules/.bin/<pkg>`. This is safe because `npm ci` (which runs before the `npx` call in CI) installs the package into `node_modules/.bin/`. The direct binary path eliminates the on-demand install path that `npx` would use if the package were missing. For `npm ci` findings, add `--ignore-scripts` — safe when the only postinstall that matters is handled by a separate explicit step (e.g. `playwright install --with-deps` handles browser download, so `npm ci --ignore-scripts` skipping `@playwright/test`'s postinstall is fine).
 
 githubactions:S8543 (pin exact version) — always fix for `npx` calls (collapsed into the S6505 fix — direct binary uses package.json-pinned version). For GitHub Actions (`actions/checkout@v4`), pin to commit SHA. No false positives observed.
+
+githubactions:S7631 (untrusted fork code) — assess what the workflow actually does with event data before dismissing. sync-staging.yml disposition (Sep 2026): `workflow_run` + `branches: [main]` still matches a fork PR whose head branch happens to be named `main`, and that PR's own green CI runs could pass the gate — hardened by verifying `HEAD_SHA` is on main via the compare API (`repos/…/compare/main...$HEAD_SHA` must return `behind|identical`) before merging. Residual flag is Won't Fix: the workflow checks out `staging`, never the event SHA, and executes no code from it; only commits verified on main are merged.
+
+shelldre:S7682 (explicit return) — Won't Fix for the `ai/chat.z.ai/scripts/*.sh` snippet functions: `.base.sh` runs `set -e` and then calls `snippet`, whose exit status is intentionally that of its last command (repomix). An explicit `return 0` would mask a repomix failure and the zip/wl-copy steps would run on missing output.
 
 ---
 
@@ -123,3 +139,5 @@ False positive summary
 | for loop where index used | S4138 | Won't Fix — unsafe conversion |
 | Negated condition with no else | S3800 | Won't Fix — clarity |
 | replace(/pat+/g, ...) flagged for replaceAll | S1321 | Won't Fix — quantifier present |
+| snippet() without explicit return | S7682 | Won't Fix — set -e contract; return 0 masks repomix failure |
+| workflow_run merge workflow flagged for fork code | S7631 | Won't Fix after on-main compare hardening — see disposition |

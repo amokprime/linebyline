@@ -1,0 +1,38 @@
+{
+  "rule": "shelldre:S1066",
+  "component": "amokprime_linebyline:ai/zcode/transcript.sh",
+  "line": 94,
+  "textRange": {
+    "startLine": 94,
+    "endLine": 94,
+    "startOffset": 6,
+    "endOffset": 8
+  },
+  "message": "Merge this if statement with the enclosing one.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": [
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:ai/zcode/transcript.sh",
+          "textRange": {
+            "startLine": 93,
+            "endLine": 93,
+            "startOffset": 4,
+            "endOffset": 6
+          },
+          "msg": "Enclosing \"if\" statement"
+        }
+      ]
+    }
+  ]
+}

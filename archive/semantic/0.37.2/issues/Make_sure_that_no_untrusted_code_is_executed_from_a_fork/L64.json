@@ -1,0 +1,38 @@
+{
+  "rule": "githubactions:S7631",
+  "component": "amokprime_linebyline:.github/workflows/sync-staging.yml",
+  "line": 64,
+  "textRange": {
+    "startLine": 64,
+    "endLine": 64,
+    "startOffset": 14,
+    "endOffset": 71
+  },
+  "message": "Make sure that no untrusted code is executed from a fork.",
+  "severity": "MAJOR",
+  "type": "VULNERABILITY",
+  "cleanCodeAttribute": "TRUSTWORTHY",
+  "cleanCodeAttributeCategory": "RESPONSIBLE",
+  "impacts": [
+    {
+      "softwareQuality": "SECURITY",
+      "severity": "HIGH"
+    }
+  ],
+  "flows": [
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:.github/workflows/sync-staging.yml",
+          "textRange": {
+            "startLine": 8,
+            "endLine": 8,
+            "startOffset": 2,
+            "endOffset": 14
+          },
+          "msg": "This trigger runs the workflow using the permissions of this repository"
+        }
+      ]
+    }
+  ]
+}

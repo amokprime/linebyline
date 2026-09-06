@@ -39,6 +39,12 @@ Do not violate.
 
 - sync-staging.yml (Sep 2026) auto-merges main into staging: fires on workflow_run completion of the three CI workflows (Playwright Tests, CodeQL Advanced, SonarCloud analysis), gates on all three succeeding for the same head_sha, then merges that verified SHA into staging. Safe by construction: a workflow_run workflow only ever fires from its default-branch copy (staging's copy is inert), the bot's GITHUB_TOKEN push to staging triggers no CI (no recursion), and the gate filters by main's head_sha so staging runs never influence it. The gate's workflow-name list must track the CI workflows' `name:` fields — renaming one makes the gate fail with 'missing' until the list is updated.
 
+## SonarQube dispositions (non-app-code)
+
+- S7682 explicit-return ×5 (ai/chat.z.ai/scripts/*.sh, 0.37.2 export, Sep 2026): Won't Fix — .base.sh runs `set -e` then calls snippet; the function's exit status is intentionally its last command's (repomix), and an explicit `return 0` would mask a repomix failure and zip/copy missing output.
+- githubactions:S7631 fork-code (sync-staging.yml, 0.37.2 export): hardened with a compare-API on-main check (`repos/…/compare/main...$HEAD_SHA` must be `behind|identical`) before merging — closes the edge where a fork PR with head branch named `main` passes the branches filter and its own PR CI. Residual flag is Won't Fix: the workflow never checks out or executes the event SHA, it only merges commits verified to be on main.
+- S7679/S7688/S1066 in ai/zcode/transcript.sh and ai/chat.z.ai/scripts/blank.sh: fixed mechanically (positional params → locals, `[` → `[[`, folded nested if); verified with shellcheck + live smoke runs.
+
 ## Project invariants
 
 - All app code lives at docs/index.html. No build step, no external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.

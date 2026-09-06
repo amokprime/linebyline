@@ -1,0 +1,23 @@
+{
+  "rule": "shelldre:S7679",
+  "component": "amokprime_linebyline:ai/zcode/transcript.sh",
+  "line": 109,
+  "textRange": {
+    "startLine": 109,
+    "endLine": 109,
+    "startOffset": 12,
+    "endOffset": 14
+  },
+  "message": "Assign this positional parameter to a local variable.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

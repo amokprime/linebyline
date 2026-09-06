@@ -34,6 +34,13 @@ jobs:
       - name: Gate on all CI workflows passing
         id: gate
         run: |
+          on_main="$(gh api "repos/$REPO/compare/main...$HEAD_SHA" --jq '.status')"
+          case "$on_main" in
+            behind|identical) echo "$HEAD_SHA is on main" ;;
+            *)
+              echo "::error::$HEAD_SHA is not on main (compare status: $on_main) — refusing to sync"
+              exit 1 ;;
+          esac
           runs="$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100")"
           pending=""
           for wf in "Playwright Tests" "CodeQL Advanced" "SonarCloud analysis"; do

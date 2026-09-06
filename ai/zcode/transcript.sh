@@ -34,7 +34,8 @@ EOF
 }
 
 flag_help() {
-  if [[ "$1" == "o" ]]; then
+  local flag="$1"
+  if [[ "$flag" == "o" ]]; then
     cat <<'EOF'
 -o FILE — write the transcript to FILE
   FILE is used verbatim: no folder resolution, no filename autogeneration, and an
@@ -72,8 +73,8 @@ REPO_ROOT="$(cd "$(dirname "$(readlink -f "$0")")/../.." && pwd)"
 # clean a clipboard path: first non-empty line, strip CR/surrounding quotes/file://,
 # trim whitespace, expand ~ (same stripping rules as ~/.bash/quote-gif.sh)
 clean_path() {
-  local p
-  p="$(printf '%s\n' "$1" | grep -m1 -v '^[[:space:]]*$')" || return 1
+  local p input="$1"
+  p="$(printf '%s\n' "$input" | grep -m1 -v '^[[:space:]]*$')" || return 1
   p="$(printf '%s' "$p" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' \
       -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/" -e 's|^file://||' -e 's|/*$||')"
   [[ -n "$p" ]] || return 1
@@ -84,14 +85,14 @@ clean_path() {
 # An existing .md file means "write next to it". $2=strict lets the leaf dir be
 # created when its parent exists; clipboard mode requires it to already exist.
 resolve_dest() {
-  local p="$1" cand
+  local p="$1" cand mode="${2:-}"
   if [[ -f "$p" && "$p" == *.md ]]; then p="$(dirname "$p")"; fi
   local cands=()
   if [[ "$p" == /* ]]; then cands=("$p"); else cands=("$REPO_ROOT/$p" "$PWD/$p"); fi
   for cand in "${cands[@]}"; do
     if [[ -d "$cand" ]]; then printf '%s' "$cand"; return 0; fi
-    if [[ "$2" == strict && -d "$(dirname "$cand")" ]]; then
-      if mkdir -p "$cand"; then printf '%s' "$cand"; return 0; fi
+    if [[ "$mode" == strict && -d "$(dirname "$cand")" ]] && mkdir -p "$cand"; then
+      printf '%s' "$cand"; return 0
     fi
   done
   return 1
@@ -100,13 +101,13 @@ resolve_dest() {
 # next transcript filename for a destination dir: X.XX.XX.md for a semver-named
 # folder, else the highest existing N.md + 1 (glob iteration, never ls-parsed)
 pick_output() {
-  local base n=0 f fbase v
-  base="$(basename "$1")"
+  local base n=0 f fbase v dir="$1"
+  base="$(basename "$dir")"
   if [[ "$base" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    printf '%s/%s.md' "$1" "$base"
+    printf '%s/%s.md' "$dir" "$base"
     return 0
   fi
-  for f in "$1"/*.md; do
+  for f in "$dir"/*.md; do
     [[ -f "$f" ]] || continue
     fbase="${f##*/}"
     if [[ "$fbase" =~ ^[0-9]+\.md$ ]]; then
@@ -114,7 +115,7 @@ pick_output() {
       if (( v > n )); then n=$v; fi
     fi
   done
-  printf '%s/%d.md' "$1" "$((n + 1))"
+  printf '%s/%d.md' "$dir" "$((n + 1))"
 }
 
 if [[ -z "$sess" ]]; then

@@ -1,0 +1,23 @@
+{
+  "rule": "shelldre:S7688",
+  "component": "amokprime_linebyline:ai/chat.z.ai/scripts/blank.sh",
+  "line": 3,
+  "textRange": {
+    "startLine": 3,
+    "endLine": 3,
+    "startOffset": 7,
+    "endOffset": 8
+  },
+  "message": "Use '[[' instead of '[' for conditional tests. The '[[' construct is safer and more feature-rich.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "HIGH"
+    }
+  ],
+  "flows": []
+}
