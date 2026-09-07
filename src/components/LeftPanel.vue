@@ -7,8 +7,14 @@
 // volume and the hotkey grid have no composables yet — controls render with
 // the monolith's initial markup and no handlers.
 import { usePanelCollapse } from '../composables/usePanelCollapse'
+import ControlsPanel from './ControlsPanel.vue'
+import { DEFAULT_CFG } from '../config'
 
 const { panelCollapsed, applyPanelCollapse, setCollapseRef } = usePanelCollapse()
+
+// sync-file hotkey badge (rebuildHkPanel appends it to #sync-file-btn);
+// Phase D swaps DEFAULT_CFG for the live config composable
+const syncFileKey = DEFAULT_CFG.hotkeys.sync_file || ''
 
 function collapsePanel() {
   panelCollapsed.value = true
@@ -236,6 +242,10 @@ function collapsePanel() {
           aria-label="Sync file"
         >
           Sync file
+          <span
+            v-if="syncFileKey"
+            class="hk-key"
+          >{{ syncFileKey }}</span>
         </button>
         <span id="sync-file-hk" />
       </div>
@@ -289,12 +299,13 @@ function collapsePanel() {
       >
         Controls
       </div>
-      <!-- tranche 4 (ControlsPanel/HotkeyCell) fills the hotkey grid -->
       <fieldset
         id="hk-grid"
         class="hk-grid"
         aria-labelledby="controls-label"
-      />
+      >
+        <ControlsPanel />
+      </fieldset>
     </section>
   </div>
 </template>
@@ -375,6 +386,17 @@ function collapsePanel() {
   display: flex;
   flex-direction: column;
   gap: 3.3px;
+}
+/* fieldset reset + grid layout (monolith .hk-grid, verbatim); the reset is
+   required for the fieldset element per the aria-accessibility skill */
+.hk-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3.3px;
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-inline-size: 0;
 }
 #song-title {
   font-size: 13.2px;
@@ -537,5 +559,8 @@ function collapsePanel() {
 }
 #sync-file-hk {
   display: none;
+}
+#sync-file-btn .hk-key {
+  font-size: 10px;
 }
 </style>

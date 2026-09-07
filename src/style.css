@@ -220,3 +220,15 @@
 .fs-tick:active {
   filter: brightness(0.88);
 }
+
+/* ── Shared hotkey key badge (monolith .hk-key) ──
+   Used by the controls-panel cells, the sync-file badge, and the Settings
+   rows; values verbatim, tokens per the Phase B table (--text→--foreground). */
+.hk-key {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--hk-key-bg);
+  border-radius: 3px;
+  padding: 1px 4px;
+  color: var(--foreground);
+}

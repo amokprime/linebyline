@@ -960,3 +960,52 @@ Fixed — the double dividers are gone from both the script and the file.
 **Cause:** my merge writer joined the existing transcript's chunks with the same `---` separator it uses between freshly rendered turns, but each existing chunk (except the last) *already ends* with that separator from the previous write — so every merge-rewritten boundary got two dividers stacked: blank line, `---`, blank line, `---`, blank line. Exactly what you saw, 14 occurrences in the file.
 
 **Fix** ([transcript.sh](/home/user/GitHub/linebyline/ai/zcode/transcript.sh)): before joining, each existing chunk has any trailing run of `---` separators stripped, so the join adds exactly one. The regex normalization also **self-heals already-corrupted files** — no manual cleanup needed. Re-running the export against the doubled file confirms it: zero double-divider patterns remain, the boundary between turns renders as a single `---`, file ends cleanly. The transcript is now at 16 turns (the merge appended this turn and skipped the log turns already covered — the mode is working as designed on a live session). shellcheck clean, and the harness memory notes the transient bug and the self-heal behavior in case a legacy doubled file shows up elsewhere.
+
+---
+
+## Turn 17
+
+### User:
+
+3 new Sonar issues saved and folded in after pushing tranche 3. Triage them, then start tranche 4. (Playwright CI may still be running; I'll only interject if it fails).
+
+---
+
+### Agent:
+
+Finding the 3 new folded issues first:
+
+Three issues: S6819 on the progress bar (`role="slider"`), and S7721 ×2 asking to move `setExpandRef`/`setCollapseRef` to module scope. The S7721 pair is a legitimate zero-risk fix — those closures only touch module-level refs. S6819 is the skill's documented Rule 1 exception (custom drag-seek model, verbatim monolith port — volume already uses a native range input). Fixing the code first:
+
+Triage recorded. Now tranche 4 — reading the monolith's Controls panel section:
+
+S7721 fixed and S6819 dispositioned. Now tranche 4 — checking config.ts's exported fields that the panel renders from:
+
+Two fixes in ControlsPanel (warn-key should follow `warn`), then wire LeftPanel — mount the panel in the grid, add its CSS, and the sync-file hotkey badge:
+
+Failures 2 and 3 are stale shell-era expectations (the badge and grid content are the new correct behavior). Failure 1 is odd — let me see the actual cell order:
+
+The mode row renders last, not first — let me check the actual template on disk:
+
+Template order is correct, so the DOM must disagree — dumping the raw mounted structure:
+
+The browser DOM is correct (mode-row is the first child) — it's a VTU `findAll` ordering quirk on multi-root fragments. Fixing the tests to scope their selectors, and updating the two stale shell-era expectations:
+
+All green — 88/88 specs, lint clean, build clean. Kicking off the full Playwright suite and writing the docs while it runs:
+
+Full suite finished **clean**: 531 passed, 9 skipped, 0 failed — even the webkit `volume-increment` flake from the last two runs passed this time. Tranche 4 is ready for commit.
+
+**The 3 new issues, triaged:**
+- `typescript:S7721` ×2 (`usePanelCollapse.ts` — "move function to outer scope" on `setExpandRef`/`setCollapseRef`): **fixed**, not dispositioned — both closures only touch module-level refs, so they moved to module scope verbatim-equivalently. Zero behavior change, covered by the existing composable tests.
+- `web:S6819` (`LeftPanel.vue:76` — "use `<input>` instead of the slider role" on `#progress-wrap`): **Accept** recommended. This is the aria-accessibility skill's documented Rule 1 exception: a custom seek bar with a mousedown+drag interaction model that can't be a native range input (the actual volume slider already *is* one). Verbatim monolith port. Rationale recorded in the seed's dispositions section.
+
+**Tranche 4 — ControlsPanel/HotkeyCell:**
+- **`src/utils/hotkeyDisplay.ts`** — the pure display rules from `_hkDisp`/`_renderHkCellContent`/`rebuildHkPanel`, extracted for unit testing: Escape→Esc and the `—` fallback; per-action key arrays (sync shows sync + `replay_line||'Enter'` with Escape-mapping applied after the fallback, `play_pause` shows `play_pause_alt` in Typing mode, prev/next gain ↑/↓ badges in Hotkey mode and show only the arrow in Typing mode); the 14-cell ordered action list with ms labels from cfg and the seek/time offset-mode flip; `HOTKEY_ONLY`/`TYPING_AVAILABLE`.
+- **`HotkeyCell.vue`** — the `div[role=button][tabindex=0]` cell with Enter/Space activation emitting `activate` (dimmed cells don't emit, matching the monolith's `!dimmed` guard) and the monolith's warn palette as inline styles.
+- **`ControlsPanel.vue`** — mode row (offset-seek + mode toggle) plus the action grid, with one quirk pinned by a test: the "(disabled in typing mode)" aria suffix only applies when *no* `HK_LABELS` entry exists — the `||` short-circuit from the monolith.
+- `LeftPanel.vue` mounts the panel in `#hk-grid` (fieldset reset CSS added per the aria skill) and gained the sync-file hotkey badge; `.hk-key` moved to `style.css` as a shared global.
+- Inert until Phase D as with prior tranches: mode refs hold monolith defaults (`useModeSwitch` will replace them), cells render from `DEFAULT_CFG`, and activation has no dispatch table yet.
+
+**Verification:** 88/88 unit specs (13 new), `vue-tsc` build clean, ESLint 0 problems, full agent-tst **531 passed / 0 failed**. One tooling gotcha worth knowing: VTU's `findAll` on a multi-root fragment component returns matches in component-tree order rather than document order — tests scope with `.mode-row .hk-cell` / `.hk-cell:not(.mode)` instead of index arithmetic (recorded in the roadmap and memory).
+
+Roadmap, section-index port status, and both memories are updated. Next up: tranche 5, the SettingsDialog (shadcn-vue `Dialog`), then the global keyboard handler last.

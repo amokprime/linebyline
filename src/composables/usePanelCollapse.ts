@@ -12,6 +12,14 @@ const panelCollapsed = ref(localStorage.getItem('lbl_panel_collapsed') === '1')
 const expandBtn = ref<HTMLElement | null>(null)
 const collapseBtn = ref<HTMLElement | null>(null)
 
+// :ref callbacks — module scope (they only touch the refs above; Sonar S7721)
+function setExpandRef(el: unknown) {
+  expandBtn.value = (el as HTMLElement) ?? null
+}
+function setCollapseRef(el: unknown) {
+  collapseBtn.value = (el as HTMLElement) ?? null
+}
+
 export function usePanelCollapse() {
   function applyPanelCollapse(transferFocus = false) {
     localStorage.setItem('lbl_panel_collapsed', panelCollapsed.value ? '1' : '0')
@@ -26,12 +34,6 @@ export function usePanelCollapse() {
       panelCollapsed.value = true
       applyPanelCollapse()
     }
-  }
-  function setExpandRef(el: unknown) {
-    expandBtn.value = (el as HTMLElement) ?? null
-  }
-  function setCollapseRef(el: unknown) {
-    collapseBtn.value = (el as HTMLElement) ?? null
   }
   return { panelCollapsed, applyPanelCollapse, autoCollapseIfNeeded, setExpandRef, setCollapseRef }
 }

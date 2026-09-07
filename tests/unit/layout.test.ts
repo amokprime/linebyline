@@ -27,13 +27,19 @@ describe('LeftPanel', () => {
     expect(wrapper.find('#btn-play-pause').exists()).toBe(true)
     expect(wrapper.find('#vol-slider').attributes('aria-label')).toBe('Volume')
     expect(wrapper.find('#vol-pct').text()).toBe('100%')
-    expect(wrapper.find('#sync-file-btn').text()).toBe('Sync file')
+    expect(wrapper.find('#sync-file-btn').text()).toContain('Sync file')
+    // rebuildHkPanel appends the sync_file hotkey badge to the button
+    expect(wrapper.find('#sync-file-btn .hk-key').text()).toBe('Ctrl+I')
   })
 
-  it('renders the controls-box with an empty hotkey grid (tranche 4 fills it)', async () => {
+  it('renders the controls-box with the hotkey grid (ControlsPanel fills it)', async () => {
     const wrapper = await mountPanel()
     expect(wrapper.find('#controls-label').text()).toBe('Controls')
-    expect(wrapper.find('#hk-grid').element.children).toHaveLength(0)
+    const grid = wrapper.find('#hk-grid')
+    // the mode row is the first grid child, then the 14 action cells
+    expect((grid.element as HTMLElement).firstElementChild?.className).toContain('mode-row')
+    expect(grid.findAll('.hk-cell')).toHaveLength(16)
+    expect(grid.findAll('.hk-cell.mode')).toHaveLength(2)
   })
 
   it('collapses via the header button: .collapsed class + inert + persisted', async () => {

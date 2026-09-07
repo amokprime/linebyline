@@ -24,6 +24,8 @@ Sections already ported live in `src/` modules: read the module first (its `test
 - Left panel / audio box / controls box (structure) → `src/components/LeftPanel.vue` (controls inert until Phase D; hk-grid empty until ControlsPanel)
 - Editor area / main field column / lyric-area + `.lrc-line` CSS → `src/components/EditorArea.vue` (line rendering, textarea, checkboxes unbound until Phase D)
 - Body + `#main` frame CSS → `src/App.vue` scoped styles; shared `.fs-spinner`/`.fs-tick` → `src/style.css`
+- Controls panel (grid display rules, HOTKEY_ONLY/TYPING_AVAILABLE) → `src/utils/hotkeyDisplay.ts` + `src/components/{ControlsPanel,HotkeyCell}.vue` (cells render from DEFAULT_CFG, inert until Phase D; activation emits, no dispatch table)
+- Shared `.hk-key` badge → `src/style.css`
 
 Everything else (State, Persistence, Undo/redo, Mode switching, Render/UI, Audio, Sync/timestamp, Secondary fields, Line counts/merge, Title, Import, Controls panel, Settings, Settings search, Confirm dialog, Keyboard handlers, Unload, Init) is still monolith-only until Phases C/D port it.
 
