@@ -78,4 +78,24 @@ describe('EditorArea', () => {
     expect((wrapper.find('#main-paren-check').element as HTMLInputElement).checked).toBe(false)
     expect(localStorage).toHaveLength(0)
   })
+
+  it('starts with zero secondary columns (monolith init parity — addSecondary is user-driven)', async () => {
+    const wrapper = await mountArea()
+    expect(wrapper.findAll('.field-col')).toHaveLength(1)
+    expect(wrapper.find('.sec-textarea').exists()).toBe(false)
+  })
+})
+
+describe('App shell', () => {
+  it('carries the app-level hidden nodes: #file-picker and #a11y-announcer', async () => {
+    const mod = await import('@/App.vue')
+    const wrapper = mount(mod.default)
+    const picker = wrapper.find('#file-picker')
+    expect(picker.attributes('type')).toBe('file')
+    expect(picker.attributes('accept')).toBe('audio/*,.lrc,.txt')
+    expect(picker.attributes('multiple')).toBeDefined()
+    const announcer = wrapper.find('#a11y-announcer')
+    expect(announcer.attributes('aria-live')).toBe('polite')
+    expect(announcer.attributes('aria-atomic')).toBe('true')
+  })
 })

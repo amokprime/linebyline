@@ -2,10 +2,16 @@
 // Editor area — structure ported from the monolith (#editor-wrapper >
 // #editor-scroll > #editor-area > the main field column: header with the
 // paren-wrap "( )" and split "↩" toggles, warn bar, lyric line list, and the
-// raw textarea behind it). The field column is the tranche-3 layout shell:
-// line rendering, textarea contents, the two checkboxes and the warn bar all
-// bind to Phase D state composables; secondary field columns arrive with
-// SecondaryField.vue.
+// raw textarea behind it, followed by the secondary field columns). The main
+// column is the tranche-3 layout shell: line rendering, textarea contents,
+// the two checkboxes and the warn bar all bind to Phase D state composables.
+import { ref } from 'vue'
+import SecondaryField from './SecondaryField.vue'
+
+// Visible secondary-field column count — the monolith starts with zero
+// (addSecondary/removeSecondary grow and shrink it). Phase D's useAppState
+// pool (10-field cap, hide/reuse) replaces this local count.
+const secCount = ref(0)
 </script>
 
 <template>
@@ -64,6 +70,11 @@
             aria-label="Main lyric text"
           />
         </div>
+        <SecondaryField
+          v-for="i in secCount"
+          :key="i"
+          :index="i"
+        />
       </div>
     </div>
   </div>
@@ -74,7 +85,9 @@
    (--surface→--card, --bg→--background, --text→--foreground,
    --text-muted→--muted-foreground, --border-mid→--input); blue accent rules
    (.lrc-line.cursor border, line-flash start) use --primary; the monolith's
-   [data-theme="dark"] selectors become .dark. */
+   [data-theme="dark"] selectors become .dark. The shared field-column rules
+   (.field-col/.field-header/.field-header-label/.fh-btn/.warn-bar) moved to
+   style.css — SecondaryField renders the same column structure. */
 #editor-wrapper {
   flex: 1;
   display: flex;
@@ -92,67 +105,6 @@
   display: flex;
   min-width: 100%;
   height: 100%;
-}
-.field-col {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-width: 286px;
-  border-right: 1px solid var(--border);
-}
-.field-col:last-child {
-  border-right: none;
-}
-.field-header {
-  display: flex;
-  align-items: center;
-  height: 37.4px;
-  padding: 0 8.8px;
-  gap: 4.4px;
-  background: var(--card);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  justify-content: space-between;
-}
-.field-header-label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--foreground);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.fh-btn {
-  height: 28.6px;
-  padding: 0 8.8px;
-  border: 1px solid var(--input);
-  border-radius: var(--radius);
-  background: transparent;
-  cursor: pointer;
-  font-size: 13.2px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--foreground);
-  white-space: nowrap;
-}
-.fh-btn:hover {
-  background: var(--background);
-}
-.fh-btn:active {
-  filter: brightness(0.88);
-  transform: translateY(1px);
-}
-.warn-bar {
-  font-size: 12px;
-  padding: 3.3px 8.8px;
-  background: var(--warn-bg);
-  border-bottom: 1px solid var(--warn-border);
-  color: var(--warn-text);
-  display: none;
-  flex-shrink: 0;
-}
-.warn-bar.visible {
-  display: block;
 }
 .lyric-scroll {
   flex: 1;

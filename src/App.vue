@@ -1,8 +1,10 @@
 <script setup lang="ts">
-// Modular app root. Phase C tranche 5: the frame plus the SettingsDialog
-// (menu-bar settings button opens it; reka-ui owns focus trap/Escape/
-// backdrop). Remaining: the global keyboard handler tranche, with the Phase D
-// state composables binding the inert controls as they land.
+// Modular app root. Phase C complete: every monolith element lives in a Vue
+// component (this shell carries the two app-level hidden nodes — #file-picker
+// for the Phase D import composable, #a11y-announcer for the _announce port).
+// Next: the Phase D state composables bind the inert controls, with the
+// global keyboard handler port landing there (it dispatches to ~30 actions
+// and needs the state composables to exist first).
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import ThemeProvider from './components/ThemeProvider.vue'
 import MenuBar from './components/MenuBar.vue'
@@ -71,6 +73,22 @@ onBeforeUnmount(() => {
         <EditorArea />
       </main>
       <SettingsDialog v-model:open="settingsOpen" />
+      <!-- Phase D: doImport opens #file-picker; _announce writes to the
+           announcer (monolith body tail, ported inert) -->
+      <input
+        id="file-picker"
+        type="file"
+        multiple
+        accept="audio/*,.lrc,.txt"
+        style="display: none"
+        aria-label="File picker"
+      >
+      <div
+        id="a11y-announcer"
+        class="sr-only"
+        aria-live="polite"
+        aria-atomic="true"
+      />
     </div>
   </ThemeProvider>
 </template>

@@ -27,8 +27,11 @@ Sections already ported live in `src/` modules: read the module first (its `test
 - Controls panel (grid display rules, HOTKEY_ONLY/TYPING_AVAILABLE) → `src/utils/hotkeyDisplay.ts` + `src/components/{ControlsPanel,HotkeyCell}.vue` (cells render from DEFAULT_CFG, inert until Phase D; activation emits, no dispatch table)
 - Shared `.hk-key` badge → `src/style.css`
 - Settings overlay (openSettings-populated markup) → `src/components/SettingsDialog.vue` on the vendored `src/components/ui/dialog/*` (reka-ui focus trap/Escape/backdrop); capture, search, save, reset-confirm logic stays monolith-only until Phase D
+- Secondary field columns (addSecondary DOM construction) → `src/components/SecondaryField.vue` (one column per `index` prop, inert until Phase D; EditorArea renders the list from a local count the Phase D state pool replaces)
+- Shared field-column CSS (.field-col/.field-header/.field-header-label/.fh-btn/.warn-bar) → `src/style.css` unscoped (EditorArea + SecondaryField); `.sec-textarea` scoped in SecondaryField
+- App-level hidden nodes (#file-picker, #a11y-announcer) → `src/App.vue` (inert until the Phase D import composable / _announce port)
 
-Everything else (State, Persistence, Undo/redo, Mode switching, Render/UI, Audio, Sync/timestamp, Secondary fields, Line counts/merge, Title, Import, Controls panel, Settings, Settings search, Confirm dialog, Keyboard handlers, Unload, Init) is still monolith-only until Phases C/D port it.
+Phase C is complete (tranches 1–6, Sep 2026): every monolith element now has a Vue component, inert where state is pending. Everything else (State, Persistence, Undo/redo, Mode switching, Render/UI renderMainLines, Audio, Sync/timestamp, Line counts/merge, Title, Import, Settings search, Confirm dialog logic, Keyboard handlers, Unload, Init) is still monolith-only behavior until Phase D ports it — the keyboard handler tranche formally moved into Phase D (dispatch needs the state composables).
 
 ---
 
