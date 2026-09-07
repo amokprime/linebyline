@@ -1009,3 +1009,57 @@ Full suite finished **clean**: 531 passed, 9 skipped, 0 failed — even the webk
 **Verification:** 88/88 unit specs (13 new), `vue-tsc` build clean, ESLint 0 problems, full agent-tst **531 passed / 0 failed**. One tooling gotcha worth knowing: VTU's `findAll` on a multi-root fragment component returns matches in component-tree order rather than document order — tests scope with `.mode-row .hk-cell` / `.hk-cell:not(.mode)` instead of index arithmetic (recorded in the roadmap and memory).
 
 Roadmap, section-index port status, and both memories are updated. Next up: tranche 5, the SettingsDialog (shadcn-vue `Dialog`), then the global keyboard handler last.
+
+---
+
+## Turn 18
+
+### User:
+
+A few new Sonar issues saved to `~/Downloads/issues/`. Triage and fold them in, then start tranche 5.
+
+---
+
+### Agent:
+
+Two exports: S6819 on `HotkeyCell.vue:33` (the `div[role=button]` cell) and S6819 on `LeftPanel.vue:82`. Let me verify what's at those lines now:
+
+Both confirmed: the HotkeyCell `div[role=button]` (fixable properly with a native `<button>`) and the same progress-wrap finding re-flagged at its shifted line. Folding the exports, then fixing HotkeyCell properly:
+
+Both folded (the slider folder now holds L76 + L82 — same finding at its shifted line). Now the proper HotkeyCell fix — native `<button>` instead of the ARIA-emulated div:
+
+All green. Now tranche 5 — reading the monolith's settings overlay markup and Settings section:
+
+Now `buildHkRows` — the hotkey rows builder:
+
+The capture/search/save logic is Phase D territory — tranche 5 is the Dialog shell. Adding the shadcn-vue Dialog component:
+
+The CLI re-added the Google Fonts import exactly as the memory warned — removing it immediately:
+
+Fonts removed. Checking the generated Dialog component's structure and the config fields I need:
+
+The generated Dialog supports `showCloseButton` and class overrides; all config fields exist. Writing the SettingsDialog shell:
+
+Now wiring the menu-bar settings button through to App:
+
+TS errors on the heterogeneous row array plus one weak test. Fixing both:
+
+Generated shadcn files trip Vue naming rules — the standard fix is scoping those rules off for the vendored `ui/` directory. Plus one stale import in my test:
+
+All green. Full suite in background, docs while it runs:
+
+Full suite clean again — **531 passed, 9 skipped, 0 failed**. Tranche 5 is ready for commit.
+
+**The 2 new S6819 issues:**
+- `HotkeyCell.vue:33` (div `[role=button]`) — **fixed properly** rather than dispositioned. Unlike the progress bar, a native `<button type="button">` fully covers the cell's interaction model (click/Enter/Space), so the ARIA emulation was replaced: the manual keydown handler is deleted (native buttons do it), `font-family: inherit` compensates for the button UA reset, and dimmed cells keep the monolith's focusable-but-`aria-disabled` behavior. An a11y upgrade over the monolith, consistent with the skill's Rule 1.
+- `LeftPanel.vue:82` (slider role) — the **same** progress-wrap finding re-flagged after the tranche-4 line shift; the existing Accept disposition stands (custom drag-seek model, skill Rule 1 exception). The export's `L82.json` now sits beside `L76.json` in the existing rule folder. Both dispositions recorded in the seed.
+
+**Tranche 5 — SettingsDialog on the shadcn-vue Dialog:**
+- `shadcn-vue add dialog` vendored `src/components/ui/dialog/*` — and predictably re-added the Google Fonts import to `style.css`, which I deleted immediately (the memory had flagged exactly this).
+- **`SettingsDialog.vue`** ports the monolith's `openSettings`-populated overlay: title bar (heading, conflict output, search field + ⌨ toggle), the 7 instant-replay checkboxes, 8 interval rows, default-meta textarea, and the `buildHkRows` hotkey rows (HK_SECTIONS groups, read-only capture inputs with the monolith's display rule — `Escape→Esc` but blank stays blank, unlike the panel's `hkDisp` em dash — hidden clear/swap/reset/restrict-warn controls). Everything renders from `DEFAULT_CFG` and is inert until Phase D wires the config composable, capture interactions, settings search, `saveSettingsNow`, and the reset confirm (kept as the monolith's inline footer confirm; the roadmap's AlertDialog swap is deferred to Phase D when `_doResetDefaults` lands).
+- Port deltas: `:show-close-button="false"` for monolith parity — reka-ui supplies the focus trap, Escape, and backdrop close that the monolith hand-rolled, plus a visually-hidden `DialogDescription` for clean `aria-describedby`. The menu-bar settings button now emits `openSettings` and App owns the dialog via `v-model:open` — the first real cross-component wiring.
+- `eslint.config.mjs` exempts vendored `src/components/ui/**` from `vue/multi-word-component-names` and `vue/require-default-prop` (library conventions, files regenerate on `add`).
+
+**Verification:** 96/96 unit specs (8 new dialog-shell tests, including the `Escape→Esc` capture rule and the hidden-confirm parity), `vue-tsc` build clean, ESLint 0 problems, full agent-tst 531/0. Roadmap, section-index port status, and both memories updated.
+
+That leaves **one Phase C tranche**: the global keyboard handler — the most coupled piece, deliberately last. Then Phase D's state composables start binding all the inert controls.

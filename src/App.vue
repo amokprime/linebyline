@@ -1,17 +1,20 @@
 <script setup lang="ts">
-// Modular app root. Phase C tranche 3: the full frame — menu bar, left panel
-// (collapse wired), and the editor-area layout shell. The main region fills
-// in over the coming tranches: ControlsPanel/HotkeyCell → SettingsDialog →
-// global keyboard handler, with the Phase D state composables behind them.
-import { onBeforeUnmount, onMounted } from 'vue'
+// Modular app root. Phase C tranche 5: the frame plus the SettingsDialog
+// (menu-bar settings button opens it; reka-ui owns focus trap/Escape/
+// backdrop). Remaining: the global keyboard handler tranche, with the Phase D
+// state composables binding the inert controls as they land.
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import ThemeProvider from './components/ThemeProvider.vue'
 import MenuBar from './components/MenuBar.vue'
 import LeftPanel from './components/LeftPanel.vue'
 import EditorArea from './components/EditorArea.vue'
+import SettingsDialog from './components/SettingsDialog.vue'
 import { usePanelCollapse } from './composables/usePanelCollapse'
 
 const { panelCollapsed, applyPanelCollapse, autoCollapseIfNeeded, setExpandRef } =
   usePanelCollapse()
+
+const settingsOpen = ref(false)
 
 function expandPanel() {
   panelCollapsed.value = false
@@ -32,7 +35,7 @@ onBeforeUnmount(() => {
 <template>
   <ThemeProvider>
     <div class="app-shell">
-      <MenuBar />
+      <MenuBar @open-settings="settingsOpen = true" />
       <main id="main">
         <h1 class="sr-only">
           LineByLine
@@ -67,6 +70,7 @@ onBeforeUnmount(() => {
         </button>
         <EditorArea />
       </main>
+      <SettingsDialog v-model:open="settingsOpen" />
     </div>
   </ThemeProvider>
 </template>

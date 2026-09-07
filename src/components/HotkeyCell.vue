@@ -1,10 +1,12 @@
 <script setup lang="ts">
-// One controls-panel hotkey cell — markup/classes ported from
-// rebuildHkPanel's cell creation. A div[role=button] with Enter/Space
-// activation (monolith parity); clicks and key presses emit `activate` and
-// the parent decides what runs (Phase D action table). Dimmed cells don't
-// emit, matching the monolith's !dimmed guard. Warn styling on mode cells is
-// the monolith's inline palette (warn tokens).
+// One controls-panel hotkey cell — classes ported from rebuildHkPanel's cell
+// creation. Port upgrade over the monolith's div[role=button]: a native
+// <button> gives the click/Enter/Space activation and button semantics for
+// free (Sonar S6819; aria-accessibility skill Rule 1), so the manual keydown
+// handler is gone. Activation emits `activate` and the parent decides what
+// runs (Phase D action table). Dimmed cells don't emit (monolith !dimmed
+// guard) and stay focusable with aria-disabled, as in the monolith. Warn
+// styling on mode cells is the monolith's inline palette (warn tokens).
 const props = defineProps<{
   label: string
   keys: string[]
@@ -21,19 +23,12 @@ const emit = defineEmits<{ activate: [] }>()
 function onClick() {
   if (!props.dimmed) emit('activate')
 }
-function onKeydown(e: KeyboardEvent) {
-  if (e.key === 'Enter' || e.key === ' ') {
-    e.preventDefault()
-    if (!props.dimmed) emit('activate')
-  }
-}
 </script>
 
 <template>
-  <div
+  <button
+    type="button"
     :class="['hk-cell', { 'mode half': mode }]"
-    role="button"
-    tabindex="0"
     :aria-label="ariaLabel ?? label"
     :aria-disabled="dimmed ? 'true' : undefined"
     :title="title ?? label"
@@ -43,7 +38,6 @@ function onKeydown(e: KeyboardEvent) {
         ? { opacity: '0.35' }
         : undefined"
     @click="onClick"
-    @keydown="onKeydown"
   >
     <span>{{ label }}</span>
     <span :style="keys.length > 1 ? 'display:flex;gap:3px' : undefined">
@@ -56,14 +50,16 @@ function onKeydown(e: KeyboardEvent) {
           : undefined"
       >{{ k }}</span>
     </span>
-  </div>
+  </button>
 </template>
 
 <style scoped>
 /* Monolith .hk-cell/.mode CSS, verbatim values; tokens per the Phase B table
-   (--bg→--background, --accent-bg tint→--accent); .hk-key itself is global
-   (style.css) since the sync-file badge and Settings rows reuse it. */
+   (--bg→--background, --accent-bg tint→--accent). font-family:inherit added
+   for the native button (UA buttons don't inherit it). .hk-key itself is
+   global (style.css) since the sync-file badge and Settings rows reuse it. */
 .hk-cell {
+  font-family: inherit;
   display: flex;
   justify-content: space-between;
   align-items: center;

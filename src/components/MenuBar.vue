@@ -1,15 +1,17 @@
 <script setup lang="ts">
 // Menu-bar shell — full markup ported from the monolith <nav id="menu-bar">.
-// Wired this tranche: theme toggle (useTheme) and the FontSelector. The
-// remaining actions are rendered but inert until their tranches: import/save/
-// undo/redo/add-field/hide-field/merge get handlers from the Phase D state
-// composables, settings opens the SettingsDialog (later tranche), and the
-// dynamic tooltips (updateDynamicTooltips embeds hotkey labels) need the
-// config composable — static titles until then.
+// Wired so far: theme toggle (useTheme), the FontSelector, and the settings
+// button (emits open-settings; App owns the SettingsDialog). The remaining
+// actions are rendered but inert until their tranches: import/save/undo/redo/
+// add-field/hide-field/merge get handlers from the Phase D state composables,
+// and the dynamic tooltips (updateDynamicTooltips embeds hotkey labels) need
+// the config composable — static titles until then.
 // Focus-prevention mousedown is ported verbatim (menu-bar slice): clicking a
 // button must not steal focus from the editor area.
 import FontSelector from './FontSelector.vue'
 import { THEME_ICONS, useTheme } from '../composables/useTheme'
+
+defineEmits<{ openSettings: [] }>()
 
 const { themeMode, cycleTheme } = useTheme()
 
@@ -105,11 +107,11 @@ function onMousedown(e: MouseEvent) {
       Merge fields
     </button>
     <div class="mb-sep" />
-    <!-- SettingsDialog tranche: opens the settings overlay -->
     <button
       id="btn-settings"
       title="Settings"
       aria-label="Settings"
+      @click="$emit('openSettings')"
     >
       ⚙️
     </button>

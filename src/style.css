@@ -1,5 +1,6 @@
+
 /* Tailwind v4 entry. Theme tokens below are mapped 1:1 from the LineByLine
-   monolith's GitHub Light/Dark palette (docs/index.html <style> block) —
+   monolith's GitHub Light/Dark palette (docs/index.html \3c style> block) —
    roadmap item 3 Phase B. The monolith toggles [data-theme="dark"] on <html>;
    the shadcn convention is the .dark class, so theme toggling (Phase C) sets
    class="dark" instead.

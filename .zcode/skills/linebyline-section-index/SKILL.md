@@ -26,6 +26,7 @@ Sections already ported live in `src/` modules: read the module first (its `test
 - Body + `#main` frame CSS → `src/App.vue` scoped styles; shared `.fs-spinner`/`.fs-tick` → `src/style.css`
 - Controls panel (grid display rules, HOTKEY_ONLY/TYPING_AVAILABLE) → `src/utils/hotkeyDisplay.ts` + `src/components/{ControlsPanel,HotkeyCell}.vue` (cells render from DEFAULT_CFG, inert until Phase D; activation emits, no dispatch table)
 - Shared `.hk-key` badge → `src/style.css`
+- Settings overlay (openSettings-populated markup) → `src/components/SettingsDialog.vue` on the vendored `src/components/ui/dialog/*` (reka-ui focus trap/Escape/backdrop); capture, search, save, reset-confirm logic stays monolith-only until Phase D
 
 Everything else (State, Persistence, Undo/redo, Mode switching, Render/UI, Audio, Sync/timestamp, Secondary fields, Line counts/merge, Title, Import, Controls panel, Settings, Settings search, Confirm dialog, Keyboard handlers, Unload, Init) is still monolith-only until Phases C/D port it.
 

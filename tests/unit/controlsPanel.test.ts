@@ -24,9 +24,9 @@ describe('ControlsPanel', () => {
     expect(modeCells).toHaveLength(2)
     expect(modeCells[0].text()).toContain('Offset time')
     expect(modeCells[1].text()).toContain('Hotkey mode')
-    expect(modeCells[0].attributes('style')).toBeUndefined()
-    expect(modeCells[0].attributes('role')).toBe('button')
-    expect(modeCells[0].attributes('tabindex')).toBe('0')
+    // native buttons, not ARIA-emulated divs (Sonar S6819 fix)
+    expect((modeCells[0].element as HTMLElement).tagName).toBe('BUTTON')
+    expect(modeCells[0].attributes('aria-label')).toBe('Toggle offset mode')
   })
 
   it('renders all 14 action cells with monolith labels and key badges', async () => {
