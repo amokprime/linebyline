@@ -41,9 +41,11 @@ defineProps<{ index: number }>()
     <!-- Phase D: checkLineCounts fills the text -->
     <div class="warn-bar" />
     <input
+      :id="`sec-file-${index}`"
       type="file"
       accept=".lrc,.txt"
       style="display: none"
+      :aria-label="`Secondary ${index} lyrics file`"
     >
     <!-- Phase D: value, paste cleaning, secondary keydown guard, scroll sync -->
     <textarea

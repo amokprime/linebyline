@@ -43,9 +43,11 @@ describe('SecondaryField', () => {
     expect(warn.attributes('role')).toBeUndefined()
   })
 
-  it('renders the hidden per-field file picker and the sec textarea', async () => {
+  it('renders the hidden per-field file picker with an accessible name (Sonar InputWithoutLabelCheck fix)', async () => {
     const wrapper = await mountField(3)
     const picker = wrapper.find('input[type=file]')
+    expect(picker.attributes('id')).toBe('sec-file-3')
+    expect(picker.attributes('aria-label')).toBe('Secondary 3 lyrics file')
     expect(picker.attributes('accept')).toBe('.lrc,.txt')
     expect(picker.attributes('style')).toContain('display: none')
     const ta = wrapper.find('textarea')
