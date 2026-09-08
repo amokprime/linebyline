@@ -7,11 +7,11 @@ links:
 ```sh
 repomix --output "scratch/upload/repomix-onboard.xml" \
 --include-full-directory-structure \
---include "package.json,README.md,\
+--include "package.json,AGENTS.md,\
 ai/chat.z.ai/skills/project-workflow-SKILL.md,\
 ai/chat.z.ai/skills/web-channel-SKILL.md,\
 ai/chat.z.ai/skills/skill-SKILL.md,\
-ai/chat.z.ai/Memory.md,archive/modular/plan/**"
+ai/chat.z.ai/MEMORY.md,archive/modular/plan/**"
 ```
 - Workflows always start with the Onboard step, including dedicated sessions:
 ```
@@ -39,9 +39,12 @@ repomix --output "scratch/upload/repomix-build.xml" \
 --include "ai/chat.z.ai/skills/linebyline-section-index-SKILL.md,\
 ai/chat.z.ai/skills/single-file-html-app-SKILL.md,\
 ai/chat.z.ai/skills/browser-hotkey-system-SKILL.md,\
-docs/index.html"
+docs/index.html,src/**,vite.config.mts,tsconfig.json,\
+tsconfig.app.json,tsconfig.node.json,tsconfig.vitest.json,\
+tests/unit/**,tests/helpers/index.js,tests/helpers/package.json"
 ```
-- Features created from this step should pass a superficial manual test
+- `package.json` is provided in Onboard; `package-lock.json` is omitted (too large; `npm install` works without it for non-reproducible installs)
+- The `src/**` + `tests/unit/**` + tsconfig bundle lets the agent run `npm install && npm run test:unit` (~103 specs, ~7s) in-sandbox as a build-test loop after patching `src/` modules
 - For longer requests zip a [[ai/chat.z.ai/Build|Build]] template along with the Repomix
 
 ---

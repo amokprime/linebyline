@@ -12,10 +12,14 @@ Step 0: Fetch the issues directly (agent-side — no zip, no sonar-watch link co
 The project is public on SonarCloud, so the agent can enumerate and export issues itself:
 
 1. **Enumerate** via the public JSON API (no auth needed; Bash `curl -s` — the web reader tool also passes it through, but its URL validator rejects `%2C`-encoded commas, so write `issueStatuses=OPEN,CONFIRMED` with literal commas there):
-   `https://sonarcloud.io/api/issues/search?componentKeys=amokprime_linebyline&pullRequest=11&issueStatuses=OPEN&sinceLeakPeriod=true`
+   ```
+   https://sonarcloud.io/api/issues/search?componentKeys=amokprime_linebyline&pullRequest=11&issueStatuses=OPEN&sinceLeakPeriod=true
+   ```
    Omit `pullRequest` for main-branch scans. Each hit's `key` identifies the issue.
 2. **Build the issue link** (sonar-export requires `id` and `open` params):
-   `https://sonarcloud.io/project/issues?id=amokprime_linebyline&pullRequest=11&issues=KEY&open=KEY`
+   ```
+   https://sonarcloud.io/project/issues?id=amokprime_linebyline&pullRequest=11&issues=KEY&open=KEY
+   ```
 3. **Export each**: `~/.local/bin/sonar-export "LINK"` — full path, it is not on ZCode's non-interactive PATH (same as agent-tst). Unauthenticated works for public projects; set `BEARER_TOKEN` for private ones. Exports land in `~/Downloads/issues/<message-slug>/L{line}.json` plus `why.md`/`how.md` when SonarCloud has tab content (css: rules have none). Same-message instances of a rule merge into one folder, one `L{line}.json` per instance.
 4. **Fold into the archive**: `mv ~/Downloads/issues/* archive/semantic/<version>/issues/` using the version directory currently in triage — then continue with Step 1.
 
@@ -133,7 +137,7 @@ Step 5: Won't Fix rationale
 Document Won't Fix decisions in the durable project memory seed (`MEMORY.md` at the project root) — it is git-tracked, harness-agnostic, and outlives harness switches; the active harness memory may also carry them. Note the SonarCloud UI terminology (Sep 2026): issue resolutions are "False Positive" and "Accept" — there is no "Won't Fix" label; map these dispositions to whichever of the two fits. Standard rationales:
 
 - False positive (S6443 / regex literal): "False positive: String.raw applies to template literals, not regex literal syntax (/pattern/)."
-- for-of index used: "Won't Fix: loop index used for [accumulation / output assignment / indexed mutation]."
+- for-of index used: "Won't Fix: loop index used for `[accumulation / output assignment / indexed mutation]`."
 - replaceAll quantifier: "Won't Fix: regex contains quantifiers; replaceAll with regex is equivalent to replace(/pattern/g) already accepted by SonarQube."
 - Negated condition, no else: "Won't Fix: no else branch; negation would invert to an empty block and reduce clarity."
 - Math.min/max non-numeric: "Won't Fix: ternary is not a pure numeric min/max pattern."
