@@ -7,7 +7,7 @@ links:
 ```sh
 repomix --output "scratch/upload/repomix-onboard.xml" \
 --include-full-directory-structure \
---include "package.json,AGENTS.md,\
+--include "package.json,AGENTS.md,README.md\
 ai/chat.z.ai/skills/project-workflow-SKILL.md,\
 ai/chat.z.ai/skills/web-channel-SKILL.md,\
 ai/chat.z.ai/skills/skill-SKILL.md,\
@@ -45,8 +45,10 @@ tests/unit/**,tests/helpers/index.js,tests/helpers/package.json"
 ```
 - `package.json` is provided in Onboard; `package-lock.json` is omitted (too large; `npm install` works without it for non-reproducible installs)
 - The `src/**` + `tests/unit/**` + tsconfig bundle lets the agent run `npm install && npm run test:unit` (~103 specs, ~7s) in-sandbox as a build-test loop after patching `src/` modules
-- For longer requests zip a [[ai/chat.z.ai/Build|Build]] template along with the Repomix
-
+- For longer requests zip a [[ai/chat.z.ai/Build|Build]] template along with the Repomix:
+```
+Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files as rules. This is the Build step.
+```
 ---
 ### Review
 ```sh

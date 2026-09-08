@@ -1,3 +1,4 @@
+
 ---
 model: GLM-5.2
 ---
@@ -224,10 +225,47 @@ Vue uses `composables/` instead of `hooks/` (Vue convention for Composition API 
 
 ### Phase D — Vue State Management
 
+State moves out of the monolith into Vue composables. Tranche plan (smallest dependency-first, global keyboard handler last — it dispatches to ~30 actions and needs every state composable to exist):
+
 - Shared state via Vue's `provide`/`inject` (equivalent to React Context): `cfg`, `hotkeyMode`, `activeLine`/`playingLine`, `isDirty`
 - Local state via `ref()` / `reactive()`: component-specific UI (search query, capture input focus)
 - Composables for persistence: `usePersistedState` (localStorage), `useAutosave` (sessionStorage)
 - The global keyboard handler becomes an `onMounted` + `onUnmounted` lifecycle hook with `ref()` for reactive state
+
+#### Tranche plan
+
+Each tranche ships its composables + Vitest specs. Components that grew inert during Phase C are wired in the matching tranche. Tranches 1–2 are leaf pure-state; 3–7 wire increasingly coupled subsystems; 8 ports the settings interactions; 9 ports the most coupled piece last.
+
+- **Tranche 1 — Foundation** — `useAppState` (core state refs + the `cfg` ref loaded via `migrateHotkeys` + a `provide`/`inject` API so children read `cfg.hotkeys.X` reactively), `usePersistedState` (thin `ref(localStorage)` helper for scattered scalar prefs: `lbl_speed`, `lbl_vol`, `lbl_muted`), `useUndoRedo` (snapshot stack, single-push model, debounced input push). No component wiring yet.
+- **Tranche 2 — Persistence + Title** — `useAutosave` (load/save sessionStorage, `_restoreSecondaryPool` shape, seed-on-load) + `useTitle` (pure `updateTitleFromText`). Wire the `cfg` ref into `SettingsDialog.vue` so rows render from live config instead of `DEFAULT_CFG` (visible behaviour change, no logic).
+- **Tranche 3 — Mode switch** — `useModeSwitch` (applyMode scroll/selection logic + the secondary-focus auto-switch). Wire into `ControlsPanel.vue` (replaces local mode refs at monolith defaults) and `EditorArea.vue`'s textarea auto-switch.
+- **Tranche 4 — Audio** — `useAudio` composable. Wire inert `LeftPanel.vue` audio controls (play/pause, volume, seek, speed, sync-file button). Persists `lbl_vol`/`lbl_muted`/`lbl_speed`. Most stateful of the wiring tranches — depends on the Tranche 1 `usePersistedState` for vol/mute.
+- **Tranche 5 — Sync/timestamp** — `useSync` (syncLine, insertEndLine, seekPrev/Next, replayActiveLine, adjustTs, batchSplitParens, markAsTranslation, doSyncFile, tickSeekOffset, setOffsetMode, `_assignInterpolatedTs`, `_peelLastParen`). Wire the `EditorArea.vue` main textarea (paste handler, click handling, renderMainLines). Adds the four missing `tests/logic.spec.js` functions to `src/utils/` with Vitest coverage (the roadmap's Phase E consolidation begins here).
+- **Tranche 6 — Merge + Secondary fields** — `useMerge` (getSecLines, checkLineCounts, updateMergeBtn, mergeTranslations). Wire inert `SecondaryField.vue` columns (paste, keydown, scroll-sync, import, paren-wrap) and the MenuBar Add/Hide/Merge buttons (the disabled state falls out of `useAppState.secondaryPool.length`).
+- **Tranche 7 — Import/Save** — `useImport` (doImport, doSave, file-picker handler, multi-file handling). Wire MenuBar's 📂/💾 buttons and App's `#file-picker`.
+- **Tranche 8 — Settings interactions** — Settings capture input (Tab trap inside shadcn Dialog, Shift+Backspace=clear, Backspace=reset+advance, Enter=swap+advance), `initSettingsSearch`/`applySettingsFilter`, `saveSettingsNow`, reset confirm (decide whether the inline footer confirm stays or swaps to shadcn `AlertDialog`).
+- **Tranche 9 — Keyboard handler** — `useTextareaKeys` (Main textarea KD: Enter trim, bracket/paren autocomplete) + `useGlobalHotkeys` (the dispatch table to ~30 actions, onMounted/onUnmounted, repeat-guard, typing-mode arrow override, settings focus trap interactions). The most coupled piece — done last so every state composable it dispatches to already exists. Also ports `updateDynamicTooltips` (needs the `cfg` ref).
+
+#### Tranche 1 design (this session)
+
+`useAppState.ts`:
+- Module-level singleton refs (the same pattern `useTheme`/`usePanelCollapse` use) for the monolith State section's mutable globals: `hotkeyMode`, `offsetSeekMode`, `activeLine`, `playingLine`, `selectedLines`, `mergeDone`, `savedAudioPath`, `lastImportStem`, `suppressScrollSync`, `_syncAutoAdvanced`, `_geniusDetectedThisSession`, `_pasteJustHappened`. `MAX_LINES=500` is a `const`.
+- `secondaryPool` is a `ref<SecondaryEntry[]>` of pool entries (max 10); `secondaryCols` is a `computed` over `secondaryPool.value.filter(e => e.visible)`. The monolith keeps them as separate arrays with manual bookkeeping — collapsing into one source of truth is the single-source-of-truth rule from the single-file-html-app skill.
+- `cfg` is a `ref<AppConfig>` initialised via `loadCfg()` (ported verbatim from the monolith's loadCfg, including the JSON.parse clone + `migrateHotkeys` call). Provided via `provide(CFG_KEY, cfg)` and consumed via `inject(CFG_KEY)` — components that need `cfg.hotkeys.X` reactively call `inject`.
+- `isDirty` is a `ref<boolean>` initialised `false`; the unload-warning handler reads it (Tranche 7 wires it).
+- Export an `AppProvider` symbol (`InjectionKey<Ref<AppConfig>>`) and a `useCfg()` convenience wrapper that calls `inject(CFG_KEY)` and throws if missing.
+
+`usePersistedState.ts`:
+- A generic helper `usePersistedRef(key, default, opts?)` that returns a `ref` whose value is read from `localStorage` at module-load and persists on every set. Options: `{ serialize?: (v) => string, deserialize?: (s) => T, validate?: (v) => boolean }` — defaults to JSON.
+- Pre-seeded exports for the three scalar prefs still scattered across the monolith: `useSpeed()` (lbl_speed → number, default 1), `useVolume()` (lbl_vol → number 0..1, default 1), `useMuted()` (lbl_muted → '0'|'1', default false). The `useEditorFont`/`useTheme`/`usePanelCollapse` composables already in the tree use direct `localStorage.getItem` calls — left alone this tranche (consolidating them onto `usePersistedRef` is a post-cutover cleanup, not a tranche-1 goal).
+
+`useUndoRedo.ts`:
+- Snapshot shape: `{ main: string, secondaries: string[], mergeDone: boolean }` (the monolith's takeSnapshot, ported).
+- Stack: `undoStack: ref<Snapshot[]>`, `redoStack: ref<Snapshot[]>`. The single-push model from the code-quality skill: `pushSnapshot()` pushes post-change only and clears `redoStack`; wholesale replacement ops call `pushSnapshot` before AND after.
+- `applySnapshot` clears extra secondaries beyond the snapshot's `secondaries.length` (the documented invariant).
+- `doUndo`/`doRedo` follow the monolith: undo needs at least 2 entries (the seed + one), redo needs at least 1.
+- Input debounce: `scheduleInputSnapshot(debounceMs)` — clears any pending timer and sets a new one. Caller passes the configured `cfg.undo_debounce_ms`.
+- The composable is **shape-only** this tranche — it doesn't yet own the snapshot content. Callers pass a `takeSnapshot: () => Snapshot` and an `applySnapshot: (s: Snapshot) => void` to the composable's `useUndoRedo({ take, apply })` factory; the composable manages the stacks + debounce but defers DOM writes to the caller. Wiring real `take`/`apply` happens in Tranche 2 once `useAutosave` and the `#main-textarea` ref exist. This keeps Tranche 1 dependency-free and unit-testable in pure node.
 
 ### Phase E — Verify and Swap
 
