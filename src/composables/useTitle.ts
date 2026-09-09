@@ -27,15 +27,18 @@ const songArtist = ref('Unknown Artist')
 // from the text; updates songTitle/songArtist refs. "Unknown" or blank tags
 // fall back to "Unknown Title" / "Unknown Artist" (monolith parity).
 export function updateTitleFromText(text: string) {
-  const tiMatch = text.match(/^\[ti:\s*(.+)\]/m)
+  // [^\]]+ (any non-] char) replaces `.+` to avoid super-linear backtracking
+  // (S8786); `.exec` replaces `.match` since the regex is non-global (S6594).
+  const tiMatch = /^\[ti:\s*([^\]]+)\]/m.exec(text)
   const ti = tiMatch?.[1]
-  const arMatch = text.match(/^\[ar:\s*(.+)\]/m)
+  const arMatch = /^\[ar:\s*([^\]]+)\]/m.exec(text)
   const ar = arMatch?.[1]
 
-  songTitle.value =
-    ti && ti.trim() && ti.trim() !== 'Unknown' ? ti.trim() : 'Unknown Title'
-  songArtist.value =
-    ar && ar.trim() && ar.trim() !== 'Unknown' ? ar.trim() : 'Unknown Artist'
+  // Optional chaining replaces `ti && ti.trim()` (S6582).
+  const tiTrimmed = ti?.trim()
+  songTitle.value = tiTrimmed && tiTrimmed !== 'Unknown' ? tiTrimmed : 'Unknown Title'
+  const arTrimmed = ar?.trim()
+  songArtist.value = arTrimmed && arTrimmed !== 'Unknown' ? arTrimmed : 'Unknown Artist'
 }
 
 // Set the song title directly (from audio filename stem). Used by useAudio.setupAudio

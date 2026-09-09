@@ -97,9 +97,11 @@ export function applyMode() {
     const taLines = text.split('\n')
     let firstLyricChar = text.length
     let charCount = 0
-    for (let i = 0; i < taLines.length; i++) {
-      if (META_RE.test(taLines[i]!) || taLines[i]!.trim() === '') {
-        charCount += taLines[i]!.length + 1
+    // Index `i` was only used to read `taLines[i]` — for-of is safe per
+    // code-quality-SKILL.md → for-of conversion safety (S4138).
+    for (const line of taLines) {
+      if (META_RE.test(line) || line.trim() === '') {
+        charCount += line.length + 1
         continue
       }
       firstLyricChar = charCount

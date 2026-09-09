@@ -73,9 +73,11 @@ let cleanupDrag: (() => void) | null = null
 function onSyncFile() {
   // Tranche 5: doSyncFile()
 }
-function onSeekOffsetTick(delta: number) {
-  // Tranche 5: tickSeekOffset(delta) — reads cfg.seek_offset_tick
-  void delta
+function onSeekOffsetTick(_delta: number) {
+  // Tranche 5: tickSeekOffset(_delta) — reads cfg.seek_offset_tick.
+  // Underscore prefix marks the parameter as intentionally unused (S3735:
+  // replaces the `void delta` no-op with the conventional TS/JS pattern;
+  // matches onSeekOffsetChange's `_e` below).
 }
 function onSeekOffsetChange(_e: Event) {
   // Tranche 5: sync #seek-offset value to cfg.seek_offset

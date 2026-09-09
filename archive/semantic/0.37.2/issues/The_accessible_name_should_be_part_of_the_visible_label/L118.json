@@ -1,0 +1,45 @@
+{
+  "key": "AaB45xMSBD7wArG_suY0",
+  "rule": "Web:S7927",
+  "severity": "MAJOR",
+  "component": "amokprime_linebyline:src/components/MenuBar.vue",
+  "project": "amokprime_linebyline",
+  "line": 118,
+  "hash": "ff4ecc98084160fea3e941794f165c5a",
+  "textRange": {
+    "startLine": 118,
+    "endLine": 123,
+    "startOffset": 4,
+    "endOffset": 5
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "The accessible name should be part of the visible label.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "a11y",
+    "accessibility",
+    "usability",
+    "wcag"
+  ],
+  "creationDate": "2026-09-06T22:45:51+0000",
+  "updateDate": "2026-09-06T22:46:14+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "HIGH"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "9b13f8e2-0cb3-4993-bac2-bb810763f4d6",
+  "lastChangeSource": "ANALYSIS"
+}

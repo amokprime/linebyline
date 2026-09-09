@@ -1,0 +1,226 @@
+{
+  "key": "AaCEjWnksgu35AS-jVFZ",
+  "rule": "typescript:S3776",
+  "severity": "CRITICAL",
+  "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+  "project": "amokprime_linebyline",
+  "line": 99,
+  "hash": "921a13b6d1b75b6d313f9a6c65b739d0",
+  "textRange": {
+    "startLine": 99,
+    "endLine": 99,
+    "startOffset": 16,
+    "endOffset": 28
+  },
+  "flows": [
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 104,
+            "endLine": 104,
+            "startOffset": 4,
+            "endOffset": 9
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 108,
+            "endLine": 108,
+            "startOffset": 2,
+            "endOffset": 4
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 118,
+            "endLine": 118,
+            "startOffset": 4,
+            "endOffset": 8
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 112,
+            "endLine": 112,
+            "startOffset": 6,
+            "endOffset": 8
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 113,
+            "endLine": 113,
+            "startOffset": 6,
+            "endOffset": 8
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 114,
+            "endLine": 114,
+            "startOffset": 6,
+            "endOffset": 8
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 114,
+            "endLine": 114,
+            "startOffset": 22,
+            "endOffset": 24
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 115,
+            "endLine": 115,
+            "startOffset": 6,
+            "endOffset": 11
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 127,
+            "endLine": 127,
+            "startOffset": 2,
+            "endOffset": 4
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 129,
+            "endLine": 129,
+            "startOffset": 4,
+            "endOffset": 7
+          },
+          "msg": "+2 (incl. 1 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 129,
+            "endLine": 129,
+            "startOffset": 37,
+            "endOffset": 39
+          },
+          "msg": "+1"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 130,
+            "endLine": 130,
+            "startOffset": 6,
+            "endOffset": 8
+          },
+          "msg": "+3 (incl. 2 for nesting)"
+        }
+      ]
+    },
+    {
+      "locations": [
+        {
+          "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+          "textRange": {
+            "startLine": 130,
+            "endLine": 130,
+            "startOffset": 35,
+            "endOffset": 37
+          },
+          "msg": "+1"
+        }
+      ]
+    }
+  ],
+  "status": "OPEN",
+  "message": "Refactor this function to reduce its Cognitive Complexity from 20 to the 15 allowed.",
+  "effort": "10min",
+  "debt": "10min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "brain-overload",
+    "editable-source"
+  ],
+  "creationDate": "2026-09-09T05:03:03+0000",
+  "updateDate": "2026-09-09T05:03:34+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "FOCUSED",
+  "cleanCodeAttributeCategory": "ADAPTABLE",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "HIGH"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "a34da5bc-9e5b-4d71-b875-b5d185d363e2",
+  "lastChangeSource": "ANALYSIS"
+}

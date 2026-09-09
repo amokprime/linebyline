@@ -1,0 +1,43 @@
+{
+  "key": "AaCDPDhshoGEu_MZKhps",
+  "rule": "typescript:S6661",
+  "severity": "MAJOR",
+  "component": "amokprime_linebyline:src/composables/useAppState.ts",
+  "project": "amokprime_linebyline",
+  "line": 68,
+  "hash": "0f3a0675eb3014ff50da8fa66b0fc939",
+  "textRange": {
+    "startLine": 68,
+    "endLine": 68,
+    "startOffset": 19,
+    "endOffset": 32
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Use an object spread instead of `Object.assign` eg: `{ ...foo }`.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "editable-source",
+    "es2018"
+  ],
+  "creationDate": "2026-09-08T22:54:53+0000",
+  "updateDate": "2026-09-08T22:55:22+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "8103ecfb-29ea-4aae-af1e-c5c0bf0a1f70",
+  "lastChangeSource": "ANALYSIS"
+}

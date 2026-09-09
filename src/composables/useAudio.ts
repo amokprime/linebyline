@@ -287,7 +287,10 @@ export function mountProgressDrag(): () => void {
   function seekTo(clientX: number) {
     const pct = getPct(clientX)
     const el = audioEl.value
-    if (el && el.duration) el.currentTime = pct * el.duration
+    // Optional chaining replaces `el && el.duration` (S6582). If `el?.duration`
+    // is truthy, `el` is necessarily non-null (else `el?.duration` would be
+    // undefined), so the `el.currentTime` write is safe.
+    if (el?.duration) el.currentTime = pct * el.duration
   }
 
   function onDown(e: MouseEvent) {

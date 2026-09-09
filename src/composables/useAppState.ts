@@ -57,15 +57,20 @@ function loadCfg(): AppConfig {
     stored = null
   }
   // Deep-clone DEFAULT_CFG so callers can mutate without aliasing the export.
-  const base: AppConfig = JSON.parse(JSON.stringify(DEFAULT_CFG))
+  // structuredClone preserves `undefined` (JSON drops it) — the cfg schema uses
+  // `=== undefined` and `??` checks, not `Object.keys().includes(...)`, so the
+  // behavior is equivalent for this shape. Replaces JSON.parse(JSON.stringify())
+  // per S7784.
+  const base: AppConfig = structuredClone(DEFAULT_CFG)
   if (!stored || typeof stored !== 'string') return base
   try {
     const d = JSON.parse(stored) as Partial<AppConfig> & { hotkeys?: HotkeyMap }
     Object.assign(base, d)
     // Hotkeys merge separately — Object.assign on a nested object replaces,
     // and we want missing keys to fall back to defaults (legacy localStorage
-    // may predate theme_toggle / replay_end / etc.).
-    base.hotkeys = Object.assign({}, DEFAULT_CFG.hotkeys, d.hotkeys || {})
+    // may predate theme_toggle / replay_end / etc.). Spread replaces
+    // Object.assign({}, ...) per S6661.
+    base.hotkeys = { ...DEFAULT_CFG.hotkeys, ...(d.hotkeys || {}) }
     migrateHotkeys(d, base)
     return base
   } catch {

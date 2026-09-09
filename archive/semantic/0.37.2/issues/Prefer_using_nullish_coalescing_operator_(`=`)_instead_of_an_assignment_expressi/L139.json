@@ -1,16 +1,33 @@
 {
+  "key": "AaB4pk4tDk5q6SaK23I2",
   "rule": "typescript:S6606",
+  "severity": "MINOR",
   "component": "amokprime_linebyline:src/config.ts",
+  "project": "amokprime_linebyline",
   "line": 139,
+  "hash": "1b01bfb8546b6335d4d370a3264ba879",
   "textRange": {
     "startLine": 139,
     "endLine": 139,
     "startOffset": 2,
     "endOffset": 78
   },
+  "flows": [],
+  "status": "OPEN",
   "message": "Prefer using nullish coalescing operator (`??=`) instead of an assignment expression, as it is simpler to read.",
-  "severity": "MINOR",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "es2020",
+    "nullish-coalescing",
+    "type-dependent"
+  ],
+  "creationDate": "2026-09-06T21:34:57+0000",
+  "updateDate": "2026-09-06T21:35:23+0000",
   "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
   "cleanCodeAttribute": "CONVENTIONAL",
   "cleanCodeAttributeCategory": "CONSISTENT",
   "impacts": [
@@ -19,5 +36,9 @@
       "severity": "LOW"
     }
   ],
-  "flows": []
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "71df398b-b2fa-4293-9fa9-44ba11067af1",
+  "lastChangeSource": "ANALYSIS"
 }

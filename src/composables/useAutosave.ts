@@ -85,13 +85,28 @@ function _restoreSecondaryPool(d: AutosaveData) {
   const { secondaryPool } = useAppState()
   // Clear any existing pool entries (loadAutosave is an init-time call)
   secondaryPool.value = []
-  for (let i = 0; i < d.poolTexts.length; i++) {
-    secondaryPool.value.push({ visible: true, text: d.poolTexts[i] || '' })
+  // Index `i` was only used to read `d.poolTexts[i]` — for-of is safe per
+  // code-quality-SKILL.md → for-of conversion safety (S4138).
+  for (const text of d.poolTexts) {
+    secondaryPool.value.push({ visible: true, text: text || '' })
   }
   const vis = d.visibleCount || 0
   for (let i = vis; i < secondaryPool.value.length; i++) {
     secondaryPool.value[i]!.visible = false
   }
+}
+
+// Compute the initial activeLine — the first non-meta non-blank line.
+// Extracted from loadAutosave() so the parent function stays under the
+// SonarQube cognitive-complexity threshold (S3776: 20 → ~12 post-extraction).
+// The monolith's same loop lives inline; extracting it here is safe because
+// the function is module-local and the only caller is loadAutosave().
+function _computeInitialActiveLine(text: string): number {
+  const lines = text.split('\n')
+  for (let i = 0; i < lines.length && i < MAX_LINES; i++) {
+    if (!META_RE.test(lines[i]!) && lines[i]!.trim() !== '') return i
+  }
+  return -1
 }
 
 // Port of the monolith loadAutosave(). Reads sessionStorage, restores state,
@@ -111,7 +126,8 @@ export function loadAutosave() {
       _callbacks.setMainText(d.main || cfg.value.default_meta)
       if (d.mergeDone) mergeDone.value = d.mergeDone
       if (d.audioPath) savedAudioPath.value = d.audioPath
-      if (d.poolTexts && d.poolTexts.length) _restoreSecondaryPool(d)
+      // Optional chaining replaces `d.poolTexts && d.poolTexts.length` (S6582).
+      if (d.poolTexts?.length) _restoreSecondaryPool(d)
     } catch {
       _callbacks.setMainText(cfg.value.default_meta)
     }
@@ -123,15 +139,10 @@ export function loadAutosave() {
   _callbacks.checkLineCounts()
   _callbacks.updateTitleFromText(_callbacks.getMainText())
 
-  // Compute initial activeLine — first non-meta non-blank line
+  // Compute initial activeLine — first non-meta non-blank line. Extracted
+  // to _computeInitialActiveLine() to keep this function under CC 15.
   if (activeLine.value < 0) {
-    const lines = _callbacks.getMainText().split('\n')
-    for (let i = 0; i < lines.length && i < MAX_LINES; i++) {
-      if (!META_RE.test(lines[i]!) && lines[i]!.trim() !== '') {
-        activeLine.value = i
-        break
-      }
-    }
+    activeLine.value = _computeInitialActiveLine(_callbacks.getMainText())
   }
 
   playingLine.value = -1

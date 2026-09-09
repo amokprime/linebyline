@@ -1,16 +1,32 @@
 {
+  "key": "AaB4pk4RDk5q6SaK23Ip",
   "rule": "typescript:S8786",
+  "severity": "MAJOR",
   "component": "amokprime_linebyline:src/utils/pasteHandlers.ts",
+  "project": "amokprime_linebyline",
   "line": 24,
+  "hash": "a59e46df426498248fa665227e9b381c",
   "textRange": {
     "startLine": 24,
     "endLine": 24,
     "startOffset": 22,
     "endOffset": 49
   },
+  "flows": [],
+  "status": "OPEN",
   "message": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
-  "severity": "MAJOR",
+  "effort": "20min",
+  "debt": "20min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "performance",
+    "regex"
+  ],
+  "creationDate": "2026-09-06T21:34:57+0000",
+  "updateDate": "2026-09-06T21:35:23+0000",
   "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
   "cleanCodeAttribute": "EFFICIENT",
   "cleanCodeAttributeCategory": "INTENTIONAL",
   "impacts": [
@@ -19,5 +35,9 @@
       "severity": "MEDIUM"
     }
   ],
-  "flows": []
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "71df398b-b2fa-4293-9fa9-44ba11067af1",
+  "lastChangeSource": "ANALYSIS"
 }
