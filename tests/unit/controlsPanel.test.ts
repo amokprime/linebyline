@@ -2,6 +2,11 @@
 // Pins the ControlsPanel render (rebuildHkPanel port): mode row, action grid,
 // typing-mode dimming, and the aria rules. Mounts standalone (the fieldset
 // lives in LeftPanel).
+//
+// Phase D Tranche 3 update: the two mode cells are now wired — clicking the
+// toggle_mode cell flips useAppState.hotkeyMode (and re-renders the panel);
+// clicking the offset_mode_toggle cell flips useAppState.offsetSeekMode.
+// Action cells remain inert until Tranches 4/5/9.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 
@@ -59,11 +64,58 @@ describe('ControlsPanel', () => {
     }
   })
 
-  it('emits activate on click but stays inert (no dispatch table until Phase D)', async () => {
+  it('mode cells read live cfg.hotkeys (DEFAULT_CFG when no stored cfg)', async () => {
+    const wrapper = await mountPanel()
+    // toggle_mode default is '`'; the mode cell's .hk-key badge shows it
+    const toggleModeCell = wrapper.findAll('.hk-cell.mode')[1]
+    expect(toggleModeCell.text()).toContain('`')
+  })
+
+  it('clicking the toggle_mode cell flips hotkeyMode and re-renders the panel label', async () => {
+    const wrapper = await mountPanel()
+    const { useAppState } = await import('@/composables/useAppState')
+    const { hotkeyMode } = useAppState()
+    expect(hotkeyMode.value).toBe(true)
+    expect(wrapper.findAll('.hk-cell.mode')[1].text()).toContain('Hotkey mode')
+
+    await wrapper.findAll('.hk-cell.mode')[1].trigger('click')
+    expect(hotkeyMode.value).toBe(false)
+    // the computed modeCells re-renders — label flips to "Typing mode",
+    // warn styling applied (monolith: warn when not in default mode)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAll('.hk-cell.mode')[1].text()).toContain('Typing mode')
+  })
+
+  it('clicking the offset_mode_toggle cell flips offsetSeekMode and re-renders the label', async () => {
+    const wrapper = await mountPanel()
+    const { useAppState } = await import('@/composables/useAppState')
+    const { offsetSeekMode } = useAppState()
+    expect(offsetSeekMode.value).toBe(false)
+    expect(wrapper.findAll('.hk-cell.mode')[0].text()).toContain('Offset time')
+
+    await wrapper.findAll('.hk-cell.mode')[0].trigger('click')
+    expect(offsetSeekMode.value).toBe(true)
+    await wrapper.vm.$nextTick()
+    expect(wrapper.findAll('.hk-cell.mode')[0].text()).toContain('Offset seek')
+  })
+
+  it('hotkey-only action cells dim when hotkeyMode is false (typing mode)', async () => {
+    const wrapper = await mountPanel()
+    const { useAppState } = await import('@/composables/useAppState')
+    const { hotkeyMode } = useAppState()
+    hotkeyMode.value = false
+    await wrapper.vm.$nextTick()
+    // play_pause (index 1) is in HOTKEY_ONLY but TYPING_AVAILABLE — not dimmed
+    // sync (index 3) is in HOTKEY_ONLY and NOT in TYPING_AVAILABLE — dimmed
+    const actionCells = wrapper.findAll('.hk-cell:not(.mode)')
+    expect(actionCells[1].attributes('aria-disabled')).toBeUndefined() // play_pause
+    expect(actionCells[3].attributes('aria-disabled')).toBe('true') // sync
+  })
+
+  it('action cell click stays inert (no dispatch table until Tranche 4/5/9)', async () => {
     const wrapper = await mountPanel()
     const spy = vi.fn()
     await wrapper.find('.hk-cell:not(.mode)').trigger('click')
-    // no listener is attached in the shell — the cell emits into the void
     expect(spy).not.toHaveBeenCalled()
     expect(wrapper.findComponent({ name: 'HotkeyCell' }).exists()).toBe(true)
   })

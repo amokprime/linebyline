@@ -2,23 +2,33 @@
 // Settings dialog — the monolith's #settings-overlay ported onto the
 // shadcn-vue Dialog (reka-ui gives the focus trap, Escape, and backdrop
 // close that the monolith hand-rolled in the keyboard section). Markup and
-// values come from openSettings/buildHkRows with DEFAULT_CFG as the source;
-// Phase D's config composable swaps in live cfg and wires openSettings/
-// saveSettingsNow, the hotkey capture interactions, the settings search, and
-// the reset confirm (_doResetDefaults). Port deltas: the search field and
-// capture inputs are inert; the monolith's inline reset confirm is kept
-// verbatim (the roadmap's AlertDialog swap is a Phase D decision); no visible
-// close button (monolith parity — Escape/backdrop close via reka-ui).
+// values come from openSettings/buildHkRows.
+//
+// Phase D Tranche 2 wiring: rows now render from live `cfg` (via useAppState)
+// instead of DEFAULT_CFG. When the user changes a setting (Tranche 8 wires
+// the capture/save interactions), the dialog re-renders automatically. The
+// hotkey capture inputs, settings search, and reset confirm stay inert until
+// Tranche 8. Port deltas: the search field and capture inputs are inert;
+// the monolith's inline reset confirm is kept verbatim (the roadmap's
+// AlertDialog swap is a Phase D decision); no visible close button
+// (monolith parity — Escape/backdrop close via reka-ui).
+import { computed } from 'vue'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
-import { DEFAULT_CFG, DEFAULT_META, HK_LABELS, HK_SECTIONS } from '../config'
+import { HK_LABELS, HK_SECTIONS } from '../config'
+import { useAppState } from '../composables/useAppState'
 
 defineProps<{ open: boolean }>()
 defineEmits<{ 'update:open': [value: boolean] }>()
 
+// Live cfg — Tranche 2 swaps DEFAULT_CFG for the reactive cfg ref so the
+// dialog re-renders when settings change (Tranche 8 wires the interactions).
+const { cfg } = useAppState()
+
 // monolith buildHkRows: stored==='Escape'?'Esc':stored — empty stays empty
-// (unlike _hkDisp's em dash, capture inputs show the blank)
+// (unlike _hkDisp's em dash, capture inputs show the blank). Now reactive
+// on cfg.value.hotkeys.
 function captureValue(key: string): string {
-  const stored = DEFAULT_CFG.hotkeys[key] || ''
+  const stored = cfg.value.hotkeys[key] || ''
   return stored === 'Escape' ? 'Esc' : stored
 }
 
@@ -32,16 +42,17 @@ const replayChecks = [
   { id: 's-replay-offset', field: 'replay_after_offset', label: 'Adjusting seek offset' },
 ] as const
 
-const intervalRows: { id: string; label: string; value: string; unit: string; min?: string; max?: string; step?: string }[] = [
-  { id: 's-tiny', label: 'Tiny', value: String(DEFAULT_CFG.tiny_ms), unit: 'ms' },
-  { id: 's-small', label: 'Small', value: String(DEFAULT_CFG.small_ms), unit: 'ms' },
-  { id: 's-medium', label: 'Medium', value: String(DEFAULT_CFG.medium_ms), unit: 'ms' },
-  { id: 's-large', label: 'Large', value: String(DEFAULT_CFG.large_ms), unit: 'ms' },
-  { id: 's-seek-inc', label: 'Seek increment', value: String(DEFAULT_CFG.seek_increment_s ?? 5), unit: 's', min: '1', max: '600' },
-  { id: 's-speed-ratio', label: 'Speed ratio', value: (DEFAULT_CFG.speed_ratio ?? 1.1).toFixed(2), unit: '×', step: '0.01', min: '1.01', max: '2' },
-  { id: 's-vol-inc', label: 'Volume increment', value: String(Math.round((DEFAULT_CFG.vol_increment || 0.1) * 100)), unit: '%', min: '1', max: '100' },
-  { id: 's-undo-debounce', label: 'Undo window', value: String(DEFAULT_CFG.undo_debounce_ms ?? 150), unit: 'ms', min: '1', max: '5000' },
-]
+// Reactive interval rows — re-computed when cfg.value changes.
+const intervalRows = computed(() => [
+  { id: 's-tiny', label: 'Tiny', value: String(cfg.value.tiny_ms), unit: 'ms' },
+  { id: 's-small', label: 'Small', value: String(cfg.value.small_ms), unit: 'ms' },
+  { id: 's-medium', label: 'Medium', value: String(cfg.value.medium_ms), unit: 'ms' },
+  { id: 's-large', label: 'Large', value: String(cfg.value.large_ms), unit: 'ms' },
+  { id: 's-seek-inc', label: 'Seek increment', value: String(cfg.value.seek_increment_s ?? 5), unit: 's', min: '1', max: '600' },
+  { id: 's-speed-ratio', label: 'Speed ratio', value: (cfg.value.speed_ratio ?? 1.1).toFixed(2), unit: '×', step: '0.01', min: '1.01', max: '2' },
+  { id: 's-vol-inc', label: 'Volume increment', value: String(Math.round((cfg.value.vol_increment || 0.1) * 100)), unit: '%', min: '1', max: '100' },
+  { id: 's-undo-debounce', label: 'Undo window', value: String(cfg.value.undo_debounce_ms ?? 150), unit: 'ms', min: '1', max: '5000' },
+])
 </script>
 
 <template>
@@ -91,7 +102,7 @@ const intervalRows: { id: string; label: string; value: string; unit: string; mi
           <div class="s-sec-label">
             Instant Replay
           </div>
-          <!-- Phase D: checked values bind to the live config composable -->
+          <!-- Phase D Tranche 2: checked values bind to live cfg (was DEFAULT_CFG) -->
           <label
             v-for="c in replayChecks"
             :key="c.id"
@@ -100,7 +111,7 @@ const intervalRows: { id: string; label: string; value: string; unit: string; mi
             <input
               :id="c.id"
               type="checkbox"
-              :checked="DEFAULT_CFG[c.field]"
+              :checked="cfg[c.field]"
             > {{ c.label }}
           </label>
         </div>
@@ -134,7 +145,7 @@ const intervalRows: { id: string; label: string; value: string; unit: string; mi
             id="s-default-meta"
             class="s-meta"
             aria-label="Default metadata tags"
-            :value="DEFAULT_META"
+            :value="cfg.default_meta"
           />
         </div>
         <div>

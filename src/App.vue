@@ -5,6 +5,12 @@
 // Next: the Phase D state composables bind the inert controls, with the
 // global keyboard handler port landing there (it dispatches to ~30 actions
 // and needs the state composables to exist first).
+//
+// Phase D Tranche 3 wiring: calls applyMode() in onMounted as the last step
+// of the Init sequence (monolith line ~10217: `rebuildHkPanel(); applyMode();`).
+// EditorArea's setup calls initModeSwitch() with its template refs, so by the
+// time App.vue's onMounted fires (children mount before parents), the
+// mode-switch singleton is bound and applyMode() can read the refs.
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import ThemeProvider from './components/ThemeProvider.vue'
 import MenuBar from './components/MenuBar.vue'
@@ -12,11 +18,69 @@ import LeftPanel from './components/LeftPanel.vue'
 import EditorArea from './components/EditorArea.vue'
 import SettingsDialog from './components/SettingsDialog.vue'
 import { usePanelCollapse } from './composables/usePanelCollapse'
+import { applyMode } from './composables/useModeSwitch'
+import { restoreAudioDisplay, setAudioCallbacks } from './composables/useAudio'
+import { useAutosave, initAutosave, doAutosave } from './composables/useAutosave'
+import { updateTitleFromText } from './composables/useTitle'
+import { useUndoRedo, type Snapshot } from './composables/useUndoRedo'
+import { useAppState } from './composables/useAppState'
 
 const { panelCollapsed, applyPanelCollapse, autoCollapseIfNeeded, setExpandRef } =
   usePanelCollapse()
 
 const settingsOpen = ref(false)
+
+// ── Tranche 2 wiring: autosave + title + undo/redo ──────────────────────────
+// Instantiate useUndoRedo with take/apply callbacks that read from useAppState.
+// Tranche 5 ports applySnapshot's full side-effect chain (renderMainLines,
+// checkLineCounts, updateMergeBtn, etc.); for now applySnapshot is a stub that
+// writes mainText + mergeDone — enough for undo/redo to not crash.
+const { mainText, secondaryPool, mergeDone } = useAppState()
+
+const undoRedo = useUndoRedo({
+  takeSnapshot: (): Snapshot => ({
+    main: mainText.value,
+    secondaries: secondaryPool.value.map((e) => e.text),
+    mergeDone: mergeDone.value,
+  }),
+  applySnapshot: (snap: Snapshot) => {
+    mainText.value = snap.main
+    // Tranche 5/6: renderMainLines, checkLineCounts, updateMergeBtn, clear extra secondaries
+    mergeDone.value = snap.mergeDone
+  },
+})
+
+// Wire useAutosave callbacks — read/write mainText, call useTitle, seed undo.
+initAutosave({
+  getMainText: () => mainText.value,
+  setMainText: (t: string) => { mainText.value = t },
+  updateTitleFromText: (text: string) => updateTitleFromText(text),
+  takeSnapshot: () => ({
+    main: mainText.value,
+    secondaries: secondaryPool.value.map((e) => e.text),
+    mergeDone: mergeDone.value,
+  }),
+  seedUndo: undoRedo.seed,
+  // Tranche 5/6 stubs:
+  renderMainLines: () => {},
+  checkLineCounts: () => {},
+})
+
+// Wire useAudio callbacks — doAutosave + updateTitleFromText + getMainText.
+// setAudioCallbacks is separate from initAudio (which LeftPanel calls with
+// the DOM refs). App.vue doesn't have the audio refs, only the callbacks.
+setAudioCallbacks({
+  getMainText: () => mainText.value,
+  setMainText: (t: string) => { mainText.value = t },
+  doAutosave: (pathHint?: string) => doAutosave(pathHint),
+  updateTitleFromText: () => updateTitleFromText(mainText.value),
+  // Tranche 5/6/9 stubs:
+  renderMainLines: () => {},
+  updateActiveLineFromTime: () => {},
+  scrollToPlaying: () => {},
+  syncSecScroll: () => {},
+  announce: () => {},
+})
 
 function expandPanel() {
   panelCollapsed.value = false
@@ -28,6 +92,17 @@ onMounted(() => {
   autoCollapseIfNeeded()
   applyPanelCollapse()
   window.addEventListener('resize', autoCollapseIfNeeded)
+  // monolith Init: restoreAudioDisplay — reactive bindings handle display
+  restoreAudioDisplay()
+  // monolith Init: loadAutosave — restores text + secondaries + seeds undo.
+  // **Port delta**: the monolith clears sessionStorage before loadAutosave
+  // (`sessionStorage.removeItem('lbl_autosave')`), which means autosave never
+  // restores. The Vue port does NOT clear — the single-file-html-app skill
+  // says "reload on init to survive accidental refresh". If the user wants
+  // the clear behavior, add `sessionStorage.removeItem('lbl_autosave')` here.
+  useAutosave().loadAutosave()
+  // monolith Init tail: rebuildHkPanel(); applyMode();
+  applyMode()
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', autoCollapseIfNeeded)

@@ -5,13 +5,45 @@
 // raw textarea behind it, followed by the secondary field columns). The main
 // column is the tranche-3 layout shell: line rendering, textarea contents,
 // the two checkboxes and the warn bar all bind to Phase D state composables.
+//
+// Phase D Tranche 3 wiring: registers template refs for #main-scroll,
+// #main-textarea, #main-lines and passes them to useModeSwitch.initModeSwitch
+// so the composable can read/write the DOM during applyMode(). The
+// renderMainLines callback is a no-op stub until Tranche 5 ports the real
+// renderer — the call site is preserved so Tranche 5 just swaps the stub.
 import { ref } from 'vue'
 import SecondaryField from './SecondaryField.vue'
+import { initModeSwitch } from '../composables/useModeSwitch'
+import { useAppState } from '../composables/useAppState'
 
 // Visible secondary-field column count — the monolith starts with zero
 // (addSecondary/removeSecondary grow and shrink it). Phase D's useAppState
 // pool (10-field cap, hide/reuse) replaces this local count.
 const secCount = ref(0)
+
+// mainText from useAppState — the textarea binds :value="mainText" (one-way).
+// Tranche 5 adds @input for two-way binding + paste/click handlers.
+const { mainText } = useAppState()
+
+// Template refs consumed by useModeSwitch.applyMode(). The refs are empty
+// until mount; applyMode reads .value at call time and no-ops pre-mount.
+const mainScroll = ref<HTMLElement | null>(null)
+const mainTextarea = ref<HTMLTextAreaElement | null>(null)
+const mainLines = ref<HTMLElement | null>(null)
+
+// Phase D Tranche 5 ports renderMainLines from the monolith — fills #main-lines
+// with .lrc-line children parsed from the textarea. No-op stub for now; the
+// call site in useModeSwitch is preserved so the swap is a one-liner.
+function renderMainLines() {
+  // Tranche 5: port from monolith — parse #main-textarea value, build .lrc-line
+  // <li> children with timestamp spans, attach click handlers, set .cursor /
+  // .active / .selected classes from useAppState refs.
+}
+
+// Register the refs + stub with the mode-switch singleton. App.vue's
+// onMounted calls applyMode() (monolith Init parity: rebuildHkPanel +
+// applyMode at the end of the startup sequence).
+initModeSwitch({ mainScroll, mainTextarea, mainLines }, renderMainLines)
 </script>
 
 <template>
@@ -55,19 +87,23 @@ const secCount = ref(0)
           />
           <div
             id="main-scroll"
+            ref="mainScroll"
             class="lyric-scroll"
           >
-            <!-- Phase D: renderMainLines port fills the .lrc-line children -->
+            <!-- Phase D Tranche 5: renderMainLines port fills the .lrc-line children -->
             <ul
               id="main-lines"
+              ref="mainLines"
               class="lyric-area"
               aria-label="Lyric lines"
             />
           </div>
           <textarea
             id="main-textarea"
+            ref="mainTextarea"
             spellcheck="false"
             aria-label="Main lyric text"
+            :value="mainText"
           />
         </div>
         <SecondaryField

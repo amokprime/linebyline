@@ -2,24 +2,91 @@
 // Left panel — structure ported from the monolith (#left-panel: header with
 // the collapse button, #audio-box, #controls-box). The collapse state lives
 // in usePanelCollapse (App owns the expand button; this component registers
-// the collapse button's ref for focus transfer).
-// Inert until later tranches/Phase D: audio playback, progress, seek offset,
-// volume and the hotkey grid have no composables yet — controls render with
-// the monolith's initial markup and no handlers.
+// the collapse button's ref for focus transfers).
+//
+// Phase D Tranche 4 wiring: audio controls (play/pause, volume, seek, speed,
+// progress bar) are now reactive — bound to useAudio's state refs + action
+// functions. The sync-file button and seek-offset arrows stay inert (Tranche 5
+// owns tickSeekOffset / doSyncFile / setOffsetMode). The hotkey grid
+// (ControlsPanel) was wired in Tranche 3.
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { usePanelCollapse } from '../composables/usePanelCollapse'
+import { useAudio } from '../composables/useAudio'
+import { useTitle } from '../composables/useTitle'
+import { useAppState } from '../composables/useAppState'
 import ControlsPanel from './ControlsPanel.vue'
-import { DEFAULT_CFG } from '../config'
 
 const { panelCollapsed, applyPanelCollapse, setCollapseRef } = usePanelCollapse()
 
-// sync-file hotkey badge (rebuildHkPanel appends it to #sync-file-btn);
-// Phase D swaps DEFAULT_CFG for the live config composable
-const syncFileKey = DEFAULT_CFG.hotkeys.sync_file || ''
+// Audio — initAudio is called with the two refs useAudio needs at module
+// level (#progress-wrap for the drag, #seek-offset for getSeekOffset). The rest
+// of the audio state (volume, speed, play/pause, time display) is consumed
+// reactively via the destructured refs + computed values.
+const progressWrap = ref<HTMLElement | null>(null)
+const seekOffset = ref<HTMLInputElement | null>(null)
+
+const {
+  initAudio,
+  masterVolume,
+  muted,
+  speedDisplay,
+  progressPct,
+  timePosText,
+  timeDurText,
+  ariaValueNow,
+  ariaValueText,
+  playing,
+  togglePlay,
+  toggleMute,
+  onVolInput,
+  onVolWheel,
+  onSpeedChange,
+  changeSpeed,
+  doSeekBack,
+  doSeekFwd,
+  mountProgressDrag,
+} = useAudio()
+
+initAudio({ progressWrap, seekOffset })
+
+// Song title/artist — from useTitle (Tranche 2). useAudio.setupAudio sets
+// songTitle from the filename; updateTitleFromText overwrites with [ti:]/[ar:].
+const { songTitle, songArtist } = useTitle()
+
+// Live cfg for the sync-file hotkey badge + vol-slider step (was DEFAULT_CFG
+// in Phase C; Tranche 3 swapped ControlsPanel to live cfg, Tranche 4 does the
+// same for LeftPanel's badge + vol step).
+const { cfg } = useAppState()
+const syncFileKey = cfg.value.hotkeys.sync_file || ''
+const volStep = cfg.value.vol_increment || 0.1
 
 function collapsePanel() {
   panelCollapsed.value = true
   applyPanelCollapse(false)
 }
+
+// Progress bar drag — mount in onMounted, cleanup in onBeforeUnmount.
+let cleanupDrag: (() => void) | null = null
+
+// Tranche 5 callback stubs — doSyncFile, tickSeekOffset, setOffsetMode.
+// LeftPanel wires the buttons to no-ops until Tranche 5 ships useSync.
+function onSyncFile() {
+  // Tranche 5: doSyncFile()
+}
+function onSeekOffsetTick(delta: number) {
+  // Tranche 5: tickSeekOffset(delta) — reads cfg.seek_offset_tick
+  void delta
+}
+function onSeekOffsetChange(_e: Event) {
+  // Tranche 5: sync #seek-offset value to cfg.seek_offset
+}
+
+onMounted(() => {
+  cleanupDrag = mountProgressDrag()
+})
+onBeforeUnmount(() => {
+  if (cleanupDrag) cleanupDrag()
+})
 </script>
 
 <template>
@@ -71,45 +138,50 @@ function collapsePanel() {
         id="song-title"
         aria-label="Song title"
       >
-        Unknown Title
+        {{ songTitle }}
       </div>
       <div
         id="song-artist"
         aria-label="Song artist"
       >
-        Unknown Artist
+        {{ songArtist }}
       </div>
       <div
         id="progress-wrap"
+        ref="progressWrap"
         role="slider"
         aria-label="Playback position"
         aria-valuemin="0"
         aria-valuemax="100"
-        aria-valuenow="0"
-        aria-valuetext="0:00 of 0:00"
+        :aria-valuenow="ariaValueNow"
+        :aria-valuetext="ariaValueText"
       >
-        <div id="progress-fill" />
+        <div
+          id="progress-fill"
+          :style="{ width: progressPct + '%' }"
+        />
       </div>
       <div id="time-row">
         <span
           id="time-pos"
           aria-label="Current position"
-        >0:00</span>
+        >{{ timePosText }}</span>
         <span
           id="time-dur"
           aria-label="Duration"
-        >0:00</span>
+        >{{ timeDurText }}</span>
       </div>
       <div id="media-row">
         <input
           id="speed-val"
           type="number"
-          value="1"
+          :value="speedDisplay"
           min="0.05"
           max="4"
           step="0.01"
           title="Playback speed"
           aria-label="Playback speed"
+          @change="onSpeedChange"
         >
         <span style="font-size: 12px; color: var(--muted-foreground)">x</span>
         <div
@@ -120,6 +192,7 @@ function collapsePanel() {
             id="speed-up-btn"
             class="fs-tick"
             title="Increase speed"
+            @click="changeSpeed(1)"
           >
             ▲
           </button>
@@ -127,6 +200,7 @@ function collapsePanel() {
             id="speed-down-btn"
             class="fs-tick"
             title="Reduce speed"
+            @click="changeSpeed(-1)"
           >
             ▼
           </button>
@@ -136,6 +210,7 @@ function collapsePanel() {
           class="media-btn"
           title="Seek back 5s (Ctrl+A)"
           aria-label="Seek back"
+          @click="doSeekBack"
         >
           <svg
             aria-hidden="true"
@@ -154,8 +229,9 @@ function collapsePanel() {
         <button
           id="btn-play-pause"
           class="media-btn"
-          title="Play/pause (Ctrl+Space)"
-          aria-label="Play"
+          :title="playing ? 'Pause (Ctrl+Space)' : 'Play (Ctrl+Space)'"
+          :aria-label="playing ? 'Pause' : 'Play'"
+          @click="togglePlay"
         >
           <svg
             id="media-play-icon"
@@ -164,6 +240,7 @@ function collapsePanel() {
             height="13"
             viewBox="0 0 11 13"
             fill="currentColor"
+            :style="{ display: playing ? 'none' : '' }"
           ><polygon points="1,0 11,6.5 1,13" /></svg>
           <svg
             id="media-pause-icon"
@@ -172,7 +249,7 @@ function collapsePanel() {
             height="13"
             viewBox="0 0 11 13"
             fill="currentColor"
-            style="display: none"
+            :style="{ display: playing ? '' : 'none' }"
           ><rect
             x="0"
             y="0"
@@ -192,6 +269,7 @@ function collapsePanel() {
           class="media-btn"
           title="Seek forward 5s (Ctrl+D)"
           aria-label="Seek forward"
+          @click="doSeekFwd"
         >
           <svg
             aria-hidden="true"
@@ -211,10 +289,12 @@ function collapsePanel() {
       <div id="seek-row">
         <input
           id="seek-offset"
+          ref="seekOffset"
           type="number"
           value="0"
           title="Seek offset (ms): shifts playback position when clicking a timestamped line"
           aria-label="Seek offset in milliseconds"
+          @change="onSeekOffsetChange"
         >
         <span>ms</span>
         <div
@@ -225,6 +305,7 @@ function collapsePanel() {
             id="seek-arr-fwd"
             class="fs-tick"
             title="Increase seek offset"
+            @click="onSeekOffsetTick(1000)"
           >
             ▲
           </button>
@@ -232,6 +313,7 @@ function collapsePanel() {
             id="seek-arr-back"
             class="fs-tick"
             title="Decrease seek offset"
+            @click="onSeekOffsetTick(-1000)"
           >
             ▼
           </button>
@@ -240,6 +322,7 @@ function collapsePanel() {
           id="sync-file-btn"
           title="Sync file"
           aria-label="Sync file"
+          @click="onSyncFile"
         >
           Sync file
           <span
@@ -252,8 +335,9 @@ function collapsePanel() {
       <div id="vol-row">
         <button
           id="vol-mute-btn"
-          title="Mute (Ctrl+M)"
-          aria-label="Mute"
+          :title="muted ? 'Unmute (Ctrl+M)' : 'Mute (Ctrl+M)'"
+          :aria-label="muted ? 'Unmute' : 'Mute'"
+          @click="toggleMute"
         >
           <svg
             id="vol-icon"
@@ -262,6 +346,7 @@ function collapsePanel() {
             height="16"
             viewBox="0 0 16 16"
             fill="currentColor"
+            :style="{ display: muted ? 'none' : '' }"
           ><path d="M9 2.5v11l-4-3H2a1 1 0 01-1-1v-3a1 1 0 011-1h3l4-3zM12.07 5.07a5 5 0 010 5.86M13.5 3.5a7.5 7.5 0 010 9" /></svg>
           <svg
             id="mute-icon"
@@ -270,7 +355,7 @@ function collapsePanel() {
             height="16"
             viewBox="0 0 16 16"
             fill="currentColor"
-            style="display: none"
+            :style="{ display: muted ? '' : 'none' }"
           ><path d="M9 2.5v11l-4-3H2a1 1 0 01-1-1v-3a1 1 0 011-1h3l4-3zM11.5 6l3 4m0-4l-3 4" /></svg>
         </button>
         <input
@@ -278,14 +363,16 @@ function collapsePanel() {
           type="range"
           min="0"
           max="1"
-          step="0.01"
-          value="1"
+          :step="volStep"
+          :value="masterVolume"
           aria-label="Volume"
+          @input="onVolInput"
+          @wheel="onVolWheel"
         >
         <span
           id="vol-pct"
           aria-label="Volume percentage"
-        >100%</span>
+        >{{ Math.round(masterVolume * 100) }}%</span>
       </div>
     </section>
     <section

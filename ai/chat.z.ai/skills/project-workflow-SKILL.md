@@ -161,12 +161,33 @@ Download copy
 
 Each turn, without prompting, copy only the files you created or updated that turn to the download directory. This includes:
 
-1. The app HTML file, `docs/index.html` (if produced this session).
+1. Any modified source files (`*.ts`, `*.vue`) so they are visible alongside code changes.
 2. Any modified test files (`*.spec.js`, `*.test.ts`) so they are visible alongside code changes.
 3. Any skill files you created or updated that turn.
-4. The updated MEMORY.md, if you changed it this turn.
+4. The updated `ai/chat.z.ai/MEMORY.md`, if you changed it this turn.
+5. The updated `0-Roadmap.md`, if tranche status changed.
 
-Put files directly in `download/` — do not use subdirectories (the user cannot see them). Use hyphenated filenames that encode the path (e.g. `chat.z.ai-MEMORY.md`, not `ai/chat.z.ai/MEMORY.md`).
+Put files directly in `download/` — do not use subdirectories (the user cannot see them). Use hyphenated filenames that encode the path (e.g. `src-composables-useAudio.ts`, not `src/composables/useAudio.ts`).
+
+**Keep `download/` clean between turns.** The same file should not exist both inside and outside the zip — the point of the zip is to collapse the sprawling flat structure. At the end of each turn, after running `prepare.sh` to generate `deliver.zip`, remove the loose files so only `deliver.zip` remains. At the start of the next turn, if a stale `deliver.zip` from the previous turn is still there, remove it before placing new files. The user downloads the zip, not the individual files.
+
+---
+
+Deliver zip pattern (multi-file sessions)
+
+When a session produces more than a handful of files (the modular refactor routinely ships 10-20 files per tranche), the flat download directory becomes hard to track. Use the prepare → download → deploy pattern:
+
+1. **Sandbox side (`scripts/prepare.sh`)**: after all files are in `download/`, run `bash /home/z/my-project/scripts/prepare.sh` to zip everything into `download/deliver.zip`. The script then removes the loose files, leaving only `deliver.zip`. The zip includes a `deploy.sh` that maps each flat hyphenated filename to its real repo path. The committed repo copy of `prepare.sh` lives at `ai/chat.z.ai/scripts/delivery/prepare.sh`.
+
+2. **User side (`ai/chat.z.ai/scripts/delivery/unpack.sh`)**: the user's `dpl` fish abbreviation (`abbr --add dpl '~/GitHub/linebyline/ai/chat.z.ai/scripts/delivery/unpack.sh'`) runs `unpack.sh`, which extracts `deliver.zip` to `scratch/`, runs `./deploy.sh`, waits 60s for Syncthing, then runs tests via SSH. The script cleans up `deploy.sh` and `deliver.zip` afterward. `unpack.sh` must be run from a terminal (not double-clicked) — the ssh + notify-send output needs a visible terminal.
+
+3. **`deploy.sh` template** (committed at `ai/chat.z.ai/scripts/delivery/deploy.sh`): a reusable script with a `deploy_file` function that uses `cmp -s` to skip byte-identical files — preserves timestamps and avoids unnecessary Syncthing syncs / git diffs. Each session, the agent fills in the file mappings (the `deploy_file <flat> <repo_path>` lines) and includes the filled-in copy inside `deliver.zip`. The template stays committed for reproducibility; the session copy is ephemeral.
+
+4. **`deploy.sh` contents**: the `deploy_file` function handles `mkdir -p` for the destination, `cmp -s` for the byte-identical check, and `mv` (or `rm` if skipped). After all `deploy_file` calls, a summary section lists changed files (one per line) for sanity-checking against the chat output. A collision-cleanup section then removes ALL remaining loose files (except `deploy.sh` and `deliver.zip`, which `unpack.sh` handles) to prevent collision with the next `unzip` round. Edit the `DEST` variable (or set `LINEBYLINE_ROOT`) if the repo lives elsewhere.
+
+5. **All three scripts live at `ai/chat.z.ai/scripts/delivery/`** — `deploy.sh` and `prepare.sh` are agent-facing (run by the agent or `prepare.sh`); `unpack.sh` is user-facing (run from terminal via `dpl`). The `delivery/` subdir keeps them away from the double-click silent scripts in `ai/chat.z.ai/scripts/`.
+
+The `deploy.sh` must be updated whenever a new file is added to the session's deliverables. Keep it in sync with `download/` — if a file is in `download/` but not in `deploy.sh`, it won't be deployed.
 
 ---
 

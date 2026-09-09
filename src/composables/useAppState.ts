@@ -103,6 +103,15 @@ const pasteJustHappened = ref(false)
 
 const isDirty = ref(false)
 
+// Main textarea content — the source of truth for the LRC text being edited.
+// Tranche 2 adds this so useAutosave can read/write the main text without
+// reaching into the DOM. EditorArea binds `<textarea :value="mainText">`
+// (one-way — Tranche 5 adds @input for two-way). **Caveat**: until Tranche 5,
+// user typing in the textarea doesn't update mainText — doAutosave saves the
+// programmatic value, not user edits. This is fine for Tranche 2's scope
+// (loadAutosave + doAutosave after setupAudio/import).
+const mainText = ref('')
+
 // ── provide/inject API ───────────────────────────────────────────────────────
 // App.vue (Tranche 2) calls `provideCfg()` in setup; descendants call
 // `useCfg()` to read the reactive cfg. Throws on missing inject — a child
@@ -139,5 +148,6 @@ export function useAppState() {
     geniusDetectedThisSession,
     pasteJustHappened,
     isDirty,
+    mainText,
   }
 }

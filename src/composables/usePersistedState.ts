@@ -102,9 +102,15 @@ export function usePersistedRef<T>(
 //   (single-source-of-truth); Tranche 4's useAudio formalizes that.
 // `lbl_muted` is a separate '1'/'0' flag the monolith reads at init — kept
 //   verbatim so existing localStorage round-trips.
+// `lbl_speed` is the playback speed multiplier — default 1.
+//   Monolith runtime clamp is [0.1, 4] (changeSpeed + Init both enforce it;
+//   the HTML input's min=0.05 is a stale attr that has no effect since
+//   changeSpeed clamps). Tranche 4 amended this validate from (0, 5] to
+//   [0.1, 4] to match — a stored 4.5 or 0.05 now falls back to 1 at load
+//   instead of sneaking through and getting silently clamped later.
 export function useSpeed() {
   return usePersistedRef<number>('lbl_speed', 1, {
-    validate: (v) => typeof v === 'number' && !Number.isNaN(v) && v > 0 && v <= 5,
+    validate: (v) => typeof v === 'number' && !Number.isNaN(v) && v >= 0.1 && v <= 4,
   })
 }
 

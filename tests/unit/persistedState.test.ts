@@ -196,6 +196,27 @@ describe('useSpeed / useVolume / useMuted pre-seeded wrappers', () => {
     expect(useSpeed().value).toBe(1)
   })
 
+  it('useSpeed rejects a stored value above 4 (monolith runtime clamp [0.1, 4])', async () => {
+    localStorage.setItem('lbl_speed', JSON.stringify(4.5))
+    const { useSpeed } = await loadHelper()
+    expect(useSpeed().value).toBe(1)
+  })
+
+  it('useSpeed rejects a stored value below 0.1 (monolith runtime clamp [0.1, 4])', async () => {
+    localStorage.setItem('lbl_speed', JSON.stringify(0.05))
+    const { useSpeed } = await loadHelper()
+    expect(useSpeed().value).toBe(1)
+  })
+
+  it('useSpeed accepts the boundary values 0.1 and 4', async () => {
+    localStorage.setItem('lbl_speed', JSON.stringify(0.1))
+    const { useSpeed } = await loadHelper()
+    expect(useSpeed().value).toBe(0.1)
+    localStorage.setItem('lbl_speed', JSON.stringify(4))
+    const mod = await import('@/composables/usePersistedState')
+    expect(mod.useSpeed().value).toBe(4)
+  })
+
   it('useVolume defaults to 1 and accepts the full [0,1] range', async () => {
     const { useVolume } = await loadHelper()
     const r = useVolume()

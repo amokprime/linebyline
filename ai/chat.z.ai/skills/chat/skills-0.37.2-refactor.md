@@ -324,7 +324,7 @@ Once you add `tsconfig.node.json` and fix the `.gitignore` `*genius*` exclusion,
 ### User:
 
 All updates applied except:
-`package.json` is already provided in Onboard and I'm not sure if the large `package-lock.json` is needed for Build step (historically it was used to sanity check Dependabot warnings about outdated pinned package versions). So I'm thinking of using this in [[ai/chat.z.ai/Repomix snippets#Build|Repomix snippets]]:
+`package.json` is already provided in Onboard and I'm not sure if the large `package-lock.json` is needed for Build step (historically it was used to sanity check Dependabot warnings about outdated pinned package versions). So I'm thinking of using this in [[ai/chat.z.ai/scripts/README#Build|Repomix snippets]]:
 ```yml
 repomix --output "scratch/upload/repomix-build.xml" \
 --include "ai/chat.z.ai/skills/linebyline-section-index-SKILL.md,\

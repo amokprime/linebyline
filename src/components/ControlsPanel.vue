@@ -4,19 +4,23 @@
 // warn-styled when the non-default mode is active) and the ordered action
 // cells (prev/play/next/sync/replay/end + the eight ts-adjust cells with ms
 // labels from cfg). Display rules live in utils/hotkeyDisplay.ts.
-// Inert until Phase D: hotkeyMode/offsetSeekMode are local refs holding the
-// monolith's initial state (useModeSwitch replaces them), cells render from
-// DEFAULT_CFG (the config composable swaps in live cfg), and activation has
-// no dispatch table yet.
-import { computed, ref } from 'vue'
+//
+// Phase D Tranche 3 wiring: hotkeyMode/offsetSeekMode now come from the
+// shared useAppState refs (the module singleton) — replaced the local refs
+// that held monolith defaults. Mode cell @activate dispatches through
+// useModeSwitch's toggleMode / toggleOffsetSeek. Action cells remain inert
+// (their dispatch table lands in Tranche 9 with the global keyboard handler;
+// Tranche 5 wires the sync/timestamp actions, Tranche 4 the audio ones).
+import { computed } from 'vue'
 import HotkeyCell from './HotkeyCell.vue'
-import { DEFAULT_CFG, HK_LABELS } from '../config'
+import { HK_LABELS } from '../config'
 import { hkCellKeys, hkPanelActions, HOTKEY_ONLY, TYPING_AVAILABLE } from '../utils/hotkeyDisplay'
+import { useAppState } from '../composables/useAppState'
+import { toggleMode, toggleOffsetSeek } from '../composables/useModeSwitch'
 
-const hotkeyMode = ref(true)   // Phase D: useModeSwitch
-const offsetSeekMode = ref(false)   // Phase D: useModeSwitch
+const { hotkeyMode, offsetSeekMode, cfg } = useAppState()
 
-const actions = computed(() => hkPanelActions(DEFAULT_CFG, offsetSeekMode.value))
+const actions = computed(() => hkPanelActions(cfg.value, offsetSeekMode.value))
 
 function cellAria(key: string, label: string, dimmed: boolean): string {
   // monolith quirk: the "(disabled in typing mode)" suffix only applies when
@@ -29,13 +33,13 @@ function isDimmed(key: string): boolean {
 }
 
 const modeCells = computed(() => [
-  { key: 'offset_mode_toggle', label: offsetSeekMode.value ? 'Offset seek' : 'Offset time', warn: offsetSeekMode.value },
-  { key: 'toggle_mode', label: hotkeyMode.value ? 'Hotkey mode' : 'Typing mode', warn: !hotkeyMode.value },
+  { key: 'offset_mode_toggle', label: offsetSeekMode.value ? 'Offset seek' : 'Offset time', warn: offsetSeekMode.value, onClick: toggleOffsetSeek },
+  { key: 'toggle_mode', label: hotkeyMode.value ? 'Hotkey mode' : 'Typing mode', warn: !hotkeyMode.value, onClick: toggleMode },
 ])
 </script>
 
 <template>
-  <!-- Phase D: activation dispatches through the CTRL_ACTIONS table -->
+  <!-- Phase D Tranche 9: action cell activation dispatches through the CTRL_ACTIONS table -->
   <div class="mode-row">
     <HotkeyCell
       v-for="m in modeCells"
@@ -44,16 +48,17 @@ const modeCells = computed(() => [
       :warn="m.warn"
       :warn-key="m.warn"
       :label="m.label"
-      :keys="[hkCellKeys(m.key, DEFAULT_CFG.hotkeys, hotkeyMode)[0]]"
+      :keys="[hkCellKeys(m.key, cfg.hotkeys, hotkeyMode)[0]]"
       :aria-label="HK_LABELS[m.key] || m.label"
       :title="HK_LABELS[m.key] || m.label"
+      @activate="m.onClick"
     />
   </div>
   <HotkeyCell
     v-for="a in actions"
     :key="a.key"
     :label="a.label"
-    :keys="hkCellKeys(a.key, DEFAULT_CFG.hotkeys, hotkeyMode)"
+    :keys="hkCellKeys(a.key, cfg.hotkeys, hotkeyMode)"
     :dimmed="isDimmed(a.key)"
     :aria-label="cellAria(a.key, a.label, isDimmed(a.key))"
     :title="HK_LABELS[a.key] || a.label"

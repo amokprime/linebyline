@@ -11,8 +11,7 @@ snippet() {
     include+=",tsconfig.node.json"
     include+=",tsconfig.vitest.json"
     include+=",tests/unit/**"
-    include+=",tests/helpers/index.js"
-    include+=",tests/helpers/package.json"
+    include+=",tests/helpers/**"
     repomix --output "$upload/repomix-build.xml" --include "$include"
 }
 # shellcheck source=.base.sh
