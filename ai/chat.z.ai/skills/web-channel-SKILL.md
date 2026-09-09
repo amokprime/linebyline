@@ -14,7 +14,8 @@ The user can only see files inside `/home/z/my-project/download/`. Everything el
 - Copy every deliverable to `download/` — the user cannot access other folders.
 - Avoid subdirectories inside `download/` — the user cannot see them. Put files directly in `download/` or zip them.
 - Don't clutter `download/` with compiled temporary files like `*.pyc`.
-- Append a version number suffix (v1, v2…) to each unversioned artifact filename. The first unversioned upload is v1. This prevents accidental overwrites when the user re-downloads.
+- For multi-file sessions (e.g. the modular refactor), use the prepare → download → deploy pattern: run `scripts/prepare.sh` to zip all deliverables + `deploy.sh` into `download/deliver.zip`. The user's `dpl` abbreviation runs `ai/chat.z.ai/scripts/delivery/unpack.sh` which extracts and deploys. See `project-workflow-SKILL.md` → "Deliver zip pattern" for the full protocol.
+- **Keep `download/` clean between turns.** The same file should not exist both inside and outside the zip — the point of the zip is to collapse the sprawling flat structure. After running `prepare.sh`, remove the loose files so only `deliver.zip` remains. At the start of the next turn, remove any stale `deliver.zip` before placing new files.
 - Avoid spaces in filenames. The download system URL-encodes spaces as `+`, which can cause "Failed to download file" errors. Use hyphens or underscores instead (e.g. `Vibecoding-workflow.md` not `Vibecoding workflow.md`).
 
 ---

@@ -7,6 +7,34 @@ The app HTML is about 2700 lines. Loading it whole costs about 50k tokens. Most 
 
 ---
 
+Port status (modular refactor — updated per tranche; the monolith is frozen until Phase E)
+
+Sections already ported live in `src/` modules: read the module first (its `tests/unit/` specs pin the behavior), and fall back to the monolith section only for the DOM-coupled halves that remain there.
+
+- Config → `src/config.ts`
+- Hotkey rules → `src/hotkeys/restrictedKeys.ts`
+- Keyboard → Key normalization → `src/hotkeys/keyUtils.ts`
+- LRC parse (pure helpers) → `src/utils/lrcParser.ts` (getSeekOffset / hasLyricContent / maybeAppendTrailingTs / suppressAuto / advanceActiveLine remain monolith-only)
+- Paste/meta → `src/utils/pasteHandlers.ts` (ensureReTagDefault / mergeLrcMeta take the meta text as a parameter — PORT DELTA)
+- Genius (pure helpers) → `src/utils/geniusExtractor.ts` (markGeniusSource / extractGeniusMeta remain monolith-only)
+- Theme → `src/composables/useTheme.ts` + `src/components/ThemeProvider.vue` (`.dark` class toggle, not `[data-theme]`)
+- Font settings → `src/composables/useEditorFont.ts` + `src/components/FontSelector.vue`
+- Button wiring (menu-bar slice) → `src/components/MenuBar.vue`
+- Left panel collapse → `src/composables/usePanelCollapse.ts` (reactive state + focus refs; `applyPanelCollapse`/`autoCollapseIfNeeded` live in App.vue's lifecycle)
+- Left panel / audio box / controls box (structure) → `src/components/LeftPanel.vue` (controls inert until Phase D; hk-grid empty until ControlsPanel)
+- Editor area / main field column / lyric-area + `.lrc-line` CSS → `src/components/EditorArea.vue` (line rendering, textarea, checkboxes unbound until Phase D)
+- Body + `#main` frame CSS → `src/App.vue` scoped styles; shared `.fs-spinner`/`.fs-tick` → `src/style.css`
+- Controls panel (grid display rules, HOTKEY_ONLY/TYPING_AVAILABLE) → `src/utils/hotkeyDisplay.ts` + `src/components/{ControlsPanel,HotkeyCell}.vue` (cells render from DEFAULT_CFG, inert until Phase D; activation emits, no dispatch table)
+- Shared `.hk-key` badge → `src/style.css`
+- Settings overlay (openSettings-populated markup) → `src/components/SettingsDialog.vue` on the vendored `src/components/ui/dialog/*` (reka-ui focus trap/Escape/backdrop); capture, search, save, reset-confirm logic stays monolith-only until Phase D
+- Secondary field columns (addSecondary DOM construction) → `src/components/SecondaryField.vue` (one column per `index` prop, inert until Phase D; EditorArea renders the list from a local count the Phase D state pool replaces)
+- Shared field-column CSS (.field-col/.field-header/.field-header-label/.fh-btn/.warn-bar) → `src/style.css` unscoped (EditorArea + SecondaryField); `.sec-textarea` scoped in SecondaryField
+- App-level hidden nodes (#file-picker, #a11y-announcer) → `src/App.vue` (inert until the Phase D import composable / _announce port)
+
+Phase C is complete (tranches 1–6, Sep 2026): every monolith element now has a Vue component, inert where state is pending. Everything else (State, Persistence, Undo/redo, Mode switching, Render/UI renderMainLines, Audio, Sync/timestamp, Line counts/merge, Title, Import, Settings search, Confirm dialog logic, Keyboard handlers, Unload, Init) is still monolith-only behavior until Phase D ports it — the keyboard handler tranche formally moved into Phase D (dispatch needs the state composables).
+
+---
+
 Step 1: Read the section markers — grep for `// ──`
 
 The app no longer embeds a SECTIONS index comment. Instead, grep for section markers:

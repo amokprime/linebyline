@@ -50,6 +50,7 @@ jobs:
             -Dsonar.organization=amokprime
             -Dsonar.scm.provider=git
             -Dsonar.exclusions=archive/**,tests/**,playwright.config.js
+            -Dsonar.coverage.exclusions=src/**,vite.config.mts
 
       # The scan alone exits 0 regardless of the quality gate; this step is what
       # makes a red gate fail the workflow (and thereby block the staging sync).

@@ -1,7 +1,7 @@
 ---
 summary: Vibecoding workflows for LineByLine that use two or more Repomix snippets. One workflow per session.
 links:
-  - "[[ai/chat.z.ai/Repomix snippets|Repomix snippets]]"
+  - "[[ai/chat.z.ai/scripts/README|README]]"
   - "[[ai/chat.z.ai/Diagrammo flowcharts|Diagrammo flowcharts]]"
 ---
 ### Building one or more features

@@ -1,0 +1,61 @@
+name: Deploy to GitHub Pages
+
+# Roadmap item 3 (archive/modular/plan/0-Roadmap.md), Phase A: this pipeline
+# is scaffolded but disarmed — workflow_dispatch is the ONLY trigger.
+#
+# DO NOT dispatch this before the Phase E cutover. A deploy-pages run repoints
+# the repo's Pages source from "Deploy from a branch" (main:/docs, the live
+# monolith) to "GitHub Actions" and immediately replaces the public site with
+# whatever dist/ contains. That flip is the intended single-moment cutover of
+# Phase E step 5 — on main, after the full Playwright suite is green against
+# the Vite build. When wiring the cutover, add the `push: branches: [main]`
+# trigger here and decide whether this workflow joins sync-staging.yml's gate
+# list.
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 #v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 #v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build Vite site
+        run: npm run build
+
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d #v6.0.0
+
+      - uses: actions/upload-pages-artifact@98ef48e41587a300b82de4cf298aa98b57b2faae #v5.0.0
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 #v5.0.1
