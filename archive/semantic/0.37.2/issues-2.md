@@ -634,3 +634,69 @@ Simulation confirmed:
    - Deploy the 6 patched source files + updated unpack.sh + MEMORY.md
 2. Push, then re-run the SonarCloud workflow (`workflow_dispatch`) to verify the 14 fixed issues are CLOSED.
 3. No need to mark Accept/False-Positive in SonarCloud UI yet per your note (no blocking issues).
+
+---
+## Turn 6
+
+### User:
+
+There are now 39 outstanding issues down from ~50. Many of them are Bash script specific and can definitely be addressed now.
+
+---
+### Agent:
+
+Let me re-fetch the PR #11 issues to a JSON file for analysis, then categorize the 39 remaining issues.
+Now I have the full picture. Let me categorize the 39 issues:
+
+- **9 `shelldre:S7688`** — `[` → `[[` in the 3 committed delivery scripts (the "Bash script specific" ones)
+- **1 `typescript:S7744`** — NEW from my build-1 patch (`d.hotkeys || {}` — the `|| {}` is useless since spreading undefined is a no-op)
+- **2 `typescript:S8786` in useTitle.ts** — my `.+` → `[^\]]+` change didn't satisfy SonarCloud; Accept per MAX_LINES=500 bounded-input rationale (need MEMORY update)
+- **27 already-documented Accept/FP** — no action (user said no need to mark in UI yet)
+Now I have the exact lines. Let me fix all 3 delivery scripts:
+Now fix unpack.sh. I need to get the current version first:
+Good — all 3 delivery scripts are fixed. Now fix the S7744 issue in useAppState.ts:
+231/231 tests pass + vue-tsc clean. Now let me set up the deliver.zip. First, fetch the 39 new issue JSONs and copy the patched files:
+Now let me update `generate_deploy_v2.py` to include the 3 delivery scripts in the mappings:
+Now let me update MEMORY.md with the new fixes:
+Now generate the deploy.sh, remove the old deliver.zip, and run prepare.sh:
+The `|| {}` is only in the comment — the actual code is clean. All 9 `[[` fixes are in the delivery scripts. Let me run prepare.sh:
+All verified. Let me update the worklog and summarize.
+#### Post-push remediation complete
+
+`deliver.zip` (96KB, 51 files) is in `download/`. After the push, PR #11 dropped from 50 → 39 OPEN issues. This turn fixes 10 more, leaving 29 (27 already-documented Accept/FP + 2 S8786 in useTitle.ts that need Accept marking).
+
+#### What was fixed this turn (10 issues)
+
+**9 `shelldre:S7688`** — `[` → `[[` in the 3 committed delivery scripts (the "Bash script specific" ones you mentioned):
+- `ai/chat.z.ai/scripts/delivery/deploy.sh` — 4 fixes (L45, L51, L113, L130)
+- `ai/chat.z.ai/scripts/delivery/prepare.sh` — 3 fixes (L31, L36, L51)
+- `ai/chat.z.ai/scripts/delivery/unpack.sh` — 2 fixes (L44, L48)
+
+The `[[` construct is bash's safer test — no word splitting, no pathname expansion, supports `&&`/`||` inside. All 3 scripts pass `bash -n` syntax check. The fixed scripts are shipped in the zip and will be deployed to `ai/chat.z.ai/scripts/delivery/`, overwriting the committed templates that SonarCloud is scanning.
+
+**1 `typescript:S7744`** — NEW from my build-1 patch. The `d.hotkeys || {}` in `useAppState.ts:73` was useless: spreading `undefined` is a no-op (`{...undefined}` === `{}`), so the `|| {}` fallback was dead code. Fixed: `{ ...DEFAULT_CFG.hotkeys, ...d.hotkeys }`. 231/231 Vitest specs green; `vue-tsc -b` clean.
+
+#### What remains (29 issues — no action needed)
+
+**2 `typescript:S8786` in `useTitle.ts:32/34`** — my build-1 regex change (`.+` → `[^\]]+`) didn't satisfy SonarCloud's S8786. The rule flags any regex with `+` quantifier, regardless of actual backtracking risk. Accept with rationale: input bounded by `MAX_LINES=500` (project invariant); simple tag-matcher with single character class + `+`; linear backtracking. Same rationale as the verbatim-port S8786 Accepts. Documented in MEMORY.
+
+**27 already-documented Accept/FP** — 7 S8786 + 7 S6594 + 1 S6557 + 2 S7755 + 1 S4138 (verbatim-port), 7 S6606 (semantic-differs), 1 Web:S6819 (slider exception), 1 Web:S7927 (icon-only FP). No action per your note.
+
+#### Deliver.zip contents (51 files)
+
+- 39 PR #11 issue JSONs (re-fetched; the 11 closed issues are gone)
+- 6 patched source files (5 unchanged from build-1 + 1 updated useAppState.ts with S7744 fix)
+- 3 fixed delivery scripts (deploy.sh + prepare.sh + unpack.sh — all with `[[`)
+- 1 updated MEMORY.md (3 new bullets: post-push re-scan summary, S7688 fix details, S8786 useTitle.ts Accept rationale)
+- 1 review triage doc (unchanged)
+- 1 deploy.sh (50 mappings + 9 known_dupes + known_zip_files array)
+
+#### Expected result after next push
+
+39 → 29 OPEN issues (the 9 S7688 + 1 S7744 = 10 will close). The remaining 29 are all Accept/FP — when you're ready, mark them in the SonarCloud UI using each issue `key` from the JSONs. No blocking issues per your note.
+
+#### Next steps
+
+1. Download `deliver.zip` and run `dpl` — the deploy will overwrite the 3 committed delivery scripts with the `[[` fixes + deploy the patched useAppState.ts + the 39 issue JSONs + updated MEMORY.md. The `known_dupes` cleanup will also remove any build-2 leftover folders if they reappear.
+2. Push, then re-run the SonarCloud workflow (`workflow_dispatch`) to verify the 10 fixes are CLOSED.
+3. The remaining 29 Accept/FP issues can be marked in the SonarCloud UI whenever convenient — no blocking issues.

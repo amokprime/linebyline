@@ -1,14 +1,14 @@
 {
-  "key": "AaCEjWoPsgu35AS-jVFg",
+  "key": "AaCIU_yesmsHQ2vn3UJN",
   "rule": "typescript:S8786",
   "severity": "MAJOR",
   "component": "amokprime_linebyline:src/composables/useTitle.ts",
   "project": "amokprime_linebyline",
-  "line": 32,
-  "hash": "f093c78cbd70bcc9d63eb587ce45fc69",
+  "line": 34,
+  "hash": "164fe37d3825eccb6b9a936ba0807872",
   "textRange": {
-    "startLine": 32,
-    "endLine": 32,
+    "startLine": 34,
+    "endLine": 34,
     "startOffset": 18,
     "endOffset": 40
   },
@@ -22,8 +22,8 @@
     "performance",
     "regex"
   ],
-  "creationDate": "2026-09-09T05:03:03+0000",
-  "updateDate": "2026-09-09T05:03:34+0000",
+  "creationDate": "2026-09-09T22:38:52+0000",
+  "updateDate": "2026-09-09T22:39:20+0000",
   "type": "CODE_SMELL",
   "organization": "amokprime",
   "pullRequest": "11",

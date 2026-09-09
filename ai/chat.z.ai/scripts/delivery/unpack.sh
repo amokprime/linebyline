@@ -41,11 +41,11 @@ cleanup() {
 trap cleanup INT TERM
 
 # ── Sanity checks ────────────────────────────────────────────────────────────
-if [ ! -d "$SCRATCH" ]; then
+if [[ ! -d "$SCRATCH" ]]; then
   echo "ERROR: scratch dir not found: $SCRATCH" >&2
   exit 1
 fi
-if [ ! -f "$DELIVER_ZIP" ]; then
+if [[ ! -f "$DELIVER_ZIP" ]]; then
   echo "ERROR: deliver.zip not found at $DELIVER_ZIP" >&2
   echo "Download deliver.zip from the chat first." >&2
   exit 1

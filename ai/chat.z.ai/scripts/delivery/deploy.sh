@@ -42,13 +42,13 @@ deploy_file() {
   local rel="$2"
   local dst="$DEST/$rel"
 
-  if [ ! -f "$src" ]; then
+  if [[ ! -f "$src" ]]; then
     skipped_missing+=("$src")
     echo "skip (missing): $src"
     return 0
   fi
 
-  if [ -f "$dst" ] && cmp -s "$src" "$dst"; then
+  if [[ -f "$dst" ]] && cmp -s "$src" "$dst"; then
     skipped_identical+=("$rel")
     echo "skip (identical): $rel"
     rm -- "${src:?}"
@@ -110,7 +110,7 @@ echo "Changed:          ${#changed[@]}"
 echo "Skipped (same):   ${#skipped_identical[@]}"
 echo "Skipped (missing): ${#skipped_missing[@]}"
 
-if [ "${#changed[@]}" -gt 0 ]; then
+if [[ ${#changed[@]} -gt 0 ]]; then
   echo ""
   echo "Changed files:"
   for f in "${changed[@]}"; do
@@ -127,7 +127,7 @@ echo ""
 echo "=== Cleanup (collision prevention) ==="
 # Print then delete each remaining file (except deploy.sh and deliver.zip).
 while IFS= read -r f; do
-  [ -z "$f" ] && continue
+  [[ -z "$f" ]] && continue
   echo "  rm: $f"
   rm -- "${f:?}"
 done < <(find . -maxdepth 1 -type f ! -name 'deploy.sh' ! -name 'deliver.zip')

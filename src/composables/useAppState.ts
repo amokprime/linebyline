@@ -69,8 +69,10 @@ function loadCfg(): AppConfig {
     // Hotkeys merge separately — Object.assign on a nested object replaces,
     // and we want missing keys to fall back to defaults (legacy localStorage
     // may predate theme_toggle / replay_end / etc.). Spread replaces
-    // Object.assign({}, ...) per S6661.
-    base.hotkeys = { ...DEFAULT_CFG.hotkeys, ...(d.hotkeys || {}) }
+    // Object.assign({}, ...) per S6661. The `|| {}` fallback is dropped per
+    // S7744 — spreading undefined is a no-op ({...undefined} === {}), so
+    // the empty object was useless.
+    base.hotkeys = { ...DEFAULT_CFG.hotkeys, ...d.hotkeys }
     migrateHotkeys(d, base)
     return base
   } catch {

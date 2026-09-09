@@ -28,12 +28,12 @@ set -euo pipefail
 DOWNLOAD_DIR="/home/z/my-project/download"
 ZIP="$DOWNLOAD_DIR/deliver.zip"
 
-if [ ! -d "$DOWNLOAD_DIR" ]; then
+if [[ ! -d "$DOWNLOAD_DIR" ]]; then
   echo "ERROR: download directory not found: $DOWNLOAD_DIR" >&2
   exit 1
 fi
 
-if [ ! -f "$DOWNLOAD_DIR/deploy.sh" ]; then
+if [[ ! -f "$DOWNLOAD_DIR/deploy.sh" ]]; then
   echo "ERROR: deploy.sh not found in $DOWNLOAD_DIR — create it first" >&2
   exit 1
 fi
@@ -48,7 +48,7 @@ rm -f -- "$ZIP"
 cd "$DOWNLOAD_DIR"
 mapfile -t files < <(find . -maxdepth 1 -type f ! -name 'deliver.zip' | sort)
 
-if [ "${#files[@]}" -eq 0 ]; then
+if [[ ${#files[@]} -eq 0 ]]; then
   echo "ERROR: no files to zip in $DOWNLOAD_DIR" >&2
   exit 1
 fi
