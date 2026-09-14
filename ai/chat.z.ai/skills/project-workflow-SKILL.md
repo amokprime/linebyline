@@ -52,7 +52,7 @@ Repomix: `repomix-review.xml`. Contains: aria-accessibility-SKILL.md, code-quali
 
 1. Re-read project-workflow-SKILL.md.
 2. Read the three audit skills in full. These are the skills most likely to be missed if read too early — reading them now, immediately before the audit, maximizes recall.
-3. For post-push Sonar remediation: enumerate issues directly from the SonarCloud public API via the sandbox (see sonarqube-workflow-SKILL.md Step 0) — no user upload needed for issue enumeration. For rule rationale (`why`/`how`), the user exports locally via `sonar-export` and uploads the zip.
+3. For post-push Sonar remediation: read the user-uploaded `sie` Markdown report (the canonical input — combines SonarCloud + CodeQL with Why/How rationale when `SONAR_API_KEY` is set). The sandbox API is a fallback for when `sie` failed on the user's end or you need a quick staleness cross-check (see sonarqube-workflow-SKILL.md Step 1).
 4. Review the code changes you made earlier this session. Audit those changes for the issues referenced in the three audit skills and make suggested fixes.
 
 ---
@@ -199,7 +199,7 @@ Cross-references
 - `code-quality` — patterns to follow and pitfalls to avoid when writing JavaScript
 - `single-file-html-app` — architectural patterns for the single-file constraint
 - `playwright-testing` — test impact awareness after code changes
-- `sonarqube-workflow` — sandbox API enumeration + local-export triage
+- `sonarqube-workflow` — `sie` Markdown report triage + sandbox API fallback (also covers CodeQL code-scanning alerts via the user's `sie` run)
 - `Vibecoding workflow` (ai/chat.z.ai/Vibecoding-workflow.md) — the human-directed session flow with step diagrams; documents the known workflows (Building features, Improving AI scaffolding, Remediating latent Sonar issues, Improving Playwright tests, Researching and implementing high-level plans). The user may follow any of these, stitch them together, or invent custom ones.
 - `Repomix snippets` (ai/chat.z.ai/Repomix-snippets.md) — the Repomix commands and step-to-bundle mapping. Step headers there are intentionally not numbered to reflect that steps can be used in any order.
 - `Diagrammo flowcharts` (ai/chat.z.ai/Diagrammo-flowcharts.md) — syntax reference for reading `dgmo` codeblocks in the Vibecoding workflow

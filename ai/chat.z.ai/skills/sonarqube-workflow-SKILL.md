@@ -1,17 +1,55 @@
 ---
 name: sonarqube-workflow
-description: Process SonarQube Cloud issues for the LineByLine project and guide remediation. Use this skill whenever the user asks about SonarQube findings, mentions rules like S3776/S2004/S7761/S6819/S7927, needs help deciding whether to fix or mark as Won't Fix, or wants to plan a SonarQube remediation pass before writing any code. Also use when the user uploads a zip of locally-exported SonarQube issues, or when the agent should enumerate issues directly from the SonarCloud public API (no user upload needed for issue enumeration).
+description: Triage SonarCloud and CodeQL findings for the LineByLine project and guide remediation. Use this skill whenever the user uploads a `sie` Markdown report (or a legacy `sonar-export` zip), asks about SonarCloud/CodeQL findings, mentions rules like S3776/S2004/S7761/S6819/S7927 or `py/...` CodeQL rule keys, needs help deciding whether to fix or mark as Won't Fix, or wants to plan a remediation pass before writing any code. Also use when the sandbox API is the only path (the user's `sie` run failed, or a quick staleness cross-check is needed mid-triage).
 ---
 
-SonarQube Cloud scans run on every push via GitHub Actions. The sandbox can enumerate issues directly via the public JSON API (no auth, no `sonar-export`); for rule rationale (`why`/`how` content), the user still exports locally via `sonar-export` and uploads the zip. The two paths complement each other: API for "what's firing where right now", local export for "why this rule and how to fix it".
+SonarCloud and CodeQL scans run on every push via GitHub Actions. The user runs `sie` (the consolidated `sonar-issue-exporter` CLI) locally and uploads the Markdown report — it includes both SonarCloud issues and CodeQL code-scanning alerts in one file, plus the rule "Why"/"How to fix it" rationale when `SONAR_API_KEY` is set. The sandbox cannot authenticate with GitHub or SonarCloud, so it cannot fetch the Why/How rationale, CodeQL alerts, or push back to a build loop on its own. When `sie` is unavailable (script failed, partial fetch, or you need a quick staleness check on a specific issue key), fall back to the public SonarCloud JSON API — it covers issue enumeration but not the rest.
 
 ---
 
-Step 0: Sandbox API enumeration (preferred first step)
+Step 0: Read the user-provided `sie` report (preferred first step)
 
-Before asking the user to export anything, fetch the current issue list directly from the SonarCloud public JSON API. The project is public (`amokprime_linebyline`), so issue enumeration works unauthenticated.
+The user runs `sie` locally and attaches the resulting Markdown file. The agent does not run `sie` (it can't — `sie` needs the user's `gh auth login` for CodeQL alerts and `SONAR_API_KEY` for the Why/How rationale). Your job is to parse the report and triage.
 
-Endpoints (use Python `urllib`, not the web reader tool — the web reader's URL validator rejects some query strings and the SPA pages render nothing for a static reader):
+What to expect in the report:
+
+- A project header: `# Issues — <project> (<scope>)`, with `Generated: <UTC>`, `Source: <input>`, `Total: N issue(s) across M source(s), K rule(s)  (SonarCloud: X, CodeQL: Y)`, and `Token: present | absent`. The token line tells you whether Why/How rationale was fetched — if `absent`, the Why/How subsections show a placeholder (e.g. `⚠ Set SONAR_TOKEN`) and you should ask the user to re-run with the token if you need rationale for an unfamiliar rule.
+- One `## <Source> Issues` section per source. `SonarCloud Issues` and `CodeQL Alerts` are the two possible sources. When only one source has findings, the simpler single-source layout is used (no parent `## <Source>` heading).
+- Per-source `### Summary` table: severity × count, type × count, and a "Top rules" bullet list with `ruleKey — N×` counts. Use this for the first-pass triage before reading individual findings.
+- One `### Rule: <ruleKey> — <rule name>` subsection per rule, with `Severity: … · Type: … · N instance(s)`, a `#### Why` block (rule rationale), a `#### How to fix` block (fix guidance; absent on simple rules), and an `#### Instances` table.
+- The Instances table columns are: `File | Line | Message | Key | Status`. `Key` is the stable identifier SonarCloud exposes (`AaBprfwD68fRE0gxBFj3` for SonarCloud issues, `codeql:N` for CodeQL alerts). `Status` is `OPEN`, `CONFIRMED`, `RESOLVED`, or `CLOSED`.
+- Deep links: SonarCloud issues link to `https://sonarcloud.io/project/issues?open=<KEY>&id=<PROJECT>`. CodeQL alerts do not have a deep link in the report — they live in the GitHub Security tab.
+- File names are repo-relative (e.g. `sie.py`, `src/composables/useAppState.ts`, `ai/chat.z.ai/scripts/delivery/deploy.sh`).
+
+Things that may surprise a fresh session:
+
+- CodeQL rule keys use a different namespace: `py/foo`, `js/bar`, `css/baz` — NOT the `python:S1234` / `Web:S5678` / `typescript:S8888` form SonarCloud uses. Same triage logic, different rule keys.
+- CodeQL "How to fix" is often a copy of the "Why" content (SonarCloud's `api/rules/show` doesn't return separate fix guidance for CodeQL rules). Don't flag this as a parsing bug.
+- The `Token: absent` line is fine for a public-project report — only the Why/How placeholders are gated. Issue enumeration + facets work without a token.
+- A single-issue URL (`?open=<KEY>&id=<PROJECT>`) input produces a "Focal Issue" callout at the top of the file. `sie` auto-falls-back to fetching the whole project's OPEN issues if the focal-issue lookup returns 0 results (the auth-boundary case) — the focal issue is still included because it appears in the full-project fetch.
+- A `-c` / `--clean` run drops the Why/How subsections silently (no placeholder). If the user mentions they ran `sie -c`, the Why/How blocks are intentionally absent — don't ask the user to re-run.
+- The default output filename is `issues.md`, auto-incrementing to `issues1.md`, `issues2.md`, etc. The user may rename the file before uploading.
+- A legacy `sonar-export` zip (per-issue JSON folders with `L1234.json` files plus shared `why.md`/`how.md` per rule) is the OLD format. `sie` replaced it. If the user uploads the old format, Step 2 of this skill still applies to the per-instance triage, but ask the user to re-run `sie` if possible — the Markdown report is the canonical input going forward.
+
+What the report does NOT include:
+
+- Source code snippets around each finding. For in-sandbox patching, the source must come from the Build Repomix bundle (`src/**`, `docs/index.html`). SonarCloud's `api/sources/show` is auth-gated even for public projects, so the sandbox cannot fetch snippets either.
+- Issue resolution state in real time. The report's `Status` column is a snapshot at generation time. If the user fixed an issue after running `sie` but before uploading, the report still shows `OPEN`. Cross-check via the API (Step 1) if status matters for the triage call.
+
+Triage directly from the report. Cross-check `Status` against the live API only when the report seems stale (e.g. the user mentions fixing an issue that still shows OPEN).
+
+---
+
+Step 1: Sandbox API enumeration (fallback when `sie` is unavailable)
+
+Use the public SonarCloud JSON API when:
+- The user's `sie` run failed or returned partial data (e.g. CodeQL alerts missing because `gh auth login` wasn't set up).
+- You need to cross-check whether a specific issue is still OPEN (the report's `Status` is a snapshot, not live).
+- The user asked about SonarCloud findings but did not attach a `sie` report, and wants a quick count before running `sie` themselves.
+
+The project is public (`amokprime_linebyline`), so issue enumeration works unauthenticated. The sandbox uses Python `urllib` (not the web reader tool — the web reader's URL validator rejects some query strings and the SPA pages render nothing for a static reader).
+
+Endpoints:
 
 - Main-branch OPEN issues (long-standing findings on `main`):
   ```
@@ -34,40 +72,16 @@ What the API returns: each issue has `key`, `rule`, `severity`, `component`, `li
 
 Auth boundary (verified Sep 2026): issue enumeration, facets, and rule filtering work unauthenticated. The following endpoints require auth and return HTTP 400 or empty results without it:
 
-- `api/rules/show?key=<rule>` — rule "why"/"how" content. For rule rationale, the user must export locally via `sonar-export` and upload the zip (see Step 1).
+- `api/rules/show?key=<rule>` — rule "why"/"how" content. The sandbox cannot fetch this — ask the user to re-run `sie` with `SONAR_API_KEY` set if the Why/How matters for the triage call.
 - `api/rules/list` — rule search. Same auth requirement.
+- `api/sources/show` — source snippets. Auth-gated even for public projects. The Build Repomix is the only sandbox-side source of patch-target code.
 - Single-issue lookup via `?issues=<KEY>` on `api/issues/search` — returns 0 results without auth. To check a specific issue's status, filter by `rules=<rule>` + `component=<component>` instead, or fetch all OPEN issues and grep the response for the key.
 
-Closed-issue gotcha: closed issues have `line: null` in the API response (and appear as `Lunknown.json` in local `sonar-export` exports). When triaging an export batch the user uploaded, cross-check each issue's `key` against the live API to detect staleness — a closed/FIXED issue in a fresh export batch is stale, not new (this bit the tranche-6 gate triage: the HotkeyCell S6819 export was the closed tranche-4 issue, not a regression). The API's `status` field is the source of truth: `OPEN`, `RESOLVED`, `CLOSED`.
+CodeQL alerts are NOT available via the sandbox API. The CodeQL code-scanning alerts endpoint (`/repos/{owner}/{repo}/code-scanning/alerts`) requires GitHub auth — only `sie` (with `gh auth login`) can fetch them locally.
+
+Closed-issue gotcha: closed issues have `line: null` in the API response. When triaging a `sie` report or cross-checking the API, the `status` field is the source of truth: `OPEN`, `RESOLVED`, `CLOSED`. A closed issue in a fresh `sie` report is stale — the user may have re-run `sie` before pushing their fix; cross-check with the API.
 
 Reference test script: `ai/chat.z.ai/scripts/test_sonar_api.py` — re-run it to verify API access still works after any sandbox change.
-
-When to skip Step 0 and go straight to Step 1: only when the user has already uploaded a zip of locally-exported issues AND wants the `why.md`/`how.md` rule rationale that the API cannot provide. In that case, the export zip is the authoritative source — but still run Step 0 in parallel to cross-check issue statuses (catches the closed-issue staleness gotcha).
-
----
-
-Step 1: Parse a local export zip (when the user uploads one)
-
-Directory layout (per version):
-```
-{version}/
-  issues/
-    Category_folder_name/
-      L1234.json      — one per issue instance, named by line number
-      L1234_2.json    — second issue on the same line
-      why.md          — rule rationale (shared — same for all instances of a rule)
-      how.md          — fix guidance (shared; absent on simple rules)
-    Another_category/
-      ...
-  linebyline-{version}.html
-  linebyline-{version}.md
-```
-
-Each `L{line}.json` contains the full issue data (rule, component, line, textRange, message, severity, type, cleanCodeAttribute, cleanCodeAttributeCategory, impacts, flows). Category folder names are trimmed: no `_1`/`_2` instance counters, no `_from_N_to_the_15_allo` complexity suffixes — all instances of the same rule are merged into one folder.
-
-Read `why.md`/`how.md` once per category folder (they are already deduplicated). Scan all `L*.json` files in the folder to get every instance — each file is a separate finding.
-
-Before triaging an export batch, cross-check each issue's status via the API (Step 0). A closed issue in a fresh export is stale — the user may have re-exported an already-folded FIXED issue. The API's `status` field is authoritative; the export's `line` field being `null`/`Lunknown` is a symptom of closed status, not the cause.
 
 ---
 
@@ -90,6 +104,7 @@ JavaScript / TypeScript rules (target `docs/index.html` or test files):
 | S6443 | Use `String.raw` on regex | Almost always false positive for `/pattern/` literals | High |
 | S4023 | Prefer `Math.min`/`Math.max` | Only true min/max patterns; not all ternaries | Medium |
 | S3800 | Negate condition | Only when there is a meaningful `else` branch | Medium |
+| S7744 | Useless `|| {}` after spread | Spreading `undefined` is a no-op (`{...undefined}` === `{}`); drop the fallback | Low |
 
 GitHub Actions workflow rules (target `.github/workflows/*.yml`):
 
@@ -97,6 +112,8 @@ GitHub Actions workflow rules (target `.github/workflows/*.yml`):
 |---|---|---|---|
 | `githubactions:S6505` | `npx`/`npm ci` supply-chain | Replace `npx <pkg>` with `./node_modules/.bin/<pkg>` (direct binary, no on-demand install); add `--ignore-scripts` to `npm ci` to prevent lifecycle scripts from running during install | Low — both fixes are mechanical and eliminate the attack surface without breaking functionality. The `npx` binary is already in `node_modules/.bin/` after `npm ci`, so the direct path works. `--ignore-scripts` is safe when the only postinstall that matters (e.g. Playwright browser download) is explicitly handled by a separate step. |
 | `githubactions:S8543` | Pin exact package version | Collapses into the S6505 fix — `./node_modules/.bin/<pkg>` runs the version pinned in `package.json`, so no on-demand install can pull an unverified release. For action pins (`actions/checkout@v4`), pin to the commit SHA (`actions/checkout@11d5960a...`) | Low — SHA-pinning is best practice. Version-tag pins (`@v4`) are mutable and can be re-pointed by the action maintainer. |
+| `githubactions:S7631` | Fork-code in workflow | Compare-API check that the head SHA is on `main` (or `behind`/`identical`) before merging | Low — Won't Fix when the workflow never checks out or executes the event SHA, only merges commits verified to be on main. Marked False Positive in the SonarCloud UI; a resolved security issue plus this marking flips the retroactively-computed quality gate green. |
+| `githubactions:S8264/S8233` | Permissions scope | Split workflow-level permissions to job level (build: `contents: read`; deploy: `pages: write` + `id-token: write`) | Low |
 
 Shell rules (target `ai/chat.z.ai/scripts/*.sh`, `ai/zcode/transcript.sh`):
 
@@ -114,6 +131,10 @@ Vue / web rules (target `src/components/*.vue`):
 | `Web:S7927` | Accessible name contains visible label | `aria-label` must be a superset of visible text; for icon-only buttons, the `aria-label` is the accessible name (can't contain an emoji glyph — False Positive) | Medium |
 | `Web:InputWithoutLabelCheck` | Input without label | Add `id` + `aria-label` (visible `<label for>` not needed on `display:none` inputs) | Low |
 
+CodeQL rules (target `sie.py`, `docs/index.html`, `src/**`):
+
+CodeQL rule keys use a `language/category` namespace, distinct from Sonar's `language:Snnnn`. Triage is the same as SonarCloud issues — assess each instance, fix or Accept per the rule's actual semantics. CodeQL alerts appear in the `## CodeQL Alerts` section of the `sie` report and only fire when `gh auth login` is set up locally.
+
 ---
 
 Step 3: Assess each finding individually
@@ -130,11 +151,17 @@ Math.min/max ternaries (S4023) — not every `a > b ? a : b` is a min/max replac
 
 Negated condition (S3800) — only invert the condition if there is a meaningful else or else if branch. A lone `if (!x) return` with no else is fine as-is; inverting it adds an empty block and reduces clarity. Mark as Won't Fix: "No else branch; inversion would reduce clarity."
 
+Useless `|| {}` after spread (S7744) — spreading `undefined` is a no-op (`{...undefined}` === `{}`), so `{ ...foo, ...(bar || {}) }` has dead `|| {}` fallback. Drop it: `{ ...foo, ...bar }`. The same applies to `(arr || [])` after a spread into an array literal — `[...foo, ...(arr || [])]` should be `[...foo, ...arr]`.
+
 githubactions:S6505 (`npx` supply-chain) — always fix. Replace `npx <pkg>` with `./node_modules/.bin/<pkg>`. This is safe because `npm ci` (which runs before the `npx` call in CI) installs the package into `node_modules/.bin/`. The direct binary path eliminates the on-demand install path that `npx` would use if the package were missing. For `npm ci` findings, add `--ignore-scripts` — safe when the only postinstall that matters is handled by a separate explicit step (e.g. `playwright install --with-deps` handles browser download, so `npm ci --ignore-scripts` skipping `@playwright/test`'s postinstall is fine).
 
 githubactions:S8543 (pin exact version) — always fix for `npx` calls (collapsed into the S6505 fix — direct binary uses package.json-pinned version). For GitHub Actions (`actions/checkout@v4`), pin to commit SHA. No false positives observed.
 
+githubactions:S7631 (fork-code) — Won't Fix when the workflow only merges commits verified to be on `main`, never checks out or executes the event SHA. Marked False Positive in the SonarCloud UI; a resolved security issue plus this marking flips the retroactively-computed quality gate green.
+
 shelldre:S7682 (explicit return) — Won't Fix for `.base.sh`'s snippet-caller functions where the exit status is intentionally the last command's (repomix); an explicit `return 0` would mask a repomix failure and zip/copy missing output. Fix elsewhere.
+
+shelldre:S7688 (`[` → `[[`) — always fix. `[[` is bash's safer test: no word splitting, no pathname expansion on variables, supports `&&`/`||` inside, and is generally preferred for conditional tests. Mechanical: `if [ ! -f "$src" ]` → `if [[ ! -f "$src" ]]`.
 
 Web:S6819 (ARIA role → native element) — fix when the native element's interaction model fully covers the use case (e.g. `div[role=button]` → `<button type=button>`). Won't Fix when the element has a custom mouse/keyboard interaction model that can't be a native input (e.g. `#progress-wrap` seek bar with mousedown+drag+wheel). Document the Won't Fix rationale and mark Accept in the SonarCloud UI.
 
@@ -148,13 +175,14 @@ Step 4: Plan the remediation pass
 
 Group accepted fixes by section (use the linebyline-section-index skill to find sections, or grep `src/` for the component path). Plan one category of change per turn to reduce regression risk. Typical order:
 
-1. Simple substitutions first (`.dataset`, `Number.isNaN`, `Object.hasOwn`, `replaceAll`)
+1. Simple substitutions first (`.dataset`, `Number.isNaN`, `Object.hasOwn`, `replaceAll`, `|| {}` after spread)
 2. for-of conversions (selective)
 3. Helper extraction for nesting depth (S2004)
 4. Cognitive complexity reduction (S3776) — most invasive, do last
-5. Workflow-file rules (S6505, S8543) — independent of app code, can be done in any order
+5. Workflow-file rules (S6505, S8543, S7631) — independent of app code, can be done in any order
 6. Shell-script rules (S7682, S7679, S7688) — independent of app code
 7. Vue/web rules (S6819, S7927, InputWithoutLabelCheck) — coordinate with the aria-accessibility skill
+8. CodeQL alerts — assess per rule; same triage logic as SonarCloud
 
 For cognitive complexity, identify the function by its start line and name from the issue JSON, then look up the section. High-CC functions that have already been reduced via helper extraction in a prior pass may have CC scores that are now lower than what the export shows — verify current state before writing any code.
 
@@ -173,6 +201,10 @@ Document Won't Fix decisions in the chat output for the user to record. Standard
 - S6819 custom interaction: "Won't Fix: custom mouse/keyboard interaction model (mousedown+drag+wheel) can't use a native `<input type="range">`. See aria-accessibility skill Rule 1."
 - S7927 icon-only button: "False Positive: icon-only button whose aria-label can't contain an emoji glyph. aria-label is the correct accessible name (WCAG / aria-accessibility skill Rule 8)."
 - S7682 snippet-caller: "Won't Fix: function exit status is intentionally the last command's (repomix); an explicit return would mask failures."
+- S6606 verbatim port: "Accept: verbatim monolith port (Tranche 1); modernization belongs to the post-Phase-E cutover pass (roadmap item 5)."
+- S8786 verbatim port: "Accept: verbatim monolith port; input bounded by `MAX_LINES=500`, simple tag-matcher regex with no nested quantifiers — linear backtracking."
+- S6594 verbatim port: "Accept: verbatim monolith port; `.match` → `.exec` is safe but diverges from the verbatim body."
+- S7744: "Fixed: dropped `|| {}` after spread — spreading `undefined` is a no-op."
 
 In the SonarCloud UI, the resolution options are "False Positive" and "Accept" (no "Won't Fix" label). Use "False Positive" for analyzer-error cases (S6443, S7927 icon-only), "Accept" for intentional-design cases (S6819 custom interaction, S7682 snippet-caller, S6606 verbatim-port). A resolved security issue plus an Accept marking flips the retroactively-computed quality gate green.
 
@@ -182,7 +214,9 @@ Step 6: Version and delivery
 
 SonarQube remediation passes are patch releases (e.g. 0.35.17 → 0.35.18). No checklist file required for pure quality passes with no functional change — state this explicitly in the chat output.
 
-After delivery, SonarQube will re-scan on the next push. New findings may appear if a refactor introduced new patterns (e.g. helper extraction can create new functions SonarQube evaluates independently). To force a re-scan without a push, the user can re-run the SonarCloud workflow via `workflow_dispatch` (enabled on `sonarcloud.yml`).
+After delivery, SonarCloud will re-scan on the next push. New findings may appear if a refactor introduced new patterns (e.g. helper extraction can create new functions SonarQube evaluates independently). To force a re-scan without a push, the user can re-run the SonarCloud workflow via `workflow_dispatch` (enabled on `sonarcloud.yml`). CodeQL alerts are re-scanned on every push to a branch with the default setup; the GitHub Security tab is the source of truth for alert state.
+
+The `sie` report itself should be saved to `archive/semantic/<version>/issues.md` (or `issues-N.md` if the user incremented the filename) so future sessions can compare the triage baseline against the next push's report. The `sie -c` / `--clean` flag drops the licensed Why/How sections if the user prefers not to commit that SonarSource content to a GPL-3 repo.
 
 ---
 
@@ -200,3 +234,15 @@ False positive summary
 | Shell snippet-caller exit status is last command's | S7682 | Won't Fix — masking risk |
 | `??=` not equivalent to `=== undefined` check | S6606 | Accept — semantics differ on null |
 | `.match` → `.exec` diverges from verbatim port | S6594 | Accept — verbatim-port rationale |
+| Verbatim monolith port, modernization deferred | S8786/S6557/S7755/S4138 | Accept — post-Phase-E pass |
+| Fork-code in workflow that only merges verified main commits | githubactions:S7631 | False Positive — workflow never executes the event SHA |
+| `|| {}` after spread is dead code | S7744 | Fix — drop the `|| {}` |
+
+---
+
+Cross-references
+
+- `code-quality` — the same rule patterns from a "write code that avoids them in the first place" angle
+- `aria-accessibility` — full Rule 1 / Rule 8 rationale for S6819 / S7927
+- `project-workflow` — Post-patch verification (run `npm run test:unit` after `src/**` patches) and Post-turn updates (MEMORY.md / skill updates after a remediation turn)
+- `sie` README (https://github.com/amokprime/sonar-issue-exporter) — installation, full CLI reference, the auth-boundary table, troubleshooting

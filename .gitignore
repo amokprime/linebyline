@@ -38,7 +38,6 @@ npm-debug.log*
 !tests/*.spec.js-snapshots/*genius*.txt
 !src/utils/geniusExtractor.ts
 !tests/unit/geniusExtractor.test.ts
-ROADMAP.md
 why.md
 how.md
 scratch
