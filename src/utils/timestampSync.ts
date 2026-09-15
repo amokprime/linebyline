@@ -131,8 +131,7 @@ export function findNextNonMetaFromIdx(updatedLines: string[], fromIdx: number):
 export function batchSplitParens(text: string): string {
   const lines = text.split('\n');
   const out: string[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    const l = lines[i]!;
+  for (const l of lines) {
     if (META_RE.test(l) || l.trim() === '') { out.push(l); continue; }
     const hasTs = TS_RE.test(l);
     const tsPrefix = hasTs ? l.slice(0, 10) : '';

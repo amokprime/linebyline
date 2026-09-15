@@ -30,11 +30,14 @@ async function mountOpen() {
 
 describe('SettingsDialog shell', () => {
   it('renders nothing visible while closed', async () => {
+    // Timeout: reka-ui's Dialog portal setup is slow under CI load (27 parallel
+    // workers competing for resources). The default 5s timeout is too tight;
+    // 15s gives headroom without masking real hangs.
     const mod = await import('@/components/SettingsDialog.vue')
     wrapper = mount(mod.default, { props: { open: false }, attachTo: document.body })
     await vi.dynamicImportSettled()
     expect(document.querySelector('#settings-title-bar')).toBeNull()
-  })
+  }, 15000)
 
   it('opens with the title bar, search field, and heading', async () => {
     await mountOpen()
@@ -105,5 +108,5 @@ describe('SettingsDialog shell', () => {
     wrapper.setProps({ open: false })
     await vi.dynamicImportSettled()
     expect(document.querySelector('#settings-title-bar')).toBeNull()
-  })
+  }, 15000)
 })

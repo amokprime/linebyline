@@ -33,7 +33,7 @@
 // exports. vi.resetModules() in tests gives a fresh module.
 
 import { ref } from 'vue'
-import { DEFAULT_CFG, type AppConfig, type HotkeyMap, HK_LABELS, HK_SECTIONS } from '@/config'
+import { DEFAULT_CFG, type AppConfig, type HotkeyMap, HK_LABELS } from '@/config'
 import { useAppState } from './useAppState'
 import { isRestrictedForAll, isRestrictedForKey } from '@/hotkeys/restrictedKeys'
 import { normKey } from '@/hotkeys/keyUtils'
@@ -325,12 +325,10 @@ export function onCaptureKeydown(key: string, e: KeyboardEvent): boolean {
   }
 
   // Enter = activate Swap if visible, else just advance focus.
+  // Both branches set _pendingAdvanceKey — the SettingsDialog component's
+  // onCaptureKd wrapper reads it to decide whether to click Swap before advancing.
   if (e.key === 'Enter') {
-    if (isReplaceVisible(key)) {
-      _pendingAdvanceKey.value = key
-    } else {
-      _pendingAdvanceKey.value = key
-    }
+    _pendingAdvanceKey.value = key
     return true
   }
 
@@ -648,6 +646,9 @@ export function useSettings() {
   }
 }
 
-// Re-export HK_SECTIONS + HK_LABELS for the template's convenience.
-export { HK_SECTIONS, HK_LABELS }
+// Re-export for the template's convenience. HK_LABELS is used locally (above),
+// so it's a normal re-export. HK_SECTIONS is only re-exported (not used locally),
+// so it uses `export ... from` (S7763 compliant).
+export { HK_LABELS }
+export { HK_SECTIONS } from '@/config'
 export type { AppConfig, HotkeyMap }

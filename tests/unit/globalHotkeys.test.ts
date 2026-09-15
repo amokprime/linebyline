@@ -155,6 +155,7 @@ vi.mock('@/composables/useImport', () => ({
 }))
 
 vi.mock('@/composables/useTheme', () => ({
+  cycleTheme: mocks.cycleTheme,
   useTheme: () => ({
     themeMode: { value: 'light' },
     applyTheme: vi.fn(),

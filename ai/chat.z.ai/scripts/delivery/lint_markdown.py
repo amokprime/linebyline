@@ -10,8 +10,6 @@ Auto-fixes:
      (Obsidian renders [id] as a link label with no URL)
   4. Bullet indentation normalized to 4-space steps:
      level 1 = 0 spaces, level 2 = 4 spaces, level 3 = 8 spaces, etc.
-     (detects existing indentation depth by counting leading spaces / 2,
-     then re-emits with 4 spaces per level)
 
 Warns (does NOT auto-fix):
   5. Bullet lines >400 chars — likely a minified clump, consider splitting
@@ -29,6 +27,7 @@ Exit codes:
   1 = overlong bullets found (need manual splitting)
   2 = usage error
 """
+import os
 import re
 import sys
 from pathlib import Path
@@ -54,6 +53,30 @@ TAG_RE = re.compile(r'(?<![\w`/])#([a-zA-Z][a-zA-Z0-9_-]*)')
 # 3. [link-label] — not preceded by [ (to skip [[...]] inner match),
 #    not followed by ( (to skip real [text](url) links).
 LINK_LABEL_RE = re.compile(r'(?<!\[)\[([^\]\[`]+)\](?!\()')
+
+# Base directory for path validation (the cwd when the script runs).
+# All file paths passed on the CLI must resolve within this directory.
+_BASE_DIR = os.path.realpath(os.getcwd())
+
+
+def safe_path(path_str: str) -> Path:
+    """Validate a file path is within the allowed base directory.
+
+    Prevents path traversal (../) and absolute path injection — the script
+    reads/writes files passed as CLI args, which in an agentic workflow
+    could be LLM-supplied. Canonicalizes via realpath, then checks the
+    resolved path starts with base_dir + os.sep (the trailing separator
+    prevents partial-path bypass like /base/dirmalicious).
+
+    Raises ValueError if the path escapes base_dir.
+    """
+    resolved = os.path.realpath(path_str)
+    base_with_sep = _BASE_DIR + os.sep
+    if resolved != _BASE_DIR and not resolved.startswith(base_with_sep):
+        raise ValueError(
+            f'path {path_str!r} resolves outside the allowed directory {_BASE_DIR!r}'
+        )
+    return Path(resolved)
 
 
 def split_by_backticks(line: str) -> list[tuple[str, bool]]:
@@ -93,13 +116,6 @@ def normalize_bullet_indent(line: str) -> tuple[str, bool]:
     level is indent // 4 (already normalized). If it's a multiple of 2 but
     not 4 (old-style 2-space indents), the level is indent // 2.
 
-    Examples (first pass converts, second pass is no-op):
-      '- foo'           → '- foo'           (level 0, unchanged)
-      '  - foo'         → '    - foo'       (2→4, level 1)
-      '    - foo'       → '    - foo'       (4, already normalized, level 1)
-      '      - foo'     → '            - foo' (6→12, old level 3 → new level 3)
-      '        - foo'   → '        - foo'   (8, already normalized, level 2)
-
     Non-bullet lines are returned unchanged.
     """
     m = re.match(r'^( +)([-*] )', line)
@@ -110,17 +126,44 @@ def normalize_bullet_indent(line: str) -> tuple[str, bool]:
     if indent_spaces == 0:
         return line, False
 
-    # Idempotent level detection: 4-space steps are already normalized.
     if indent_spaces % 4 == 0:
         level = indent_spaces // 4
     else:
-        # Old-style 2-space indents — convert to 4-space steps.
         level = indent_spaces // 2
 
     new_indent = '    ' * level
     new_line = new_indent + line[m.start(2):]
-    changed = new_line != line
-    return new_line, changed
+    return new_line, new_line != line
+
+
+def fix_tokens_in_segment(text: str, is_heading: bool) -> tuple[str, list[str]]:
+    """Apply the wikilink/tag/link-label auto-fixes to a single text segment.
+
+    Extracted from lint_line to reduce cognitive complexity (S3776).
+    Returns (fixed_text, messages).
+    """
+    messages: list[str] = []
+
+    # Auto-fix [[wikilink]] first (before [link-label] to avoid partial match).
+    prev = text
+    text = WIKILINK_RE.sub(fix_wikilink, text)
+    if text != prev:
+        messages.append('fixed wikilink')
+
+    # Auto-fix #tag (skip on heading lines — those are markdown headings).
+    if not is_heading:
+        prev = text
+        text = TAG_RE.sub(fix_tag, text)
+        if text != prev:
+            messages.append('fixed tag')
+
+    # Auto-fix [link-label] (not followed by `(`).
+    prev = text
+    text = LINK_LABEL_RE.sub(fix_link_label, text)
+    if text != prev:
+        messages.append('fixed link-label')
+
+    return text, messages
 
 
 def lint_line(line: str, in_code_block: bool) -> tuple[str, list[str], int]:
@@ -145,28 +188,9 @@ def lint_line(line: str, in_code_block: bool) -> tuple[str, list[str], int]:
         if inside:
             fixed_segments.append(text)
             continue
-
-        new_text = text
-        # Auto-fix [[wikilink]] first (before [link-label] to avoid partial match).
-        prev = new_text
-        new_text = WIKILINK_RE.sub(fix_wikilink, new_text)
-        if new_text != prev:
-            messages.append(f'fixed wikilink')
-
-        # Auto-fix #tag (skip on heading lines — those are markdown headings).
-        if not is_heading:
-            prev = new_text
-            new_text = TAG_RE.sub(fix_tag, new_text)
-            if new_text != prev:
-                messages.append(f'fixed tag')
-
-        # Auto-fix [link-label] (not followed by `(`).
-        prev = new_text
-        new_text = LINK_LABEL_RE.sub(fix_link_label, new_text)
-        if new_text != prev:
-            messages.append(f'fixed link-label')
-
-        fixed_segments.append(new_text)
+        fixed_text, msgs = fix_tokens_in_segment(text, is_heading)
+        fixed_segments.append(fixed_text)
+        messages.extend(msgs)
 
     fixed_line = ''.join(fixed_segments)
 
@@ -189,7 +213,6 @@ def lint_file(path: Path) -> tuple[bool, list[str], int]:
     overlong_total = 0
 
     for i, line in enumerate(lines, 1):
-        # Track fenced code block state.
         if FENCE_RE.match(line):
             in_code_block = not in_code_block
             new_lines.append(line)
@@ -218,7 +241,11 @@ def main() -> int:
     total_overlong = 0
 
     for arg in sys.argv[1:]:
-        path = Path(arg)
+        try:
+            path = safe_path(arg)
+        except ValueError as exc:
+            print(f'ERROR: {exc}', file=sys.stderr)
+            return 2
         if not path.exists():
             print(f'WARN: {path} does not exist — skipping', file=sys.stderr)
             continue
@@ -247,8 +274,6 @@ def main() -> int:
         print(f'WARNING: {total_overlong} overlong bullet(s) found (> {OVERLONG_BULLET_THRESHOLD} chars).')
         print('These are likely minified clumps — consider splitting into separate bullets.')
         print('Re-run after splitting to clear this warning.')
-        # Exit 0 — warnings don't block prepare.sh. The auto-fixes are already applied.
-        # The warning is the JIT reminder; splitting is the agent's responsibility.
 
     return 0
 

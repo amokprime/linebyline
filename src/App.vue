@@ -268,10 +268,10 @@ initGlobalHotkeys({
     settingsOpen.value = !settingsOpen.value
   },
   openHelp: () => {
-    window.open('https://github.com/amokprime/linebyline/blob/main/HELP.md', '_blank')
+    window.open('https://github.com/amokprime/linebyline/blob/main/HELP.md', '_blank', 'noopener')
   },
   openIssues: () => {
-    window.open('https://github.com/amokprime/linebyline/issues', '_blank')
+    window.open('https://github.com/amokprime/linebyline/issues', '_blank', 'noopener')
   },
   doUndo: () => undoRedo.doUndo(),
   doRedo: () => undoRedo.doRedo(),

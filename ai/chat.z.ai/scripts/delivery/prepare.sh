@@ -23,7 +23,7 @@ set -euo pipefail
 
 DOWNLOAD_DIR="/home/z/my-project/download"
 ZIP="$DOWNLOAD_DIR/deliver.zip"
-LINTER="/home/z/my-project/scripts/lint_markdown.py"
+LINTER="/home/z/my-project/scripts/delivery/lint_markdown.py"
 
 if [[ ! -d "$DOWNLOAD_DIR" ]]; then
   echo "ERROR: download directory not found: $DOWNLOAD_DIR" >&2

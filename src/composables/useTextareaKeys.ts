@@ -24,7 +24,7 @@
 
 import { META_RE, TS_RE } from '@/utils/lrcParser'
 import { useAppState } from './useAppState'
-import { setOnInputCallback, onMainInput } from './useSync'
+import { setOnInputCallback } from './useSync'
 
 // Set by App.vue (or by useSync via setOnInputCallback). Called whenever the
 // textarea's value is programmatically changed by these handlers — the
@@ -49,10 +49,6 @@ function fireInput(ta: HTMLTextAreaElement) {
   // The programmatic-input callback is for App.vue's undo debounce (which
   // useSync's setOnInputCallback already wires to scheduleInputSnapshot).
   if (_onProgrammaticInput) _onProgrammaticInput()
-  // Defensive: ensure onMainInput fired (it should have via the dispatched event,
-  // but if the textarea isn't the editor's main-textarea the event won't reach
-  // the bound handler).
-  void onMainInput
 }
 
 // Trim trailing whitespace from the current line + insert newline. Only fires

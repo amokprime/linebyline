@@ -12,14 +12,20 @@ type ThemeMode = 'light' | 'dark'
 
 const themeMode = ref<ThemeMode>(localStorage.getItem('lbl_theme') === 'dark' ? 'dark' : 'light')
 
+// Module-level applyTheme + cycleTheme — exported directly so useGlobalHotkeys
+// can call cycleTheme without the useTheme() factory (avoids the unused
+// useTheme import that triggered S3735 void-operator). The factory still
+// returns both for components that need them.
+export function applyTheme() {
+  document.documentElement.classList.toggle('dark', themeMode.value === 'dark')
+}
+
+export function cycleTheme() {
+  themeMode.value = themeMode.value === 'dark' ? 'light' : 'dark'
+  localStorage.setItem('lbl_theme', themeMode.value)
+  applyTheme()
+}
+
 export function useTheme() {
-  function applyTheme() {
-    document.documentElement.classList.toggle('dark', themeMode.value === 'dark')
-  }
-  function cycleTheme() {
-    themeMode.value = themeMode.value === 'dark' ? 'light' : 'dark'
-    localStorage.setItem('lbl_theme', themeMode.value)
-    applyTheme()
-  }
   return { themeMode, applyTheme, cycleTheme }
 }

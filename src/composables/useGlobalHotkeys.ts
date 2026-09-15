@@ -42,7 +42,6 @@ import {
   adjustTs,
   doSyncFile,
   insertEndLine,
-  isAutoLineSuppressed,
   markAsTranslation,
   seekNextLine,
   seekPrevLine,
@@ -54,10 +53,9 @@ import { changeSpeed, doSeekBack, doSeekFwd, toggleMute, togglePlay } from './us
 import { toggleMode } from './useModeSwitch'
 import { addSecondary, mergeTranslations, removeSecondary } from './useMerge'
 import { doImport, doSave } from './useImport'
-import { useTheme } from './useTheme'
+import { cycleTheme } from './useTheme'
 import { usePanelCollapse } from './usePanelCollapse'
 import { useSettings, getSettingsFocusable, showResetConfirm, hideResetConfirm, doResetDefaults } from './useSettings'
-import { HK_LABELS } from '@/config'
 
 // ── Callbacks (set by initGlobalHotkeys) ──────────────────────────────────
 export interface GlobalHotkeyCallbacks {
@@ -176,7 +174,7 @@ function handleSettingsHotkeyDispatch(
   }
   if (hk.theme_toggle && hkMatch(ks, hk.theme_toggle)) {
     e.preventDefault()
-    useTheme().cycleTheme()
+    cycleTheme()
     return true
   }
   if (hk.panel_toggle && hkMatch(ks, hk.panel_toggle)) {
@@ -207,7 +205,7 @@ function handleSettingsEscape(e: KeyboardEvent, settingsOpen: boolean): boolean 
     return true
   }
   const focused = document.activeElement
-  if (focused && focused.classList.contains('hk-capture')) return true
+  if (focused?.classList.contains('hk-capture')) return true
   const srch = document.getElementById('s-search')
   if (focused === srch) {
     if (searchHkMode()) {
@@ -342,9 +340,9 @@ function handleHotkeyModeArrows(e: KeyboardEvent, allLines: string[], lineCount:
   const { activeLine, selectedLines } = useAppState()
   const isUp = e.key === 'ArrowUp'
   if (!e.shiftKey && !e.ctrlKey && isAtBoundary(isUp)) return
-  // Suppress auto-line-follow (the typing-mode arrow override won't fire here
-  // because we're in hotkey mode, but isAutoLineSuppressed is shared state).
-  void isAutoLineSuppressed
+  // Note: isAutoLineSuppressed is shared state from useSync — the typing-mode
+  // arrow override won't fire here (we're in hotkey mode), but the flag
+  // is consumed by handleTypingModeArrowKeys which reads it via the import.
   const dir = isUp ? -1 : 1
   const next = Math.max(0, activeLine.value)
   let candidate = findNextNonMetaLine(allLines, next + dir, dir, lineCount)
@@ -433,7 +431,6 @@ function handleHotkeyModeNav(e: KeyboardEvent, allLines: string[], lineCount: nu
 
 function handleHotkeyModeReplay(e: KeyboardEvent, ks: string, hk: Record<string, string>): boolean {
   const { activeLine } = useAppState()
-  const { cfg } = useAppState()
   if (hkMatch(ks, hk.replay_line) && activeLine.value >= 0) {
     e.preventDefault()
     syncLine()
@@ -459,7 +456,6 @@ function handleHotkeyModeReplay(e: KeyboardEvent, ks: string, hk: Record<string,
     replayActiveLine(true)
     return true
   }
-  void cfg
   return false
 }
 
@@ -592,8 +588,6 @@ export function updateDynamicTooltips() {
   set('btn-seek-back', `Seek back ${inc}s (${fmt(hk.seek_back)} / ArrowLeft in Hotkey mode)`)
   set('btn-seek-fwd', `Seek forward ${inc}s (${fmt(hk.seek_fwd)} / ArrowRight in Hotkey mode)`)
   set('btn-play-pause', `Play/pause (${fmt(hk.play_pause_alt)})`)
-  void HK_LABELS
-  void useTheme
 }
 
 // ── Convenience export ────────────────────────────────────────────────────
