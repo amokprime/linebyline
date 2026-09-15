@@ -92,10 +92,60 @@ fi
 # work without lifecycle scripts locally.
 npm install --ignore-scripts
 
+# ── ESLint (autofix + gate) ─────────────────────────────────────────────────
+# Runs ESLint on src/ between npm install and Vitest — catches SonarQube-rule
+# violations locally before they reach CI (SonarCloud). Pattern mirrors the
+# sonar-issue-exporter deploy.sh (ruff --fix → ruff gate → pytest).
+#
+# Uses the direct binary ./node_modules/.bin/eslint (per githubactions:S6505 —
+# avoids `npx eslint` which can trigger on-demand install). The binary is
+# guaranteed to exist after `npm install` since eslint is a devDependency.
+#
+# Conditional on eslint.config.mjs existing: pure-markdown turns or turns that
+# ship only ai/chat.z.ai/ files (no src/ changes) can skip this by not having
+# the config — but in practice the config is always present in the repo root.
+echo ""
+echo "=== ESLint (autofix + gate) ==="
+if [[ -f "$DEST/eslint.config.mjs" ]] && [[ -f "$DEST/node_modules/.bin/eslint" ]]; then
+  # Autofix pass — applies --fix for auto-fixable rules (formatting, prefer-const, etc.)
+  ./node_modules/.bin/eslint src/ --fix || true
+  # Gate pass — fails the deploy if any issues remain after autofix
+  ./node_modules/.bin/eslint src/
+  echo "ESLint gate passed."
+else
+  echo "  (skipped: eslint.config.mjs or node_modules/.bin/eslint not found)"
+  echo "  If this is unexpected, run 'npm install --ignore-scripts' manually."
+fi
+
 # ── Vitest unit suite ───────────────────────────────────────────────────────
 echo ""
 echo "=== Running Vitest unit suite ==="
 npm run test:unit
+
+# ── Syncthing wait + Playwright via SSH ─────────────────────────────────────
+# COMMENTED OUT — Playwright targets docs/index.html until Phase E (per
+# "Project invariants" in MEMORY.md), so running it on src/** patches is ~8.3
+# minutes wasted per deploy. Re-enable both post-Phase E (Tranche 5 cutover).
+#
+# The Syncthing wait ensures the deployed files have synced to the remote test
+# machine before Playwright runs. The `sleep 60` is a blunt heuristic — replace
+# with Syncthing REST API polling post-Phase E:
+#   curl -X POST -H "X-API-Key: $KEY" "http://127.0.0.1:8384/rest/db/scan?folder=$LBL_ID"
+#   poll /rest/db/completion?folder=$LBL_ID&device=$SERVER_ID until .completion == 100
+#
+# The Playwright run uses the human's master SSH key (`ssh Server tst` — see
+# tests/SSH_SETUP.md). The server's `tst` fish function runs `podman run …
+# npx playwright test "$@"` in the Podman Ubuntu container (PW_CONTAINER=1).
+# The prior "unpack.sh hung" report was actually 8.3 minutes of Playwright
+# tests, not a real hang — the user's Ctrl+C was during the `sleep 60`.
+#
+# echo ""
+# echo "=== Waiting for Syncthing sync ==="
+# sleep 60
+#
+# echo ""
+# echo "=== Running Playwright suite via SSH ==="
+# ssh Server tst
 
 # ── Collision cleanup (scoped to zip-extracted files only) ─────────────────
 echo ""

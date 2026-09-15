@@ -169,6 +169,8 @@ Web:S7927 (accessible name contains visible label) — False Positive for icon-o
 
 Web:InputWithoutLabelCheck — add `id` + `aria-label`. `aria-label` satisfies the rule; no visible `<label for>` is needed on a `display:none` input (mirrors the App-level `#file-picker` pattern that passes the analyzer).
 
+`python:S2083` (path traversal in CLI scripts) — when a CLI script reads a file path from `sys.argv` and passes it to `open()` / `Path.read_text()` / `Path.write_text()`, SonarCloud's taint analyzer requires the path validation + the I/O call to be in the SAME function body. Taint analysis does NOT cross function boundaries, and module-level constants (e.g. `_BASE_DIR = os.path.realpath(...)`) are NOT recognized as trusted sources — the derivation must be inline in the I/O function. What works: inline `base_dir = os.path.realpath(os.getcwd())` in the I/O function, then `resolved = os.path.realpath(path_str)`, then `if resolved != base_dir and not resolved.startswith(base_dir + os.sep): raise ValueError(...)`, then `with open(resolved) as f: ...`. The base_dir derivation, the guard, and the I/O are all in the same function body, and `open()` receives the validated `resolved` path (not the original user input). What does NOT work: (1) a `safe_path()` helper called from `main()` — taint analysis can't trace the validation across the boundary; (2) `os.path.realpath` + `startswith(_BASE_DIR + os.sep)` using a module-level constant — SonarCloud doesn't recognize the module-level variable as trusted.
+
 ---
 
 Step 4: Plan the remediation pass
@@ -208,6 +210,8 @@ Document Won't Fix decisions in the chat output for the user to record. Standard
 
 In the SonarCloud UI, the resolution options are "False Positive" and "Accept" (no "Won't Fix" label). Use "False Positive" for analyzer-error cases (S6443, S7927 icon-only), "Accept" for intentional-design cases (S6819 custom interaction, S7682 snippet-caller, S6606 verbatim-port). A resolved security issue plus an Accept marking flips the retroactively-computed quality gate green.
 
+**Blocking vs non-blocking dispositions** — the Won't Fix / Accept / False Positive rationales above apply to **non-blocking** issues only (code smells, maintainability issues that don't fail the quality gate). For **blocking** issues (security rules like S2083, reliability rules that fail the gate), comply fully rather than attempting workarounds. SonarCloud's taint analysis is thorough — regex tricks, helper functions, and "almost compliant" patterns will all be detected, and each failed attempt costs a full upload → scan → triage cycle. The time spent bypassing a blocking issue is almost always greater than the time spent complying with it. See `code-quality-SKILL.md` → "Blocking Sonar issues: comply, don't bypass" for the full rationale and the S2083 cautionary example.
+
 ---
 
 Step 6: Version and delivery
@@ -242,7 +246,7 @@ False positive summary
 
 Cross-references
 
-- `code-quality` — the same rule patterns from a "write code that avoids them in the first place" angle
-- `aria-accessibility` — full Rule 1 / Rule 8 rationale for S6819 / S7927
-- `project-workflow` — Post-patch verification (run `npm run test:unit` after `src/**` patches) and Post-turn updates (MEMORY.md / skill updates after a remediation turn)
+- `code-quality` (Review bundle, same bundle as this skill) — the same rule patterns from a "write code that avoids them in the first place" angle
+- `aria-accessibility` (Review bundle, same bundle as this skill) — full Rule 1 / Rule 8 rationale for S6819 / S7927
+- `project-workflow` (Onboard bundle — not in the Review bundle; available at Onboard step or if the user uploaded it separately) — Post-patch verification (run `npm run test:unit` after `src/**` patches) and Post-turn updates (MEMORY.md / skill updates after a remediation turn)
 - `sie` README (https://github.com/amokprime/sonar-issue-exporter) — installation, full CLI reference, the auth-boundary table, troubleshooting

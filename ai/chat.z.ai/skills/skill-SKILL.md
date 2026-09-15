@@ -1,6 +1,6 @@
 ---
 name: skill
-description: Create new skills and update existing ones for the LineByLine project. Use this skill whenever you need to create a skill from scratch, revise an existing skill, extract knowledge from MEMORY.md into a skill, or decide whether something belongs in a skill versus MEMORY.md. Also use when planning a skill-creation or skill-update session, or when evaluating whether existing skills need updating based on recent code changes.
+description: Create new skills and update existing ones for the LineByLine project. Use this skill whenever you need to create a skill from scratch, revise an existing skill, extract knowledge from MEMORY.md into a skill, or decide whether something belongs in a skill versus MEMORY.md. Also use when planning a skill-creation or skill-update session, when evaluating whether existing skills need updating based on recent code changes, OR when consolidating duplicated information across agent-facing files (MEMORY.md, AGENTS.md, skills, roadmap) — the consolidation direction protocol lives here. Also use when the user mentions "consolidation", "single source of truth", "duplicate knowledge", or asks to clean up MEMORY.md bloat.
 ---
 
 A skill bakes substantive, reusable knowledge into a persistent artifact so it doesn't bloat MEMORY.md or get lost between sessions. Covers when to create or update skills, how to write them, and how to keep them current.
@@ -29,6 +29,30 @@ If you'd need to explain it to a fresh model in a new session and it's not speci
 When extracting from MEMORY.md into a skill, prune the MEMORY.md entry to a brief reference. Don't duplicate — MEMORY.md should point to the skill, not restate it.
 
 Within a single version's MEMORY.md section, write one bullet per parallel thread of work, not one bullet per turn. If a thread evolves across multiple turns (fix → regression catch → follow-up), update the existing bullet in-place to reflect the final state rather than appending a new bullet per turn. (See "MEMORY.md discipline" in project-workflow-SKILL.md for the full protocol.)
+
+---
+
+Consolidation direction
+
+When the same piece of information appears in multiple agent-facing files, consolidate upstream so each unique piece of info has exactly one canonical home. The consolidation direction, in priority order (highest = most authoritative, lowest = most specific):
+
+1. Skill file (`ai/chat.z.ai/skills/*-SKILL.md`) — general patterns, bug classes, rule rationales, procedural workflows, reference tables. The most reusable layer; skills are read by name when their `description` matches the current task.
+2. Roadmap file (`archive/modular/plan/0-Roadmap.md`, Onboard bundle) — large, structured, app-specific but non-event-driven content: the modular refactor plan, Phase A–E tranche implementation notes, port deltas per tranche, file lists per tranche. A roadmap section is the canonical home when content is too large for MEMORY.md and too app-specific for a skill.
+3. `AGENTS.md` (Onboard bundle) — cross-cutting project context needed at Onboard before any skill is read: Repomix caveats, project structure, harness sandbox limits, the consolidation direction itself. When a topic is covered by a skill, AGENTS.md points to it rather than restating the rule.
+4. `MEMORY.md` — app-specific events, per-version dispositions, invariants tied to specific versions, CI/repo automation history. The most specific layer; entries here point to skills/roadmap for the general rule and record only the instance.
+
+Direction of consolidation: when you discover the same information duplicated across these files, move it upstream (skill or roadmap), then replace every duplicate with a one-line pointer (e.g. `see \`code-quality-SKILL.md\` → "Section Name" for the rule`). Never duplicate a rule across files — that creates a synchronization burden and the copies drift.
+
+When to consolidate proactively: any meta-session involving agent scaffolding (a Skills step), and any time you finish a Build/Review/Test step and notice a rule or pattern that has been written into MEMORY.md three or more times. The third repetition is the trigger to extract.
+
+Concrete examples from the Sep 2026 consolidation sessions:
+
+- SonarQube rule rationales (S2083 taint analysis, S6819 ARIA exceptions, S7927 icon-only-button false positives, etc.) — duplicated across MEMORY.md and sonarqube-workflow-SKILL.md → consolidated into the skill; MEMORY.md keeps per-version Accept/Won't-Fix decisions only.
+- Phase D tranche implementation notes (port deltas, test quirks, file lists per tranche) — duplicated across MEMORY.md and 0-Roadmap.md → consolidated into the roadmap; MEMORY.md's "Architectural decisions" section is now a 3-paragraph pointer. The roadmap's "Tranche N implementation notes" subsections are the single source of truth.
+- Bash workflow script patterns (strict mode, ${var:?} guards, scoped cleanup, no line continuations in quoted strings) — duplicated across MEMORY.md and code-quality-SKILL.md → consolidated into the skill's "Bash workflow scripts" section.
+- Cross-bundle pointers — when a skill references a file in a different bundle (e.g. sonarqube-workflow-SKILL.md → project-workflow-SKILL.md), annotate the pointer with the bundle name so a fresh chat session knows whether it can read the target immediately or must wait for that step's bundle upload.
+
+The same direction applies inside a single file: prefer one section per topic, with subsections pointing back rather than parallel summaries.
 
 ---
 
