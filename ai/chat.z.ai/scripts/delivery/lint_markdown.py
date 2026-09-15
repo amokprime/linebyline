@@ -264,7 +264,7 @@ def main() -> int:
         changed, messages, overlong = lint_file(arg)
         if changed:
             any_changed = True
-            print(f'FIXED: {path}')
+            print(f'FIXED: {arg}')
         all_messages.extend(messages)
         total_overlong += overlong
 
