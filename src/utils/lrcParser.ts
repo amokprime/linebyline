@@ -1,8 +1,11 @@
 // Ported from docs/index.html "── LRC parsing utilities ──" (roadmap item 3
 // Phase C, tranche 1). Only the pure functions moved here; getSeekOffset,
-// hasLyricContent, maybeAppendTrailingTs, suppressAuto and advanceActiveLine
-// read DOM/state globals and stay in the monolith until the Phase D
-// composables. Verbatim bodies.
+// suppressAuto and advanceActiveLine read DOM/state globals and stay in the
+// monolith until the Phase D composables. Verbatim bodies.
+//
+// Phase D Tranche 5 additions: hasLyricContent and hasTrailingTimestamp
+// moved here from the monolith body, refactored to take the text as a
+// parameter instead of reading getTA(). Callers (useSync) pass mainText.value.
 
 export const TS_RE = /^\[(\d{2}):(\d{2})\.(\d{2})\]/;
 export const META_RE = /^\[[a-zA-Z]+:/;
@@ -72,4 +75,62 @@ export function lrcHasTi(raw: string): boolean {
     const m = l.match(/^\[ti:\s*(.*)\]$/i);
     return m !== null && m[1]!.trim() !== '' && m[1]!.trim().toLowerCase() !== 'unknown';
   });
+}
+
+// Phase D Tranche 5 — ported from monolith body (line ~758). PORT DELTA:
+// the monolith reads getTA() (the textarea value); this version takes the
+// text as a parameter so the composable can pass mainText.value without
+// reaching into the DOM. Returns true if any non-meta, non-blank line has
+// non-empty text content (after stripping the timestamp prefix if present).
+// Used by syncLine / insertEndLine / maybeAppendTrailingTs to bail out
+// when the editor has only metadata + blank lines (no point inserting a
+// [00:00.00] timestamp for an empty lyric).
+export function hasLyricContent(text: string): boolean {
+  return text.split('\n').some((l) => {
+    if (!l.trim() || META_RE.test(l)) return false;
+    const content = TS_RE.test(l) ? l.slice(10).trim() : l.trim();
+    return content !== '';
+  });
+}
+
+// Phase D Tranche 5 — ported from monolith body (line ~1685). PORT DELTA:
+// the monolith reads getTA(); this version takes the lines array directly.
+// Returns true if the last non-empty, non-meta line is a trailing timestamp
+// (a timestamp with no content after it). Used by checkLineCounts to show
+// the "Missing trailing timestamp" warning and by insertEndLine to decide
+// whether to insert a new end-timestamp or update an existing one.
+export function hasTrailingTimestamp(lines: string[]): boolean {
+  for (let i = lines.length - 1; i >= 0; i--) {
+    const l = lines[i]!;
+    if (l.trim() === '' || META_RE.test(l)) continue;
+    return isEndTs(l);
+  }
+  return false;
+}
+
+// Phase D Tranche 5 — ported from monolith body (line ~1695). PORT DELTA:
+// takes the lines array directly. Returns true if every non-meta, non-blank,
+// non-trailing-ts line has a timestamp — the precondition for mergeTranslations.
+// Used by updateMergeBtn to enable/disable the merge button.
+export function allLyricLinesHaveTs(lines: string[]): boolean {
+  return lines
+    .filter((l) => l.trim() && !META_RE.test(l) && !isEndTs(l))
+    .every((l) => tsToMs(l) !== null);
+}
+
+// Phase D Tranche 6 — ported from monolith body (line ~1678). PORT DELTA:
+// takes the lines array directly. Returns the main-field lyric lines
+// (non-meta, non-blank, non-trailing-ts). Used by checkLineCounts to compare
+// against secondary field line counts and by mergeTranslations to build the
+// merged result.
+export function getMainLyricLines(lines: string[]): string[] {
+  return lines.filter((l) => l.trim() && !META_RE.test(l) && !isEndTs(l));
+}
+
+// Phase D Tranche 6 — ported from monolith body (line ~1666). PORT DELTA:
+// takes the textarea value as a string. Returns non-blank lines from a
+// secondary field's content. Used by checkLineCounts + mergeTranslations to
+// compare against the main field's lyric line count.
+export function getSecLines(text: string): string[] {
+  return text.split('\n').filter((l) => l.trim());
 }

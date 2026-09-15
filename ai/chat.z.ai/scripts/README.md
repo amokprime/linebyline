@@ -10,45 +10,45 @@ links:
 ### onboard.sh
 - Workflows always start with the Onboard step, including dedicated sessions:
 ```
-Follow `*-SKILL.md` files as rules. This is the Onboard step.
+Read `AGENTS.md`, `README.md`, `MEMORY.md`, and the `*-SKILL.md` files. Follow skill files and `AGENTS.md` as rules. This is the Onboard step.
 ```
 
 ### build.sh
 - `package.json` is provided in Onboard; `package-lock.json` is omitted (too large; `npm install` works without it for non-reproducible installs)
 - The `src/**` + `tests/unit/**` + tsconfig bundle lets the agent run `npm install && npm run test:unit` (~103 specs, ~7s) in-sandbox as a build-test loop after patching `src/` modules
 ```
-Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files as rules. This is the Build step.
+Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files and `AGENTS.md` as rules. This is the Build step.
 ```
 
 ### review.sh
 - Check new code pre-commit
 ```
-Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files as rules. This is the Review step — use the review skills to screen for new code issues pre-commit.
+Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files and `AGENTS.md` as rules. This is the Review step — use the review skills to screen for new code issues pre-commit.
 ```
 - Remediate post-push SonarCloud issues
 ```
-Re-read `project-workflow-SKILL.md` and the review skills. Follow `*-SKILL.md` files as rules. This is the Review step again post-push — use the review skills to patch SonarCloud issues.
+Re-read `project-workflow-SKILL.md` and the review skills. Follow `*-SKILL.md` files and `AGENTS.md` as rules. This is the Review step again post-push — use the review skills to patch SonarCloud issues.
 ```
 
 ### test.sh
 - Patch failing tests (including newly written) after the Build step and pre-commit:
 ```
-Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files as rules. This is the Test step — use the Playwright skill to patch the failed tests.
+Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files and `AGENTS.md` as rules. This is the Test step — use the Playwright skill to patch the failed tests.
 ```
 - Generate new tests or helpers for new features added in the Build step:
 ```
-Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files as rules. This is the Test step — use the Playwright skill to:
+Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files and `AGENTS.md` as rules. This is the Test step — use the Playwright skill to:
 <Add specific requests>
 ```
 - Follow Onboard in a dedicated testwriting session:
 ```
-Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files as rules. This is primarily a testwriting session. However, tell me if you suspect app code to be at fault with any failing tests.
+Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files and `AGENTS.md` as rules. This is primarily a testwriting session. However, tell me if you suspect app code to be at fault with any failing tests.
 ```
 
 ### skills.sh
 - The Skills step typically follows Onboard in a dedicated non-code session:
 ```
-Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files as rules. This will be a meta-session involving work on agent scaffolding for fresh chats.
+Re-read `project-workflow-SKILL.md`. Follow `*-SKILL.md` files and `AGENTS.md` as rules. This will be a meta-session involving work on agent scaffolding for fresh chats.
 ```
 
 ## Delivery

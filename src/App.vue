@@ -2,15 +2,21 @@
 // Modular app root. Phase C complete: every monolith element lives in a Vue
 // component (this shell carries the two app-level hidden nodes — #file-picker
 // for the Phase D import composable, #a11y-announcer for the _announce port).
-// Next: the Phase D state composables bind the inert controls, with the
-// global keyboard handler port landing there (it dispatches to ~30 actions
-// and needs the state composables to exist first).
 //
 // Phase D Tranche 3 wiring: calls applyMode() in onMounted as the last step
 // of the Init sequence (monolith line ~10217: `rebuildHkPanel(); applyMode();`).
 // EditorArea's setup calls initModeSwitch() with its template refs, so by the
 // time App.vue's onMounted fires (children mount before parents), the
 // mode-switch singleton is bound and applyMode() can read the refs.
+//
+// Phase D Tranche 5 wiring: wires useSync callbacks (the full setMainText
+// side-effect chain: renderMainLines + checkLineCounts + updateMergeBtn +
+// updateTitleFromText + doAutosave + pushSnapshot). Wires useAudio's Tranche
+// 5 callbacks (updateActiveLineFromTime + renderMainLines + scrollToPlaying +
+// syncSecScroll + announce). Wires useAutosave's renderMainLines. Wires
+// useModeSwitch's renderMainLines callback to the real function (was a no-op
+// stub). Wires the undo debounce via setOnInputCallback so useSync doesn't
+// depend on useUndoRedo (avoids a circular import).
 import { onBeforeUnmount, onMounted, ref } from 'vue'
 import ThemeProvider from './components/ThemeProvider.vue'
 import MenuBar from './components/MenuBar.vue'
@@ -19,11 +25,35 @@ import EditorArea from './components/EditorArea.vue'
 import SettingsDialog from './components/SettingsDialog.vue'
 import { usePanelCollapse } from './composables/usePanelCollapse'
 import { applyMode } from './composables/useModeSwitch'
-import { restoreAudioDisplay, setAudioCallbacks } from './composables/useAudio'
+import {
+  restoreAudioDisplay,
+  setAudioCallbacks,
+  setupAudio,
+  useAudio,
+} from './composables/useAudio'
 import { useAutosave, initAutosave, doAutosave } from './composables/useAutosave'
-import { updateTitleFromText } from './composables/useTitle'
+import { updateTitleFromText, useTitle } from './composables/useTitle'
 import { useUndoRedo, type Snapshot } from './composables/useUndoRedo'
 import { useAppState } from './composables/useAppState'
+import {
+  renderMainLines,
+  setOnInputCallback,
+  setSyncCallbacks,
+  updateActiveLineFromTime,
+  scrollToPlaying,
+} from './composables/useSync'
+import {
+  initMerge,
+  checkLineCounts,
+  updateMergeBtn,
+  syncSecScroll,
+} from './composables/useMerge'
+import {
+  initImport,
+  setFilePickerRef,
+  onFilePickerChange,
+  onMiddleClick,
+} from './composables/useImport'
 
 const { panelCollapsed, applyPanelCollapse, autoCollapseIfNeeded, setExpandRef } =
   usePanelCollapse()
@@ -32,10 +62,36 @@ const settingsOpen = ref(false)
 
 // ── Tranche 2 wiring: autosave + title + undo/redo ──────────────────────────
 // Instantiate useUndoRedo with take/apply callbacks that read from useAppState.
-// Tranche 5 ports applySnapshot's full side-effect chain (renderMainLines,
-// checkLineCounts, updateMergeBtn, etc.); for now applySnapshot is a stub that
-// writes mainText + mergeDone — enough for undo/redo to not crash.
-const { mainText, secondaryPool, mergeDone } = useAppState()
+// Tranche 5 amends applySnapshot to run the full side-effect chain via the
+// App.vue-wired setMainText — same callback the textarea's @input uses.
+const { mainText, secondaryPool, mergeDone, playingLine } = useAppState()
+
+// Phase D Tranche 7 — #file-picker ref (hidden input at the app root).
+// useImport reads it to trigger the picker click + the change handler.
+const filePicker = ref<HTMLInputElement | null>(null)
+setFilePickerRef(filePicker)
+
+// The setMainText side-effect chain: the monolith inlines this everywhere
+// (`_setTA(t); renderMainLines(); checkLineCounts(); updateMergeBtn();
+// updateTitleFromText(); doAutosave(); pushSnapshot();`). Tranche 5 collapses
+// it into one function so the composable's setMainText calls are one-liners.
+// `pushSnapshot` is wholesale-replacement → pre + post (single-push model
+// from the code-quality skill + useUndoRedo).
+function setMainText(t: string) {
+  // Pre-change snapshot (only if mainText is changing — wholesale replacement)
+  if (mainText.value !== t) {
+    undoRedo.pushSnapshot()
+  }
+  mainText.value = t
+  renderMainLines()
+  // Tranche 6: real checkLineCounts + updateMergeBtn (the warn bars + merge
+  // button disabled state recompute on every setMainText call).
+  checkLineCounts()
+  updateMergeBtn()
+  updateTitleFromText(mainText.value)
+  doAutosave()
+  undoRedo.pushSnapshot()
+}
 
 const undoRedo = useUndoRedo({
   takeSnapshot: (): Snapshot => ({
@@ -45,12 +101,27 @@ const undoRedo = useUndoRedo({
   }),
   applySnapshot: (snap: Snapshot) => {
     mainText.value = snap.main
-    // Tranche 5/6: renderMainLines, checkLineCounts, updateMergeBtn, clear extra secondaries
+    // Tranche 6: clear extra secondaries beyond the snapshot's length (the
+    // documented invariant — undoing to a pre-add snapshot must not leave
+    // stale text in still-visible columns). Restore text for each snap entry.
+    for (let i = 0; i < secondaryPool.value.length; i++) {
+      if (i < snap.secondaries.length) {
+        secondaryPool.value[i]!.text = snap.secondaries[i]!
+      } else {
+        secondaryPool.value[i]!.text = ''
+      }
+    }
+    renderMainLines()
+    checkLineCounts()
+    updateMergeBtn()
     mergeDone.value = snap.mergeDone
+    playingLine.value = -1
+    doAutosave()
   },
 })
 
-// Wire useAutosave callbacks — read/write mainText, call useTitle, seed undo.
+// Wire useAutosave callbacks — Tranche 5 swaps renderMainLines from no-op
+// to the real function.
 initAutosave({
   getMainText: () => mainText.value,
   setMainText: (t: string) => { mainText.value = t },
@@ -61,25 +132,125 @@ initAutosave({
     mergeDone: mergeDone.value,
   }),
   seedUndo: undoRedo.seed,
-  // Tranche 5/6 stubs:
-  renderMainLines: () => {},
+  // Tranche 5: real renderMainLines; Tranche 6 stub:
+  renderMainLines,
   checkLineCounts: () => {},
 })
 
-// Wire useAudio callbacks — doAutosave + updateTitleFromText + getMainText.
-// setAudioCallbacks is separate from initAudio (which LeftPanel calls with
-// the DOM refs). App.vue doesn't have the audio refs, only the callbacks.
+// Wire useAudio callbacks — Tranche 5 swaps renderMainLines + adds
+// updateActiveLineFromTime + scrollToPlaying + syncSecScroll + announce.
+const { audioEl, lastPlayingLine, currentMs } = useAudio()
+// Tranche 7: useImport needs setSongTitle/setSongArtist to reset on pair import.
+const { songTitle, songArtist } = useTitle()
 setAudioCallbacks({
   getMainText: () => mainText.value,
   setMainText: (t: string) => { mainText.value = t },
   doAutosave: (pathHint?: string) => doAutosave(pathHint),
   updateTitleFromText: () => updateTitleFromText(mainText.value),
-  // Tranche 5/6/9 stubs:
-  renderMainLines: () => {},
-  updateActiveLineFromTime: () => {},
-  scrollToPlaying: () => {},
+  // Tranche 5 wires these:
+  renderMainLines,
+  updateActiveLineFromTime,
+  scrollToPlaying,
+  // Tranche 6 stubs:
   syncSecScroll: () => {},
-  announce: () => {},
+  announce: (msg: string) => {
+    const el = document.getElementById('a11y-announcer')
+    if (el) el.textContent = msg
+  },
+})
+
+// Wire useSync callbacks — App.vue owns the setMainText chain + audio helpers.
+// The audio helpers wrap useAudio's audioEl ref so useSync doesn't import
+// useAudio directly (avoids a circular import: useAudio imports useAppState,
+// useSync imports useAppState + utils, App.vue wires them together).
+setSyncCallbacks({
+  setMainText,
+  getMainText: () => mainText.value,
+  doAutosave: (pathHint?: string) => doAutosave(pathHint),
+  updateTitleFromText: () => updateTitleFromText(mainText.value),
+  // Tranche 6: real checkLineCounts + updateMergeBtn + syncSecScroll (were no-ops).
+  checkLineCounts,
+  updateMergeBtn,
+  syncSecScroll,
+  announce: (msg: string) => {
+    const el = document.getElementById('a11y-announcer')
+    if (el) el.textContent = msg
+  },
+  getCurrentMs: () => currentMs(),
+  seekToMs: (ms: number) => {
+    const el = audioEl.value
+    if (el) el.currentTime = ms / 1000
+  },
+  playIfNotPlaying: () => {
+    const el = audioEl.value
+    if (!el) return
+    void el.play()
+    useAppState().playing.value = true
+  },
+  setLastPlayingLine: (i: number) => {
+    lastPlayingLine.value = i
+  },
+  getAudioDurationMs: () => {
+    const el = audioEl.value
+    return el && el.duration ? Math.floor(el.duration * 1000) : null
+  },
+  isAudioReady: () => audioEl.value !== null,
+})
+
+// ── Tranche 6 wiring: useMerge callbacks ──────────────────────────────────
+// initMerge is called once with the callback set. The setMainText chain +
+// pushSnapshot + scheduleSecInputSnapshot are the same callbacks useSync uses
+// (App.vue owns them). markGeniusSource stays a no-op until Tranche 9.
+initMerge({
+  setMainText,
+  getMainText: () => mainText.value,
+  doAutosave: () => doAutosave(),
+  pushSnapshot: () => undoRedo.pushSnapshot(),
+  scheduleSecInputSnapshot: () =>
+    undoRedo.scheduleInputSnapshot(useAppState().cfg.value.undo_debounce_ms || 150),
+  markGeniusSource: () => {
+    // Tranche 9 owns markGeniusSource (writes to the [re:] tag).
+  },
+})
+
+// ── Tranche 7 wiring: useImport callbacks ──────────────────────────────────
+// initImport wires the setMainText chain + setupAudio/clearAudio + song title
+// setters + undo seed. The middle-click + file-picker @change handlers are
+// attached in onMounted (document-level + element-level listeners).
+initImport({
+  setMainText,
+  getMainText: () => mainText.value,
+  doAutosave: (pathHint?: string) => doAutosave(pathHint),
+  setupAudio: (file: File, pathHint?: string) => setupAudio(file, pathHint),
+  clearAudio: () => {
+    const el = audioEl.value
+    if (el) {
+      el.pause()
+      el.src = ''
+      audioEl.value = null
+    }
+    useAppState().playing.value = false
+  },
+  setSongTitle: (s: string) => { songTitle.value = s },
+  setSongArtist: (s: string) => { songArtist.value = s },
+  pushSnapshot: () => undoRedo.pushSnapshot(),
+  seedUndo: (snap: Snapshot) => undoRedo.seed(snap),
+  takeSnapshot: (): Snapshot => ({
+    main: mainText.value,
+    secondaries: secondaryPool.value.map((e) => e.text),
+    mergeDone: mergeDone.value,
+  }),
+  renderMainLines,
+  checkLineCounts,
+  updateMergeBtn,
+  updateTitleFromText: () => updateTitleFromText(mainText.value),
+})
+
+// Wire the undo debounce for useSync's onMainInput — the typing-mode input
+// handler schedules a debounced snapshot push. useSync exposes setOnInputCallback
+// so it doesn't depend on useUndoRedo (avoids a circular import).
+setOnInputCallback(() => {
+  undoRedo.scheduleInputSnapshot(useAppState().cfg.value.undo_debounce_ms || 150)
 })
 
 function expandPanel() {
@@ -101,11 +272,26 @@ onMounted(() => {
   // says "reload on init to survive accidental refresh". If the user wants
   // the clear behavior, add `sessionStorage.removeItem('lbl_autosave')` here.
   useAutosave().loadAutosave()
+  // monolith Init: renderMainLines — already called by loadAutosave's callback,
+  // but call once more to ensure the line list reflects post-init state.
+  renderMainLines()
   // monolith Init tail: rebuildHkPanel(); applyMode();
   applyMode()
+  // Tranche 7: middle-click → doImport (or open secondary picker if hovering).
+  // Attached to document so it fires regardless of the click target. The
+  // monolith's `settings-overlay.classList.contains('open')` guard is unnecessary
+  // — shadcn-vue's Dialog has its own focus trap that prevents middle-click
+  // outside the dialog from reaching the document handler.
+  document.addEventListener('mousedown', onMiddleClick)
+  // Tranche 7: #file-picker @change → onFilePickerChange (multi-file dispatch).
+  const fp = filePicker.value
+  if (fp) fp.addEventListener('change', onFilePickerChange)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', autoCollapseIfNeeded)
+  document.removeEventListener('mousedown', onMiddleClick)
+  const fp = filePicker.value
+  if (fp) fp.removeEventListener('change', onFilePickerChange)
 })
 </script>
 
@@ -148,10 +334,12 @@ onBeforeUnmount(() => {
         <EditorArea />
       </main>
       <SettingsDialog v-model:open="settingsOpen" />
-      <!-- Phase D: doImport opens #file-picker; _announce writes to the
-           announcer (monolith body tail, ported inert) -->
+      <!-- Tranche 7: #file-picker — doImport opens it via ref; the @change
+           handler dispatches to useImport.onFilePickerChange (multi-file:
+           audio-only / lrc-only / audio+lrc pair). -->
       <input
         id="file-picker"
+        ref="filePicker"
         type="file"
         multiple
         accept="audio/*,.lrc,.txt"

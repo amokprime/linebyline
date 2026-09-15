@@ -8,42 +8,90 @@
 //
 // Phase D Tranche 3 wiring: registers template refs for #main-scroll,
 // #main-textarea, #main-lines and passes them to useModeSwitch.initModeSwitch
-// so the composable can read/write the DOM during applyMode(). The
-// renderMainLines callback is a no-op stub until Tranche 5 ports the real
-// renderer — the call site is preserved so Tranche 5 just swaps the stub.
-import { ref } from 'vue'
+// so the composable can read/write the DOM during applyMode().
+//
+// Phase D Tranche 5 wiring: registers the same refs with useSync.initSync,
+// ports renderMainLines from the monolith (delegated mousedown handler on
+// #main-lines), adds @input + @paste on #main-textarea, and @paste on
+// #main-lines (hotkey-mode overwrite path). The two-way textarea binding
+// is :value + @input (NOT v-model — programmatic mainText writes shouldn't
+// trigger the input side-effect chain, only user typing should).
+//
+// Phase D Tranche 6 wiring: secondary field columns now render from
+// useAppState.secondaryCols (computed over the pool — Tranche 1 made
+// secondaryPool the single source of truth). The main warn bar binds to
+// useAppState.mainWarnText / mainWarnVisible (Tranche 6 additions — the
+// monolith imperatively wrote #main-warn.textContent; Vue binds reactively).
+// The #main-scroll @scroll handler syncs secondary fields via useMerge.syncScrollFrom.
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import SecondaryField from './SecondaryField.vue'
 import { initModeSwitch } from '../composables/useModeSwitch'
 import { useAppState } from '../composables/useAppState'
+import {
+  initSync,
+  onMainInput,
+  onMainLinesContextMenu,
+  onMainLinesMouseDown,
+  onMainLinesPaste,
+  onMainPaste,
+  renderMainLines,
+} from '../composables/useSync'
+import { syncScrollFrom } from '../composables/useMerge'
 
-// Visible secondary-field column count — the monolith starts with zero
-// (addSecondary/removeSecondary grow and shrink it). Phase D's useAppState
-// pool (10-field cap, hide/reuse) replaces this local count.
-const secCount = ref(0)
+// mainText + secondaryPool + main warn-bar state from useAppState.
+// Tranche 6 iterates over secondaryPool (not the secondaryCols computed)
+// so each SecondaryField receives its actual pool index as a prop — the
+// `:index` is positional to the pool, not to the visible-column list. This
+// matches the monolith's "Secondary N" label where N is the pool position + 1
+// (preserved across hide/reuse — the monolith's removeSecondary pops the
+// last visible, so hidden entries are always at the end of the pool, and
+// addSecondary reuses the first hidden — pool index always matches the
+// visible position when hidden entries are contiguous at the end).
+const { mainText, secondaryPool, mainWarnText, mainWarnVisible } = useAppState()
 
-// mainText from useAppState — the textarea binds :value="mainText" (one-way).
-// Tranche 5 adds @input for two-way binding + paste/click handlers.
-const { mainText } = useAppState()
-
-// Template refs consumed by useModeSwitch.applyMode(). The refs are empty
-// until mount; applyMode reads .value at call time and no-ops pre-mount.
+// Template refs consumed by useModeSwitch.applyMode() + useSync.renderMainLines().
+// The refs are empty until mount; both composables read .value at call time
+// and no-op pre-mount.
 const mainScroll = ref<HTMLElement | null>(null)
 const mainTextarea = ref<HTMLTextAreaElement | null>(null)
 const mainLines = ref<HTMLElement | null>(null)
 
 // Phase D Tranche 5 ports renderMainLines from the monolith — fills #main-lines
-// with .lrc-line children parsed from the textarea. No-op stub for now; the
-// call site in useModeSwitch is preserved so the swap is a one-liner.
-function renderMainLines() {
-  // Tranche 5: port from monolith — parse #main-textarea value, build .lrc-line
-  // <li> children with timestamp spans, attach click handlers, set .cursor /
-  // .active / .selected classes from useAppState refs.
-}
+// with .lrc-line <li> children parsed from mainText. Imported from useSync; the
+// call site in useModeSwitch (applyMode's hotkey-mode branch) calls the same
+// function via the renderMainLines callback parameter. LeftPanel registers
+// the #seek-offset input ref separately via setSeekOffsetRef.
+initSync({ mainLines, mainTextarea, mainScroll }, {})
 
-// Register the refs + stub with the mode-switch singleton. App.vue's
-// onMounted calls applyMode() (monolith Init parity: rebuildHkPanel +
+// Register the refs + the real renderMainLines with the mode-switch singleton.
+// App.vue's onMounted calls applyMode() (monolith Init parity: rebuildHkPanel +
 // applyMode at the end of the startup sequence).
 initModeSwitch({ mainScroll, mainTextarea, mainLines }, renderMainLines)
+
+// Attach delegated mousedown + contextmenu + paste handlers to #main-lines
+// in onMounted (the refs are populated by then). Also attaches @scroll to
+// #main-scroll for secondary-field scroll sync (the monolith's syncScrollFrom
+// was attached to #main-scroll directly).
+onMounted(() => {
+  const ml = mainLines.value
+  if (ml) {
+    ml.addEventListener('mousedown', onMainLinesMouseDown)
+    ml.addEventListener('contextmenu', onMainLinesContextMenu)
+    ml.addEventListener('paste', onMainLinesPaste)
+  }
+  const ms = mainScroll.value
+  if (ms) {
+    ms.addEventListener('scroll', () => syncScrollFrom(ms))
+  }
+})
+onBeforeUnmount(() => {
+  const ml = mainLines.value
+  if (ml) {
+    ml.removeEventListener('mousedown', onMainLinesMouseDown)
+    ml.removeEventListener('contextmenu', onMainLinesContextMenu)
+    ml.removeEventListener('paste', onMainLinesPaste)
+  }
+})
 </script>
 
 <template>
@@ -84,13 +132,14 @@ initModeSwitch({ mainScroll, mainTextarea, mainLines }, renderMainLines)
             id="main-warn"
             class="warn-bar"
             role="alert"
-          />
+            :class="{ visible: mainWarnVisible }"
+          >{{ mainWarnText }}</div>
           <div
             id="main-scroll"
             ref="mainScroll"
             class="lyric-scroll"
           >
-            <!-- Phase D Tranche 5: renderMainLines port fills the .lrc-line children -->
+            <!-- Phase D Tranche 5: renderMainLines (useSync) fills the .lrc-line children -->
             <ul
               id="main-lines"
               ref="mainLines"
@@ -104,12 +153,20 @@ initModeSwitch({ mainScroll, mainTextarea, mainLines }, renderMainLines)
             spellcheck="false"
             aria-label="Main lyric text"
             :value="mainText"
+            @input="onMainInput"
+            @paste="onMainPaste"
           />
         </div>
+        <!-- Phase D Tranche 6: renders from secondaryPool (the single source
+             of truth — Tranche 1). `v-if="entry.visible"` hides pool entries
+             that were hidden by removeSecondary; the `:key` is the pool
+             index + 1 (1-based, matches the "Secondary N" label) so Vue can
+             track entries across hide/reuse without remounting. -->
         <SecondaryField
-          v-for="i in secCount"
-          :key="i"
-          :index="i"
+          v-for="(entry, i) in secondaryPool"
+          v-show="entry.visible"
+          :key="i + 1"
+          :index="i + 1"
         />
       </div>
     </div>
@@ -193,6 +250,9 @@ initModeSwitch({ mainScroll, mainTextarea, mainLines }, renderMainLines)
 .lrc-line.end-ts {
   color: var(--muted-foreground);
   font-style: italic;
+}
+.lrc-line.blank-line {
+  cursor: default;
 }
 .lrc-line.cursor {
   border-left: 3px solid var(--primary);

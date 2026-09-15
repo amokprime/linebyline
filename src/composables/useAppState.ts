@@ -32,12 +32,27 @@ export const MAX_LINES = 500
 // Maximum number of secondary-field columns (monolith invariant).
 export const MAX_SECONDARIES = 10
 
-// Secondary-field entry shape. Tranche 6 fills in the textarea ref + handlers;
-// the pool tracks visibility + per-field text content here so undo/redo and
-// autosave can snapshot without reaching into the DOM.
+// Secondary-field entry shape. Tranche 6 augments with warn-bar state +
+// the textarea ref for scroll sync. The pool tracks visibility + per-field
+// text content here so undo/redo and autosave can snapshot without reaching
+// into the DOM.
+//
+// The Tranche 6 additions (`warnText`/`warnVisible`/`textareaEl`) are marked
+// optional so callers that construct entries with just `{ visible, text }`
+// (useAutosave._restoreSecondaryPool, tests) still type-check. The fields are
+// always populated by addSecondary() before the entry becomes visible, so
+// SecondaryField.vue can read them without null guards at render time.
 export interface SecondaryEntry {
   visible: boolean
   text: string
+  // Tranche 6 additions — warn-bar state (reactive; SecondaryField binds
+  // `:class="{ visible: entry.warnVisible }"` and `{{ entry.warnText }}`).
+  warnText?: string
+  warnVisible?: boolean
+  // Textarea element ref — registered by SecondaryField.vue's setup so
+  // useMerge.syncScrollFrom + onSecInput can reach the DOM. null in pure-node
+  // tests + before mount.
+  textareaEl?: HTMLTextAreaElement | null
 }
 
 // Reactive `cfg` shared via provide/inject. Components that read hotkeys or
@@ -119,6 +134,13 @@ const isDirty = ref(false)
 // (loadAutosave + doAutosave after setupAudio/import).
 const mainText = ref('')
 
+// Tranche 6 — main warn-bar state. The monolith imperatively writes
+// `#main-warn.textContent` + toggles `.visible`. Vue binds `:class` + `{{ }}`
+// reactively. checkLineCounts (useMerge) writes here; EditorArea's #main-warn
+// template reads.
+const mainWarnText = ref('')
+const mainWarnVisible = ref(false)
+
 // ── provide/inject API ───────────────────────────────────────────────────────
 // App.vue (Tranche 2) calls `provideCfg()` in setup; descendants call
 // `useCfg()` to read the reactive cfg. Throws on missing inject — a child
@@ -156,5 +178,7 @@ export function useAppState() {
     pasteJustHappened,
     isDirty,
     mainText,
+    mainWarnText,
+    mainWarnVisible,
   }
 }

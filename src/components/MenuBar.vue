@@ -8,12 +8,37 @@
 // the config composable — static titles until then.
 // Focus-prevention mousedown is ported verbatim (menu-bar slice): clicking a
 // button must not steal focus from the editor area.
+//
+// Phase D Tranche 6 wiring: Add/Hide/Merge buttons now dispatch to useMerge.
+// Hide field's disabled state binds to `secondaryCols.length === 0`; Merge
+// fields' disabled state binds to `computeMergeBtnDisabled()` (reactively
+// recomputes when mainText / secondaryPool text / mergeDone change).
+import { computed } from 'vue'
 import FontSelector from './FontSelector.vue'
 import { THEME_ICONS, useTheme } from '../composables/useTheme'
+import { useAppState } from '../composables/useAppState'
+import {
+  addSecondary,
+  computeMergeBtnDisabled,
+  mergeTranslations,
+  removeSecondary,
+} from '../composables/useMerge'
+import { doImport, doSave } from '../composables/useImport'
 
 defineEmits<{ openSettings: [] }>()
 
 const { themeMode, cycleTheme } = useTheme()
+const { secondaryPool, mergeDone } = useAppState()
+
+// Hide field is disabled when no visible secondary field exists.
+const hideDisabled = computed(() =>
+  secondaryPool.value.filter((e) => e.visible).length === 0,
+)
+
+// Merge fields is disabled per computeMergeBtnDisabled (checks hasTs +
+// hasTrailing + allLyricLinesHaveTs + secondary content + count match).
+// Also disabled when mergeDone is true (the monolith sets it post-merge).
+const mergeDisabled = computed(() => mergeDone.value || computeMergeBtnDisabled())
 
 function onMousedown(e: MouseEvent) {
   if ((e.target as HTMLElement).closest('button')) e.preventDefault()
@@ -26,19 +51,23 @@ function onMousedown(e: MouseEvent) {
     aria-label="Main toolbar"
     @mousedown="onMousedown"
   >
-    <!-- Phase D: import composable (file picker, middle-click, multi-file) -->
+    <!-- Phase D Tranche 7: import composable (file picker, middle-click, multi-file) -->
     <button
       id="btn-import"
       title="Open (Middle click)"
       aria-label="Open file"
+      @click="doImport"
+      @mousedown.prevent
     >
       📂
     </button>
-    <!-- Phase D: save/download handler -->
+    <!-- Phase D Tranche 7: save/download handler -->
     <button
       id="btn-save"
       title="Save"
       aria-label="Save"
+      @click="doSave"
+      @mousedown.prevent
     >
       💾
     </button>
@@ -83,26 +112,33 @@ function onMousedown(e: MouseEvent) {
     <div class="mb-sep" />
     <FontSelector />
     <div class="mb-sep" />
-    <!-- Phase D: secondary-field composables (add/remove, 10-field cap) -->
+    <!-- Phase D Tranche 6: add/remove secondary fields (10-field cap, pool reuse) -->
     <button
       class="mb-btn"
       title="Add secondary field"
+      @click="addSecondary"
+      @mousedown.prevent
     >
       Add field
     </button>
     <button
-      disabled
-      aria-disabled="true"
+      class="mb-btn"
+      :disabled="hideDisabled"
+      :aria-disabled="hideDisabled"
       title="Hide last secondary field"
+      @click="removeSecondary"
+      @mousedown.prevent
     >
       Hide field
     </button>
-    <!-- Phase D: merge composable (mergeTranslations) -->
+    <!-- Phase D Tranche 6: merge translations (computeMergeBtnDisabled for state) -->
     <button
       class="mb-btn accent"
-      disabled
-      aria-disabled="true"
+      :disabled="mergeDisabled"
+      :aria-disabled="mergeDisabled"
       title="Merge fields"
+      @click="mergeTranslations"
+      @mousedown.prevent
     >
       Merge fields
     </button>
