@@ -294,61 +294,11 @@ export function onCaptureBlur(key: string) {
 //   Escape: revert to last good value and blur
 //   Modifier-only (Ctrl/Shift/Alt/Meta alone): return false (no action)
 //   Otherwise: capture the key, check restriction + conflict, save or show Swap
-export function onCaptureKeydown(key: string, e: KeyboardEvent): boolean {
+// Handle the captured key: check restriction, conflict, save or show Swap.
+// Extracted from onCaptureKeydown to reduce cognitive complexity (S3776).
+function _handleCapturedKey(key: string, newVal: string, newStored: string): boolean {
   const { cfg } = useAppState()
   const r = getRow(key)
-  ensureRowInit(key, cfg.value.hotkeys)
-
-  // Tab and arrows bubble to the global focus trap (don't stopPropagation).
-  if (['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-    e.preventDefault()
-    return false
-  }
-  e.preventDefault()
-  e.stopPropagation()
-
-  // Shift+Backspace = clear (unassign), stay focused.
-  if (e.key === 'Backspace' && e.shiftKey) {
-    clearHotkey(key, true)
-    return true
-  }
-
-  // Backspace = activate Default if visible, then advance focus.
-  if (e.key === 'Backspace') {
-    if (isResetVisible(key)) {
-      // The template's @click on the Default button will fire resetHotkey.
-      // Focus advance is handled by the SettingsDialog component via a ref to
-      // the captures list — we expose the action via a callback set below.
-      _pendingAdvanceKey.value = key
-    }
-    return true
-  }
-
-  // Enter = activate Swap if visible, else just advance focus.
-  // Both branches set _pendingAdvanceKey — the SettingsDialog component's
-  // onCaptureKd wrapper reads it to decide whether to click Swap before advancing.
-  if (e.key === 'Enter') {
-    _pendingAdvanceKey.value = key
-    return true
-  }
-
-  // Escape = revert + blur.
-  if (e.key === 'Escape') {
-    revertAndExit(key)
-    return true
-  }
-
-  // Modifier-only: no action.
-  if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return true
-
-  // Capture the key.
-  const parts: string[] = []
-  if (e.ctrlKey) parts.push('Ctrl')
-  if (e.shiftKey) parts.push('Shift')
-  if (e.altKey) parts.push('Alt')
-  parts.push(normKey(e.key))
-  const newVal = parts.join('+')
-  const newStored = newVal === 'Esc' ? 'Escape' : newVal
 
   // Restriction check.
   const restrictMsg = isRestrictedForKey(newStored, key)
@@ -356,7 +306,6 @@ export function onCaptureKeydown(key: string, e: KeyboardEvent): boolean {
     r.restrictWarn = `⚠ ${restrictMsg}`
     _conflictMessage.value = ''
     r.conflictKey = ''
-    // Revert display but stay focused (user can try another key).
     r.skipBlurRevert = true
     r.isFocused = false
     r.skipBlurRevert = false
@@ -383,6 +332,59 @@ export function onCaptureKeydown(key: string, e: KeyboardEvent): boolean {
     persistCfg()
   }
   return true
+}
+
+export function onCaptureKeydown(key: string, e: KeyboardEvent): boolean {
+  const { cfg } = useAppState()
+  ensureRowInit(key, cfg.value.hotkeys)
+
+  // Tab and arrows bubble to the global focus trap (don't stopPropagation).
+  if (['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+    e.preventDefault()
+    return false
+  }
+  e.preventDefault()
+  e.stopPropagation()
+
+  // Shift+Backspace = clear (unassign), stay focused.
+  if (e.key === 'Backspace' && e.shiftKey) {
+    clearHotkey(key, true)
+    return true
+  }
+
+  // Backspace = activate Default if visible, then advance focus.
+  if (e.key === 'Backspace') {
+    if (isResetVisible(key)) {
+      _pendingAdvanceKey.value = key
+    }
+    return true
+  }
+
+  // Enter = activate Swap if visible, else just advance focus.
+  if (e.key === 'Enter') {
+    _pendingAdvanceKey.value = key
+    return true
+  }
+
+  // Escape = revert + blur.
+  if (e.key === 'Escape') {
+    revertAndExit(key)
+    return true
+  }
+
+  // Modifier-only: no action.
+  if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return true
+
+  // Capture the key.
+  const parts: string[] = []
+  if (e.ctrlKey) parts.push('Ctrl')
+  if (e.shiftKey) parts.push('Shift')
+  if (e.altKey) parts.push('Alt')
+  parts.push(normKey(e.key))
+  const newVal = parts.join('+')
+  const newStored = newVal === 'Esc' ? 'Escape' : newVal
+
+  return _handleCapturedKey(key, newVal, newStored)
 }
 
 // Internal: revert display to last good value, clear conflict/restrict UI, blur.
@@ -469,37 +471,9 @@ export function setSearchHkMode(on: boolean) {
   }
 }
 
-// Hotkey-search-mode keydown handler. Returns true if handled.
-export function onSearchKeydown(e: KeyboardEvent): boolean {
-  if (_searchHkMode.value) {
-    if (['Tab', 'ArrowUp', 'ArrowDown'].includes(e.key)) return false
-    e.preventDefault()
-    e.stopPropagation()
-    if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'Delete') {
-      setSearchHkMode(false)
-      _searchQuery.value = ''
-      return true
-    }
-    if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return true
-    const parts: string[] = []
-    if (e.ctrlKey) parts.push('Ctrl')
-    if (e.shiftKey) parts.push('Shift')
-    if (e.altKey) parts.push('Alt')
-    parts.push(normKey(e.key))
-    const ks = parts.join('+')
-    const { cfg } = useAppState()
-    const isAssigned = Object.values(cfg.value.hotkeys).some(
-      (v) => v === ks || (ks === 'Esc' && v === 'Escape'),
-    )
-    if (isRestrictedForAll(ks) && !isAssigned) return true
-    _searchQuery.value = ks
-    return true
-  }
-  // Normal mode: toggle_mode hotkey switches to hk mode; reset_defaults shows
-  // confirm; Escape and Tab/ArrowUp/ArrowDown pass through to the global handler.
-  if (['Tab', 'ArrowUp', 'ArrowDown'].includes(e.key)) return false
-  if (e.key === 'Escape') return false
-  // Build the canonical key string for matching.
+// Build the canonical key string from a KeyboardEvent.
+// Extracted from onSearchKeydown to reduce cognitive complexity (S3776).
+function _buildKeyString(e: KeyboardEvent, includeModifierOnly: boolean): string {
   const parts: string[] = []
   if (e.ctrlKey) parts.push('Ctrl')
   if (e.shiftKey) parts.push('Shift')
@@ -507,11 +481,44 @@ export function onSearchKeydown(e: KeyboardEvent): boolean {
   if (!['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) {
     parts.push(normKey(e.key))
   }
-  if (parts.length === 0) return false
+  if (!includeModifierOnly && parts.length === 0) return ''
+  return parts.join('+')
+}
+
+// Hotkey-search-mode keydown handler. Returns true if handled.
+function _handleSearchHkMode(e: KeyboardEvent): boolean {
+  if (['Tab', 'ArrowUp', 'ArrowDown'].includes(e.key)) return false
+  e.preventDefault()
+  e.stopPropagation()
+  if (e.key === 'Escape' || e.key === 'Backspace' || e.key === 'Delete') {
+    setSearchHkMode(false)
+    _searchQuery.value = ''
+    return true
+  }
+  if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return true
+  const parts: string[] = []
+  if (e.ctrlKey) parts.push('Ctrl')
+  if (e.shiftKey) parts.push('Shift')
+  if (e.altKey) parts.push('Alt')
+  parts.push(normKey(e.key))
   const ks = parts.join('+')
   const { cfg } = useAppState()
+  const isAssigned = Object.values(cfg.value.hotkeys).some(
+    (v) => v === ks || (ks === 'Esc' && v === 'Escape'),
+  )
+  if (isRestrictedForAll(ks) && !isAssigned) return true
+  _searchQuery.value = ks
+  return true
+}
+
+// Normal-mode keydown handler. Returns true if handled.
+function _handleSearchNormalMode(e: KeyboardEvent): boolean {
+  if (['Tab', 'ArrowUp', 'ArrowDown'].includes(e.key)) return false
+  if (e.key === 'Escape') return false
+  const ks = _buildKeyString(e, false)
+  if (ks === '') return false
+  const { cfg } = useAppState()
   const hk = cfg.value.hotkeys
-  // Match stored 'Escape' against keyStr 'Esc' (the normKey quirk).
   const matches = (stored: string) => ks === stored || (stored === 'Escape' && ks === 'Escape')
   if (hk.reset_defaults && matches(hk.reset_defaults)) {
     e.preventDefault()
@@ -525,6 +532,13 @@ export function onSearchKeydown(e: KeyboardEvent): boolean {
     return true
   }
   return false
+}
+
+export function onSearchKeydown(e: KeyboardEvent): boolean {
+  if (_searchHkMode.value) {
+    return _handleSearchHkMode(e)
+  }
+  return _handleSearchNormalMode(e)
 }
 
 // ── saveSettingsNow ─────────────────────────────────────────────────────────

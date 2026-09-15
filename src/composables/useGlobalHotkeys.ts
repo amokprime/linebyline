@@ -410,7 +410,7 @@ function handleHotkeyModeNav(e: KeyboardEvent, allLines: string[], lineCount: nu
       .map((l, i) => ({ l, i }))
       .filter(({ l }) => !META_RE.test(l) && l.trim() !== '')
     if (nonMeta.length) {
-      activeLine.value = e.key === 'Home' ? nonMeta[0]!.i : nonMeta[nonMeta.length - 1]!.i
+      activeLine.value = e.key === 'Home' ? nonMeta[0]!.i : nonMeta.at(-1)!.i
       selectedLines.value.clear()
       import('./useSync').then(({ renderMainLines, scrollToActive }) => {
         renderMainLines()

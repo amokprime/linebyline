@@ -57,7 +57,7 @@ export function filterYmal(lyricLines: string[]): string[] {
   for (const line of lyricLines) {
     const t = line.trim();
     if (t === 'You might also like') {
-      if (out.length && out[out.length - 1]!.trim() !== '') out.push('');
+      if (out.length && out.at(-1)!.trim() !== '') out.push('');
       inYmal = true;
       continue;
     }
@@ -76,7 +76,7 @@ export function stripSectionHeaders(lines: string[]): string[] {
   for (const line of lines) {
     const t = line.trim();
     if (/^\[.{2,50}\]$/.test(t) && !TS_RE.test(t)) {
-      if (out.length && out[out.length - 1]!.trim() !== '') out.push('');
+      if (out.length && out.at(-1)!.trim() !== '') out.push('');
       continue;
     }
     out.push(line);
@@ -128,8 +128,8 @@ export function extractGeniusAlbum(head: string[]): string {
 
 export function extractGeniusFields(head: string[]): { title: string; artist: string; album: string } {
   let artist = '';
-  for (let i = 0; i < head.length; i++) {
-    const m = head[i]!.match(/^Cover art for .+ by (.+)$/i);
+  for (const h of head) {
+    const m = h.match(/^Cover art for .+ by (.+)$/i);
     if (m) {
       artist = m[1]!.trim();
       break;

@@ -251,7 +251,7 @@ export function mergeTranslations(): boolean {
     alert('Line count mismatch between main and secondary fields. Fix counts before merging.')
     return false
   }
-  const lastLine = mainLines[tsLines[tsLines.length - 1]![0]]!
+  const lastLine = mainLines[tsLines.at(-1)![0]]!
   if (!isEndTs(lastLine)) {
     alert('No trailing end timestamp found. Add an end timestamp to the last lyric line before merging.')
     return false
