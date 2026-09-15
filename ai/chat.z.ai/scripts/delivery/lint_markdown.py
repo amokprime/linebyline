@@ -208,11 +208,12 @@ def lint_file(path_str: str) -> tuple[bool, list[str], int]:
     Validates the path via safe_path() internally so the validation is visible
     at the I/O site (S2083: taint analysis needs to see the check before the read/write).
     """
-    # Inline path validation (S2083: taint analysis doesn't recognize
-    # custom sanitizer functions — the check must be visible at the I/O site).
+    # Path traversal defense (S2083): resolve to canonical path, then verify
+    # it's within the allowed base directory (cwd). Use the validated resolved
+    # path for ALL I/O — the original user input is never passed to open.
+    base_dir = os.path.realpath(os.getcwd())
     resolved = os.path.realpath(path_str)
-    base_with_sep = _BASE_DIR + os.sep
-    if resolved != _BASE_DIR and not resolved.startswith(base_with_sep):
+    if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
         print(f'ERROR: path {path_str!r} resolves outside the allowed directory', file=sys.stderr)
         return False, [], 0
     path = Path(resolved)
@@ -221,7 +222,8 @@ def lint_file(path_str: str) -> tuple[bool, list[str], int]:
         return False, [], 0
     if path.suffix != '.md':
         return False, [], 0
-    original = path.read_text(encoding='utf-8')
+    with open(resolved, 'r', encoding='utf-8') as f:
+        original = f.read()
     lines = original.splitlines(keepends=True)
 
     in_code_block = False
@@ -243,7 +245,8 @@ def lint_file(path_str: str) -> tuple[bool, list[str], int]:
 
     changed = ''.join(new_lines) != original
     if changed:
-        path.write_text(''.join(new_lines), encoding='utf-8')
+        with open(resolved, 'w', encoding='utf-8') as f:
+            f.write(''.join(new_lines))
 
     return changed, messages, overlong_total
 

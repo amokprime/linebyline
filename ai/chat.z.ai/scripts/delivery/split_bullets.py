@@ -139,14 +139,16 @@ def _process_file(path_str: str) -> tuple[int, int]:
     Validates the path via safe_path() internally so the validation is visible
     at the I/O site (S2083: taint analysis needs to see the check before the read/write).
     """
-    # Inline path validation (S2083: taint analysis doesn't recognize
-    # custom sanitizer functions — the check must be visible at the I/O site).
+    # Path traversal defense (S2083): resolve to canonical path, then verify
+    # it's within the allowed base directory (cwd). The resolved path is used
+    # for ALL I/O — the original user input is never passed to open/read/write.
+    base_dir = os.path.realpath(os.getcwd())
     resolved = os.path.realpath(path_str)
-    base_with_sep = _BASE_DIR + os.sep
-    if resolved != _BASE_DIR and not resolved.startswith(base_with_sep):
+    if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
         raise ValueError(f'path {path_str!r} resolves outside the allowed directory')
-    path = Path(resolved)
-    lines = path.read_text(encoding='utf-8').splitlines(keepends=True)
+    # Use the validated resolved path — NOT the original user input
+    with open(resolved, 'r', encoding='utf-8') as f:
+        lines = f.read().splitlines(keepends=True)
 
     new_lines: list[str] = []
     split_count = 0
@@ -166,7 +168,9 @@ def _process_file(path_str: str) -> tuple[int, int]:
         else:
             new_lines.append(line)
 
-    path.write_text(''.join(new_lines), encoding='utf-8')
+    # Write using the validated resolved path
+    with open(resolved, 'w', encoding='utf-8') as f:
+        f.write(''.join(new_lines))
     return split_count, remaining
 
 
