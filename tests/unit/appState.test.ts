@@ -84,7 +84,11 @@ describe('useAppState — cfg loading', () => {
 describe('useAppState — provide/inject', () => {
   it('useCfg throws when called outside a Vue component setup (no active instance)', async () => {
     const mod = await import('@/composables/useAppState')
+    // Suppress Vue's own [Vue warn] from inject() being called outside setup —
+    // the test deliberately triggers this path to verify useCfg() throws.
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     expect(() => mod.useCfg()).toThrow(/provideCfg.*missing/)
+    warnSpy.mockRestore()
   })
 
   it('provideCfg + useCfg round-trips the same ref inside a component tree', async () => {
@@ -117,6 +121,10 @@ describe('useAppState — provide/inject', () => {
     const { defineComponent, h } = await import('vue')
     const { mount } = await import('@vue/test-utils')
 
+    // Suppress Vue's own [Vue warn] about the missing injection — the test
+    // deliberately triggers this path to verify useCfg() throws.
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
     const Child = defineComponent({
       setup() {
         // Should throw — no provider in any ancestor
@@ -125,6 +133,7 @@ describe('useAppState — provide/inject', () => {
       },
     })
     mount(Child)
+    warnSpy.mockRestore()
   })
 
   it('CFG_KEY is a Symbol (unique across modules)', async () => {

@@ -3,21 +3,22 @@
 // component (this shell carries the two app-level hidden nodes — #file-picker
 // for the Phase D import composable, #a11y-announcer for the _announce port).
 //
-// Phase D Tranche 3 wiring: calls applyMode() in onMounted as the last step
-// of the Init sequence (monolith line ~10217: `rebuildHkPanel(); applyMode();`).
-// EditorArea's setup calls initModeSwitch() with its template refs, so by the
-// time App.vue's onMounted fires (children mount before parents), the
-// mode-switch singleton is bound and applyMode() can read the refs.
+// Phase D Tranche 9 wiring: instantiates useGlobalHotkeys (init with the
+// undo/redo + settings + help/issues callbacks), attaches the document-level
+// keydown handler in onMounted, calls updateDynamicTooltips after Init and
+// after any cfg change (via a watch). Also instantiates useTextareaKeys for
+// the main textarea's Enter-trim + bracket autocomplete (EditorArea binds
+// @keydown="onMainKeydown" via the useTextareaKeys export).
 //
-// Phase D Tranche 5 wiring: wires useSync callbacks (the full setMainText
-// side-effect chain: renderMainLines + checkLineCounts + updateMergeBtn +
-// updateTitleFromText + doAutosave + pushSnapshot). Wires useAudio's Tranche
-// 5 callbacks (updateActiveLineFromTime + renderMainLines + scrollToPlaying +
-// syncSecScroll + announce). Wires useAutosave's renderMainLines. Wires
-// useModeSwitch's renderMainLines callback to the real function (was a no-op
-// stub). Wires the undo debounce via setOnInputCallback so useSync doesn't
-// depend on useUndoRedo (avoids a circular import).
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+// Phase D Tranche 5 wiring (re-applied): wires useSync callbacks (the full
+// setMainText side-effect chain: renderMainLines + checkLineCounts +
+// updateMergeBtn + updateTitleFromText + doAutosave + pushSnapshot). Wires
+// useAudio's Tranche 5 callbacks (updateActiveLineFromTime + renderMainLines +
+// scrollToPlaying + syncSecScroll + announce). Wires useAutosave's
+// renderMainLines. Wires useModeSwitch's renderMainLines callback to the real
+// function (was a no-op stub). Wires the undo debounce via setOnInputCallback
+// so useSync doesn't depend on useUndoRedo (avoids a circular import).
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import ThemeProvider from './components/ThemeProvider.vue'
 import MenuBar from './components/MenuBar.vue'
 import LeftPanel from './components/LeftPanel.vue'
@@ -54,6 +55,11 @@ import {
   onFilePickerChange,
   onMiddleClick,
 } from './composables/useImport'
+import {
+  initGlobalHotkeys,
+  onGlobalKeydown,
+  updateDynamicTooltips,
+} from './composables/useGlobalHotkeys'
 
 const { panelCollapsed, applyPanelCollapse, autoCollapseIfNeeded, setExpandRef } =
   usePanelCollapse()
@@ -253,6 +259,32 @@ setOnInputCallback(() => {
   undoRedo.scheduleInputSnapshot(useAppState().cfg.value.undo_debounce_ms || 150)
 })
 
+// ── Tranche 9 wiring: global keyboard handler ────────────────────────────
+// initGlobalHotkeys receives the undo/redo + settings + help/issues callbacks.
+// The document-level keydown handler is attached in onMounted (below).
+initGlobalHotkeys({
+  isSettingsOpen: () => settingsOpen.value,
+  toggleSettings: () => {
+    settingsOpen.value = !settingsOpen.value
+  },
+  openHelp: () => {
+    window.open('https://github.com/amokprime/linebyline/blob/main/HELP.md', '_blank')
+  },
+  openIssues: () => {
+    window.open('https://github.com/amokprime/linebyline/issues', '_blank')
+  },
+  doUndo: () => undoRedo.doUndo(),
+  doRedo: () => undoRedo.doRedo(),
+})
+
+// Re-run updateDynamicTooltips whenever cfg changes (Settings save, capture
+// input commit, reset). The watch is deep so nested hotkeys changes trigger.
+watch(
+  () => useAppState().cfg.value,
+  () => updateDynamicTooltips(),
+  { deep: true },
+)
+
 function expandPanel() {
   panelCollapsed.value = false
   applyPanelCollapse(false)
@@ -277,19 +309,20 @@ onMounted(() => {
   renderMainLines()
   // monolith Init tail: rebuildHkPanel(); applyMode();
   applyMode()
+  // Tranche 9: monolith Init's updateDynamicTooltips() call.
+  updateDynamicTooltips()
   // Tranche 7: middle-click → doImport (or open secondary picker if hovering).
-  // Attached to document so it fires regardless of the click target. The
-  // monolith's `settings-overlay.classList.contains('open')` guard is unnecessary
-  // — shadcn-vue's Dialog has its own focus trap that prevents middle-click
-  // outside the dialog from reaching the document handler.
   document.addEventListener('mousedown', onMiddleClick)
   // Tranche 7: #file-picker @change → onFilePickerChange (multi-file dispatch).
   const fp = filePicker.value
   if (fp) fp.addEventListener('change', onFilePickerChange)
+  // Tranche 9: document-level keydown for hotkey dispatch.
+  document.addEventListener('keydown', onGlobalKeydown)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', autoCollapseIfNeeded)
   document.removeEventListener('mousedown', onMiddleClick)
+  document.removeEventListener('keydown', onGlobalKeydown)
   const fp = filePicker.value
   if (fp) fp.removeEventListener('change', onFilePickerChange)
 })

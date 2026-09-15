@@ -1,36 +1,140 @@
 <script setup lang="ts">
 // Settings dialog — the monolith's #settings-overlay ported onto the
 // shadcn-vue Dialog (reka-ui gives the focus trap, Escape, and backdrop
-// close that the monolith hand-rolled in the keyboard section). Markup and
-// values come from openSettings/buildHkRows.
+// close that the monolith hand-rolled in the keyboard section).
 //
-// Phase D Tranche 2 wiring: rows now render from live `cfg` (via useAppState)
-// instead of DEFAULT_CFG. When the user changes a setting (Tranche 8 wires
-// the capture/save interactions), the dialog re-renders automatically. The
-// hotkey capture inputs, settings search, and reset confirm stay inert until
-// Tranche 8. Port deltas: the search field and capture inputs are inert;
-// the monolith's inline reset confirm is kept verbatim (the roadmap's
-// AlertDialog swap is a Phase D decision); no visible close button
-// (monolith parity — Escape/backdrop close via reka-ui).
-import { computed } from 'vue'
+// Phase D Tranche 2: rows render from live `cfg` (via useAppState) instead
+// of DEFAULT_CFG. When the user changes a setting, the dialog re-renders
+// automatically.
+//
+// Phase D Tranche 8 wiring: full settings interactions now live in
+// useSettings — capture input KD (Tab trap, Shift+Backspace=clear, Backspace=
+// reset+advance, Enter=swap+advance), conflict detection with Swap, reset
+// to default with swap pattern, search/filter (text + hk modes), save now,
+// and the inline footer Yes/No reset confirm. The capture inputs are still
+// readonly (they intercept keydown, not text input); the Clear/Swap/Reset
+// buttons render their .visible state from useSettings computeds.
+//
+// Port deltas from the monolith:
+//  - The search input + the capture inputs use Vue event bindings (@input,
+//    @keydown, @focus, @blur) instead of imperative addEventListener.
+//  - The capture inputs' "focus placeholder" ('…') comes from captureDisplay()
+//    which reads the per-row isFocused flag — the same closure-variable trick
+//    the monolith used, but exposed reactively.
+//  - Thehk-clear / hk-reset / hk-replace button .visible classes bind to
+//    isClearVisible / isResetVisible / isReplaceVisible — the monolith toggled
+//    them imperatively.
+//  - The reset confirm flow uses v-if on a ref instead of style.display.
+//  - saveSettingsNow takes a values object built from the template's bindings;
+//    the composable doesn't reach into the DOM.
+import { computed, watch, nextTick, ref } from 'vue'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
-import { HK_LABELS, HK_SECTIONS } from '../config'
+import { DEFAULT_META } from '../config'
 import { useAppState } from '../composables/useAppState'
+import {
+  HK_SECTIONS,
+  HK_LABELS,
+  useSettings,
+  setSearchQuery,
+  type SettingsFormValues,
+} from '../composables/useSettings'
+import { useEditorFont } from '../composables/useEditorFont'
+import { useAudio } from '../composables/useAudio'
 
-defineProps<{ open: boolean }>()
-defineEmits<{ 'update:open': [value: boolean] }>()
+const props = defineProps<{ open: boolean }>()
+const emit = defineEmits<{ 'update:open': [value: boolean] }>()
 
-// Live cfg — Tranche 2 swaps DEFAULT_CFG for the reactive cfg ref so the
-// dialog re-renders when settings change (Tranche 8 wires the interactions).
 const { cfg } = useAppState()
 
-// monolith buildHkRows: stored==='Escape'?'Esc':stored — empty stays empty
-// (unlike _hkDisp's em dash, capture inputs show the blank). Now reactive
-// on cfg.value.hotkeys.
-function captureValue(key: string): string {
-  const stored = cfg.value.hotkeys[key] || ''
-  return stored === 'Escape' ? 'Esc' : stored
-}
+const {
+  captureDisplay,
+  isClearVisible,
+  isResetVisible,
+  isReplaceVisible,
+  restrictWarnText,
+  isRowInConflict,
+  isRowHidden,
+  isSectionHidden,
+  isNonHkRowHidden,
+  searchQuery,
+  searchHkMode,
+  conflictMessage,
+  isResetConfirmVisible,
+  onCaptureFocus,
+  onCaptureBlur,
+  onCaptureKeydown,
+  onSearchKeydown,
+  clearHotkey,
+  resetHotkey,
+  swapHotkey,
+  setSearchHkMode,
+  saveSettingsNow,
+  showResetConfirm,
+  hideResetConfirm,
+  doResetDefaults,
+  setResetCallbacks,
+  initSettings,
+  consumePendingAdvance,
+} = useSettings()
+
+// Reset callbacks for the editor font + audio speed + seek-offset display.
+// useEditorFont doesn't expose resetEditorFont — we use setFont + setSizeFromInput
+// with the defaults to achieve the same effect.
+const { setFont, setSizeFromInput } = useEditorFont()
+const { changeSpeed } = useAudio()
+setResetCallbacks({
+  resetEditorFont: () => {
+    setFont('system-ui,sans-serif')
+    setSizeFromInput(14)
+  },
+  resetSpeed: () => changeSpeed(0),
+  resetSeekOffsetDisplay: () => {
+    // The #seek-offset input value lives in LeftPanel; we can't reach it from
+    // here without a ref. Setting cfg.value.seek_offset will re-render the
+    // binding if LeftPanel's template uses :value — LeftPanel.vue's #seek-offset
+    // uses value="0" hardcoded; this remains a known post-cutover fix.
+  },
+})
+
+// Initialize settings state when the dialog opens.
+watch(
+  () => props.open,
+  (open) => {
+    if (open) initSettings()
+  },
+)
+
+// When the dialog opens, focus the search field.
+watch(
+  () => props.open,
+  (open) => {
+    if (open) {
+      nextTick(() => {
+        const el = document.getElementById('s-search') as HTMLInputElement | null
+        if (el) el.focus()
+      })
+    }
+  },
+)
+
+// Re-sync form values from cfg when the dialog opens (covers external cfg
+// changes like a reset-to-defaults).
+watch(
+  () => props.open,
+  (open) => {
+    if (open) {
+      tinyMs.value = String(cfg.value.tiny_ms)
+      smallMs.value = String(cfg.value.small_ms)
+      mediumMs.value = String(cfg.value.medium_ms)
+      largeMs.value = String(cfg.value.large_ms)
+      seekInc.value = String(cfg.value.seek_increment_s ?? 5)
+      speedRatio.value = (cfg.value.speed_ratio ?? 1.1).toFixed(2)
+      volInc.value = String(Math.round((cfg.value.vol_increment || 0.1) * 100))
+      undoDebounce.value = String(cfg.value.undo_debounce_ms ?? 150)
+      defaultMeta.value = cfg.value.default_meta ?? DEFAULT_META
+    }
+  },
+)
 
 const replayChecks = [
   { id: 's-replay-prev', field: 'replay_prev_line', label: 'Moving to previous line' },
@@ -42,17 +146,143 @@ const replayChecks = [
   { id: 's-replay-offset', field: 'replay_after_offset', label: 'Adjusting seek offset' },
 ] as const
 
-// Reactive interval rows — re-computed when cfg.value changes.
+// Reactive form values bound to number/text inputs.
+const tinyMs = ref(String(cfg.value.tiny_ms))
+const smallMs = ref(String(cfg.value.small_ms))
+const mediumMs = ref(String(cfg.value.medium_ms))
+const largeMs = ref(String(cfg.value.large_ms))
+const seekInc = ref(String(cfg.value.seek_increment_s ?? 5))
+const speedRatio = ref((cfg.value.speed_ratio ?? 1.1).toFixed(2))
+const volInc = ref(String(Math.round((cfg.value.vol_increment || 0.1) * 100)))
+const undoDebounce = ref(String(cfg.value.undo_debounce_ms ?? 150))
+const defaultMeta = ref(cfg.value.default_meta ?? DEFAULT_META)
+
 const intervalRows = computed(() => [
-  { id: 's-tiny', label: 'Tiny', value: String(cfg.value.tiny_ms), unit: 'ms' },
-  { id: 's-small', label: 'Small', value: String(cfg.value.small_ms), unit: 'ms' },
-  { id: 's-medium', label: 'Medium', value: String(cfg.value.medium_ms), unit: 'ms' },
-  { id: 's-large', label: 'Large', value: String(cfg.value.large_ms), unit: 'ms' },
-  { id: 's-seek-inc', label: 'Seek increment', value: String(cfg.value.seek_increment_s ?? 5), unit: 's', min: '1', max: '600' },
-  { id: 's-speed-ratio', label: 'Speed ratio', value: (cfg.value.speed_ratio ?? 1.1).toFixed(2), unit: '×', step: '0.01', min: '1.01', max: '2' },
-  { id: 's-vol-inc', label: 'Volume increment', value: String(Math.round((cfg.value.vol_increment || 0.1) * 100)), unit: '%', min: '1', max: '100' },
-  { id: 's-undo-debounce', label: 'Undo window', value: String(cfg.value.undo_debounce_ms ?? 150), unit: 'ms', min: '1', max: '5000' },
+  { id: 's-tiny', label: 'Tiny', v: tinyMs, unit: 'ms', min: '1', max: '60000' },
+  { id: 's-small', label: 'Small', v: smallMs, unit: 'ms', min: '1', max: '60000' },
+  { id: 's-medium', label: 'Medium', v: mediumMs, unit: 'ms', min: '1', max: '60000' },
+  { id: 's-large', label: 'Large', v: largeMs, unit: 'ms', min: '1', max: '60000' },
+  { id: 's-seek-inc', label: 'Seek increment', v: seekInc, unit: 's', min: '1', max: '600' },
+  { id: 's-speed-ratio', label: 'Speed ratio', v: speedRatio, unit: '×', step: '0.01', min: '1.01', max: '2' },
+  { id: 's-vol-inc', label: 'Volume increment', v: volInc, unit: '%', min: '1', max: '100' },
+  { id: 's-undo-debounce', label: 'Undo window', v: undoDebounce, unit: 'ms', min: '1', max: '5000' },
 ])
+
+function readFormValues(): SettingsFormValues {
+  return {
+    replay_prev_line: (document.getElementById('s-replay-prev') as HTMLInputElement)?.checked ?? cfg.value.replay_prev_line,
+    replay_next_line: (document.getElementById('s-replay-next') as HTMLInputElement)?.checked ?? cfg.value.replay_next_line,
+    replay_resume_current: (document.getElementById('s-replay-resume') as HTMLInputElement)?.checked ?? cfg.value.replay_resume_current,
+    replay_play_other: (document.getElementById('s-replay-other') as HTMLInputElement)?.checked ?? cfg.value.replay_play_other,
+    replay_after_offset: (document.getElementById('s-replay-offset') as HTMLInputElement)?.checked ?? cfg.value.replay_after_offset,
+    replay_after_sync: (document.getElementById('s-replay-sync') as HTMLInputElement)?.checked ?? cfg.value.replay_after_sync,
+    replay_after_ts: (document.getElementById('s-replay-ts') as HTMLInputElement)?.checked ?? cfg.value.replay_after_ts,
+    tiny_ms: parseInt(tinyMs.value, 10),
+    small_ms: parseInt(smallMs.value, 10),
+    medium_ms: parseInt(mediumMs.value, 10),
+    large_ms: parseInt(largeMs.value, 10),
+    seek_increment_s: parseInt(seekInc.value, 10),
+    speed_ratio: parseFloat(speedRatio.value),
+    vol_increment: parseInt(volInc.value, 10),
+    undo_debounce_ms: parseInt(undoDebounce.value, 10),
+    default_meta: defaultMeta.value,
+  }
+}
+
+function onSaveNow() {
+  saveSettingsNow(readFormValues())
+}
+
+// Capture input keydown — wraps onCaptureKeydown to handle the focus advance
+// for Backspace (reset+advance) and Enter (swap+advance).
+function onCaptureKd(key: string, e: KeyboardEvent) {
+  const handled = onCaptureKeydown(key, e)
+  if (!handled) return
+  // If Backspace was pressed and Reset was visible, click Reset then advance.
+  if (e.key === 'Backspace' && !e.shiftKey) {
+    if (isResetVisible(key)) {
+      resetHotkey(key)
+    }
+    advanceFocus(key)
+    return
+  }
+  // If Enter was pressed, click Swap if visible, then advance.
+  if (e.key === 'Enter') {
+    if (isReplaceVisible(key)) {
+      swapHotkey(key)
+    }
+    advanceFocus(key)
+    return
+  }
+  // Consume the pending advance key for any other handled case (defensive).
+  consumePendingAdvance()
+}
+
+function advanceFocus(fromKey: string) {
+  // Find all visible capture inputs in document order, move to the next one
+  // after fromKey. If at the end, wrap to the search field.
+  const captures = Array.from(
+    document.querySelectorAll<HTMLInputElement>('#hk-settings-rows .hk-capture'),
+  ).filter((el) => el.offsetParent !== null)
+  const idx = captures.findIndex((el) => el.id === 'hk-capture-' + fromKey)
+  if (idx < 0) return
+  const next = captures[idx + 1]
+  if (next) {
+    next.focus()
+  } else {
+    const search = document.getElementById('s-search') as HTMLInputElement | null
+    if (search) search.focus()
+  }
+}
+
+function onFocus(key: string) {
+  onCaptureFocus(key)
+}
+function onBlur(key: string) {
+  onCaptureBlur(key)
+}
+
+// Search field handlers.
+function onSearchInput(e: Event) {
+  // Text-mode: read the input value into the search query ref so the filter
+  // computeds re-run. Hotkey-mode: the keydown handler sets the query string
+  // directly; this @input is a no-op (the input is effectively write-only).
+  if (searchHkMode()) return
+  const v = (e.target as HTMLInputElement).value
+  setSearchQuery(v)
+}
+
+function onSearchKd(e: KeyboardEvent) {
+  onSearchKeydown(e)
+}
+
+function onSearchBtnClick() {
+  setSearchHkMode(!searchHkMode())
+}
+
+// Reset confirm handlers.
+function onResetClick() {
+  showResetConfirm()
+  nextTick(() => {
+    const yes = document.getElementById('s-confirm-yes') as HTMLButtonElement | null
+    if (yes) yes.focus()
+  })
+}
+function onConfirmYes() {
+  hideResetConfirm()
+  doResetDefaults()
+  nextTick(() => {
+    const search = document.getElementById('s-search') as HTMLInputElement | null
+    if (search) search.focus()
+  })
+}
+function onConfirmNo() {
+  hideResetConfirm()
+  nextTick(() => {
+    const search = document.getElementById('s-search') as HTMLInputElement | null
+    if (search) search.focus()
+  })
+}
 </script>
 
 <template>
@@ -69,7 +299,6 @@ const intervalRows = computed(() => [
       </DialogDescription>
       <div id="settings-title-bar">
         <DialogTitle
-          id="settings-heading"
           class="s-heading"
         >
           Settings
@@ -77,45 +306,53 @@ const intervalRows = computed(() => [
         <output
           id="settings-conflict"
           aria-live="polite"
-        />
-        <!-- Phase D: settings search (initSettingsSearch / applySettingsFilter) -->
+          :style="{ display: conflictMessage() ? '' : 'none' }"
+        >{{ conflictMessage() }}</output>
         <div id="s-search-wrap">
           <input
             id="s-search"
             type="text"
-            placeholder="Search…"
+            :value="searchQuery()"
+            :placeholder="searchHkMode() ? 'Press a key…' : 'Search…'"
+            :class="{ 'hk-mode': searchHkMode() }"
+            :readonly="searchHkMode()"
             autocomplete="off"
             spellcheck="false"
             aria-label="Search settings"
+            @input="onSearchInput"
+            @keydown="onSearchKd"
           >
           <button
             id="s-search-kbd"
+            :class="{ active: searchHkMode() }"
             title="Switch to hotkey search (or press toggle mode key)"
             aria-label="Switch to hotkey search mode"
+            @click="onSearchBtnClick"
           >
             ⌨
           </button>
         </div>
       </div>
       <div id="settings-body">
-        <div>
+        <div :class="{ 's-hidden': isNonHkRowHidden('Instant Replay') }">
           <div class="s-sec-label">
             Instant Replay
           </div>
-          <!-- Phase D Tranche 2: checked values bind to live cfg (was DEFAULT_CFG) -->
           <label
             v-for="c in replayChecks"
             :key="c.id"
             class="s-check"
+            :class="{ 's-hidden': isNonHkRowHidden(c.label) }"
           >
             <input
               :id="c.id"
               type="checkbox"
               :checked="cfg[c.field]"
+              @change="onSaveNow"
             > {{ c.label }}
           </label>
         </div>
-        <div>
+        <div :class="{ 's-hidden': isNonHkRowHidden('Intervals') }">
           <div class="s-sec-label">
             Intervals
           </div>
@@ -123,21 +360,24 @@ const intervalRows = computed(() => [
             v-for="r in intervalRows"
             :key="r.id"
             class="s-row"
+            :class="{ 's-hidden': isNonHkRowHidden(r.label) }"
           >
             <label :for="r.id">{{ r.label }}</label>
             <input
               :id="r.id"
               class="s-num"
               type="number"
-              :value="r.value"
+              :value="r.v.value"
               :min="r.min"
               :max="r.max"
               :step="r.step"
+              @input="r.v.value = ($event.target as HTMLInputElement).value"
+              @change="onSaveNow"
             >
             <span class="s-unit">{{ r.unit }}</span>
           </div>
         </div>
-        <div>
+        <div :class="{ 's-hidden': isNonHkRowHidden('Default metadata tags') }">
           <div class="s-sec-label">
             Default metadata tags
           </div>
@@ -145,31 +385,38 @@ const intervalRows = computed(() => [
             id="s-default-meta"
             class="s-meta"
             aria-label="Default metadata tags"
-            :value="cfg.default_meta"
+            :value="defaultMeta"
+            @input="defaultMeta = ($event.target as HTMLTextAreaElement).value; onSaveNow()"
           />
         </div>
-        <div>
+        <div :class="{ 's-hidden': isSectionHidden('Hotkeys', HK_SECTIONS.flatMap(s => s.keys)) }">
           <div class="s-sec-label">
             Hotkeys
           </div>
           <div id="hk-settings-rows">
-            <!-- Phase D: hotkey capture (buildHkRows interaction logic) -->
             <template
               v-for="section in HK_SECTIONS"
               :key="section.label"
             >
-              <div class="s-sub-label">
+              <div
+                class="s-sub-label"
+                :class="{ 's-hidden': isSectionHidden(section.label, section.keys) }"
+              >
                 {{ section.label }}
               </div>
               <div
                 v-for="key in section.keys"
                 :key="key"
                 class="hk-row"
+                :class="{ 's-hidden': isRowHidden(key), 'hk-conflict': isRowInConflict(key) }"
               >
                 <button
                   class="hk-clear"
+                  :class="{ visible: isClearVisible(key) }"
                   title="Clear (Shift+Backspace)"
                   :aria-label="'Clear hotkey for ' + (HK_LABELS[key] || key)"
+                  @mousedown.prevent
+                  @click="clearHotkey(key, false)"
                 >
                   ✕
                 </button>
@@ -177,22 +424,32 @@ const intervalRows = computed(() => [
                 <input
                   :id="'hk-capture-' + key"
                   class="hk-capture"
-                  :value="captureValue(key)"
+                  :value="captureDisplay(key)"
                   readonly
+                  @focus="onFocus(key)"
+                  @blur="onBlur(key)"
+                  @keydown="onCaptureKd(key, $event)"
                 >
                 <button
                   class="hk-replace"
+                  :class="{ visible: isReplaceVisible(key) }"
                   :aria-label="'Swap hotkey with ' + (HK_LABELS[key] || key)"
+                  @click="swapHotkey(key)"
                 >
                   Swap
                 </button>
                 <button
                   class="hk-reset"
+                  :class="{ visible: isResetVisible(key) }"
                   :aria-label="'Reset hotkey for ' + (HK_LABELS[key] || key) + ' to default'"
+                  @click="resetHotkey(key)"
                 >
                   ↺ Default
                 </button>
-                <span class="hk-restrict-warn" />
+                <span
+                  class="hk-restrict-warn"
+                  :class="{ visible: restrictWarnText(key) !== '' }"
+                >{{ restrictWarnText(key) }}</span>
               </div>
             </template>
           </div>
@@ -202,30 +459,37 @@ const intervalRows = computed(() => [
         id="settings-footer"
         aria-label="Settings actions"
       >
-        <!-- Phase D: saveSettingsNow / _doResetDefaults + reset confirm -->
+        <!-- Monolith parity: the confirm elements stay in the DOM with
+             display:none toggled by v-show (not v-if) so the test that pins
+             `style.display === 'none'` continues to pass. -->
         <button
           id="s-reset-defaults"
           class="s-btn"
+          v-show="!isResetConfirmVisible()"
+          @click="onResetClick"
         >
           Reset defaults
         </button>
         <span
           id="s-confirm-msg"
-          style="display: none; font-size: 13.2px; color: var(--warn-text)"
+          v-show="isResetConfirmVisible()"
+          style="font-size: 13.2px; color: var(--warn-text)"
         >Reset all settings to defaults?</span>
         <button
           id="s-confirm-yes"
+          v-show="isResetConfirmVisible()"
           class="s-btn primary"
-          style="display: none"
           aria-label="Confirm reset"
+          @click="onConfirmYes"
         >
           Yes
         </button>
         <button
           id="s-confirm-no"
+          v-show="isResetConfirmVisible()"
           class="s-btn"
-          style="display: none"
           aria-label="Cancel reset"
+          @click="onConfirmNo"
         >
           No
         </button>
@@ -320,6 +584,11 @@ const intervalRows = computed(() => [
 }
 #s-search-kbd:active {
   filter: brightness(0.88);
+}
+#s-search-kbd.active {
+  background: var(--accent);
+  color: var(--primary);
+  border-color: var(--accent-border);
 }
 #settings-body {
   overflow-y: auto;
@@ -522,6 +791,10 @@ const intervalRows = computed(() => [
 }
 .hk-restrict-warn.visible {
   display: inline-block;
+}
+/* Hidden rows (search filter) — same as the monolith's .s-hidden class. */
+.s-hidden {
+  display: none !important;
 }
 #settings-footer {
   display: flex;

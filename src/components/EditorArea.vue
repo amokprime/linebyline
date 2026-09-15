@@ -36,6 +36,7 @@ import {
   onMainPaste,
   renderMainLines,
 } from '../composables/useSync'
+import { onMainKeydown } from '../composables/useTextareaKeys'
 import { syncScrollFrom } from '../composables/useMerge'
 
 // mainText + secondaryPool + main warn-bar state from useAppState.
@@ -155,6 +156,7 @@ onBeforeUnmount(() => {
             :value="mainText"
             @input="onMainInput"
             @paste="onMainPaste"
+            @keydown="onMainKeydown"
           />
         </div>
         <!-- Phase D Tranche 6: renders from secondaryPool (the single source

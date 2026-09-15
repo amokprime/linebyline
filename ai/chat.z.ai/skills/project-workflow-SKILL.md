@@ -177,17 +177,32 @@ Deliver zip pattern (multi-file sessions)
 
 When a session produces more than a handful of files (the modular refactor routinely ships 10-20 files per tranche), the flat download directory becomes hard to track. Use the prepare → download → deploy pattern:
 
-1. **Sandbox side (`scripts/prepare.sh`)**: after all files are in `download/`, run `bash /home/z/my-project/scripts/prepare.sh` to zip everything into `download/deliver.zip`. The script then removes the loose files, leaving only `deliver.zip`. The zip includes a `deploy.sh` that maps each flat hyphenated filename to its real repo path. The committed repo copy of `prepare.sh` lives at `ai/chat.z.ai/scripts/delivery/prepare.sh`.
+1. **Fill out `deploy.sh` FIRST, before writing deliverables.** Write the `deploy_file <flat> <repo_path>` lines in `download/deploy.sh` as a checklist of what you plan to deliver. This is the JIT reminder mechanism: `prepare.sh` reads these lines and verifies every expected file exists in `download/` before zipping. If you forget to copy a file, `prepare.sh` fails with a clear message listing the missing files. See "prepare.sh verification" below.
 
-2. **User side (`ai/chat.z.ai/scripts/delivery/unpack.sh`)**: the user's `dpl` fish abbreviation (`abbr --add dpl '~/GitHub/linebyline/ai/chat.z.ai/scripts/delivery/unpack.sh'`) runs `unpack.sh`, which extracts `deliver.zip` to `scratch/`, runs `./deploy.sh`, waits 60s for Syncthing, then runs tests via SSH. The script cleans up `deploy.sh` and `deliver.zip` afterward. `unpack.sh` must be run from a terminal (not double-clicked) — the ssh + notify-send output needs a visible terminal.
+2. **Sandbox side (`scripts/prepare.sh`)**: after all files are in `download/`, run `bash /home/z/my-project/scripts/prepare.sh`. The script does three things: (a) lints all `*.md` files — auto-fixes bare `#id`/`[id]`/`[[id]]` outside backticks by wrapping them in backticks (prevents Obsidian rendering them as tags / link labels / wikilinks per AGENTS.md rules) + warns about bullet lines >400 chars (the "minified clump" detector); (b) verifies every file listed in `deploy.sh`'s `deploy_file` calls exists in `download/`; (c) zips everything into `download/deliver.zip` + removes the loose files. The committed repo copy of `prepare.sh` lives at `ai/chat.z.ai/scripts/delivery/prepare.sh`. The linter lives at `ai/chat.z.ai/scripts/lint_markdown.py`.
 
-3. **`deploy.sh` template** (committed at `ai/chat.z.ai/scripts/delivery/deploy.sh`): a reusable script with a `deploy_file` function that uses `cmp -s` to skip byte-identical files — preserves timestamps and avoids unnecessary Syncthing syncs / git diffs. Each session, the agent fills in the file mappings (the `deploy_file <flat> <repo_path>` lines) and includes the filled-in copy inside `deliver.zip`. The template stays committed for reproducibility; the session copy is ephemeral.
+3. **User side (`ai/chat.z.ai/scripts/delivery/unpack.sh`)**: the user's `dpl` fish abbreviation (`abbr --add dpl '~/GitHub/linebyline/ai/chat.z.ai/scripts/delivery/unpack.sh'`) runs `unpack.sh`, which is now a thin wrapper: sanity checks, snapshot zip contents to `.deliver-files.list`, extract, run `deploy.sh`, cleanup. The heavy lifting (deploy files, `npm install`, `npm run test:unit`, scoped cleanup) lives in `deploy.sh`. `unpack.sh` must be run from a terminal (not double-clicked) — the npm + test output needs a visible terminal.
 
-4. **`deploy.sh` contents**: the `deploy_file` function handles `mkdir -p` for the destination, `cmp -s` for the byte-identical check, and `mv` (or `rm` if skipped). After all `deploy_file` calls, a summary section lists changed files (one per line) for sanity-checking against the chat output. A collision-cleanup section then removes ALL remaining loose files (except `deploy.sh` and `deliver.zip`, which `unpack.sh` handles) to prevent collision with the next `unzip` round. Edit the `DEST` variable (or set `LINEBYLINE_ROOT`) if the repo lives elsewhere.
+4. **`deploy.sh` template** (committed at `ai/chat.z.ai/scripts/delivery/deploy.sh`): a reusable script with a `deploy_file` function that uses `cmp -s` to skip byte-identical files. Each session, the agent fills in the file mappings (the `deploy_file <flat> <repo_path>` lines) and includes the filled-in copy inside `deliver.zip`. The template also runs `npm install` (idempotent) + `npm run test:unit` after deploying — matching the sonar-issue-exporter pattern. The Syncthing wait + Playwright SSH blocks are commented out (Phase E re-enable). The template stays committed for reproducibility; the session copy is ephemeral.
 
-5. **All three scripts live at `ai/chat.z.ai/scripts/delivery/`** — `deploy.sh` and `prepare.sh` are agent-facing (run by the agent or `prepare.sh`); `unpack.sh` is user-facing (run from terminal via `dpl`). The `delivery/` subdir keeps them away from the double-click silent scripts in `ai/chat.z.ai/scripts/`.
+5. **`deploy.sh` contents**: the `deploy_file` function handles `mkdir -p` for the destination, `cmp -s` for the byte-identical check, and `mv` (or `rm` if skipped). After all `deploy_file` calls, a summary section lists changed files (one per line). Then `npm install` + `npm run test:unit` run. A collision-cleanup section then removes remaining loose files scoped to `.deliver-files.list` (the manifest `unpack.sh` wrote before extraction) — pre-existing `scratch/` files like `scratch.md` are NOT touched.
 
-The `deploy.sh` must be updated whenever a new file is added to the session's deliverables. Keep it in sync with `download/` — if a file is in `download/` but not in `deploy.sh`, it won't be deployed.
+6. **All three scripts live at `ai/chat.z.ai/scripts/delivery/`** — `deploy.sh` and `prepare.sh` are agent-facing (run by the agent or `prepare.sh`); `unpack.sh` is user-facing (run from terminal via `dpl`). The linter lives at `ai/chat.z.ai/scripts/lint_markdown.py`. The `delivery/` subdir keeps them away from the double-click silent scripts in `ai/chat.z.ai/scripts/`.
+
+The `deploy.sh` must be updated whenever a new file is added to the session's deliverables. Keep it in sync with `download/` — if a file is in `download/` but not in `deploy.sh`, it won't be deployed. If a file is in `deploy.sh` but not in `download/`, `prepare.sh` will fail before zipping.
+
+---
+
+Markdown linter (JIT reminder)
+
+The linter (`ai/chat.z.ai/scripts/lint_markdown.py`) runs automatically in `prepare.sh` before zipping. It enforces the AGENTS.md "Fence code snippets" and "Inline fence strings" rules:
+
+- Auto-fixes bare `#identifier` outside backticks → wraps in backticks (Obsidian would render `#id` as a tag pill)
+- Auto-fixes bare `[[identifier]]` outside backticks → wraps in backticks (Obsidian would render `[[id]]` as a wikilink)
+- Auto-fixes bare `[identifier]` outside backticks (not followed by `(`) → wraps in backticks (Obsidian would render `[id]` as a link label)
+- Warns about bullet lines >400 chars (the "minified clump" detector — split into separate bullets)
+
+The linter skips text inside inline backtick spans and fenced code blocks. Auto-fixes are applied silently; overlong-bullet warnings print prominently but do not block the zip. The warning is the JIT reminder — splitting the bullets is the agent's responsibility.
 
 ---
 
@@ -203,3 +218,4 @@ Cross-references
 - `Vibecoding workflow` (ai/chat.z.ai/Vibecoding-workflow.md) — the human-directed session flow with step diagrams; documents the known workflows (Building features, Improving AI scaffolding, Remediating latent Sonar issues, Improving Playwright tests, Researching and implementing high-level plans). The user may follow any of these, stitch them together, or invent custom ones.
 - `Repomix snippets` (ai/chat.z.ai/Repomix-snippets.md) — the Repomix commands and step-to-bundle mapping. Step headers there are intentionally not numbered to reflect that steps can be used in any order.
 - `Diagrammo flowcharts` (ai/chat.z.ai/Diagrammo-flowcharts.md) — syntax reference for reading `dgmo` codeblocks in the Vibecoding workflow
+</file>

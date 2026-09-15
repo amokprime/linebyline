@@ -14,6 +14,12 @@ import { usePanelCollapse } from '../composables/usePanelCollapse'
 import { useAudio } from '../composables/useAudio'
 import { useTitle } from '../composables/useTitle'
 import { useAppState } from '../composables/useAppState'
+import {
+  setSeekOffsetRef,
+  tickSeekOffset,
+  doSyncFile,
+  onSeekOffsetChange as onSeekOffsetChangeSync,
+} from '../composables/useSync'
 import ControlsPanel from './ControlsPanel.vue'
 
 const { panelCollapsed, applyPanelCollapse, setCollapseRef } = usePanelCollapse()
@@ -48,6 +54,9 @@ const {
 } = useAudio()
 
 initAudio({ progressWrap, seekOffset })
+// Phase D Tranche 5 wiring (re-applied): register the #seek-offset ref with
+// useSync so tickSeekOffset / onSeekOffsetChange can read the input value.
+setSeekOffsetRef(seekOffset)
 
 // Song title/artist — from useTitle (Tranche 2). useAudio.setupAudio sets
 // songTitle from the filename; updateTitleFromText overwrites with [ti:]/[ar:].
@@ -68,19 +77,18 @@ function collapsePanel() {
 // Progress bar drag — mount in onMounted, cleanup in onBeforeUnmount.
 let cleanupDrag: (() => void) | null = null
 
-// Tranche 5 callback stubs — doSyncFile, tickSeekOffset, setOffsetMode.
-// LeftPanel wires the buttons to no-ops until Tranche 5 ships useSync.
+// Tranche 5 wiring (re-applied): the sync-file button + seek-offset arrows +
+// seek-offset @change now dispatch to useSync's real functions. The wrapper
+// onSeekOffsetTick reads cfg.seek_offset_tick at click time (was a 1000/-1000
+// literal in the monolith; the wrapper lets users customize the increment).
 function onSyncFile() {
-  // Tranche 5: doSyncFile()
+  doSyncFile()
 }
-function onSeekOffsetTick(_delta: number) {
-  // Tranche 5: tickSeekOffset(_delta) — reads cfg.seek_offset_tick.
-  // Underscore prefix marks the parameter as intentionally unused (S3735:
-  // replaces the `void delta` no-op with the conventional TS/JS pattern;
-  // matches onSeekOffsetChange's `_e` below).
+function onSeekOffsetTick(sign: number) {
+  tickSeekOffset(sign)
 }
-function onSeekOffsetChange(_e: Event) {
-  // Tranche 5: sync #seek-offset value to cfg.seek_offset
+function onSeekOffsetChange(e: Event) {
+  onSeekOffsetChangeSync(e)
 }
 
 onMounted(() => {
@@ -307,7 +315,7 @@ onBeforeUnmount(() => {
             id="seek-arr-fwd"
             class="fs-tick"
             title="Increase seek offset"
-            @click="onSeekOffsetTick(1000)"
+            @click="onSeekOffsetTick(1)"
           >
             ▲
           </button>
@@ -315,7 +323,7 @@ onBeforeUnmount(() => {
             id="seek-arr-back"
             class="fs-tick"
             title="Decrease seek offset"
-            @click="onSeekOffsetTick(-1000)"
+            @click="onSeekOffsetTick(-1)"
           >
             ▼
           </button>

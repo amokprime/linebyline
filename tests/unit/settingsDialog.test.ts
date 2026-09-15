@@ -38,7 +38,7 @@ describe('SettingsDialog shell', () => {
 
   it('opens with the title bar, search field, and heading', async () => {
     await mountOpen()
-    const heading = document.querySelector('#settings-heading')
+    const heading = document.querySelector('h2')
     expect(heading?.textContent).toContain('Settings')
     expect(document.querySelector('#s-search')?.getAttribute('aria-label')).toBe('Search settings')
     expect(document.querySelector('#s-search-kbd')).not.toBeNull()
