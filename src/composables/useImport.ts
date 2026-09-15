@@ -198,7 +198,9 @@ export function doImport() {
 export function doSave() {
   const { lastImportStem } = useAppState()
   const text = _callbacks.getMainText()
-  const tiMatch = text.match(/^\[ti:\s*(.+)\]/m)
+  // [^\]]+ (any non-] char) replaces `.+` to avoid super-linear backtracking
+  // (S8786); `.exec` replaces `.match` since the regex is non-global (S6594).
+  const tiMatch = /^\[ti:\s*([^\]]+)\]/m.exec(text)
   const ti = tiMatch ? tiMatch[1]!.trim() : ''
   let stem = 'lyrics'
   if (ti && ti.toLowerCase() !== 'unknown') {

@@ -133,13 +133,13 @@ def split_bullet(line: str) -> list[str]:
     return [line]
 
 
-def _process_file(path: Path) -> tuple[int, int]:
+def _process_file(path_str: str) -> tuple[int, int]:
     """Read, split overlong bullets, and write back. Returns (split_count, remaining).
 
-    Takes an already-validated Path (caller must call safe_path first).
-    Separated from main() so the path validation is visible at the call site
-    (S2083: static analysis needs to see the validation before the I/O).
+    Validates the path via safe_path() internally so the validation is visible
+    at the I/O site (S2083: taint analysis needs to see the check before the read/write).
     """
+    path = safe_path(path_str)
     lines = path.read_text(encoding='utf-8').splitlines(keepends=True)
 
     new_lines: list[str] = []
@@ -169,13 +169,7 @@ def main() -> int:
         print('Usage: split_bullets.py <file.md>', file=sys.stderr)
         return 1
 
-    try:
-        path = safe_path(sys.argv[1])
-    except ValueError as exc:
-        print(f'ERROR: {exc}', file=sys.stderr)
-        return 1
-
-    split_count, remaining = _process_file(path)
+    split_count, remaining = _process_file(sys.argv[1])
     print(f'Split {split_count} overlong bullets. {remaining} remain (no natural break point found).')
     return 0 if remaining == 0 else 1
 

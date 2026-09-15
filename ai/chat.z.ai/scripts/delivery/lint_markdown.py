@@ -202,8 +202,18 @@ def lint_line(line: str, in_code_block: bool) -> tuple[str, list[str], int]:
     return fixed_line, messages, overlong
 
 
-def lint_file(path: Path) -> tuple[bool, list[str], int]:
-    """Lint a markdown file. Returns (changed, messages, overlong_count)."""
+def lint_file(path_str: str) -> tuple[bool, list[str], int]:
+    """Lint a markdown file. Returns (changed, messages, overlong_count).
+
+    Validates the path via safe_path() internally so the validation is visible
+    at the I/O site (S2083: taint analysis needs to see the check before the read/write).
+    """
+    path = safe_path(path_str)
+    if not path.exists():
+        print(f'WARN: {path} does not exist — skipping', file=sys.stderr)
+        return False, [], 0
+    if path.suffix != '.md':
+        return False, [], 0
     original = path.read_text(encoding='utf-8')
     lines = original.splitlines(keepends=True)
 
@@ -241,18 +251,7 @@ def main() -> int:
     total_overlong = 0
 
     for arg in sys.argv[1:]:
-        try:
-            path = safe_path(arg)
-        except ValueError as exc:
-            print(f'ERROR: {exc}', file=sys.stderr)
-            return 2
-        if not path.exists():
-            print(f'WARN: {path} does not exist — skipping', file=sys.stderr)
-            continue
-        if path.suffix != '.md':
-            continue
-
-        changed, messages, overlong = lint_file(path)
+        changed, messages, overlong = lint_file(arg)
         if changed:
             any_changed = True
             print(f'FIXED: {path}')
