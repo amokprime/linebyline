@@ -149,7 +149,7 @@ export function removeSecondary(): boolean {
 // element owned by EditorArea). The merge button enable state is updated via
 // updateMergeBtn() (separate function — the monolith calls both in tandem).
 export function checkLineCounts() {
-  const { secondaryPool, mergeDone, cfg } = useAppState()
+  const { secondaryPool, mergeDone } = useAppState()
   const mainText = _callbacks.getMainText()
   const mainLines = mainText.split('\n')
   const n = getMainLyricLines(mainLines).length
@@ -195,7 +195,6 @@ export function checkLineCounts() {
   // Field borders — the monolith's _updateFieldBorders. EditorArea's watch
   // on secondaryCols handles this reactively (the last visible column gets
   // borderRight: none). No imperative DOM write needed here.
-  void cfg
 }
 
 // Port of the monolith updateMergeBtn(). Computes the merge button's disabled

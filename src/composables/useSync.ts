@@ -266,6 +266,63 @@ function _handleLineClick(e: MouseEvent, i: number, line: string, lines: string[
   }
 }
 
+// Whether a line should be skipped in hotkey-mode rendering. Meta lines are
+// always skipped; blank lines are skipped unless they follow a non-meta line
+// (preserves blank separators between lyric sections). Extracted from
+// renderMainLines to keep its cognitive complexity under 15.
+function _shouldSkipLine(line: string, prev: string | undefined, hotkeyMode: boolean): boolean {
+  if (hotkeyMode && META_RE.test(line)) {
+    return true
+  }
+  if (hotkeyMode && line.trim() === '') {
+    if (prev === undefined || META_RE.test(prev)) {
+      return true
+    }
+  }
+  return false
+}
+
+// Build the class list for a rendered line. Extracted from renderMainLines.
+function _buildLineClasses(
+  line: string,
+  i: number,
+  playingLine: number,
+  activeLine: number,
+  selectedLines: Set<number>,
+): string[] {
+  const classes = ['lrc-line']
+  if (isEndTs(line)) {
+    classes.push('end-ts')
+  }
+  if (i === playingLine) {
+    classes.push('active')
+  }
+  if (i === activeLine) {
+    classes.push('cursor')
+  }
+  if (selectedLines.has(i)) {
+    classes.push('selected')
+  }
+  return classes
+}
+
+// Build the inner HTML for a rendered line. Timestamped lines get a ts span +
+// rest span; blank lines get &nbsp;; other lines get escaped text. Extracted
+// from renderMainLines.
+function _buildLineInner(line: string, classes: string[]): string {
+  const ms = tsToMs(line)
+  if (ms !== null) {
+    const tsText = line.slice(0, 10)
+    const restText = line.slice(10)
+    return `<span class="ts">${_escapeHtml(tsText)}</span><span>${_escapeHtml(restText)}</span>`
+  }
+  if (line.trim() === '') {
+    classes.push('blank-line')
+    return '&nbsp;'
+  }
+  return _escapeHtml(line)
+}
+
 export function renderMainLines() {
   const container = _refs.current?.mainLines.value
   if (!container) {
@@ -281,41 +338,12 @@ export function renderMainLines() {
   const parts: string[] = []
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]!
-    if (hotkeyMode.value && META_RE.test(line)) {
+    const prev = lines[i - 1]
+    if (_shouldSkipLine(line, prev, hotkeyMode.value)) {
       continue
     }
-    if (hotkeyMode.value && line.trim() === '') {
-      const prev = lines[i - 1]
-      if (prev === undefined || META_RE.test(prev)) {
-        continue
-      }
-    }
-    const classes = ['lrc-line']
-    if (isEndTs(line)) {
-      classes.push('end-ts')
-    }
-    if (i === playingLine.value) {
-      classes.push('active')
-    }
-    if (i === activeLine.value) {
-      classes.push('cursor')
-    }
-    if (selectedLines.value.has(i)) {
-      classes.push('selected')
-    }
-    const ms = tsToMs(line)
-    let inner: string
-    if (ms !== null) {
-      // Timestamp span + rest text — escape text content to prevent XSS
-      const tsText = line.slice(0, 10)
-      const restText = line.slice(10)
-      inner = `<span class="ts">${_escapeHtml(tsText)}</span><span>${_escapeHtml(restText)}</span>`
-    } else if (line.trim() === '') {
-      inner = '&nbsp;'
-      classes.push('blank-line')
-    } else {
-      inner = _escapeHtml(line)
-    }
+    const classes = _buildLineClasses(line, i, playingLine.value, activeLine.value, selectedLines.value)
+    const inner = _buildLineInner(line, classes)
     parts.push(
       `<li class="${classes.join(' ')}" data-idx="${i}" role="listitem">${inner}</li>`,
     )
@@ -362,11 +390,11 @@ export function onMainLinesContextMenu(e: MouseEvent) {
 // needs explicit escaping for the text content (the structural tags are static).
 function _escapeHtml(s: string): string {
   return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;')
 }
 
 export function scrollToActive() {
@@ -546,6 +574,83 @@ function _advanceAfterSplit(updatedLines: string[], afterInserted: number) {
   }
 }
 
+// Split-mode mark-as-translation: peel trailing parenthesized groups into
+// separate lines with interpolated timestamps. Extracted from
+// markAsTranslation to reduce its cognitive complexity. Returns true if the
+// split was handled (so the caller returns early).
+function _markAsTranslationSplit(
+  lines: string[],
+  targetIdx: number,
+  hotkeyMode: boolean,
+): boolean {
+  let content = TS_RE.test(lines[targetIdx]!)
+    ? lines[targetIdx]!.slice(10).replace(/^ /, '')
+    : lines[targetIdx]!
+  const ts = TS_RE.test(lines[targetIdx]!) ? lines[targetIdx]!.slice(0, 10) : ''
+  const groups: string[] = []
+  let peeled: [string, string] | null
+  while ((peeled = peelLastParen(content)) !== null) {
+    const [before, group] = peeled
+    groups.push(group)
+    content = before
+  }
+  if (groups.length === 0) {
+    return false
+  }
+  lines[targetIdx] = ts + (content ? ' ' + content : content)
+  const toInsert = groups.slice().reverse()
+  lines.splice(targetIdx + 1, 0, ...toInsert)
+  const nextMs = findNextTimestampMs(lines, targetIdx + toInsert.length)
+  if (nextMs !== null) {
+    toInsert.forEach((g, k) => {
+      const idx = targetIdx + 1 + k
+      lines[idx] = msToTs(Math.max(0, nextMs - (toInsert.length - k) * 10)) + (g ? ' ' + g : '')
+    })
+  }
+  _callbacks.setMainText(lines.join('\n'))
+  if (hotkeyMode) {
+    _advanceAfterSplit(getMainText().split('\n'), targetIdx + 1 + toInsert.length)
+  }
+  return true
+}
+
+// Normal mark-as-translation: stamp the next timestamp minus 10ms onto the
+// target line, optionally wrapping content in parens. Extracted from
+// markAsTranslation to reduce its cognitive complexity.
+function _markAsTranslationNormal(
+  lines: string[],
+  targetIdx: number,
+  useParens: boolean,
+  hotkeyMode: boolean,
+) {
+  const { activeLine } = useAppState()
+  const nextMs = findNextTimestampMs(lines, targetIdx)
+  if (nextMs === null) {
+    return
+  }
+  const content = TS_RE.test(lines[targetIdx]!)
+    ? lines[targetIdx]!.slice(10).replace(/^ /, '')
+    : lines[targetIdx]!
+  let newContent = content
+  if (useParens && newContent.trim() && !newContent.trim().startsWith('(')) {
+    newContent = '(' + newContent.trim() + ')'
+  }
+  lines[targetIdx] = msToTs(nextMs - 10) + (newContent ? ' ' + newContent : '')
+  _callbacks.setMainText(lines.join('\n'))
+  if (hotkeyMode) {
+    const updatedLines = getMainText().split('\n')
+    for (let j = targetIdx + 1; j < updatedLines.length; j++) {
+      if (!META_RE.test(updatedLines[j]!) && updatedLines[j]!.trim() !== '') {
+        activeLine.value = j
+        suppressAuto()
+        renderMainLines()
+        scrollToActive()
+        break
+      }
+    }
+  }
+}
+
 export function markAsTranslation() {
   const { activeLine, hotkeyMode } = useAppState()
   if (!hasTrailingTimestamp(getMainText().split('\n'))) {
@@ -575,62 +680,12 @@ export function markAsTranslation() {
   const useParens = (document.getElementById('main-paren-check') as HTMLInputElement | null)?.checked ?? false
 
   if (splitMode) {
-    let content = TS_RE.test(lines[targetIdx]!)
-      ? lines[targetIdx]!.slice(10).replace(/^ /, '')
-      : lines[targetIdx]!
-    const ts = TS_RE.test(lines[targetIdx]!) ? lines[targetIdx]!.slice(0, 10) : ''
-    const groups: string[] = []
-    let peeled: [string, string] | null
-    while ((peeled = peelLastParen(content)) !== null) {
-      const [before, group] = peeled
-      groups.push(group)
-      content = before
-    }
-    if (groups.length > 0) {
-      lines[targetIdx] = ts + (content ? ' ' + content : content)
-      const toInsert = groups.slice().reverse()
-      lines.splice(targetIdx + 1, 0, ...toInsert)
-      const nextMs = findNextTimestampMs(lines, targetIdx + toInsert.length)
-      if (nextMs !== null) {
-        toInsert.forEach((g, k) => {
-          const idx = targetIdx + 1 + k
-          lines[idx] = msToTs(Math.max(0, nextMs - (toInsert.length - k) * 10)) + (g ? ' ' + g : '')
-        })
-      }
-      _callbacks.setMainText(lines.join('\n'))
-      if (hotkeyMode.value) {
-        _advanceAfterSplit(getMainText().split('\n'), targetIdx + 1 + toInsert.length)
-      }
+    if (_markAsTranslationSplit(lines, targetIdx, hotkeyMode.value)) {
       return
     }
   }
 
-  // Normal mark-as-translation
-  const nextMs = findNextTimestampMs(lines, targetIdx)
-  if (nextMs === null) {
-    return
-  }
-  const content = TS_RE.test(lines[targetIdx]!)
-    ? lines[targetIdx]!.slice(10).replace(/^ /, '')
-    : lines[targetIdx]!
-  let newContent = content
-  if (useParens && newContent.trim() && !newContent.trim().startsWith('(')) {
-    newContent = '(' + newContent.trim() + ')'
-  }
-  lines[targetIdx] = msToTs(nextMs - 10) + (newContent ? ' ' + newContent : '')
-  _callbacks.setMainText(lines.join('\n'))
-  if (hotkeyMode.value) {
-    const updatedLines = getMainText().split('\n')
-    for (let j = targetIdx + 1; j < updatedLines.length; j++) {
-      if (!META_RE.test(updatedLines[j]!) && updatedLines[j]!.trim() !== '') {
-        activeLine.value = j
-        suppressAuto()
-        renderMainLines()
-        scrollToActive()
-        break
-      }
-    }
-  }
+  _markAsTranslationNormal(lines, targetIdx, useParens, hotkeyMode.value)
 }
 
 // ── Seek offset / sync file ─────────────────────────────────────────────────
@@ -907,64 +962,54 @@ export function onMainPaste(e: ClipboardEvent) {
   }
 }
 
-// ── #main-lines paste handler (hotkey mode) ────────────────────────────────
-// Port of the monolith's #main-lines paste handler. Always overwrites in
-// hotkey mode — use the lrc-import path (merge meta if present, replace lyrics).
-// Genius paste overwrites lyrics + preserves existing meta.
-export function onMainLinesPaste(e: ClipboardEvent) {
-  const { hotkeyMode, activeLine, cfg } = useAppState()
-  if (!hotkeyMode.value) {
-    return // hotkey-mode-only handler
+// Non-Genius hotkey-mode paste: merge meta if present, replace lyrics.
+// Extracted from onMainLinesPaste to reduce its cognitive complexity.
+function _onMainLinesPasteNonGenius(raw: string, cfg: { default_meta: string }) {
+  const { activeLine } = useAppState()
+  const normalized = normalizeLrcTimestamps(raw)
+  const hasMeta = normalized.split('\n').some((l) => META_RE.test(l))
+  let mergedMeta: string
+  if (hasMeta) {
+    mergedMeta = mergeLrcMeta(normalized, cfg.default_meta)
+  } else {
+    // Preserve the current meta block exactly (including trailing blank separator)
+    const taLines = getMainText().split('\n')
+    const lmi = findLastMetaIdx(taLines)
+    mergedMeta = lmi >= 0 ? taLines.slice(0, lmi + 1).join('\n') : cfg.default_meta.trimEnd()
   }
-  e.preventDefault()
-  const raw = e.clipboardData?.getData('text/plain') || ''
-  if (!raw) {
-    return
+  const lines = normalized.split('\n').filter((l) => !META_RE.test(l))
+  let text = (mergedMeta ? mergedMeta.trimEnd() + '\n\n' : '') + lines.join('\n').trim()
+  // Rebuild with default meta block if nothing meaningful survived
+  if (!mergedMeta) {
+    text = cfg.default_meta.trimEnd() + '\n\n' + lines.join('\n').trim()
   }
-  const geniusCleaned = cleanGenius(raw)
-  // Always overwrite in hotkey mode — use lrc-import path (merge meta if present, replace lyrics)
-  if (!geniusCleaned) {
-    const normalized = normalizeLrcTimestamps(raw)
-    const hasMeta = normalized.split('\n').some((l) => META_RE.test(l))
-    let mergedMeta: string
-    if (hasMeta) {
-      mergedMeta = mergeLrcMeta(normalized, cfg.value.default_meta)
-    } else {
-      // Preserve the current meta block exactly (including trailing blank separator)
-      const taLines = getMainText().split('\n')
-      const lmi = findLastMetaIdx(taLines)
-      mergedMeta = lmi >= 0 ? taLines.slice(0, lmi + 1).join('\n') : cfg.value.default_meta.trimEnd()
-    }
-    let lines = normalized.split('\n').filter((l) => !META_RE.test(l))
-    let text = (mergedMeta ? mergedMeta.trimEnd() + '\n\n' : '') + lines.join('\n').trim()
-    // Rebuild with default meta block if nothing meaningful survived
-    if (!mergedMeta) {
-      text = cfg.value.default_meta.trimEnd() + '\n\n' + lines.join('\n').trim()
-    }
-    if ((document.getElementById('main-split-check') as HTMLInputElement | null)?.checked) {
-      text = batchSplitParens(text)
-    }
-    _callbacks.setMainText(text)
-    activeLine.value = -1
-    const ls = getMainText().split('\n')
-    for (let i = 0; i < ls.length; i++) {
-      if (!META_RE.test(ls[i]!) && ls[i]!.trim() !== '') {
-        activeLine.value = i
-        break
-      }
-    }
-    renderMainLines()
-    scrollToActive()
-    return
+  if ((document.getElementById('main-split-check') as HTMLInputElement | null)?.checked) {
+    text = batchSplitParens(text)
   }
-  // Genius paste: overwrite lyrics, preserve meta (same as non-Genius hotkey-mode path)
+  _callbacks.setMainText(text)
+  activeLine.value = -1
+  const ls = getMainText().split('\n')
+  for (let i = 0; i < ls.length; i++) {
+    if (!META_RE.test(ls[i]!) && ls[i]!.trim() !== '') {
+      activeLine.value = i
+      break
+    }
+  }
+  renderMainLines()
+  scrollToActive()
+}
+
+// Genius hotkey-mode paste: overwrite lyrics, preserve existing meta.
+// Extracted from onMainLinesPaste to reduce its cognitive complexity.
+function _onMainLinesPasteGenius(geniusCleaned: string, cfg: { default_meta: string }) {
+  const { activeLine } = useAppState()
   const cleanedTrimmed = geniusCleaned.split('\n').map((l) => l.trimEnd()).join('\n')
   const finalTrimmed = (document.getElementById('main-split-check') as HTMLInputElement | null)?.checked
     ? batchSplitParens(cleanedTrimmed)
     : cleanedTrimmed
   const taLines = getMainText().split('\n')
   const lmi = findLastMetaIdx(taLines)
-  const existingMeta = lmi >= 0 ? taLines.slice(0, lmi + 1).join('\n') : cfg.value.default_meta.trimEnd()
+  const existingMeta = lmi >= 0 ? taLines.slice(0, lmi + 1).join('\n') : cfg.default_meta.trimEnd()
   _callbacks.setMainText((existingMeta ? existingMeta.trimEnd() + '\n\n' : '') + finalTrimmed.trimStart())
   // markGeniusSource + extractGeniusMeta — Tranche 6 owns these
   if (activeLine.value < 0) {
@@ -978,6 +1023,28 @@ export function onMainLinesPaste(e: ClipboardEvent) {
       }
     }
   }
+}
+
+// ── #main-lines paste handler (hotkey mode) ────────────────────────────────
+// Port of the monolith's #main-lines paste handler. Always overwrites in
+// hotkey mode — use the lrc-import path (merge meta if present, replace lyrics).
+// Genius paste overwrites lyrics + preserves existing meta.
+export function onMainLinesPaste(e: ClipboardEvent) {
+  const { hotkeyMode, cfg } = useAppState()
+  if (!hotkeyMode.value) {
+    return // hotkey-mode-only handler
+  }
+  e.preventDefault()
+  const raw = e.clipboardData?.getData('text/plain') || ''
+  if (!raw) {
+    return
+  }
+  const geniusCleaned = cleanGenius(raw)
+  if (!geniusCleaned) {
+    _onMainLinesPasteNonGenius(raw, cfg.value)
+    return
+  }
+  _onMainLinesPasteGenius(geniusCleaned, cfg.value)
 }
 
 // ── Exported for App.vue / EditorArea / LeftPanel ──────────────────────────

@@ -284,7 +284,7 @@ export function onMiddleClick(e: MouseEvent) {
   e.preventDefault()
   const { secondaryPool } = useAppState()
   for (const entry of secondaryPool.value.filter((en) => en.visible)) {
-    if (entry.textareaEl && entry.textareaEl.contains(e.target as Node)) {
+    if (entry.textareaEl?.contains(e.target as Node)) {
       // Open the per-field picker — SecondaryField's 📂 button click handler.
       // The picker element lives in the SecondaryField component; we trigger it
       // via a custom event the component listens for, OR by finding the input

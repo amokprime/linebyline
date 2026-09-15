@@ -10,10 +10,15 @@ import { cleanPaste } from './pasteHandlers';
 // Find first lyric line: after "Read More", else first section header [Capitalized...]
 export function findGeniusLyricStart(lines: string[]): number {
   for (let i = 0; i < lines.length; i++) {
-    if (/Read More\s*$/.test(lines[i]!.trim())) return i + 1;
+    if (/Read More\s*$/.test(lines[i]!.trim())) {
+      return i + 1;
+    }
   }
   for (let i = 0; i < lines.length; i++) {
-    if (/^\[[A-Z]/.test(lines[i]!.trim())) return i; // [A-Z] distinguishes section headers from LRC tags [ti:..]
+    // [A-Z] distinguishes section headers from LRC tags [ti:..]
+    if (/^\[[A-Z]/.test(lines[i]!.trim())) {
+      return i;
+    }
   }
   return -1;
 }
@@ -32,12 +37,16 @@ export function findGeniusLyricEnd(lines: string[], start: number): number {
 
 // Returns {start, end} or null if not Genius content
 export function findGeniusLyricBounds(lines: string[]): { start: number; end: number } | null {
-  const hasLyricsHeading = lines.some((l) => /Lyrics$/.test(l.trim()));
+  const hasLyricsHeading = lines.some((l) => l.trim().endsWith('Lyrics'));
   const hasGenius = lines.some((l) => /Genius\.com|genius\.com|ML Genius|Genius is the/.test(l));
   const hasReadMore = lines.some((l) => /Read More\s*$/.test(l.trim()));
-  if (!hasLyricsHeading && !hasGenius && !hasReadMore) return null;
+  if (!hasLyricsHeading && !hasGenius && !hasReadMore) {
+    return null;
+  }
   const start = findGeniusLyricStart(lines);
-  if (start < 0) return null;
+  if (start < 0) {
+    return null;
+  }
   const end = findGeniusLyricEnd(lines, start);
   return { start, end };
 }
