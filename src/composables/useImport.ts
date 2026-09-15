@@ -198,10 +198,16 @@ export function doImport() {
 export function doSave() {
   const { lastImportStem } = useAppState()
   const text = _callbacks.getMainText()
-  // [^\]]+ (any non-] char) replaces `.+` to avoid super-linear backtracking
-  // (S8786); `.exec` replaces `.match` since the regex is non-global (S6594).
-  const tiMatch = /^\[ti:\s*([^\]]+)\]/m.exec(text)
-  const ti = tiMatch ? tiMatch[1]!.trim() : ''
+  // Parse [ti:] tag via string indexOf (avoids S8786 regex backtracking +
+  // S6594 .match → .exec). Same logic as useTitle.ts but without regex.
+  let ti = ''
+  const tiIdx = text.indexOf('[ti:')
+  if (tiIdx >= 0) {
+    const closeIdx = text.indexOf(']', tiIdx + 4)
+    if (closeIdx > tiIdx + 4) {
+      ti = text.slice(tiIdx + 4, closeIdx).trim()
+    }
+  }
   let stem = 'lyrics'
   if (ti && ti.toLowerCase() !== 'unknown') {
     stem = ti

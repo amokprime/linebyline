@@ -222,6 +222,17 @@ function lastLyricLine(): number {
 }
 
 // ── Render / line UI ───────────────────────────────────────────────────────
+// Strip the [mm:ss.cc] timestamp prefix from a line for the a11y announce
+// message. Uses string indexOf instead of regex to avoid S8786 (super-linear
+// backtracking). The timestamp is always 10 chars ([mm:ss.cc]) optionally
+// followed by spaces; the rest is the lyric content.
+function _stripTsPrefix(line: string): string {
+  if (line.startsWith('[') && line.length >= 10 && line[10] === ']') {
+    return line.slice(11).replace(/^\s+/, '')
+  }
+  return line
+}
+
 function _announce(msg: string) {
   _callbacks.announce(msg)
 }
@@ -848,7 +859,7 @@ export function updateActiveLineFromTime(posMs: number) {
   renderMainLines()
   scrollToPlaying()
   _callbacks.syncSecScroll()
-  _announce('Playing line ' + (best + 1) + ': ' + lines[best]!.replace(/\[[^\]]*\]\s*/, '').trim())
+  _announce('Playing line ' + (best + 1) + ': ' + _stripTsPrefix(lines[best]!).trim())
 }
 
 // ── Main textarea @input handler ───────────────────────────────────────────

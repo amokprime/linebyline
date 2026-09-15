@@ -208,7 +208,14 @@ def lint_file(path_str: str) -> tuple[bool, list[str], int]:
     Validates the path via safe_path() internally so the validation is visible
     at the I/O site (S2083: taint analysis needs to see the check before the read/write).
     """
-    path = safe_path(path_str)
+    # Inline path validation (S2083: taint analysis doesn't recognize
+    # custom sanitizer functions — the check must be visible at the I/O site).
+    resolved = os.path.realpath(path_str)
+    base_with_sep = _BASE_DIR + os.sep
+    if resolved != _BASE_DIR and not resolved.startswith(base_with_sep):
+        print(f'ERROR: path {path_str!r} resolves outside the allowed directory', file=sys.stderr)
+        return False, [], 0
+    path = Path(resolved)
     if not path.exists():
         print(f'WARN: {path} does not exist — skipping', file=sys.stderr)
         return False, [], 0
