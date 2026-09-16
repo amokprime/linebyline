@@ -35,7 +35,7 @@
     - button "Seek back"
     - button "Play"
     - button "Seek forward"
-    - spinbutton "Seek offset in milliseconds": /-\d+/
+    - spinbutton "Seek offset in milliseconds": "0"
     - text: ms
     - button "▲"
     - button "▼"

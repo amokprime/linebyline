@@ -134,7 +134,9 @@ onBeforeUnmount(() => {
             class="warn-bar"
             role="alert"
             :class="{ visible: mainWarnVisible }"
-          >{{ mainWarnText }}</div>
+          >
+            {{ mainWarnText }}
+          </div>
           <div
             id="main-scroll"
             ref="mainScroll"

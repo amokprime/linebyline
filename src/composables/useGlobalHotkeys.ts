@@ -48,6 +48,8 @@ import {
   replayActiveLine,
   setOffsetMode,
   syncLine,
+  renderMainLines,
+  scrollToActive,
 } from './useSync'
 import { changeSpeed, doSeekBack, doSeekFwd, toggleMute, togglePlay } from './useAudio'
 import { toggleMode } from './useModeSwitch'
@@ -370,10 +372,8 @@ function handleHotkeyModeArrows(e: KeyboardEvent, allLines: string[], lineCount:
   // Trigger a re-render of the line list — Vue's reactivity handles this
   // since activeLine is a ref consumed by renderMainLines.
   // (The monolith called renderMainLines() + scrollToActive() explicitly.)
-  import('./useSync').then(({ renderMainLines, scrollToActive }) => {
-    renderMainLines()
-    scrollToActive()
-  })
+  renderMainLines()
+  scrollToActive()
 }
 
 function handlePageKeys(e: KeyboardEvent, allLines: string[]) {
@@ -396,10 +396,8 @@ function handlePageKeys(e: KeyboardEvent, allLines: string[]) {
       : Math.min(nonMeta.length - 1, base + pageLines)
   activeLine.value = nonMeta[targetPos]!.i
   selectedLines.value.clear()
-  import('./useSync').then(({ renderMainLines, scrollToActive }) => {
-    renderMainLines()
-    scrollToActive()
-  })
+  renderMainLines()
+  scrollToActive()
 }
 
 function handleHotkeyModeNav(e: KeyboardEvent, allLines: string[], lineCount: number) {
@@ -412,10 +410,8 @@ function handleHotkeyModeNav(e: KeyboardEvent, allLines: string[], lineCount: nu
     if (nonMeta.length) {
       activeLine.value = e.key === 'Home' ? nonMeta[0]!.i : nonMeta.at(-1)!.i
       selectedLines.value.clear()
-      import('./useSync').then(({ renderMainLines, scrollToActive }) => {
-        renderMainLines()
-        scrollToActive()
-      })
+      renderMainLines()
+      scrollToActive()
     }
     return
   }
@@ -464,7 +460,7 @@ function handleHotkeyModeKeys(e: KeyboardEvent, ks: string, hk: Record<string, s
   if (e.key === 'Escape' || hkMatch(ks, hk.clear_sel)) {
     e.preventDefault()
     selectedLines.value.clear()
-    import('./useSync').then(({ renderMainLines }) => renderMainLines())
+    renderMainLines()
     return
   }
   const allLines = useAppState().mainText.value.split('\n')

@@ -463,21 +463,21 @@ function onConfirmNo() {
              display:none toggled by v-show (not v-if) so the test that pins
              `style.display === 'none'` continues to pass. -->
         <button
+          v-show="!isResetConfirmVisible()"
           id="s-reset-defaults"
           class="s-btn"
-          v-show="!isResetConfirmVisible()"
           @click="onResetClick"
         >
           Reset defaults
         </button>
         <span
-          id="s-confirm-msg"
           v-show="isResetConfirmVisible()"
+          id="s-confirm-msg"
           style="font-size: 13.2px; color: var(--warn-text)"
         >Reset all settings to defaults?</span>
         <button
-          id="s-confirm-yes"
           v-show="isResetConfirmVisible()"
+          id="s-confirm-yes"
           class="s-btn primary"
           aria-label="Confirm reset"
           @click="onConfirmYes"
@@ -485,8 +485,8 @@ function onConfirmNo() {
           Yes
         </button>
         <button
-          id="s-confirm-no"
           v-show="isResetConfirmVisible()"
+          id="s-confirm-no"
           class="s-btn"
           aria-label="Cancel reset"
           @click="onConfirmNo"

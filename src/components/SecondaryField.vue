@@ -13,6 +13,7 @@ import {
   onSecInput,
   onSecKeydown,
   onSecPaste,
+  syncScrollFrom,
 } from '../composables/useMerge'
 
 const props = defineProps<{ index: number }>()
@@ -72,11 +73,7 @@ function onFileChange(e: Event) {
 // `@scroll` syncs all other scrollable fields to match this one's ratio.
 function onScroll(e: Event) {
   const ta = e.target as HTMLTextAreaElement
-  // Lazy import to avoid a circular dependency (useMerge → useAppState →
-  // useMerge would only happen if syncScrollFrom were called at module load).
-  import('../composables/useMerge').then(({ syncScrollFrom }) => {
-    syncScrollFrom(ta)
-  })
+  syncScrollFrom(ta)
 }
 </script>
 
@@ -96,7 +93,9 @@ function onScroll(e: Event) {
           aria-label="Import secondary lyrics file"
           @click="openFilePicker"
           @mousedown.prevent
-        >📂</button>
+        >
+          📂
+        </button>
         <label
           style="display: flex; align-items: center; gap: 4px; font-size: 12px; cursor: pointer; white-space: nowrap; color: var(--muted-foreground)"
           title="Wrap all secondary lines in parentheses"
@@ -110,7 +109,9 @@ function onScroll(e: Event) {
     <div
       class="warn-bar"
       :class="{ visible: entry?.warnVisible }"
-    >{{ entry?.warnText }}</div>
+    >
+      {{ entry?.warnText }}
+    </div>
     <input
       :id="`sec-file-${index}`"
       ref="filePicker"

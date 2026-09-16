@@ -70,7 +70,7 @@ const settingsOpen = ref(false)
 // Instantiate useUndoRedo with take/apply callbacks that read from useAppState.
 // Tranche 5 amends applySnapshot to run the full side-effect chain via the
 // App.vue-wired setMainText — same callback the textarea's @input uses.
-const { mainText, secondaryPool, mergeDone, playingLine } = useAppState()
+const { mainText, secondaryPool, mergeDone, playingLine, cfg } = useAppState()
 
 // Phase D Tranche 7 — #file-picker ref (hidden input at the app root).
 // useImport reads it to trigger the picker click + the change handler.
@@ -190,7 +190,7 @@ setSyncCallbacks({
   playIfNotPlaying: () => {
     const el = audioEl.value
     if (!el) return
-    void el.play()
+    el.play()
     useAppState().playing.value = true
   },
   setLastPlayingLine: (i: number) => {
@@ -290,6 +290,29 @@ function expandPanel() {
   applyPanelCollapse(false)
 }
 
+// ── Phase E Tranche 1 — beforeunload dirty check ────────────────────────────
+// Parity with the monolith's beforeunload (docs/index.html lines 2766-2770).
+// Reads mainText + secondaryPool directly so a stale isDirty (e.g. the watch
+// in useAppState hasn't fired yet) can never suppress the warning. The
+// returnValue string matches the monolith verbatim.
+//
+// Port delta: the monolith reads cfg.default_meta (live global); here we read
+// cfg.value.default_meta (cfg is now a ref). The secondary check reads
+// secondaryPool (all entries) — not secondaryCols (visible-only computed) —
+// so hidden entries that still hold text from a previous session trigger the
+// warning. This preserves the monolith's intent (warn before losing any text)
+// even though the Vue port's secondaryCols semantics differ.
+function onBeforeUnload(e: BeforeUnloadEvent) {
+  const hasMain =
+    mainText.value.trim() !== cfg.value.default_meta.trim() &&
+    mainText.value.trim() !== ''
+  const hasSec = secondaryPool.value.some((entry) => entry.text.trim() !== '')
+  if (hasMain || hasSec) {
+    e.preventDefault()
+    e.returnValue = 'Progress will not be saved. Are you sure?'
+  }
+}
+
 onMounted(() => {
   // monolith Init: autoCollapseIfNeeded(); applyPanelCollapse(); resize listener
   autoCollapseIfNeeded()
@@ -318,6 +341,8 @@ onMounted(() => {
   if (fp) fp.addEventListener('change', onFilePickerChange)
   // Tranche 9: document-level keydown for hotkey dispatch.
   document.addEventListener('keydown', onGlobalKeydown)
+  // Phase E Tranche 1: beforeunload dirty check (warn before losing unsaved work).
+  window.addEventListener('beforeunload', onBeforeUnload)
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', autoCollapseIfNeeded)
@@ -325,6 +350,9 @@ onBeforeUnmount(() => {
   document.removeEventListener('keydown', onGlobalKeydown)
   const fp = filePicker.value
   if (fp) fp.removeEventListener('change', onFilePickerChange)
+  // Phase E Tranche 1: remove the beforeunload listener to avoid leaks on
+  // hot-reload during dev (Vite HMR re-mounts App.vue without a page reload).
+  window.removeEventListener('beforeunload', onBeforeUnload)
 })
 </script>
 

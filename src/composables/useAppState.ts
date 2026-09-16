@@ -24,7 +24,7 @@
 // wrapper is the component root. We keep the shape minimal so Tranche 6 can
 // fill it in without re-touching this file.
 
-import { computed, inject, provide, ref, type InjectionKey, type Ref } from 'vue'
+import { computed, inject, provide, ref, watch, type InjectionKey, type Ref } from 'vue'
 import { DEFAULT_CFG, migrateHotkeys, type AppConfig, type HotkeyMap } from '@/config'
 
 // Maximum number of LRC lines the editor accepts (monolith invariant).
@@ -140,6 +140,37 @@ const mainText = ref('')
 // template reads.
 const mainWarnText = ref('')
 const mainWarnVisible = ref(false)
+
+// ── Phase E Tranche 1 — isDirty bridge ──────────────────────────────────────
+// Reactively reflects whether the editor has unsaved content. The beforeunload
+// handler in App.vue reads mainText + secondaryPool directly (always fresh, so
+// a stale isDirty can never suppress the warning), but isDirty is exposed for
+// other consumers (e.g. a future "unsaved changes" indicator in the UI).
+//
+// Port delta vs monolith (docs/index.html lines 2766-2770):
+//   - getTA() → mainText.value (the Vue port's source of truth)
+//   - cfg.default_meta → cfg.value.default_meta (cfg is now a ref)
+//   - secondaryCols.some(c => c.linesEl.value.trim() !== '')
+//       → secondaryPool.value.some(e => e.text.trim() !== '')
+//   Per the roadmap quirk: the Vue port's secondaryCols is visible-only (it's
+//   a computed over visible entries), so we read secondaryPool to also catch
+//   hidden entries that may still hold text from a previous session.
+//
+// flush: 'sync' so tests can assert isDirty.value immediately after a mutation
+// without awaiting nextTick. deep: true so per-entry .text mutations on
+// secondaryPool trigger the watch. immediate: true so isDirty is correct on
+// module init (matches the monolith's read-on-beforeunload semantics).
+watch(
+  [mainText, secondaryPool],
+  () => {
+    const hasMain =
+      mainText.value.trim() !== cfg.value.default_meta.trim() &&
+      mainText.value.trim() !== ''
+    const hasSec = secondaryPool.value.some((e) => e.text.trim() !== '')
+    isDirty.value = hasMain || hasSec
+  },
+  { immediate: true, deep: true, flush: 'sync' },
+)
 
 // ── provide/inject API ───────────────────────────────────────────────────────
 // App.vue (Tranche 2) calls `provideCfg()` in setup; descendants call

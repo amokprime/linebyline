@@ -242,7 +242,7 @@ export function togglePlay() {
   } catch (e) {
     console.warn('audioEl.volume read-only in this context:', e)
   }
-  void el.play()
+  el.play()
   playing.value = true
   lastPlayingLine.value = activeLine.value
   const cfg = useAppState().cfg.value
@@ -263,7 +263,7 @@ export function doSeek(dir: number) {
   el.currentTime = Math.max(0, Math.min(el.duration || 0, el.currentTime + dir * inc))
   const { playing } = useAppState()
   if (!playing.value) {
-    void el.play()
+    el.play()
     playing.value = true
   }
 }
@@ -310,7 +310,7 @@ export function mountProgressDrag(): () => void {
       const el = audioEl.value
       const { playing } = useAppState()
       if (el && !playing.value) {
-        void el.play()
+        el.play()
         playing.value = true
       }
     }

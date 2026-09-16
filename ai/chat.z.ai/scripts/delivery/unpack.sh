@@ -17,10 +17,10 @@
 #   - ${var:?} guards on every rm with a variable path (SC2115)
 #   - LINEBYLINE_ROOT override (config over constants)
 #   - unzip -oqq — -o overwrites stale files from a failed previous run
-#   - INT/TERM trap cleans up deploy.sh + deliver.zip + .deliver-files.list on Ctrl+C
-#     (set -e failure does NOT trigger this trap — files remain for
-#      debugging per the existing documented behavior; next run's
-#      `unzip -oqq` overwrites anyway)
+#   - EXIT trap cleans up deploy.sh + deliver.zip + .deliver-files.list on
+#     ALL exits (success, failure, signal). This prevents stale files from
+#     colliding with the next download (KDE file picker autonames to
+#     deliver(1).zip if a stale deliver.zip is still in scratch/).
 #   - Errors on stderr with explicit exit codes
 
 set -euo pipefail
@@ -31,17 +31,23 @@ DELIVER_ZIP="$SCRATCH/deliver.zip"
 DEPLOY_SH="$SCRATCH/deploy.sh"
 DELIVER_LIST="$SCRATCH/.deliver-files.list"
 
-# ── Signal-trap cleanup ──────────────────────────────────────────────────────
-# Ctrl+C during the test step leaves deploy.sh, deliver.zip, and
-# .deliver-files.list in scratch/, requiring manual cleanup. The trap fires
-# only on INT/TERM — set -e failures leave files for debugging (next run's
-# `unzip -oqq` overwrites anyway).
+# ── EXIT-trap cleanup ────────────────────────────────────────────────────────
+# Runs on ALL exits — success, set -e failure, INT/TERM signal. This ensures
+# deliver.zip + deploy.sh + .deliver-files.list are always removed, so the
+# next download doesn't collide with a stale deliver.zip (which KDE's file
+# picker would autoname deliver(1).zip, requiring manual rename before dpl).
+#
+# The previous design (trap on INT/TERM only, leaving files on set -e failure
+# "for debugging") caused the stale-file collision problem. Since deploy.sh
+# is regenerated each session and deliver.zip is re-downloaded from the chat,
+# there's no debugging value in leaving them behind — the user can always
+# re-download.
 cleanup() {
   rm -f -- "${DEPLOY_SH:?}" "${DELIVER_ZIP:?}" "${DELIVER_LIST:?}"
   echo "" >&2
-  echo "Cleaned up deploy.sh + deliver.zip + .deliver-files.list (Ctrl+C caught)." >&2
+  echo "Cleaned up deploy.sh + deliver.zip + .deliver-files.list." >&2
 }
-trap cleanup INT TERM
+trap cleanup EXIT
 
 # ── Sanity checks ────────────────────────────────────────────────────────────
 if [[ ! -d "$SCRATCH" ]]; then
@@ -72,8 +78,4 @@ unzip -oqq "$DELIVER_ZIP"
 chmod +x "$DEPLOY_SH"
 ./deploy.sh
 
-# ── Normal-exit cleanup ─────────────────────────────────────────────────────
-# Disable the signal trap so Ctrl+C during the final rm doesn't recurse.
-trap - INT TERM
-cleanup
 echo "Done."

@@ -248,3 +248,131 @@ describe('useAppState — invariants', () => {
     expect(a.activeLine).toBe(b.activeLine)
   })
 })
+
+// ── Phase E Tranche 1 — isDirty watch + beforeunload integration ────────────
+// The monolith's beforeunload (docs/index.html lines 2766-2770) reads getTA()
+// + secondaryCols directly. The Vue port wires a watch in useAppState that
+// mirrors the same check into the isDirty ref (for observability), and App.vue
+// adds a beforeunload listener that re-reads mainText + secondaryPool directly
+// (so a stale isDirty can never suppress the warning). These specs pin both.
+describe('useAppState — isDirty watch (Phase E Tranche 1)', () => {
+  it('isDirty is false when mainText and secondaryPool are empty (default state)', async () => {
+    const { isDirty, mainText, secondaryPool } = await loadAppState()
+    expect(mainText.value).toBe('')
+    expect(secondaryPool.value).toEqual([])
+    expect(isDirty.value).toBe(false)
+  })
+
+  it('isDirty is true when mainText has non-default content', async () => {
+    const { isDirty, mainText } = await loadAppState()
+    mainText.value = '[00:01.00] some lyric\n'
+    expect(isDirty.value).toBe(true)
+  })
+
+  it('isDirty is false when mainText equals cfg.default_meta (port-delta quirk — default-meta-only is "not dirty")', async () => {
+    const { isDirty, mainText, cfg } = await loadAppState()
+    mainText.value = cfg.value.default_meta
+    expect(isDirty.value).toBe(false)
+  })
+
+  it('isDirty is false when mainText is empty string (even though it differs from default_meta)', async () => {
+    const { isDirty, mainText, cfg } = await loadAppState()
+    expect(cfg.value.default_meta).not.toBe('')
+    mainText.value = ''
+    expect(isDirty.value).toBe(false)
+  })
+
+  it('isDirty is true when any visible secondary has text', async () => {
+    const { isDirty, secondaryPool } = await loadAppState()
+    secondaryPool.value.push({ visible: true, text: 'translation\n' })
+    expect(isDirty.value).toBe(true)
+  })
+
+  it('isDirty is true when any hidden secondary has text (quirk preservation — hidden entries still count)', async () => {
+    // The Vue port's secondaryCols is visible-only, but isDirty reads
+    // secondaryPool (all entries) so hidden entries with text still flag dirty.
+    // This preserves the monolith's intent: warn before losing any text.
+    const { isDirty, secondaryPool } = await loadAppState()
+    secondaryPool.value.push({ visible: false, text: 'hidden translation\n' })
+    expect(isDirty.value).toBe(true)
+  })
+
+  it('isDirty reactively updates when mainText changes (flush: sync — no nextTick needed)', async () => {
+    const { isDirty, mainText } = await loadAppState()
+    expect(isDirty.value).toBe(false)
+    mainText.value = 'dirty content\n'
+    expect(isDirty.value).toBe(true)
+    mainText.value = ''
+    expect(isDirty.value).toBe(false)
+  })
+
+  it('isDirty reactively updates on deep secondary .text mutation (deep watch catches per-entry changes)', async () => {
+    const { isDirty, secondaryPool } = await loadAppState()
+    secondaryPool.value.push({ visible: true, text: '' })
+    expect(isDirty.value).toBe(false)
+    // Deep mutation — the watch has deep: true to catch this without replacing
+    // the whole array.
+    secondaryPool.value[0]!.text = 'now has content\n'
+    expect(isDirty.value).toBe(true)
+  })
+
+  it('isDirty stays true when a secondary with text is hidden (removed from secondaryCols but kept in secondaryPool)', async () => {
+    // Quirk preservation: hiding a secondary (visible=false) doesn't clear
+    // its text from secondaryPool, so isDirty stays true.
+    const { isDirty, secondaryPool } = await loadAppState()
+    secondaryPool.value.push({ visible: true, text: 'content\n' })
+    expect(isDirty.value).toBe(true)
+    secondaryPool.value[0]!.visible = false
+    expect(isDirty.value).toBe(true)
+  })
+})
+
+describe('App.vue — beforeunload integration (Phase E Tranche 1)', () => {
+  async function mountApp() {
+    const mod = await import('@/App.vue')
+    const { mount } = await import('@vue/test-utils')
+    return mount(mod.default)
+  }
+
+  it('does not preventDefault when mainText equals default_meta (not dirty after loadAutosave fallback)', async () => {
+    const wrapper = await mountApp()
+    // After mount, loadAutosave runs with no sessionStorage autosave →
+    // mainText is set to cfg.default_meta (the fallback). This is not dirty.
+    const { mainText, cfg } = await loadAppState()
+    expect(mainText.value).toBe(cfg.value.default_meta)
+    const event = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('prevents default when mainText has non-default content', async () => {
+    const wrapper = await mountApp()
+    const { mainText } = await loadAppState()
+    mainText.value = '[00:01.00] custom lyric\n'
+    const event = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('prevents default when a visible secondary has text', async () => {
+    const wrapper = await mountApp()
+    const { secondaryPool } = await loadAppState()
+    secondaryPool.value.push({ visible: true, text: 'translation\n' })
+    const event = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
+    wrapper.unmount()
+  })
+
+  it('prevents default when a hidden secondary has text (quirk preservation via secondaryPool)', async () => {
+    const wrapper = await mountApp()
+    const { secondaryPool } = await loadAppState()
+    secondaryPool.value.push({ visible: false, text: 'hidden translation\n' })
+    const event = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(event)
+    expect(event.defaultPrevented).toBe(true)
+    wrapper.unmount()
+  })
+})
