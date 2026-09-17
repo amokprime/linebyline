@@ -94,6 +94,23 @@ setResetCallbacks({
     // binding if LeftPanel's template uses :value — LeftPanel.vue's #seek-offset
     // uses value="0" hardcoded; this remains a known post-cutover fix.
   },
+  afterReset: () => {
+    // Re-sync form refs from cfg — doResetDefaults updates cfg.value but the
+    // local refs (tinyMs, smallMs, etc.) still hold the pre-reset values.
+    // This runs whether the reset is triggered by the Yes button click
+    // (onConfirmYes) or by the Enter key (handleResetConfirmKeys →
+    // doResetDefaults). Without this, the input fields show stale values
+    // until the dialog is closed and re-opened.
+    tinyMs.value = String(cfg.value.tiny_ms)
+    smallMs.value = String(cfg.value.small_ms)
+    mediumMs.value = String(cfg.value.medium_ms)
+    largeMs.value = String(cfg.value.large_ms)
+    seekInc.value = String(cfg.value.seek_increment_s ?? 5)
+    speedRatio.value = (cfg.value.speed_ratio ?? 1.1).toFixed(2)
+    volInc.value = String(Math.round((cfg.value.vol_increment || 0.1) * 100))
+    undoDebounce.value = String(cfg.value.undo_debounce_ms ?? 150)
+    defaultMeta.value = cfg.value.default_meta ?? DEFAULT_META
+  },
 })
 
 // Initialize settings state when the dialog opens.
@@ -101,6 +118,21 @@ watch(
   () => props.open,
   (open) => {
     if (open) initSettings()
+  },
+)
+
+// Save settings when the dialog closes. shadcn-vue Dialog unmounts DialogContent
+// on close (reka-ui Presence), so @change/blur events may not fire before the
+// inputs are removed from the DOM. This watcher ensures form values are
+// committed to cfg even if the user presses Escape immediately after typing.
+// The monolith didn't need this because it used display:none (content stayed
+// in the DOM, so blur+change fired before closeSettings ran).
+watch(
+  () => props.open,
+  (open, prevOpen) => {
+    if (!open && prevOpen) {
+      onSaveNow()
+    }
   },
 )
 
@@ -271,6 +303,7 @@ function onResetClick() {
 function onConfirmYes() {
   hideResetConfirm()
   doResetDefaults()
+  // afterReset callback (registered via setResetCallbacks) re-syncs form refs
   nextTick(() => {
     const search = document.getElementById('s-search') as HTMLInputElement | null
     if (search) search.focus()
@@ -291,7 +324,7 @@ function onConfirmNo() {
     @update:open="$emit('update:open', $event)"
   >
     <DialogContent
-      class="settings-win flex flex-col gap-0 overflow-hidden rounded-[8.8px] p-0 sm:max-w-[480px]"
+      class="settings-win flex flex-col gap-0 overflow-hidden rounded-[8.8px] p-0 sm:max-w-[480px] max-h-[88vh]"
       :show-close-button="false"
     >
       <DialogDescription class="sr-only">
@@ -334,7 +367,7 @@ function onConfirmNo() {
         </div>
       </div>
       <div id="settings-body">
-        <div :class="{ 's-hidden': isNonHkRowHidden('Instant Replay') }">
+        <div :class="{ 's-hidden': isNonHkRowHidden('Instant Replay') && !replayChecks.some(c => !isNonHkRowHidden(c.label)) }">
           <div class="s-sec-label">
             Instant Replay
           </div>
@@ -352,7 +385,7 @@ function onConfirmNo() {
             > {{ c.label }}
           </label>
         </div>
-        <div :class="{ 's-hidden': isNonHkRowHidden('Intervals') }">
+        <div :class="{ 's-hidden': isNonHkRowHidden('Intervals') && !intervalRows.some(r => !isNonHkRowHidden(r.label)) }">
           <div class="s-sec-label">
             Intervals
           </div>

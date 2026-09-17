@@ -219,14 +219,17 @@ describe('useImport — onFilePickerChange (audio-only)', () => {
 })
 
 describe('useImport — onFilePickerChange (lrc-only)', () => {
-  it('reads the lrc + merges meta + sets main text + pushes snapshot', async () => {
+  it('reads the lrc + merges meta + sets main text', async () => {
     const { mod, callbacks } = await initImportWithStubs()
     const restore = stubFileReaderText('[ti: Song]\n[00:01.00] lyric\n')
     const lf = makeTextFile('song.lrc', '[ti: Song]\n[00:01.00] lyric\n')
     const e = { target: { files: [lf] } } as unknown as Event
     mod.onFilePickerChange(e)
     expect(callbacks.setMainText).toHaveBeenCalled()
-    expect(callbacks.pushSnapshot).toHaveBeenCalled()
+    // pushSnapshot is NOT called separately — setMainText (App.vue's real
+    // implementation) handles the undo stack push internally (pre + post).
+    // The explicit pushSnapshot was removed to fix the undo double-push bug
+    // where the first Control+z was a no-op (pop to identical state).
     expect(callbacks.doAutosave).toHaveBeenCalledWith('song')
     restore()
   })

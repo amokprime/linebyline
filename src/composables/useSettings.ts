@@ -32,7 +32,7 @@
 // called once in SettingsDialog.vue setup. Action functions are module-level
 // exports. vi.resetModules() in tests gives a fresh module.
 
-import { ref } from 'vue'
+import { nextTick, reactive, ref } from 'vue'
 import { DEFAULT_CFG, type AppConfig, type HotkeyMap, HK_LABELS } from '@/config'
 import { useAppState } from './useAppState'
 import { isRestrictedForAll, isRestrictedForKey } from '@/hotkeys/restrictedKeys'
@@ -59,14 +59,20 @@ interface RowState {
 }
 
 function makeRowState(): RowState {
-  return {
+  // reactive() so template bindings (:class, {{ }}) that read restrictWarn,
+  // isFocused, conflictKey etc. re-render on mutation. Without this, setting
+  // r.restrictWarn = '...' is invisible to Vue — the .hk-restrict-warn span
+  // stays display:none because no reactive dependency triggered a re-render.
+  // The reactivity is shallow (RowState has only primitives), so reactive()
+  // is fine — no need for shallowReactive.
+  return reactive({
     lastGoodVal: '',
     prevVal: '',
     conflictKey: '',
     restrictWarn: '',
     isFocused: false,
     skipBlurRevert: false,
-  }
+  })
 }
 
 // ── Module-level singleton state ──────────────────────────────────────────
@@ -412,6 +418,16 @@ export function consumePendingAdvance(): string | null {
 export function isResetConfirmVisible(): boolean { return _resetConfirmVisible.value }
 export function showResetConfirm() {
   _resetConfirmVisible.value = true
+  // Focus the Yes button (monolith parity — the monolith's showResetConfirm
+  // focuses #s-confirm-yes via requestAnimationFrame). This runs whether the
+  // confirm is triggered by the button click (onResetClick) or by the global
+  // hotkey (useGlobalHotkeys → showResetConfirm). Without this, the global
+  // hotkey path shows the confirm but doesn't focus, failing the test's
+  // toBeFocused assertion.
+  nextTick(() => {
+    const yes = document.getElementById('s-confirm-yes') as HTMLButtonElement | null
+    if (yes) yes.focus()
+  })
 }
 export function hideResetConfirm() {
   _resetConfirmVisible.value = false
@@ -424,11 +440,17 @@ export interface ResetCallbacks {
   resetEditorFont: () => void
   resetSpeed: () => void
   resetSeekOffsetDisplay: () => void
+  // Called after doResetDefaults updates cfg — the SettingsDialog uses this
+  // to re-sync its local form refs (tinyMs, smallMs, etc.) from cfg so the
+  // input fields show the reset values immediately. Without this, the fields
+  // show stale values until the dialog is closed and re-opened.
+  afterReset: () => void
 }
 let _resetCallbacks: ResetCallbacks = {
   resetEditorFont: () => {},
   resetSpeed: () => {},
   resetSeekOffsetDisplay: () => {},
+  afterReset: () => {},
 }
 export function setResetCallbacks(cb: ResetCallbacks) {
   _resetCallbacks = cb
@@ -461,14 +483,17 @@ export function doResetDefaults() {
   _resetCallbacks.resetEditorFont()
   _resetCallbacks.resetSpeed()
   _resetCallbacks.resetSeekOffsetDisplay()
+  _resetCallbacks.afterReset()
 }
 
 // ── Search mode ──────────────────────────────────────────────────────────────
 export function setSearchHkMode(on: boolean) {
   _searchHkMode.value = on
-  if (on) {
-    _searchQuery.value = ''
-  }
+  // Clear the search query on mode switch (both directions). The monolith
+  // clears the input on enter AND on exit — without clearing on exit, the
+  // text-mode filter uses the old hk-mode query (a key string like "x")
+  // which matches hotkey values, not label text, hiding all rows.
+  _searchQuery.value = ''
 }
 
 // Build the canonical key string from a KeyboardEvent.

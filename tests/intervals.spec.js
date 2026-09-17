@@ -1,3 +1,4 @@
+
 const {
   test,
   expect,
@@ -35,7 +36,7 @@ test("seek-increment", async ({ page, media }) => {
   await page.keyboard.press("Control+,");
   await page.getByRole("spinbutton", { name: "Seek increment" }).fill("13");
   await page.keyboard.press("Escape");
-  await expect(page.locator("#settings-overlay")).not.toHaveClass(/open/);
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.locator("#main-lines").click();
   await page.keyboard.press("ArrowRight");
   await expect(page.getByText("0:130:")).toBeVisible();
@@ -47,7 +48,7 @@ test("speed-ratio", async ({ page, media }) => {
   await page.keyboard.press("Control+,");
   await page.getByRole("spinbutton", { name: "Speed ratio" }).fill("2");
   await page.keyboard.press("Escape");
-  await expect(page.locator("#settings-overlay")).not.toHaveClass(/open/);
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.locator("#main-lines").click();
   await page.keyboard.press("Control+1");
   await expect(
@@ -69,7 +70,7 @@ test("volume-increment", async ({ page, media }) => {
   await page.keyboard.press("Control+,");
   await page.getByRole("spinbutton", { name: "Volume increment" }).fill("20");
   await page.keyboard.press("Escape");
-  await expect(page.locator("#settings-overlay")).not.toHaveClass(/open/);
+  await expect(page.getByRole("dialog")).not.toBeVisible();
   await page.locator("#vol-slider").hover();
   await page.mouse.wheel(0, 120);
   await expect(page.locator("#vol-slider")).toHaveValue("0.8");

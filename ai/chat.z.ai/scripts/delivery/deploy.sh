@@ -122,6 +122,12 @@ echo ""
 echo "=== Running Vitest unit suite ==="
 npm run test:unit
 
+# ── Vite build (rebuild dist/ with patched source) ──────────────────────────
+echo ""
+echo "=== Building Vite dist/ ==="
+npm run build
+echo "dist/ rebuilt."
+
 # ── Syncthing wait + Playwright via SSH ─────────────────────────────────────
 # COMMENTED OUT — Playwright targets docs/index.html until Phase E (per
 # "Project invariants" in MEMORY.md), so running it on src/** patches is ~8.3

@@ -1,3 +1,4 @@
+
 // Phase D Tranche 9 — global keyboard handler, ported from the monolith
 // "── Keyboard → Global KD ──" + "── Overlay utilities ──" sections. Owns:
 //  - The document-level keydown handler that dispatches to ~30 actions via a
@@ -50,6 +51,7 @@ import {
   syncLine,
   renderMainLines,
   scrollToActive,
+  tickSeekOffset,
 } from './useSync'
 import { changeSpeed, doSeekBack, doSeekFwd, toggleMute, togglePlay } from './useAudio'
 import { toggleMode } from './useModeSwitch'
@@ -480,21 +482,22 @@ function handleHotkeyModeKeys(e: KeyboardEvent, ks: string, hk: Record<string, s
     doSeekFwd()
     return
   }
-  const { cfg } = useAppState()
+  const { cfg, offsetSeekMode } = useAppState()
+  const om = offsetSeekMode.value
   const actions: Record<string, () => void> = {
     [hk.play_pause ?? '']: () => togglePlay(),
     [hk.sync ?? '']: () => syncLine(),
     [hk.end_line ?? '']: () => insertEndLine(),
     [hk.prev_line ?? '']: () => seekPrevLine(),
     [hk.next_line ?? '']: () => seekNextLine(),
-    [hk.ts_back_tiny ?? '']: () => adjustTs(-cfg.value.tiny_ms),
-    [hk.ts_fwd_tiny ?? '']: () => adjustTs(cfg.value.tiny_ms),
-    [hk.ts_back_small ?? '']: () => adjustTs(-cfg.value.small_ms),
-    [hk.ts_fwd_small ?? '']: () => adjustTs(cfg.value.small_ms),
-    [hk.ts_back_medium ?? '']: () => adjustTs(-cfg.value.medium_ms),
-    [hk.ts_fwd_medium ?? '']: () => adjustTs(cfg.value.medium_ms),
-    [hk.ts_back_large ?? '']: () => adjustTs(-cfg.value.large_ms),
-    [hk.ts_fwd_large ?? '']: () => adjustTs(cfg.value.large_ms),
+    [hk.ts_back_tiny ?? '']: () => om ? tickSeekOffset(-cfg.value.tiny_ms) : adjustTs(-cfg.value.tiny_ms),
+    [hk.ts_fwd_tiny ?? '']: () => om ? tickSeekOffset(cfg.value.tiny_ms) : adjustTs(cfg.value.tiny_ms),
+    [hk.ts_back_small ?? '']: () => om ? tickSeekOffset(-cfg.value.small_ms) : adjustTs(-cfg.value.small_ms),
+    [hk.ts_fwd_small ?? '']: () => om ? tickSeekOffset(cfg.value.small_ms) : adjustTs(cfg.value.small_ms),
+    [hk.ts_back_medium ?? '']: () => om ? tickSeekOffset(-cfg.value.medium_ms) : adjustTs(-cfg.value.medium_ms),
+    [hk.ts_fwd_medium ?? '']: () => om ? tickSeekOffset(cfg.value.medium_ms) : adjustTs(cfg.value.medium_ms),
+    [hk.ts_back_large ?? '']: () => om ? tickSeekOffset(-cfg.value.large_ms) : adjustTs(-cfg.value.large_ms),
+    [hk.ts_fwd_large ?? '']: () => om ? tickSeekOffset(cfg.value.large_ms) : adjustTs(cfg.value.large_ms),
   }
   const fn = actions[ks]
   if (fn) {

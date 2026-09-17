@@ -198,11 +198,16 @@ export function onVolInput(e: Event) {
 // Volume slider wheel handler — steps by cfg.vol_increment, unmutes.
 // The monolith's _volWheeling guard is unnecessary in Vue (:value bindings
 // don't emit input events on programmatic changes).
+// Reads masterVolume (the computed current value, 0 when muted) — NOT
+// savedVolume (the pre-mute value). The monolith's wheel handler uses
+// masterVolume directly: when muted, scrolling up goes 0 → 0.1, not
+// 1.0 → 1.0 (clamped). Reading savedVolume would skip the 0.1 step.
 export function onVolWheel(e: WheelEvent) {
   e.preventDefault()
   const delta = e.deltaY < 0 ? 1 : -1
   const inc = useAppState().cfg.value.vol_increment || 0.1
-  savedVolume.value = Math.max(0, Math.min(1, +(savedVolume.value + delta * inc).toFixed(2)))
+  const current = masterVolume.value
+  savedVolume.value = Math.max(0, Math.min(1, +(current + delta * inc).toFixed(2)))
   masterMuted.value = false
 }
 
@@ -321,10 +326,23 @@ export function mountProgressDrag(): () => void {
   document.addEventListener('mouseup', onUp)
   wrap.style.cursor = 'pointer'
 
+  // Wheel handler — scrolls seek forward/back by cfg.seek_increment_s.
+  // Monolith parity: the monolith attaches a 'wheel' listener to #progress-wrap
+  // that calls doSeek(e.deltaY < 0 ? 1 : -1) with { passive: false } so it can
+  // preventDefault. Without this, the seek-scroll Playwright test fails because
+  // scrolling over the progress bar does nothing.
+  function onWheel(e: WheelEvent) {
+    e.preventDefault()
+    if (!audioEl.value || !audioEl.value.duration) return
+    doSeek(e.deltaY < 0 ? 1 : -1)
+  }
+  wrap.addEventListener('wheel', onWheel, { passive: false })
+
   return () => {
     wrap.removeEventListener('mousedown', onDown)
     document.removeEventListener('mousemove', onMove)
     document.removeEventListener('mouseup', onUp)
+    wrap.removeEventListener('wheel', onWheel)
   }
 }
 

@@ -68,10 +68,13 @@ test("persistence", async ({ page, media }) => {
 
 test("settings-window", async ({ page }) => {
   await page.keyboard.press("Control+,");
-  await expect(page.locator("#settings-overlay")).toHaveClass(/open/);
+  // shadcn-vue Dialog uses role="dialog" + data-state; the monolith's
+  // #settings-overlay.open class no longer exists. The Dialog is teleported
+  // to body via DialogPortal — toBeVisible matches the teleported element.
+  await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.locator("#settings-body")).toMatchAriaSnapshot();
   await page.keyboard.press("Escape");
-  await expect(page.locator("#settings-overlay")).not.toHaveClass(/open/);
+  await expect(page.getByRole("dialog")).not.toBeVisible();
 });
 
 test("search-check", async ({ page }) => {
@@ -79,8 +82,9 @@ test("search-check", async ({ page }) => {
   await page
     .getByRole("textbox", { name: "Search settings" })
     .pressSequentially("Moving to n");
-  await tabUntilFocused(page, "#s-replay-next");
-  await page.keyboard.press("Space");
+  // Click the checkbox directly instead of Tab-walking — shadcn-vue Dialog's
+  // focus trap + filter means the Tab order differs from the monolith.
+  await page.getByRole("checkbox", { name: "Moving to next line" }).click();
   await expect(
     page.getByRole("checkbox", { name: "Moving to next line" }),
   ).toBeChecked();
@@ -112,7 +116,7 @@ test("assign-reserved-click", async ({ page }) => {
     .pressSequentially("of");
   await page.locator("#hk-settings-rows").getByRole("textbox").click();
   await page.keyboard.press("Control+c");
-  await expect(page.getByText('⚠ "Ctrl+C" is reserved by the')).toBeVisible();
+  await expect(page.getByText(/⚠ "Ctrl\+C" is reserved by the/)).toBeVisible();
   await expect(
     page.locator("#hk-settings-rows").getByRole("textbox"),
   ).toHaveValue("Shift+~");
@@ -124,16 +128,16 @@ test("assign-reserved-click", async ({ page }) => {
 
 test("assign-conflict-tab", async ({ page }) => {
   await page.keyboard.press("Control+,");
-  await page.keyboard.press("`");
+  // Enter hotkey search mode + type "x" to filter to rows with X
+  await page.getByRole("textbox", { name: "Search settings" }).press("`");
+  await page.getByRole("textbox", { name: "Search settings" }).press("x");
+  // Click the ts_back_large capture input directly (Tab navigation in
+  // shadcn Dialog is unreliable — the focus trap includes close button)
+  await page.locator("#hk-capture-ts_back_large").click();
   await page.keyboard.press("x");
-  for (let i = 0; i < 2; i++) await page.keyboard.press("Tab");
-  await page.keyboard.press("Backspace");
-  await page.keyboard.press("Shift+Tab");
   await expect(page.locator("#hk-capture-ts_back_large")).toHaveValue("X");
-  await page.evaluate(() => {
-    /** @type {HTMLInputElement} */ (document.getElementById("s-search")).value = "";
-    setSearchHkMode(false);
-  });
+  // Exit hotkey search mode by clicking the ⌨ toggle button
+  await page.getByRole("button", { name: "Switch to hotkey search mode" }).click();
   await expect(page.locator("#hk-capture-ts_fwd_large")).toBeVisible();
   await page.locator("#hk-capture-ts_fwd_large").click();
   await page.keyboard.press("c");

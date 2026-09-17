@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 // Left panel — structure ported from the monolith (#left-panel: header with
 // the collapse button, #audio-box, #controls-box). The collapse state lives
@@ -301,7 +302,7 @@ onBeforeUnmount(() => {
           id="seek-offset"
           ref="seekOffset"
           type="number"
-          value="0"
+          :value="cfg.seek_offset ?? 0"
           title="Seek offset (ms): shifts playback position when clicking a timestamped line"
           aria-label="Seek offset in milliseconds"
           @change="onSeekOffsetChange"

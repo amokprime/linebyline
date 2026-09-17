@@ -95,11 +95,12 @@ describe('useAudio — volume + mute', () => {
     const { masterMuted, masterVolume, onVolWheel } = useAudio()
     masterMuted.value = true
 
-    // deltaY < 0 = scroll up = increase
+    // deltaY < 0 = scroll up = increase.
+    // Reads masterVolume (0 when muted), not savedVolume (1.0 pre-mute).
+    // Matches the monolith's wheel handler: masterVolume + delta * inc.
+    // Muted → 0 + 0.1 = 0.1, then masterMuted=false so masterVolume=savedVolume=0.1.
     onVolWheel({ deltaY: -100, preventDefault: () => {} } as unknown as WheelEvent)
-    expect(masterVolume.value).toBeCloseTo(1, 2) // 0 + 0.1 = 0.1... wait, savedVolume starts at 1
-    // Actually savedVolume defaults to 1, so masterVolume = 1 when unmuted.
-    // After unmute via wheel, masterMuted = false, masterVolume = savedVolume = 1.
+    expect(masterVolume.value).toBeCloseTo(0.1, 2)
     expect(masterMuted.value).toBe(false)
   })
 
@@ -340,6 +341,33 @@ describe('useAudio — mountProgressDrag', () => {
     // mouseup auto-plays (was not playing before)
     expect(playing.value).toBe(true)
     expect(mock.play).toHaveBeenCalled()
+
+    cleanup()
+    document.body.removeChild(wrap)
+  })
+
+  it('wheel on progress-wrap seeks by cfg.seek_increment_s', async () => {
+    const { useAudio, initAudio } = await import('@/composables/useAudio')
+    const { audioEl, mountProgressDrag } = useAudio()
+    // duration=100, currentTime=10 so doSeek has room to move in both directions
+    const mock = makeMockAudio(100, 10)
+    audioEl.value = mock
+
+    const wrap = document.createElement('div')
+    document.body.appendChild(wrap)
+
+    initAudio(
+      { progressWrap: { value: wrap } as any, seekOffset: { value: null } as any },
+    )
+    const cleanup = mountProgressDrag()
+
+    // Wheel up (deltaY < 0) → doSeek(1) → currentTime += 5 (default seek_increment_s)
+    wrap.dispatchEvent(new WheelEvent('wheel', { deltaY: -100 }))
+    expect(mock.currentTime).toBe(15)
+
+    // Wheel down (deltaY > 0) → doSeek(-1) → currentTime -= 5
+    wrap.dispatchEvent(new WheelEvent('wheel', { deltaY: 100 }))
+    expect(mock.currentTime).toBe(10)
 
     cleanup()
     document.body.removeChild(wrap)

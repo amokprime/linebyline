@@ -8,22 +8,26 @@
 #   (contains every loose file in download/ — flat, hyphenated names,
 #    no subdirectories — PLUS deploy.sh which is one of those loose files)
 #
-# This script does three things:
+# This script does four things:
 #   1. Lint all *.md files in download/ (auto-fix bare #id/[id]/[[id]],
 #      warn about overlong bullets — see lint_markdown.py for details)
 #   2. Verify every file listed in deploy.sh's deploy_file calls exists
 #      in download/ (catches forgotten deliverables BEFORE zipping)
-#   3. Zip everything into deliver.zip + clean up loose files
+#   3. Run ESLint + Vitest in the sandbox (if src/ or tests/ files are present)
+#      to catch code quality + unit test failures BEFORE zipping
+#   4. Zip everything into deliver.zip + clean up loose files
 #
-# The linter + expected-files check are JIT reminders: if you forgot to copy
-# a file to download/, or wrote bare #tokens in MEMORY.md, this script fails
-# before the zip is created. Fix the issues, then re-run.
+# The linter + expected-files check + ESLint/Vitest are JIT reminders: if
+# you forgot to copy a file, wrote bare #tokens in MEMORY.md, introduced an
+# ESLint violation, or broke a unit test, this script fails before the zip
+# is created. Fix the issues, then re-run.
 
 set -euo pipefail
 
 DOWNLOAD_DIR="/home/z/my-project/download"
 ZIP="$DOWNLOAD_DIR/deliver.zip"
 LINTER="/home/z/my-project/scripts/delivery/lint_markdown.py"
+SANDBOX_DIR="/home/z/my-project/sandbox"
 
 if [[ ! -d "$DOWNLOAD_DIR" ]]; then
   echo "ERROR: download directory not found: $DOWNLOAD_DIR" >&2
@@ -78,7 +82,61 @@ fi
 
 echo "  ${#expected_files[@]} expected files found in download/ — all present."
 
-# ── Step 3: Zip everything ──────────────────────────────────────────────────
+# ── Step 3: Run ESLint + Vitest in sandbox (if src/ or tests/ files present) ─
+echo ""
+echo "=== Running ESLint + Vitest in sandbox ==="
+
+# Check if the sandbox project tree exists (with package.json + node_modules)
+if [[ ! -d "$SANDBOX_DIR" ]] || [[ ! -f "$SANDBOX_DIR/package.json" ]]; then
+  echo "  (skipped: sandbox project tree not found at $SANDBOX_DIR)"
+  echo "  To enable: extract the Build Repomix into $SANDBOX_DIR and run 'npm install --ignore-scripts'"
+elif [[ ! -f "$SANDBOX_DIR/node_modules/.bin/eslint" ]]; then
+  echo "  (skipped: node_modules not installed in sandbox — run 'npm install --ignore-scripts' in $SANDBOX_DIR)"
+else
+  # Parse deploy_file lines to get flat → repo path mappings, copy patched
+  # files into the sandbox so ESLint + Vitest test the actual patched code.
+  echo "  Copying patched files to sandbox..."
+  while IFS= read -r flat rel; do
+    [[ -z "$flat" || -z "$rel" ]] && continue
+    # Only copy src/ or tests/ files (skip docs, config, etc.)
+    if [[ "$rel" == src/* || "$rel" == tests/* ]]; then
+      mkdir -p "$SANDBOX_DIR/$(dirname "$rel")"
+      cp "$DOWNLOAD_DIR/$flat" "$SANDBOX_DIR/$rel"
+      echo "    $flat → $rel"
+    fi
+  done < <(grep -oP 'deploy_file\s+(\S+)\s+(\S+)' "$DOWNLOAD_DIR/deploy.sh" | awk '{print $2, $3}')
+
+  echo ""
+  echo "  Running ESLint (autofix + gate)..."
+  cd "$SANDBOX_DIR"
+  ./node_modules/.bin/eslint src/ --fix || true
+  if ! ./node_modules/.bin/eslint src/; then
+    echo "" >&2
+    echo "ERROR: ESLint gate failed — fix the violations above before zipping." >&2
+    exit 1
+  fi
+  echo "  ESLint gate passed."
+
+  echo ""
+  echo "  Running vue-tsc type check..."
+  if ! ./node_modules/.bin/vue-tsc -b 2>&1; then
+    echo "" >&2
+    echo "ERROR: vue-tsc type check failed — fix the type errors above before zipping." >&2
+    exit 1
+  fi
+  echo "  vue-tsc clean."
+
+  echo ""
+  echo "  Running Vitest unit suite..."
+  if ! ./node_modules/.bin/vitest run 2>&1; then
+    echo "" >&2
+    echo "ERROR: Vitest suite failed — fix the failing tests above before zipping." >&2
+    exit 1
+  fi
+  echo "  Vitest suite passed."
+fi
+
+# ── Step 4: Zip everything ──────────────────────────────────────────────────
 echo ""
 echo "=== Creating deliver.zip ==="
 

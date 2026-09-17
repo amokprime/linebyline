@@ -1,3 +1,4 @@
+
 // @vitest-environment happy-dom
 // Tests for useSettings — Phase D Tranche 8.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -425,9 +426,10 @@ describe('useSettings — reset confirm flow', () => {
       resetEditorFont: () => calls.push('font'),
       resetSpeed: () => calls.push('speed'),
       resetSeekOffsetDisplay: () => calls.push('seek'),
+      afterReset: () => calls.push('after'),
     })
     settings.doResetDefaults()
-    expect(calls).toEqual(['font', 'speed', 'seek'])
+    expect(calls).toEqual(['font', 'speed', 'seek', 'after'])
   })
 })
 

@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 // Modular app root. Phase C complete: every monolith element lives in a Vue
 // component (this shell carries the two app-level hidden nodes — #file-picker
@@ -81,13 +82,14 @@ setFilePickerRef(filePicker)
 // (`_setTA(t); renderMainLines(); checkLineCounts(); updateMergeBtn();
 // updateTitleFromText(); doAutosave(); pushSnapshot();`). Tranche 5 collapses
 // it into one function so the composable's setMainText calls are one-liners.
-// `pushSnapshot` is wholesale-replacement → pre + post (single-push model
-// from the code-quality skill + useUndoRedo).
+// `setMainText` is the wholesale-replacement entry point. The undo stack
+// gets ONE push per call (POST-change, matching the monolith's pattern:
+// _setTA(text); renderMainLines(); ...; pushSnapshot();). The monolith
+// pushes AFTER the change, so undo pops to the previous state and redo
+// re-applies the new state. The pre-push was removed — it created duplicate
+// undo entries that made the first Control+z a no-op.
 function setMainText(t: string) {
-  // Pre-change snapshot (only if mainText is changing — wholesale replacement)
-  if (mainText.value !== t) {
-    undoRedo.pushSnapshot()
-  }
+  if (mainText.value === t) return
   mainText.value = t
   renderMainLines()
   // Tranche 6: real checkLineCounts + updateMergeBtn (the warn bars + merge

@@ -1,3 +1,4 @@
+
 // Phase D Tranche 7 — import + save, ported from the monolith's
 // "── Import ──" section. Owns:
 //  - doImport (opens #file-picker)
@@ -257,7 +258,11 @@ export function onFilePickerChange(e: Event) {
     reader.onload = (ev) => {
       const raw = normalizeLrcTimestamps((ev.target?.result as string) || '')
       processImportedLrc(raw, lfStem, lfStem, false)
-      _callbacks.pushSnapshot()
+      // setMainText (called by processImportedLrc) already pushes a pre +
+      // post snapshot. The extra pushSnapshot here would add a duplicate
+      // top entry, making the first undo a no-op (pop to identical state).
+      // The monolith's flow uses _setTA (no push) + one explicit pushSnapshot;
+      // the Vue port's setMainText replaces both, so the explicit push is gone.
       _callbacks.doAutosave(lfStem || undefined)
     }
     reader.readAsText(lf!, 'utf-8')
