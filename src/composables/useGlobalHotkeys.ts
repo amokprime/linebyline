@@ -292,7 +292,16 @@ function handleGlobalHotkeys(e: KeyboardEvent, ks: string, hk: Record<string, st
   }
   if (hk.save && hkMatch(ks, hk.save)) {
     e.preventDefault()
-    doSave()
+    // Dispatch through window.doSave if it has been overridden (e.g. by a
+    // Playwright test monkeypatch on Firefox, which blocks the download event).
+    // Falls back to the imported doSave in node unit tests where window.doSave
+    // is undefined. App.vue registers window.doSave = doSave in onMounted so
+    // both paths invoke the same function at runtime unless a test replaces it.
+    if (typeof window !== 'undefined' && typeof window.doSave === 'function') {
+      window.doSave()
+    } else {
+      doSave()
+    }
     return true
   }
   if (handleGlobalHotkeyDispatch(e, ks, hk)) return true

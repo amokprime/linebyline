@@ -7,6 +7,7 @@ This file explains how I setup ZCode during the GLM-5.3-Flash promotion period a
 2. Download the AppImage to some persistent folder (i.e `~/.zcode/executable/*.AppImage`), double-click it and approve execution. The desktop entry created is based on the original executable path. So if you naively downloaded the AppImage to `~/Downloads` and deleted it, restore it and edit the menu entry path to a persistent path.
 3. Sign in via chat.z.ai (no need for API key) and claim the GLM-5.3-Flash promotion
 4. Skills can be added with Settings -> Onboard or project-scoped in `.zcode/skills/`. You might need to restart ZCode to load them.
+5. ⚠️Privacy flag: https://blog.ferstar.org/en/posts/zcode-silent-workspace-snapshot-upload/. Don't use for private projects (LineByLine is public OSS).
 
 ### Usage
 1. Sometimes the agent gets cutoff with an error like below. Probably the equivalent of the web UI captcha popup but invisible. Send a "." message to get the agent to continue.

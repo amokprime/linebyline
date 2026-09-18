@@ -29,6 +29,16 @@ The chat.z.ai web channel workflow ships context in isolated Repomix bundles, on
 
 The Onboard bundle includes: `package.json`, `README.md`, `ai/chat.z.ai/{AGENTS,MEMORY}.md`, `ai/chat.z.ai/skills/{project-workflow,web-channel,skill}-SKILL.md`, `ai/chat.z.ai/scripts/delivery/{prepare,deploy,unpack}.sh`, and `archive/modular/plan/**` (includes `0-Roadmap.md`).
 
+### Build-Test bundle (Sep 2026, experimental)
+
+The Build and Test bundles may be fused into a single "Build-Test bundle" — `repomix-build-test.xml` — for tasks that need both app code and test code in the same context window:
+
+- Fixing test failures that involve both source patches and test patches (the canonical case — the agent needs to read the failing spec AND the module under test).
+- Expanding test coverage for new build features (test code needed alongside app code).
+- Understanding what's being tested when reviewing app code changes (tests connect to app code via import paths).
+
+A `build-test.sh` script has been added (see `ai/chat.z.ai/scripts/build-test.sh`) that combines the Build + Test Repomix includes into a single bundle. `build.sh` and `test.sh` remain as-is — the Build-Test bundle is additive, not a replacement. The fusion is experimental until a few sessions validate that the larger context window isn't a net negative for build-only or test-only tasks.
+
 ## Repomix context — read these notes first
 
 - Anything in `.gitignore` is dropped from the packed file contents, **but** the `<directory_structure>` tree Summary still lists those paths. A path appearing in the tree does not guarantee its contents are in the pack — if the agent needs a file that isn't in the pack, ask the user to re-export or paste it.
@@ -41,9 +51,9 @@ The Onboard bundle includes: `package.json`, `README.md`, `ai/chat.z.ai/{AGENTS,
 - `/` — Project docs for humans (`CONTRIBUTING.md`, `HELP.md`, `README.md`, `LIMITATIONS.md`, `SECURITY.md`, `CREDITS.md`). Evaluate for stale references when the relevant area changes.
 - `.github/` — Issue templates and GitHub Actions workflows (`codeql.yml`, `playwright.yml`, `sonarcloud.yml`, `deploy.yml`).
 - `ai/` — Vibecoding instructions and tools for humans.
-  - `chat.z.ai/` — This web chat workflow (the live copy).
-  - `claude.ai/` — Abandoned web chat workflow.
-  - `omp/`, `zcode/` — Other harness setup docs (not used by the web agent).
+    - `chat.z.ai/` — This web chat workflow (the live copy).
+    - `claude.ai/` — Abandoned web chat workflow.
+    - `omp/`, `zcode/` — Other harness setup docs (not used by the web agent).
 - `archive/` — AI chat transcripts for app code building sessions, plus Sonar issue exports under `archive/semantic/<version>/issues/`.
 - `docs/` — `index.html` single-file LineByLine app code (the live monolith, pre-modular-refactor).
 - `src/` — Modular Vite + Vue + Tailwind + shadcn-vue app (refactor in progress; see `archive/modular/plan/0-Roadmap.md`).
@@ -54,7 +64,9 @@ The Onboard bundle includes: `package.json`, `README.md`, `ai/chat.z.ai/{AGENTS,
 
 - Don't put large comment blocks in code files. Separate documentation from source. See `web-channel-SKILL.md` (Onboard bundle) → "Comment density" for the full rule (3+ consecutive comment lines, paired `name.md` readmes, etc.).
 - Documentation and context files should never be dense, minified walls of text.
-- Fence code snippets in markdown documentation, including agent context files like this one and `MEMORY.md`. Short inline references like `variableName` or `npm run dev` or `<HTML tag>` are fine as inline backticks; longer code fragments, URLs with query params, and multi-line examples should be fenced in codeblocks — bare inline code either spills (Obsidian syntax-highlighting with no closing HTML tag) or gets rendered as an embedded element hiding the source (with closing HTML tag).
+- Fence code snippets in markdown documentation, including agent context files like this one and `MEMORY.md`. Short inline references like `variableName` or `npm run dev` or `<HTML tag>` are fine as inline backticks.
+    - Longer code fragments, URLs with query params, and multi-line examples should be fenced in codeblocks.
+    - Bare inline code either spills (Obsidian syntax-highlighting with no closing HTML tag) or gets rendered as an embedded element hiding the source (with closing HTML tag).
 - Inline fence strings with certain special characters when the following Obsidian behaviors are not desired:
         - `#audio-box`: tag "audio-box", displays as pill
         - `[blah]` -> Markdown link label with no URL, syntax highlighted anyway
@@ -64,6 +76,18 @@ The Onboard bundle includes: `package.json`, `README.md`, `ai/chat.z.ai/{AGENTS,
 ## Running LineByLine tests
 
 The sandbox can run small standalone scripts (unit-level logic checks, data transforms) and the Vitest unit suite when the Build Repomix includes `src/**` and `tests/unit/**`. The full Playwright suite (~540 tests, ~7 min, with snapshot data) is too heavy for the sandbox — the user runs it locally via `tst` and uploads results.
+
+### Sample Playwright tests in sandbox
+
+While the full suite is still too heavy, **sample Playwright tests CAN and SHOULD be run in the sandbox** to verify source patches end-to-end before delivery — the Vitest unit suite alone does not catch `dist/` build issues. The sandbox can:
+
+- Run `npx vite preview --port 5173` (after `npm run build`) to serve the production build.
+- Run individual Playwright tests or small subsets using the `playwright` package directly (NOT the `@playwright/test` CLI, which has config issues in the sandbox — its `playwright.config.js` looks for `tests/` and snapshot fixtures that may not be present in a sparse sandbox tree). Use standalone Node scripts that import `playwright` and launch chromium against the preview URL.
+- Verify that source patches actually work end-to-end against the built `dist/` — not just against the Vitest happy-dom environment.
+
+The key lesson (Sep 2026, session 9): a Vitest timeout failure blocks `npm run build` (via `set -euo pipefail` in `deploy.sh`), causing Playwright to run against a stale `dist/` without the patched code — the test suite then reports spurious regressions that look like the patches didn't work.
+
+Running even 2–3 sample Playwright tests in sandbox against the Vite preview catches this before delivery: a passing sandbox sample against a freshly built `dist/` proves the source patch reaches the build.
 
 For the canonical workflow see `project-workflow-SKILL.md` (Onboard bundle) → "Test" step and "Post-patch verification", and `playwright-testing-SKILL.md` (Test bundle) for snapshot strategy, font-fragile screenshots, and the TS diagnostics setup.
 

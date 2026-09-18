@@ -1,3 +1,4 @@
+
 // @vitest-environment happy-dom
 // Tests for useGlobalHotkeys — Phase D Tranche 9.
 // Verifies the document-level keydown handler dispatches to the right action
@@ -249,6 +250,34 @@ describe('useGlobalHotkeys — global hotkey dispatch (both modes)', () => {
     await freshSetup()
     dispatch('y', { ctrlKey: true })
     expect(mocks.doRedo).toHaveBeenCalled()
+  })
+
+  // Phase E Tranche 3: the save hotkey dispatches through window.doSave when
+  // it has been overridden (Playwright's Firefox test monkeypatches it to
+  // capture the save output). When window.doSave is unset (the unit-test
+  // happy-dom environment), the imported doSave mock must be called instead.
+  it('Ctrl+S dispatches through window.doSave when set, falling back to imported doSave', async () => {
+    await freshSetup()
+    // No window.doSave set → imported mock fires.
+    dispatch("'", { ctrlKey: true })
+    expect(mocks.doSave).toHaveBeenCalledTimes(1)
+
+    // Now install a window.doSave override and verify it takes precedence.
+    const w = window as unknown as { doSave?: () => void }
+    const override = vi.fn()
+    w.doSave = override
+    mocks.doSave.mockClear()
+    try {
+      dispatch("'", { ctrlKey: true })
+      expect(override).toHaveBeenCalledTimes(1)
+      expect(mocks.doSave).not.toHaveBeenCalled()
+    } finally {
+      delete w.doSave
+    }
+
+    // After cleanup, the imported mock fires again.
+    dispatch("'", { ctrlKey: true })
+    expect(mocks.doSave).toHaveBeenCalledTimes(1)
   })
 })
 

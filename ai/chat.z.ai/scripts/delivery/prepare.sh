@@ -60,7 +60,7 @@ echo "=== Verifying expected files (from deploy.sh deploy_file calls) ==="
 expected_files=()
 while IFS= read -r f; do
   [[ -n "$f" ]] && expected_files+=("$f")
-done < <(grep -oP 'deploy_file\s+\K\S+' "$DOWNLOAD_DIR/deploy.sh")
+done < <(awk '$1 == "deploy_file" {print $2}' "$DOWNLOAD_DIR/deploy.sh" | tr -d "\"'")
 
 missing_files=()
 for f in "${expected_files[@]}"; do
@@ -104,7 +104,7 @@ else
       cp "$DOWNLOAD_DIR/$flat" "$SANDBOX_DIR/$rel"
       echo "    $flat → $rel"
     fi
-  done < <(grep -oP 'deploy_file\s+(\S+)\s+(\S+)' "$DOWNLOAD_DIR/deploy.sh" | awk '{print $2, $3}')
+  done < <(awk '$1 == "deploy_file" {print $2, $3}' "$DOWNLOAD_DIR/deploy.sh" | tr -d "\"'")
 
   echo ""
   echo "  Running ESLint (autofix + gate)..."

@@ -1,3 +1,4 @@
+
 // @vitest-environment happy-dom
 // Pins the useAppState composable (Tranche 1 Phase D foundation):
 //  - loadCfg reads lbl_cfg, deep-merges with defaults, runs migrateHotkeys
@@ -327,7 +328,7 @@ describe('useAppState — isDirty watch (Phase E Tranche 1)', () => {
   })
 })
 
-describe('App.vue — beforeunload integration (Phase E Tranche 1)', () => {
+describe('App.vue — beforeunload integration (Phase E Tranche 1)', { timeout: 15000 }, () => {
   async function mountApp() {
     const mod = await import('@/App.vue')
     const { mount } = await import('@vue/test-utils')

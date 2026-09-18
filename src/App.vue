@@ -55,6 +55,7 @@ import {
   setFilePickerRef,
   onFilePickerChange,
   onMiddleClick,
+  doSave,
 } from './composables/useImport'
 import {
   initGlobalHotkeys,
@@ -345,6 +346,15 @@ onMounted(() => {
   document.addEventListener('keydown', onGlobalKeydown)
   // Phase E Tranche 1: beforeunload dirty check (warn before losing unsaved work).
   window.addEventListener('beforeunload', onBeforeUnload)
+  // Phase E Tranche 3: expose doSave on window so the global hotkey handler
+  // can dispatch through the runtime-resolved reference. This lets Playwright's
+  // Firefox test (typing-mode.spec.js meta-save-update) monkeypatch window.doSave
+  // to capture the save output — Firefox blocks the download event that
+  // chromium/webkit use. The monolith exposed doSave implicitly (top-level
+  // function declaration); the Vue port must expose it explicitly. The hotkey
+  // handler in useGlobalHotkeys checks window.doSave first, falling back to
+  // the imported reference in node unit tests where window.doSave is undefined.
+  window.doSave = doSave
 })
 onBeforeUnmount(() => {
   window.removeEventListener('resize', autoCollapseIfNeeded)
@@ -355,6 +365,9 @@ onBeforeUnmount(() => {
   // Phase E Tranche 1: remove the beforeunload listener to avoid leaks on
   // hot-reload during dev (Vite HMR re-mounts App.vue without a page reload).
   window.removeEventListener('beforeunload', onBeforeUnload)
+  // Phase E Tranche 3: clear window.doSave on unmount so HMR doesn't leave
+  // a stale reference pointing at the old module's doSave closure.
+  delete (window as { doSave?: () => void }).doSave
 })
 </script>
 

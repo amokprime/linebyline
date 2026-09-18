@@ -1,120 +1,128 @@
+
 # Playwright Test Failures — Phase E Tranche 3
 
 Live status of the Vite-target Playwright suite (`LBL_VITE_TARGET=1 tst`).
 Updated after each test run. The monolith-target suite (`tst` without the env
 var) should stay green throughout Phase E — failures here are Vite-target only.
 
-## Current status (Sep 17, 2026 — session 10, post-patch run)
+## Current status (Sep 17, 2026 — session 9, Tranche 3 done)
 
-### Root cause of session 10's "patches didn't work"
+### Tranche 3 checkpoint: PASSED
+
+The local-test checkpoint is complete. The `deploy.sh` `npm run build` fix
+(from session 8) ensures `dist/` is rebuilt after Vitest, so source patches
+actually reach Playwright. Two non-logic failures were fixed in session 9:
+
+- **`typing-mode.spec.js:meta-save-update` (firefox-only)** — FIXED. Root
+  cause: the test monkeypatches `window.doSave` on Firefox (which blocks the
+  download event), but the Vue port's hotkey handler called the imported
+  `doSave` directly, bypassing the monkeypatch. Fix: `App.vue` exposes
+  `window.doSave = doSave` in `onMounted`; `useGlobalHotkeys.ts` dispatches
+  through `window.doSave` when set, falling back to the imported reference in
+  node unit tests. New `src/globals.d.ts` declares the `Window.doSave`
+  augmentation for `src/**`; `tsconfig.vitest.json` includes it.
+
+- **`intervals.spec.js:typing-debounce-1` (chromium-only)** — FIXED. Root
+  cause: the Settings save-on-close watch (Vue async flush `'pre'`) may not
+  have committed `undo_debounce_ms=1` before the first keystroke, leaving the
+  undo stack one entry short. Fix: added a 50ms wait after pressing Escape +
+  bumped inter-keystroke wait from 20ms to 50ms.
+
+### Session 9 test run results (253 failures)
+
+```
+253 failed / 284 passed / 9 skipped (16.4m)
+```
+
+Breakdown:
+
+| Category | Tests (unique) | Browser scope | Status |
+|---|---|---|---|
+| `logic.spec.js` `ReferenceError: X is not defined` | 84 × 3 = 252 | all 3 | Deferred to Tranche 4 |
+| `settings.spec.js:assign-conflict-tab` | 1 | webkit only | Needs test rewrite |
+
+### Remaining failure: `assign-conflict-tab` (webkit-only)
+
+This is a pre-existing known failure (FAILURES.md category 15). The test times
+out at 30s on the "Confirm reset" button click (line 148). The shadcn-vue
+Dialog's reset-confirm flow uses a focus trap + reactivity timing that doesn't
+match the monolith's imperative flow. Needs a dedicated test rewrite — not a
+source-code fix. Fits a future Test session alongside the Tranche 4
+`logic.spec.js` consolidation.
+
+### `--update-snapshots` notes
+
+`--update-snapshots` only writes baselines for `toMatchSnapshot` /
+`toHaveScreenshot` / `toMatchAriaSnapshot`. It does NOT affect
+`toHaveValue` / `toBeVisible` / `toBeChecked` — these are value assertions.
+Tests that timeout before reaching the snapshot assertion also can't be fixed
+by `--update-snapshots`. None of the remaining 253 failures are snapshot
+assertions.
+
+### Sandbox verification
+
+Session 9 verified the fixes work end-to-end against the production Vite build
+(`npx vite preview --port 5173` in sandbox):
+
+- `window.doSave` exposure: `typeof window.doSave === 'function'` → PASS
+- `Ctrl+'` dispatch through `window.doSave`: monkeypatch invoked → PASS
+- Firefox capture pattern (meta-save-update mechanism): `__saveCapture`
+  populated → PASS
+- `intervals.spec.js:typing-debounce-1` timing fix: typed a/b/c with 50ms
+  gaps, 2× Control+Z undid back to "a" → PASS (all 4 assertions)
+
+### Previous session notes (session 8)
+
+#### Root cause of session 8's "patches didn't work"
 
 **`deploy.sh` was missing `npm run build`.** The `vite preview` server serves
 `dist/` — if `dist/` isn't rebuilt after source patches, Playwright tests run
-against the stale build. Every source patch (SettingsDialog watch, LeftPanel
+against the stale build. Every session 8 patch (SettingsDialog watch, LeftPanel
 seek-offset, useGlobalHotkeys offset mode, useImport undo fix, index.html
-favicon) was deployed to the source files but never built into `dist/`.
+favicon) was deployed to source files but never built into `dist/`.
 
-**Fix**: `deploy.sh` now runs `npm run build` after the Vitest suite. The next
-`dpl` will rebuild `dist/` automatically.
+**Fix**: `deploy.sh` now runs `npm run build` after the Vitest suite.
 
-### Session 10 test run results (stale dist/ — same as pre-patch)
+#### Session 8 test run results (stale dist/ — same as pre-patch)
 
 ```
 307 failed / 224 passed / 9 skipped (18.7m) — --update-snapshots run
 306 failed / 225 passed / 9 skipped (18.4m) — normal run
 ```
 
-Both runs have the same 104 unique failing tests. `--update-snapshots` didn't
-fix any because:
-1. Most failures are `toHaveValue`/`toBeVisible`/`toBeChecked` — not snapshot
-   assertions. `--update-snapshots` only writes baselines for `toMatchSnapshot`,
-   `toHaveScreenshot`, `toMatchAriaSnapshot`.
-2. Tests that timeout (favicon 30s, sync-adjust checkboxes 30s) never reach
-   the snapshot assertion, so no baseline is written.
-3. The source patches weren't in `dist/` anyway.
+Both runs had the same 104 unique failing tests. `--update-snapshots` didn't
+fix any because most failures were `toHaveValue`/`toBeVisible`/`toBeChecked`
+— not snapshot assertions.
 
-### What should happen after `dpl` (with `npm run build`)
+#### Categories fixed in session 8 (all green after dist/ rebuild)
 
-After rebuilding `dist/` with the session 10 patches, the following tests
-should pass (verified in sandbox with chromium):
-- `intervals.spec.js`: seek-increment, speed-ratio, volume-increment,
-  typing-debounce-1 (settings save on close via watch)
-- `playback.spec.js`: seek-scroll, volume-mute-up, volume-mute-down,
-  audio-missing-noop (wheel handlers + onVolWheel fix)
-- `settings.spec.js`: settings-window, assign-reserved-click, search-check
-  (getByRole dialog + reactive RowState + section filter fix)
-- `keyboard-nav.spec.js`: tab-settings (direct clicks + Control+End)
-- `sync-adjust.spec.js`: adjust-seek (seek-offset reactive + offset mode
-  dispatch), replay-resume (max-h-`[88vh]`)
-- `smoke.spec.js`: favicon (index.html link tag)
-- `undo-redo.spec.js`: import-main, typing-debounce (undo stack double-push fix)
+| Category | Tests (unique) | Status |
+|---|---|---|
+| 3. `#settings-overlay` | 0 | Fixed (session 8) |
+| 5. Wheel events | 0 | Fixed (session 8) |
+| 6. restrictWarnText | 0 | Fixed (session 8) |
+| 7. Settings save on Escape | 4 | Fixed (session 8) |
+| 8. Dialog viewport | 5 | Fixed (session 8) |
+| 9. page.evaluate module fn | 1 | Fixed (session 8) |
+| 10. Section filter + Tab order | 2 | Fixed (session 8) |
+| 11. Seek-offset + undo stack | 3 | Fixed (session 8) |
+| 12. Favicon | 1 | Fixed (session 8) |
 
-### Remaining failures (need investigation after rebuild)
+#### Categories fixed in session 9
 
-- **`assign-conflict-tab`** (3 browsers): Tab navigation in shadcn Dialog —
-  capture input shows "…" instead of "X" after Backspace+Shift+Tab. Needs
-  test rewrite to use direct clicks.
-- **`sync-repeat`** (3 browsers): 3× sync + 3× undo should remove all
-  timestamps. Undo stack double-push for syncLine + innerText concatenation.
-- **`persistence`** (3 browsers): 30s timeout on checkbox check — max-h fix
-  should help but may need scrollIntoView.
-- **`replay-moving-next`**, **`replay-sync-time`**, **`replay-another-line`**
-  (3 browsers each): 30s timeout on checkbox check — max-h fix should help.
-  These also need `toHaveScreenshot` baselines regenerated.
-- **`typing-mode.spec.js:meta-save-update`** (1 failure): needs error context.
-- **`accessibility.spec.js`** (3 failures): axe-scan — needs axe report.
+| Category | Tests (unique) | Status |
+|---|---|---|
+| typing-mode meta-save-update | 1 (firefox) | Fixed (session 9) |
+| intervals typing-debounce-1 | 1 (chromium) | Fixed (session 9) |
+| smoke doSave-exposed + doSave-dispatch | 6 (new tests) | Fixed (session 9) |
 
-### `tst-vite-log` fish function fixes
+#### `tst-vite-log` fish function fixes (session 8)
 
-The old function had two issues:
-1. `\d` in the grep pattern — Perl regex, not supported in `grep -E`. Caused
-   "stray \ before d" warning + matched literal `d` instead of digits.
-   **Fix**: replace `\d` with `[0-9]`.
-2. Pattern matched `[N/540]` progress lines — hundreds of lines of noise.
-   **Fix**: removed `tests/` from the pattern (it matched progress lines
-   like `[41/540] [chromium] › tests/logic.spec.js:...`). Now only matches
-   numbered errors, Error/Expected/Received lines, and final counts.
+1. Replaced `\d` with `[0-9]` (Perl regex not supported in `grep -E` — caused
+   "stray \ before d" warning).
+2. Simplified grep pattern to only match numbered errors + Error/Expected/
+   Received + final counts (removed `[N/540]` progress lines that produced
+   hundreds of lines of noise).
 
 The fixed function is in `tst-vite-log.fish` (deploy to
 `~/.config/fish/functions/tst-vite-log.fish`).
-
-### `--update-snapshots` notes
-
-`--update-snapshots` only writes baselines for:
-- `toMatchSnapshot()` — `.txt` baselines
-- `toHaveScreenshot()` — `.png` baselines
-- `toMatchAriaSnapshot()` — `.aria.yml` baselines
-
-It does NOT affect:
-- `toHaveValue` / `toHaveText` / `toBeVisible` / `toBeChecked` — these are
-  value assertions, not snapshot comparisons
-- Tests that timeout before reaching the snapshot assertion
-
-To regenerate Vite-target baselines after the `dist/` rebuild:
-```sh
-LBL_VITE_TARGET=1 npx playwright test --update-snapshots
-```
-Then commit the new baselines in `tests/*.spec.js-snapshots/`.
-
-## Summary table
-
-| Category | Tests (unique) | Status |
-|----------|---------------|--------|
-| 1. logic.spec.js globals | 84 | Deferred to Tranche 4 |
-| 3. `#settings-overlay` | 0 | Fixed (session 8) |
-| 5. Wheel events | 0 | Fixed (session 8-10) |
-| 6. restrictWarnText | 0 | Fixed (session 8-9) |
-| 7. Settings save on Escape | 4 | Fixed (session 9) — needs dist/ rebuild |
-| 8. Dialog viewport | 5 | Fixed (session 9) — needs dist/ rebuild |
-| 9. page.evaluate module fn | 1 | Fixed (session 9) — needs dist/ rebuild |
-| 10. Section filter + Tab order | 2 | Fixed (session 9-10) — needs dist/ rebuild |
-| 11. Seek-offset + undo stack | 3 | Fixed (session 10) — needs dist/ rebuild |
-| 12. Favicon | 1 | Fixed (session 10) — needs dist/ rebuild |
-| 13. Accessibility axe-scan | 2 | Needs investigation |
-| 14. Typing-mode meta-save | 1 | Needs investigation |
-| 15. assign-conflict-tab | 1 | Needs test rewrite |
-| 16. sync-repeat | 1 | Needs undo stack fix for syncLine |
-
-**Expected after `dpl` (with `npm run build`)**: ~20 failures remaining
-(categories 13, 14, 15, 16 + logic.spec.js 84 = ~88 total, ×3 browsers = ~264).
-Category 1 (logic.spec.js) is the bulk, deferred to Tranche 4.
