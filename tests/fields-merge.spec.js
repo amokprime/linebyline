@@ -23,10 +23,10 @@ test("hide-secondary", async ({ page, importSecondary }) => {
     page.getByRole("button", { name: "Import secondary lyrics file" }).first(),
   ).toBeVisible();
   await expect(page.getByText(/Line count mismatch \(5 vs 0\)/)).toBeVisible();
-  await expect(page.getByLabel("Secondary 1 lyrics")).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).toHaveValue(
     /Ojalá pudiera identificar ese olor/,
   );
-  await expect(page.getByLabel("Secondary 1 lyrics")).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).toHaveValue(
     /Oh, ojalá pudiera identificar ese olor/,
   );
 });
@@ -43,13 +43,13 @@ test("replace-secondary", async ({ page, importSecondary }) => {
   await expect(page.getByLabel("Lyric lines").locator("listitem")).toHaveCount(
     0,
   );
-  await expect(page.getByLabel("Secondary 1 lyrics")).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).toHaveValue(
     /J'aimerais pouvoir identifier cette odeur/,
   );
-  await expect(page.getByLabel("Secondary 1 lyrics")).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).toHaveValue(
     /Oh, j'aimerais pouvoir identifier cette odeur/,
   );
-  await expect(page.getByLabel("Secondary 1 lyrics")).not.toHaveValue(/Ojalá/);
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).not.toHaveValue(/Ojalá/);
   await expect(page.getByText(/Line count mismatch \(5 vs 0\)/)).toBeVisible();
 });
 
@@ -59,7 +59,7 @@ test("paste-secondary-genius", async ({
   workaroundPaste: _workaroundPaste,
 }) => {
   await page.keyboard.press("Control+4");
-  await page.getByLabel("Secondary 1 lyrics").click();
+  await page.getByRole("textbox", { name: "Secondary 1 lyrics" }).click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("mock.txt"));

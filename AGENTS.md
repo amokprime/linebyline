@@ -42,6 +42,12 @@ This file sits in the conventional project-root `AGENTS.md` slot; ZCode loads it
 ## Coding and testing
 
 - Don't put large comment blocks in code files. Separate documentation from source.
+- Documentation and context files should never be dense, minified walls of text.
+- Fence code snippets in markdown documentation. Short inline references like `variableName` or `npm run dev` are fine as inline backticks; longer code fragments, URLs with query params, and multi-line examples should be fenced — bare inline code either spills (Obsidian syntax-highlighting with no closing tag) or gets rendered as an embedded element hiding the source (with closing tag).
+- Fence strings with certain special characters when the following Obsidian behaviors are not desired:
+	- `#audio-box`: tag "audio-box", displays as pill
+	- `[blah]` -> Markdown link label with no URL, syntax highlighted anyway
+	- `[[blah]]` -> Wikilink to note "blah.md"
 - Run tests to cover the blast radius of code patches (i.e. with `agent-tst -g`)
 - Suggest new Playwright tests to cover new app features
 - Run the entire `agent-tst` Playwright suite before presenting work for the user to commit
@@ -82,6 +88,16 @@ This file sits in the conventional project-root `AGENTS.md` slot; ZCode loads it
 - `gh` is available on PATH (`/usr/sbin/gh`). Use it for PR checks, failed workflow runs
   (`gh run list --status failure`), and Dependabot alerts
   (`gh api repos/amokprime/linebyline/dependabot/alerts/<number>`).
+
+## SonarCloud
+
+- The project is public — enumerate open issues via the JSON API:
+  - **Main branch** (long-standing findings on `main`): `https://sonarcloud.io/api/issues/search?componentKeys=amokprime_linebyline&issueStatuses=OPEN`
+  - **PR staging** (new-code findings on the current staging→main PR): `https://sonarcloud.io/api/issues/search?componentKeys=amokprime_linebyline&pullRequest=N&issueStatuses=OPEN`
+- Export each with `~/.local/bin/sonar-export "LINK"` (full path, not on ZCode's
+  PATH; exports land in `~/Downloads/issues/`, fold them into
+  `archive/semantic/<version>/issues/`). Exact workflow: sonarqube-workflow skill, Step 0 —
+  faster than running `sonar-watch` and copying links manually.
 
 ## Deletions
 

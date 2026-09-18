@@ -5,6 +5,7 @@ snippet() {
     ignore+=",ai/chat.z.ai/skills/skill-SKILL.md"
     ignore+=",ai/chat.z.ai/skills/chat/**"
     ignore+=",ai/chat.z.ai/scripts/chat/**"
+    ignore+=",ai/chat.z.ai/scripts/delivery/**"
     repomix --output "$upload/repomix-skills.xml" \
         --include "$include" \
         --ignore "$ignore"

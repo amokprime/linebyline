@@ -42,6 +42,6 @@ Bugs:
 
 **Bug 2 (Esc can't close from text-mode search):** The search field's `onkeydown` handler in the text-mode `else` branch called `e.stopPropagation()` unconditionally, so Esc never reached the global KD handler where `closeSettings()` lives. Fixed by adding `if(e.key==='Escape')return;` before `e.stopPropagation()` in that branch, matching the existing Tab exemption.
 
-**Bug 3 (hk-key background too dark in light mode):** `--border-mid` (#b8bec6 light / #484f58 dark) was used as the badge background. Introduced a dedicated `--hk-key-bg` variable: `#dde1e6` in light mode (between `--border` #d0d7de and `--bg` #f6f8fa — visibly lighter than before but still distinct from surface), `#484f58` in dark mode (unchanged). `.hk-key` now references `--hk-key-bg`.
+**Bug 3 (hk-key background too dark in light mode):** `--border-mid` (#b8bec6 light / `#484f58` dark) was used as the badge background. Introduced a dedicated `--hk-key-bg` variable: `#dde1e6` in light mode (between `--border` `#d0d7de` and `--bg` `#f6f8fa` — visibly lighter than before but still distinct from surface), `#484f58` in dark mode (unchanged). `.hk-key` now references `--hk-key-bg`.
 
 ---

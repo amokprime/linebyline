@@ -1,0 +1,342 @@
+
+#!/usr/bin/env python3
+"""Lint markdown files for Obsidian prettify issues per AGENTS.md rules.
+
+Auto-fixes:
+  1. Bare #identifier outside backticks → wrap in backticks
+     (Obsidian renders #id as a tag pill)
+  2. Bare [[identifier]] outside backticks → wrap in backticks
+     (Obsidian renders [[id]] as a wikilink)
+  3. Bare [identifier] outside backticks (not followed by `(`) → wrap in backticks
+     (Obsidian renders [id] as a link label with no URL)
+  4. Bullet indentation normalized to 4-space steps:
+     level 1 = 0 spaces, level 2 = 4 spaces, level 3 = 8 spaces, etc.
+  5. Bare === text === outside backticks → wrap in backticks
+     (Obsidian's ==highlight== extension greedily matches the outer == of
+     === text ===, applying a yellow background to the contained text)
+
+Warns (does NOT auto-fix):
+  6. Bullet lines >400 chars — likely a minified clump, consider splitting
+
+Skips:
+  - Text inside inline backtick spans (`...`)
+  - Text inside fenced code blocks (``` ... ```)
+  - Heading lines (for # check only — [id], [[id]], and === are still checked)
+
+Usage:
+  python3 lint_markdown.py file1.md [file2.md ...]
+
+Exit codes:
+  0 = clean (or all violations auto-fixed; overlong bullets only warn)
+  1 = overlong bullets found (need manual splitting)
+  2 = usage error
+"""
+import os
+import re
+import sys
+from pathlib import Path
+
+# Threshold for "minified clump" warning on bullet lines.
+OVERLONG_BULLET_THRESHOLD = 400
+
+# Regex for inline backtick spans — `...` (non-greedy, no nested backticks).
+BACKTICK_SPAN = re.compile(r'`[^`]*`')
+
+# Regex for fenced code block markers (``` or ~~~ at start of line).
+FENCE_RE = re.compile(r'^(\s*)(```|~~~)')
+
+# Regex for markdown headings (1-6 # at start of line).
+HEADING_RE = re.compile(r'^\s{0,3}#{1,6}\s')
+
+# Violation patterns (applied to text OUTSIDE backtick spans):
+# 1. [[wikilink]] — must be checked BEFORE [link-label] to avoid double-matching.
+WIKILINK_RE = re.compile(r'\[\[([^\]]+)\]\]')
+# 2. #tag — preceded by non-word, non-backtick, non-slash (to skip URLs).
+#    Requires a letter as the first char (so #1, #2 footnote-style refs don't match).
+TAG_RE = re.compile(r'(?<![\w`/])#([a-zA-Z][a-zA-Z0-9_-]*)')
+# 3. [link-label] — not preceded by [ (to skip [[...]] inner match),
+#    not followed by ( (to skip real [text](url) links).
+LINK_LABEL_RE = re.compile(r'(?<!\[)\[([^\]\[`]+)\](?!\()')
+# 4. === section headers === — Obsidian's ==highlight== extension greedily
+#    matches the outer == of === text ===, applying a yellow background to
+#    the contained text. Wrapping in backticks renders them as literal code.
+#    Matches === or more on each side with text in between (no newticks, no newlines).
+SECTION_HEADER_RE = re.compile(r'(?<![=`])===([^=`\n]+?)===(?![=`])')
+
+# 4b. === section headers with nested backticks === — the SECTION_HEADER_RE
+#     above skips these (inner content excludes backticks to avoid broken
+#     double-backtick wrapping). This second pattern catches them for a WARN
+#     only — the agent must manually convert to a fenced code block (triple
+#     backticks) since inline single-backtick wrapping splits on inner backticks.
+#     Uses `.+?` (any non-newline char, lazy) instead of `[^=`\n]+?` so the
+#     content can include `=` chars (e.g. regex strings like `[^=`\n]+?`).
+#     The `` ` `` in the middle requires at least one backtick in the content.
+SECTION_HEADER_NESTED_RE = re.compile(r'(?<![=`])===(.+?`.+?)===(?![=`])')
+
+# Base directory for path validation (the cwd when the script runs).
+# All file paths passed on the CLI must resolve within this directory.
+_BASE_DIR = os.path.realpath(os.getcwd())
+
+
+def safe_path(path_str: str) -> Path:
+    """Validate a file path is within the allowed base directory.
+
+    Prevents path traversal (../) and absolute path injection — the script
+    reads/writes files passed as CLI args, which in an agentic workflow
+    could be LLM-supplied. Canonicalizes via realpath, then checks the
+    resolved path starts with base_dir + os.sep (the trailing separator
+    prevents partial-path bypass like /base/dirmalicious).
+
+    Raises ValueError if the path escapes base_dir.
+    """
+    resolved = os.path.realpath(path_str)
+    base_with_sep = _BASE_DIR + os.sep
+    if resolved != _BASE_DIR and not resolved.startswith(base_with_sep):
+        raise ValueError(
+            f'path {path_str!r} resolves outside the allowed directory {_BASE_DIR!r}'
+        )
+    return Path(resolved)
+
+
+def split_by_backticks(line: str) -> list[tuple[str, bool]]:
+    """Split a line into segments: (text, is_inside_backticks)."""
+    segments: list[tuple[str, bool]] = []
+    pos = 0
+    for m in BACKTICK_SPAN.finditer(line):
+        if m.start() > pos:
+            segments.append((line[pos:m.start()], False))
+        segments.append((m.group(), True))
+        pos = m.end()
+    if pos < len(line):
+        segments.append((line[pos:], False))
+    if not segments:
+        segments.append(('', False))
+    return segments
+
+
+def fix_wikilink(m: re.Match) -> str:
+    return f'`[[{m.group(1)}]]`'
+
+
+def fix_tag(m: re.Match) -> str:
+    return f'`#{m.group(1)}`'
+
+
+def fix_link_label(m: re.Match) -> str:
+    return f'`[{m.group(1)}]`'
+
+
+def fix_section_header(m: re.Match) -> str:
+    # Wrap the entire === text === span in backticks so Obsidian renders it
+    # as literal code instead of applying ==highlight== to the outer == pair.
+    return f'`{m.group()}`'
+
+
+def normalize_bullet_indent(line: str) -> tuple[str, bool]:
+    """Normalize bullet indentation to 4-space steps.
+
+    Level 1 (base) = 0 spaces, level 2 = 4 spaces, level 3 = 8 spaces, etc.
+
+    Detection is idempotent: if the indent is already a multiple of 4, the
+    level is indent // 4 (already normalized). If it's a multiple of 2 but
+    not 4 (old-style 2-space indents), the level is indent // 2.
+
+    Non-bullet lines are returned unchanged.
+    """
+    m = re.match(r'^( +)([-*] )', line)
+    if not m:
+        return line, False
+
+    indent_spaces = len(m.group(1))
+    if indent_spaces == 0:
+        return line, False
+
+    if indent_spaces % 4 == 0:
+        level = indent_spaces // 4
+    else:
+        level = indent_spaces // 2
+
+    new_indent = '    ' * level
+    new_line = new_indent + line[m.start(2):]
+    return new_line, new_line != line
+
+
+def fix_tokens_in_segment(text: str, is_heading: bool) -> tuple[str, list[str]]:
+    """Apply the wikilink/tag/link-label/section-header auto-fixes to a segment.
+
+    Extracted from lint_line to reduce cognitive complexity (S3776).
+    Returns (fixed_text, messages).
+    """
+    messages: list[str] = []
+
+    # Auto-fix [[wikilink]] first (before [link-label] to avoid partial match).
+    prev = text
+    text = WIKILINK_RE.sub(fix_wikilink, text)
+    if text != prev:
+        messages.append('fixed wikilink')
+
+    # Auto-fix #tag (skip on heading lines — those are markdown headings).
+    if not is_heading:
+        prev = text
+        text = TAG_RE.sub(fix_tag, text)
+        if text != prev:
+            messages.append('fixed tag')
+
+    # Auto-fix [link-label] (not followed by `(`).
+    prev = text
+    text = LINK_LABEL_RE.sub(fix_link_label, text)
+    if text != prev:
+        messages.append('fixed link-label')
+
+    # Auto-fix === section headers === (Obsidian ==highlight== collision).
+    # Runs last so it doesn't interfere with the [link-label] check.
+    prev = text
+    text = SECTION_HEADER_RE.sub(fix_section_header, text)
+    if text != prev:
+        messages.append('fixed section-header (=== highlight)')
+
+    return text, messages
+
+
+def lint_line(line: str, in_code_block: bool) -> tuple[str, list[str], int, int]:
+    """Lint a single line. Returns (fixed_line, messages, overlong_count, nested_header_count)."""
+    if in_code_block:
+        return line, [], 0, 0
+
+    # Normalize bullet indentation to 4-space steps (runs first — structural).
+    line, indent_changed = normalize_bullet_indent(line)
+
+    is_heading = bool(HEADING_RE.match(line))
+    segments = split_by_backticks(line)
+
+    fixed_segments: list[str] = []
+    messages: list[str] = []
+    overlong = 0
+    nested_headers = 0
+
+    if indent_changed:
+        messages.append('normalized bullet indent')
+
+    for text, inside in segments:
+        if inside:
+            fixed_segments.append(text)
+            continue
+        fixed_text, msgs = fix_tokens_in_segment(text, is_heading)
+        fixed_segments.append(fixed_text)
+        messages.extend(msgs)
+
+    fixed_line = ''.join(fixed_segments)
+
+    # Check for === text with `backticks` === patterns (warn only — can't
+    # auto-fix because inline single-backtick wrapping splits on inner backticks).
+    # Must check the FULL line (not per-segment) because the pattern spans
+    # across backtick segments when it contains inner backticks.
+    if SECTION_HEADER_NESTED_RE.search(fixed_line):
+        nested_headers = 1
+        messages.append('WARN: === with nested backticks — convert to fenced code block')
+
+    # Check for overlong bullets (warn only, no auto-fix).
+    stripped = fixed_line.rstrip()
+    if stripped.startswith('- ') and len(stripped) > OVERLONG_BULLET_THRESHOLD:
+        overlong = 1
+
+    return fixed_line, messages, overlong, nested_headers
+
+
+def lint_file(path_str: str) -> tuple[bool, list[str], int, int]:
+    """Lint a markdown file. Returns (changed, messages, overlong_count, nested_header_count).
+
+    Validates the path via safe_path() internally so the validation is visible
+    at the I/O site (S2083: taint analysis needs to see the check before the read/write).
+    """
+    # Path traversal defense (S2083): resolve to canonical path, then verify
+    # it's within the allowed base directory (cwd). Use the validated resolved
+    # path for ALL I/O — the original user input is never passed to open.
+    base_dir = os.path.realpath(os.getcwd())
+    resolved = os.path.realpath(path_str)
+    if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
+        print(f'ERROR: path {path_str!r} resolves outside the allowed directory', file=sys.stderr)
+        return False, [], 0, 0
+    path = Path(resolved)
+    if not path.exists():
+        print(f'WARN: {path} does not exist — skipping', file=sys.stderr)
+        return False, [], 0, 0
+    if path.suffix != '.md':
+        return False, [], 0, 0
+    with open(resolved, 'r', encoding='utf-8') as f:
+        original = f.read()
+    lines = original.splitlines(keepends=True)
+
+    in_code_block = False
+    new_lines: list[str] = []
+    messages: list[str] = []
+    overlong_total = 0
+    nested_total = 0
+
+    for i, line in enumerate(lines, 1):
+        if FENCE_RE.match(line):
+            in_code_block = not in_code_block
+            new_lines.append(line)
+            continue
+
+        fixed, msgs, overlong, nested = lint_line(line, in_code_block)
+        new_lines.append(fixed)
+        for msg in msgs:
+            messages.append(f'{path.name}:{i}: {msg}')
+        overlong_total += overlong
+        nested_total += nested
+
+    changed = ''.join(new_lines) != original
+    if changed:
+        with open(resolved, 'w', encoding='utf-8') as f:
+            f.write(''.join(new_lines))
+
+    return changed, messages, overlong_total, nested_total
+
+
+def main() -> int:
+    if len(sys.argv) < 2:
+        print('Usage: lint_markdown.py <file1.md> [file2.md ...]', file=sys.stderr)
+        return 2
+
+    any_changed = False
+    all_messages: list[str] = []
+    total_overlong = 0
+    total_nested = 0
+
+    for arg in sys.argv[1:]:
+        changed, messages, overlong, nested = lint_file(arg)
+        if changed:
+            any_changed = True
+            print(f'FIXED: {arg}')
+        all_messages.extend(messages)
+        total_overlong += overlong
+        total_nested += nested
+
+    if all_messages:
+        print()
+        print('=== Lint messages ===')
+        for m in all_messages:
+            print(f'  {m}')
+
+    if any_changed:
+        print()
+        print('Auto-fixed bare #id / [id] / [[id]] / === text === tokens — wrapped in backticks.')
+
+    if total_overlong > 0:
+        print()
+        print(f'WARNING: {total_overlong} overlong bullet(s) found (> {OVERLONG_BULLET_THRESHOLD} chars).')
+        print('These are likely minified clumps — consider splitting into separate bullets.')
+        print('Re-run after splitting to clear this warning.')
+
+    if total_nested > 0:
+        print()
+        print(f'WARNING: {total_nested} === text with nested backticks === pattern(s) found.')
+        print('These cannot be auto-fixed — inline single-backtick wrapping splits on inner backticks.')
+        print('Convert to a fenced code block (triple backticks) or rephrase to remove inner backticks.')
+
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())

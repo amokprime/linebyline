@@ -1,0 +1,42 @@
+{
+  "key": "AaCC2RPU3vu4aE8Mnjr3",
+  "rule": "typescript:S4138",
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:src/utils/geniusExtractor.ts",
+  "project": "amokprime_linebyline",
+  "line": 122,
+  "hash": "f71dc60b4df6385d0eb25fe90cb83852",
+  "textRange": {
+    "startLine": 122,
+    "endLine": 128,
+    "startOffset": 2,
+    "endOffset": 3
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Expected a `for-of` loop instead of a `for` loop with this simple iteration.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "clumsy"
+  ],
+  "creationDate": "2026-09-08T21:06:34+0000",
+  "updateDate": "2026-09-08T21:07:02+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "db52b0a3-0ed8-4386-a2fe-254c5557b0b4",
+  "lastChangeSource": "ANALYSIS"
+}

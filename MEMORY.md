@@ -1,57 +1,164 @@
 # LineByLine — durable memory seed
 
-Harness-agnostic, git-tracked memory for AI coding agents. ZCode bootstraps its machine-local memory from this file; OMP's frozen snapshot of the same content lives at `ai/omp/learned.md`. When a turn produces a durable fact (architectural decision, bug pattern, critical constraint, project invariant), update this file.
+Harness-agnostic, git-tracked memory for AI coding agents. ZCode bootstraps its machine-local memory from this file; OMP's frozen snapshot of the same content lives in `ai/omp/learned.md`. When a turn produces a durable fact (architectural decision, bug pattern, critical constraint, project invariant), update this file.
 
 ## Architectural decisions
 
-- activeLine / playingLine split (0.35.13): activeLine = navigation cursor (.cursor class), playingLine = audio highlight (.active class). Navigation moves the cursor; only sync, play, and click set the playing highlight. updateActiveLineFromTime places the highlight when audio reaches lineTs.
-- insertEndLine three-tier logic (0.35.13): (1) if activeLine is a trailing ts, update in place; (2) if the next non-blank line after activeLine is a trailing ts, update in place; (3) otherwise insert new.
-- TYPING_AVAILABLE set (0.37.0): keeps play_pause, prev_line, next_line enabled in Typing mode with mode-specific hotkey displays. play_pause shows Space in hotkey mode, Ctrl+Space (from play_pause_alt) in typing mode. prev_line shows Q ↑ in hotkey mode, ↑ only in typing mode. next_line shows E ↓ in hotkey mode, ↓ only in typing mode.
-- Swap-button conflict resolution (0.37.0): when a conflict is detected, the Swap button swaps hotkeys between the current action and the conflicting action — no blank hotkeys left over. Reset-to-default uses the same swap pattern (gives any holder of that default its own default back).
-- hasLyricContent() guard (0.35.11): prevents syncLine, insertEndLine, maybeAppendTrailingTs from inserting useless [00:00.00] lines when no line has text content.
-- All assembly-site newline convention (0.35.11): all four LRC assembly sites (import, paste, merge, sync) use exactly one blank separator line. The shared helper is mergedMeta.trimEnd() + '\n\n' + lyrics.
+### Modular stack scaffold (item 3 Phase A, Sep 2026)
+
+- Vite 8 + Vue 3.5 + TS 6 + Tailwind v4 + shadcn-vue 2.8 (reka-nova style, neutral base) scaffolded at repo root: `src/`, `vite.config.mts`, `tsconfig{,.app,.node}.json`, `components.json`, `deploy.yml` (workflow_dispatch ONLY until the Phase E cutover).
+- `package.json` keeps `"type": "commonjs"` until item 4 converts the CJS Playwright tests — hence the Vite config is `vite.config.mts` (ESM per-file).
+- `shadcn init`'s Google Fonts (Geist) import was removed — no external fonts; re-delete it if `shadcn-vue add` re-adds one.
+- The shadcn-vue CLI (devDep) carries 7 moderate npm-audit findings via `vue-metamorph → stylus → decode-uri-component` — dismiss Dependabot alerts on it as dev dependency.
+- Status + gotchas: `archive/modular/plan/0-Roadmap.md` item 3, "Phase A implementation notes".
+
+### Theme tokens mapped (item 3 Phase B, Sep 2026)
+
+- `src/style.css` holds the shadcn token blocks mapped 1:1 from the monolith's GitHub Light/Dark palette, plus a separate "LineByLine app tokens" block (`--active-*`, `--warn-*`, `--hk-key-bg`, `--accent-border`, `--editor-*`) that shadcn tooling must never rewrite; all exposed as Tailwind utilities via `@theme inline`.
+- Key gotcha — the `--accent` name flips meaning: shadcn accent = monolith accent-bg tint; monolith blue accent = `--primary`. Ported CSS must rewrite `var(--accent)` → `var(--primary)` at extraction.
+- The monolith's `[data-theme="dark"]` on `<html>` becomes the `.dark` class (ThemeProvider, Phase C).
+- `--text-faint` was dead and is dropped; dark `--destructive` (`#f85149`) is new since the monolith never styled it.
+- Layout-to-Tailwind conversion is deferred into Phase C per component.
+
+### Phase C tranches (all done, Sep 2026 — Phase C complete)
+
+- **Tranche 1** — six pure modules ported verbatim: `src/config.ts`, `src/hotkeys/{keyUtils,restrictedKeys}.ts`, `src/utils/{lrcParser,pasteHandlers,geniusExtractor}.ts`.
+  - Vitest bridge pins behavior while Playwright still targets the monolith until Phase E: `npm run test:unit`, `tests/unit/*.test.ts`.
+  - Port deltas: `ensureReTagDefault`/`mergeLrcMeta` take `defaultMeta` as a param (monolith reads the `cfg` global).
+  - Quirks pinned by tests:
+    - `TS_RE` is `^`-anchored
+    - `normKey('Escape') = 'Esc'`, making `hkMatch`'s `'Escape'` branch unreachable
+    - `findArtistAfterTitle` breaks fully on a `Producer` line
+    - `ensureReTagDefault` fills empty tags as `[re:VALUE]` (no space)
+    - `normalizeLrcTimestamps` only truncates exactly-3 decimals
+  - `sonarjs/super-linear-regex` + `empty-string-repetition` are off for `src/**` and `tests/unit/**` (same Won't-Fix disposition as the monolith-era tests, roadmap item 5).
+- **Tranche 2** — first Vue components: `src/composables/{useTheme,useEditorFont}.ts` (module-level singleton refs so Phase D's keyboard dispatch shares state), `components/{ThemeProvider,FontSelector,MenuBar}.vue`, App.vue swapped to ThemeProvider+MenuBar shell.
+  - Port deltas: `.dark` class instead of `[data-theme]`; no `getElementById` value sync (Vue refs are the inputs' state); font JS default 14 (the 13.2px CSS token is the pre-JS fallback).
+  - Pinned quirks: the font-size input applies `|| 14` BEFORE clamping (0/NaN → 14); ticks clamp only the side they step toward.
+  - Menu-bar CSS ported verbatim as scoped styles with the Phase B token rewrites; unwired buttons render inert with `<!-- Phase D -->` comments; dynamic tooltips deferred (need the config composable).
+  - A11y fix-forward: text buttons dropped mismatched aria-labels (visible text names them).
+  - Component tests: `@vue/test-utils` + `happy-dom` devDeps, per-file `// @vitest-environment happy-dom` pragma (pure tests stay node).
+- **Tranche 3** — main layout frame: `composables/usePanelCollapse.ts` (singleton; `lbl_panel_collapsed`, portrait auto-collapse <640px, focus transfer via registered template refs), `components/{LeftPanel,EditorArea}.vue`, App.vue = full frame incl. the Init sequence `autoCollapse → applyPanelCollapse → resize listener`.
+  - Port delta: the monolith's `html { font-size: 14.3px }` root scaling is NOT ported (explicit `.app-shell` font-size; Tailwind rem scale untouched).
+  - Blue-accent rules (`#progress-fill`, `#vol-slider`, checkbox accent-color, `.lrc-line.cursor` border, line-flash start) use `--primary`.
+  - Shared `.fs-spinner`/`.fs-tick` moved to `style.css` unscoped (speed/seek spinners reuse them).
+- **Tranche 4** — controls-panel hotkey grid: `utils/hotkeyDisplay.ts` (pure display rules) + `components/{ControlsPanel,HotkeyCell}.vue`.
+  - Cells are native `<button type="button">` (S6819 fix — the monolith's `div[role=button]` replaced; manual keydown deleted).
+  - Dimmed cells don't emit — monolith `!dimmed` guard; aria-labels from `HK_LABELS` with the quirk that the "(disabled in typing mode)" suffix only applies when NO `HK_LABELS` entry exists (`||` short-circuit).
+  - Inert until Phase D: mode refs at defaults, cells render `DEFAULT_CFG`, no dispatch table.
+  - VTU gotcha: `findAll` on a multi-root fragment component returns component-tree order, not document order — scope selectors instead of index arithmetic.
+- **Tranche 5** — settings overlay → `components/SettingsDialog.vue` on the vendored `src/components/ui/dialog`.
+  - `shadcn-vue add dialog` RE-ADDS the Google Fonts import to `style.css` — delete it after every add.
+  - Capture inputs are readOnly with the `Escape→Esc`/blank-stays-blank display rule (unlike the panel's hkDisp em dash); all rendered from `DEFAULT_CFG`, inert until Phase D.
+  - `:show-close-button="false"` (monolith parity); reka-ui replaces the monolith's hand-rolled focus trap/Escape/backdrop.
+  - Inline footer reset-confirm kept; the AlertDialog swap is deferred. MenuBar emits `openSettings`; App owns `v-model:open`.
+  - eslint config exempts `src/components/ui/**` from `multi-word-component-names` + `require-default-prop` (vendored conventions).
+- **Tranche 6 — Phase C complete**: last JS-generated UI structure ported — `components/SecondaryField.vue` renders one `addSecondary()` column per `index` prop ("Secondary N" label/aria, 📂 import button + paren checkbox, warn-bar WITHOUT `role=alert` (monolith parity, only `#main-warn` has it), hidden per-field picker, `.sec-textarea` scoped CSS).
+  - Shared `.field-col/.field-header/.field-header-label/.fh-btn/.warn-bar` rules moved EditorArea-scoped → `style.css` unscoped (multi-component rationale, same as `.fs-spinner`/`.hk-key`).
+  - EditorArea renders `v-for` over a local `secCount` ref (default 0 = monolith init; the Phase D `useAppState` pool + 10-field cap replaces it).
+  - App.vue gained the two app-level hidden nodes for full body-markup parity: `#file-picker` (`audio/*,.lrc,.txt`, multiple) and `#a11y-announcer` (`.sr-only` class — same conversion as the h1).
+  - Scope amendment recorded in the roadmap: the "global keyboard handler last" tranche moved INTO Phase D (dispatch to ~30 actions needs the state composables; a pre-state port would be a throwaway stub).
+  - 103 unit specs.
+
+### Sync behavior invariants
+
+- `activeLine` / `playingLine` split (0.35.13): `activeLine` = navigation cursor (`.cursor` class), `playingLine` = audio highlight (`.active` class). Navigation moves the cursor; only sync, play, and click set the playing highlight. `updateActiveLineFromTime` places the highlight when audio reaches `lineTs`.
+- `insertEndLine` three-tier logic (0.35.13):
+  1. if `activeLine` is a trailing ts, update in place;
+  2. if the next non-blank line after `activeLine` is a trailing ts, update in place;
+  3. otherwise insert new.
+- `TYPING_AVAILABLE` set (0.37.0): keeps `play_pause`, `prev_line`, `next_line` enabled in Typing mode with mode-specific displays — `play_pause` shows Space in hotkey mode, Ctrl+Space (from `play_pause_alt`) in typing mode; `prev_line` shows `Q ↑` vs `↑` only; `next_line` shows `E ↓` vs `↓` only.
+- Swap-button conflict resolution (0.37.0): on conflict, Swap swaps hotkeys between the current action and the conflicting action — no blanks left over. Reset-to-default uses the same swap pattern (gives any holder of that default its own default back).
+- `hasLyricContent()` guard (0.35.11): prevents `syncLine`, `insertEndLine`, `maybeAppendTrailingTs` from inserting useless `[00:00.00]` lines when no line has text content.
+- All-assembly-site newline convention (0.35.11): all four LRC assembly sites (import, paste, merge, sync) use exactly one blank separator line:
+
+  ```
+  mergedMeta.trimEnd() + '\n\n' + lyrics
+  ```
 
 ## Bug patterns
 
 Fix once, audit after every refactor.
 
-- Helper extraction can delete callees. _peelLastParen was deleted during Stage C refactoring (0.35.15) and broke batchSplitParens at runtime. After extracting any helper, audit all pre-existing callees in the refactored section. Codified in code-quality skill.
-- String assembly with conditional separator: tsPrefix + ' ' + content with .replace(/^ /,'') strips the space from [mm:ss.cc] text when content is non-empty but no paren groups. Fix: tsPrefix + (tsPrefix && content ? ' ' + content : content). Codified in code-quality skill.
-- Dynamic config reads vs hardcoded constants. Reading DEFAULT_META (constant) instead of cfg.default_meta (live value) means UI changes have no effect. Codified in code-quality skill.
-- Braceless-if ambiguity (S2681). A single-line if(x)y; makes the following statement look conditional. Always use braces. Codified in code-quality skill.
-- META_RE false positive on Genius headers. /^\[[a-zA-Z]+:/ matches both LRC tags ([ti:..]) and capitalized Genius headers ([Intro: All], [Chorus:..]). Fix is local to _findGeniusLyricStart using /^\[[A-Z]/.test() — do NOT change META_RE globally, 30+ other usages depend on it.
-- State variable disagreement. When two variables track the same concept (e.g. masterVolume + masterMuted), they can disagree, causing subtle bugs. Pick one as authoritative; derive the rest. Codified in code-quality skill.
+- Helper extraction can delete callees: `_peelLastParen` was deleted during Stage C refactoring (0.35.15) and broke `batchSplitParens` at runtime. After extracting any helper, audit all pre-existing callees in the refactored section. Codified in the code-quality skill.
+- String assembly with conditional separator: `tsPrefix + ' ' + content` with `.replace(/^ /,'')` strips the space from `[mm:ss.cc]` text when content is non-empty but has no paren groups. Fix:
+
+  ```
+  tsPrefix + (tsPrefix && content ? ' ' + content : content)
+  ```
+
+  Codified in the code-quality skill.
+- Dynamic config reads vs hardcoded constants: reading `DEFAULT_META` (constant) instead of `cfg.default_meta` (live value) means UI changes have no effect. Codified in the code-quality skill.
+- Braceless-if ambiguity (S2681): a single-line `if(x)y;` makes the following statement look conditional. Always use braces. Codified in the code-quality skill.
+- `META_RE` false positive on Genius headers: `/^\[[a-zA-Z]+:/` matches both LRC tags (`[ti:..]`) and capitalized Genius headers (`[Intro: All]`, `[Chorus:..]`). Fix is local to `_findGeniusLyricStart` using `/^\[[A-Z]/.test()` — do NOT change `META_RE` globally; 30+ other usages depend on it.
+- State variable disagreement: when two variables track the same concept (e.g. `masterVolume` + `masterMuted`), they can disagree, causing subtle bugs. Pick one as authoritative; derive the rest. Codified in the code-quality skill.
 
 ## Critical constraints
 
 Do not violate.
 
-- MAX_LINES=500. Import and paste handlers reject content over the limit with alert. addSecondary() enforces a 10-field cap.
-- Test entry point is agent-tst, never raw npx playwright. The wrapper hides the SSH test infrastructure; bypassing it triggers a master-key path. See AGENTS.md.
-- Underscore prefix on auto-setup fixtures. Renaming workaroundPaste to _workaroundPaste silences tsserver TS6133.
-- SonarQube S3776 CC threshold = 15 per function. Helper extraction and dispatch tables are the durable mitigations. See code-quality skill.
-- Undo/redo single-push model (post-change only), except for wholesale content replacement (import, merge, paste) which needs pre + post. See code-quality skill.
-- applySnapshot must clear extra secondaries beyond snapshot's secondaries.length, or undoing to a pre-add snapshot leaves stale content in still-visible textareas.
-- beforeunload must check all secondary textareas, not just the main one, or secondary work is lost without warning.
-- All four LRC assembly sites (import, paste, merge, sync) use mergedMeta.trimEnd() + '\n\n' + lyrics for exactly one blank separator. Inconsistent separator counts cause blank-line mismatches between main and secondary fields.
+- `MAX_LINES=500`. Import and paste handlers reject content over the limit with `alert`. `addSecondary()` enforces a 10-field cap.
+- Test entry point is `agent-tst`, never raw `npx playwright`. The wrapper hides the SSH test infrastructure; bypassing it triggers a master-key path. See AGENTS.md.
+- Underscore prefix on auto-setup fixtures: renaming `workaroundPaste` → `_workaroundPaste` silences tsserver TS6133.
+- SonarQube S3776 CC threshold = 15 per function. Helper extraction and dispatch tables are the durable mitigations. See the code-quality skill.
+- Undo/redo single-push model (post-change only), except for wholesale content replacement (import, merge, paste) which needs pre + post. See the code-quality skill.
+- `applySnapshot` must clear extra secondaries beyond the snapshot's `secondaries.length`, or undoing to a pre-add snapshot leaves stale content in still-visible textareas.
+- `beforeunload` must check all secondary textareas, not just the main one, or secondary work is lost without warning.
+- All four LRC assembly sites (import, paste, merge, sync) use exactly one blank separator line:
+
+  ```
+  mergedMeta.trimEnd() + '\n\n' + lyrics
+  ```
+
+  Inconsistent separator counts cause blank-line mismatches between main and secondary fields.
 
 ## CI & repo automation
 
-- sync-staging.yml (Sep 2026) auto-merges main into staging: fires on workflow_run completion of the three CI workflows (Playwright Tests, CodeQL Advanced, SonarCloud analysis), gates on all three succeeding for the same head_sha (plus a compare-API check that the SHA is on main), then merges that verified SHA into staging. Safe by construction: a workflow_run workflow only ever fires from its default-branch copy (staging's copy is inert), the bot's GITHUB_TOKEN push to staging triggers no CI (no recursion), and staging runs never influence the gate.
-- Gate semantics (reworked after its first 6 runs all false-failed): only KNOWN failure conclusions (failure, cancelled, timed_out, startup_failure, stale, action_required) go red; anything unsettled or unreadable — in_progress, missing, empty string — defers green (ready=false), relying on the completing workflow's own completion event to re-trigger. workflow_run fires once per completing CI workflow, so each push produces up to 3 sync runs (defer, defer, merge) — that pattern is normal, not failures.
-- Bug pattern that caused those false reds: `jq -r --argjson data "$x" '…'` without `-n` reads STDIN — in a GitHub Actions run step stdin is empty, so the filter never executes: exit 0, zero output, silent empty string. Any jq invocation whose input comes from --argjson/--arg must use `-n`. shellcheck and YAML parsing did not catch it; validate workflow run steps by executing them (against live or fixture data), not just linting them.
-- sonarcloud.yml fails the build on a red quality gate (sonarqube-quality-gate-action, pinned v1.2.1, added Sep 2026) — that is how "Sonar failed" reaches the staging sync gate; the scan action alone exits 0 regardless of gate state. Two separate "Sonar" indicators exist: the Actions workflow conclusion (immutable, gate-blocking since this change) and the SonarCloud GitHub App's commit check "SonarCloud Code Analysis" (retroactive — recomputed when issues are resolved, no new scan needed; the sync gate does not read it). Consequence of gate-blocking: a main push with uncurated new issues fails the workflow and blocks sync; after fixing/marking the issues, re-run the SonarCloud workflow (workflow_dispatch is enabled) or push again to sync staging.
+- `sync-staging.yml` (Sep 2026) auto-merges main into staging: fires on `workflow_run` completion of the three CI workflows (Playwright Tests, CodeQL Advanced, SonarCloud analysis), gates on all three succeeding for the same `head_sha` (plus a compare-API check that the SHA is on main), then merges that verified SHA into staging. Safe by construction: a `workflow_run` workflow only ever fires from its default-branch copy (staging's copy is inert), the bot's `GITHUB_TOKEN` push to staging triggers no CI (no recursion), and staging runs never influence the gate.
+- Gate semantics (reworked after its first 6 runs all false-failed): only KNOWN failure conclusions (`failure`, `cancelled`, `timed_out`, `startup_failure`, `stale`, `action_required`) go red; anything unsettled or unreadable — `in_progress`, missing, empty string — defers green (`ready=false`), relying on the completing workflow's own completion event to re-trigger. `workflow_run` fires once per completing CI workflow, so each push produces up to 3 sync runs (defer, defer, merge) — that pattern is normal, not failures.
+- Bug pattern behind those false reds: `jq -r --argjson data "$x" '…'` without `-n` reads STDIN — in a GitHub Actions run step stdin is empty, so the filter never executes: exit 0, zero output, silent empty string. Any jq invocation whose input comes from `--argjson`/`--arg` must use `-n`. Shellcheck and YAML parsing did not catch it; validate workflow run steps by executing them (against live or fixture data), not just linting them.
+- `sonarcloud.yml` fails the build on a red quality gate (`sonarqube-quality-gate-action`, pinned v1.2.1, added Sep 2026) — that is how "Sonar failed" reaches the staging sync gate; the scan action alone exits 0 regardless of gate state. Two separate "Sonar" indicators exist: the Actions workflow conclusion (immutable, gate-blocking since this change) and the SonarCloud GitHub App's commit check "SonarCloud Code Analysis" (retroactive — recomputed when issues are resolved, no new scan needed; the sync gate does not read it). Consequence of gate-blocking: a main push with uncurated new issues fails the workflow and blocks sync; after fixing/marking the issues, re-run the SonarCloud workflow (`workflow_dispatch` is enabled) or push again to sync staging.
 - The gate's workflow-name list must track the CI workflows' `name:` fields — renaming one makes the gate defer forever (staging silently stops syncing) until the list is updated.
 
 ## SonarQube dispositions (non-app-code)
 
-- S7682 explicit-return ×5 (ai/chat.z.ai/scripts/*.sh, 0.37.2 export, Sep 2026): Won't Fix — .base.sh runs `set -e` then calls snippet; the function's exit status is intentionally its last command's (repomix), and an explicit `return 0` would mask a repomix failure and zip/copy missing output.
-- githubactions:S7631 fork-code (sync-staging.yml, 0.37.2 export): hardened with a compare-API on-main check (`repos/…/compare/main...$HEAD_SHA` must be `behind|identical`) before merging — closes the edge where a fork PR with head branch named `main` passes the branches filter and its own PR CI. Residual flag is Won't Fix: the workflow never checks out or executes the event SHA, it only merges commits verified to be on main. Marked False Positive in the SonarCloud UI (Sep 2026) — the UI offers False Positive/Accept, no "Won't Fix" label; a resolved security issue plus this marking flipped the retroactively-computed quality gate green.
-- S7679/S7688/S1066 in ai/zcode/transcript.sh and ai/chat.z.ai/scripts/blank.sh: fixed mechanically (positional params → locals, `[` → `[[`, folded nested if); verified with shellcheck + live smoke runs.
+- Sonar gate "Coverage on New Code" (PR #11, Sep 2026): the 80%-on-new-code condition had no teeth while new code was only `.yml`/`.sh` (not coverable languages) — the modular scaffold's `src/` was the first countable JS/TS and went 0.0%, failing the gate. Fixed with `-Dsonar.coverage.exclusions=src/**,vite.config.mts` in `sonarcloud.yml` (coverage measurement only — issue analysis on `src/` continues). Directory-level so phases B–D don't re-fail per file. REVISIT when a coverage pipeline exists (vitest or Playwright v8 coverage, realistically Phase E or later): narrow the exclusions then; the project has never had line-coverage measurement.
+- `githubactions:S8264/S8233/S6505` ×4 (deploy.yml, PR #11, Sep 2026): all fixed, none Won't Fix — workflow-level permissions split to job level (build: `contents: read`; deploy: `pages: write` + `id-token: write`), `npm ci --ignore-scripts` with the Vite build verified to work without lifecycle scripts locally. Unverified until first real run: whether `configure-pages`/`upload-pages-artifact` in the build job need more than `contents: read` — if the Phase E smoke test 403s there, add `pages: write` to the build job (job-level stays rule-compliant).
+- `S7682` explicit-return ×5 (`ai/chat.z.ai/scripts/*.sh`, 0.37.2 export, Sep 2026): Won't Fix — `.base.sh` runs `set -e` then calls the snippet; the function's exit status is intentionally its last command's (repomix), and an explicit `return 0` would mask a repomix failure and zip/copy missing output.
+- `githubactions:S7631` fork-code (sync-staging.yml, 0.37.2 export): hardened with a compare-API on-main check (`repos/…/compare/main...$HEAD_SHA` must be `behind|identical`) before merging — closes the edge where a fork PR with a head branch named `main` passes the branches filter and its own PR CI. Residual flag is Won't Fix: the workflow never checks out or executes the event SHA, it only merges commits verified to be on main. Marked False Positive in the SonarCloud UI (Sep 2026) — the UI offers False Positive/Accept, no "Won't Fix" label; a resolved security issue plus this marking flipped the retroactively-computed quality gate green.
+- `S7679/S7688/S1066` in `ai/zcode/transcript.sh` and `ai/chat.z.ai/scripts/blank.sh`: fixed mechanically (positional params → locals, `[` → `[[`, folded nested `if`); verified with shellcheck + live smoke runs.
+- `css:S4666` ×2 (`src/style.css:146/:159`, PR #11, Sep 2026): "Duplicate selector `:root`/`.dark`" — intentional. The shadcn-generated `:root`/`.dark` token blocks (L68/L104) are deliberately separate from the LineByLine app-token blocks (L146/L159) so a future `shadcn-vue` regeneration rewrites only its own tokens, never the app's. Recommend marking False Positive with that reason; merging the blocks would remove the protection. Non-blocking (maintainability code smell).
+- `typescript:S8786` ×6 / `S6594` ×6 / `S6606` ×7 (`src/utils/lrcParser.ts`, `src/utils/pasteHandlers.ts`, `src/config.ts`, PR #11, Sep 2026): all on verbatim monolith ports.
+  - `S8786` = same Won't-Fix family as the eslint-off `sonarjs/super-linear-regex` (inputs bounded by `MAX_LINES=500`).
+  - `S6594` (`.match` → `.exec`) is safe for non-global regexes but diverges from verbatim bodies.
+  - `S6606` (`??=`) is NOT equivalent — it coalesces `null` too, while `ensureDefaultHotkeys` checks `=== undefined` explicitly; converting would change semantics on corrupted-config edge cases.
+  - Recommend Accept on all 19 with the verbatim-port rationale; modernization belongs to a deliberate post-cutover pass (roadmap item 5). Exports folded in `archive/semantic/0.37.2/issues/`.
+- `web:S7927` (`src/components/MenuBar.vue:116`, PR #11, Sep 2026): "accessible name should be part of the visible label" on the theme button — False Positive. Icon-only button whose aria-label ("Toggle theme") can't contain an emoji glyph; the emoji siblings (📂/💾/⚙️) go unflagged only because their content is a static character while the theme button's is a Vue interpolation the analyzer treats as a text label. `aria-label` is the correct accessible name for icon-only buttons (WCAG / aria-accessibility skill Rule 8).
+- `web:S6819` (`src/components/LeftPanel.vue`, PR #11, Sep 2026): "use `<input>` instead of the slider role" on `#progress-wrap` — Accept. Custom seek bar with mousedown+drag interaction (Phase D `useAudio` implements it); this is the aria-accessibility skill Rule 1 documented exception (custom mouse/keyboard interaction model that can't be a native range input). The real volume slider already IS a native `input[type=range]`. Verbatim monolith port (`docs/index.html` ships the same pattern). Re-flagged at `:82` after the tranche-4 line shift — same finding, folder holds L76+L82.
+- `web:S6819` (`src/components/HotkeyCell.vue:33`, PR #11, Sep 2026): "use `<button>` instead of the button role" — FIXED (Sep 2026): unlike the progress bar, a native `<button type=button>` fully covers the cell's interaction (click/Enter/Space), so the ARIA emulation was replaced with a real button (manual keydown handler deleted; `font-family: inherit` added for the button UA reset). A11y upgrade over the monolith, consistent with the skill's Rule 1.
+- `typescript:S7721` ×2 (`src/composables/usePanelCollapse.ts:30/:33`, PR #11, Sep 2026): "move function to outer scope" on `setExpandRef`/`setCollapseRef` — FIXED (Sep 2026): both only touch module-level refs, moved to module scope.
+- `web:InputWithoutLabelCheck` (`src/components/SecondaryField.vue:43`, PR #11, Sep 2026): "add an id and associate it with a label" on the hidden per-field file picker — FIXED (Sep 2026): `id="sec-file-${index}"` + aria-label "Secondary N lyrics file", mirroring the App-level `#file-picker` pattern that passes the analyzer (`aria-label` satisfies the rule; no visible `<label for>` needed on a `display:none` input). This was the sole failing gate condition: it is a BUG-type issue, so it moved `new_reliability_rating` to C — code smells alone (S6819/S7927 etc.) never fail the reliability condition. Exports folded in `archive/semantic/0.37.2/issues/`.
+- Export naming quirk: `sonar-export` writes `Lunknown.json` when the issue JSON has no `line` field — closed issues lose their line, so re-exporting an already-folded FIXED issue yields an `Lunknown` file. Check issue status in the API before triaging exports; a closed/FIXED issue in a fresh export batch is stale, not new (bit the tranche-6 gate triage: the HotkeyCell S6819 export was the closed tranche-4 issue, not a regression).
+
+## Agent tooling
+
+- `sonar-export` lives at `~/.local/bin/sonar-export` (NOT on ZCode's non-interactive PATH — invoke by full path, like `agent-tst`). Takes a Sonar issue URL (must contain `id` and `open` query params), writes `~/Downloads/issues/<message-slug>/L{line}.json` + `why.md`/`how.md` when those tabs have content (css: rules have none). Unauthenticated works for public projects; `BEARER_TOKEN` env is optional. Fold exports into `archive/semantic/<version>/issues/`.
+- SonarCloud access via web reader: the SPA pages render nothing for a static reader (and its URL validator rejects some %-encoded query strings), but the public JSON API passes through cleanly — enumerate issues with:
+
+  ```
+  https://sonarcloud.io/api/issues/search?componentKeys=amokprime_linebyline&pullRequest=N&issueStatuses=OPEN
+  ```
+
+  (no `%2C`), then build `https://sonarcloud.io/project/issues?id=amokprime_linebyline&pullRequest=N&issues=<KEY>&open=<KEY>` links for sonar-export.
+- ZCode prunes rollout logs in place mid-session (a log that held 230 records / 11 turns was reduced to 19 / 2 on Sep 6, 2026): export transcripts promptly after milestones, don't batch them up. `transcript.sh` now MERGES when the log renders fewer turns than the file it overwrites: skips log turns already covered (user text matches an earlier turn/steer), grows the last turn in place when it's the same turn (agent-paragraph union), appends new turns with continued numbering, and notes the counts on stderr. Turns 12–15 of `archive/modular/plan/3-Modular-Stack-Refactor/1.md` were rebuilt that way (git HEAD + live conversation; the merge even healed an abridged paragraph in the hand reconstruction).
 
 ## Project invariants
 
-- All app code lives at docs/index.html. No build step, no external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.
-- The app version is encoded in title, not in the filename. Patching script alone is incomplete — the version bump must land in both title and the script body.
+- All app code lives at `docs/index.html` until the item-3 modular cutover (Phase E); `src/` is scaffold-only until Phase C. No external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.
+- The app version is encoded in `<title>`, not in the filename. Patching script alone is incomplete — the version bump must land in both title and the script body.
 - The app is LRC-focused, but has Genius paste. Genius scraping is delegated to a browser extension (cross-origin blocks prevent in-app fetching); in-app extraction is structural parsing of pasted text.
-- No external fonts. Google Fonts was removed in 0.34.5. system-ui, sans-serif resolves differently across OSes and is the source of font-fragile screenshot tests.
+- No external fonts. Google Fonts was removed in 0.34.5. `system-ui, sans-serif` resolves differently across OSes and is the source of font-fragile screenshot tests.
+
+## TypeScript / tooling config
+
+- `tsconfig.vitest.json` (Sep 2026): all `@/*` alias imports live in `tests/unit/*.test.ts` (src uses relative imports), but `tsconfig.app.json` includes only `src/**` — the test files belonged to no TS project, so Zed's language server type-checked them as an inferred project without the paths alias or `vite/client` types → ts2307 "Cannot find module '@/components/…'". Fixed by adding `tsconfig.vitest.json` (extends `tsconfig.app.json`, `include: tests/unit/**/*.ts`) referenced from the root `tsconfig.json` — same solution pattern create-vue ships. Builds via `vue-tsc -b` now type-check the unit tests too (they are strict-clean).

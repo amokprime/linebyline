@@ -104,7 +104,7 @@ test("replay-moving-next", async ({ page, media }) => {
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
   await page.keyboard.press("Control+,");
-  await page.getByText("Moving to next line").check();
+  await page.getByRole("checkbox", { name: "Moving to next line" }).check();
   await page.keyboard.press("Escape");
   await page.keyboard.press("e");
   await triggerTimeUpdate(page);
@@ -119,7 +119,7 @@ test("replay-sync-time", async ({ page, media }) => {
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
   await page.keyboard.press("Control+,");
-  await page.getByText("Adjusting timestamp").check();
+  await page.getByRole("checkbox", { name: "Adjusting timestamp" }).check();
   await page.keyboard.press("Escape");
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("c");

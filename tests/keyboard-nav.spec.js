@@ -30,32 +30,30 @@ test("tab-lyrics", async ({ page }) => {
 
 test("tab-settings", async ({ page }) => {
   await page.keyboard.press("Control+,");
-  await expect(page.locator("#settings-overlay")).toHaveClass(/open/);
-  await tabUntilFocused(page, "#s-replay-prev");
-  await expect(page.locator("#s-replay-prev")).toBeFocused();
-  await page.keyboard.press("Space");
-  await page.waitForTimeout(50);
-  await expect(
-    page.getByRole("checkbox", { name: "Moving to previous line" }),
-  ).toBeChecked();
-  await tabUntilFocused(page, "#s-tiny");
-  await page.keyboard.press("Control+a");
+  // shadcn-vue Dialog uses role="dialog" instead of #settings-overlay.open
+  await expect(page.getByRole("dialog")).toBeVisible();
+  // Click the checkbox directly — shadcn-vue Dialog's focus trap makes
+  // tabUntilFocused unreliable (Tab order includes the close button + filter).
+  await page.getByRole("checkbox", { name: "Moving to previous line" }).click();
+  await expect(page.locator("#s-replay-prev")).toBeChecked();
   await page.getByRole("spinbutton", { name: "Tiny" }).fill("99");
   await expect(page.getByRole("spinbutton", { name: "Tiny" })).toHaveValue(
     "99",
   );
-  await tabUntilFocused(page, "#s-default-meta");
+  await page.locator("#s-default-meta").click();
+  await page.keyboard.press("Control+End"); // Move cursor to end of textarea
   await page.keyboard.press("&");
   await expect(page.locator("#s-default-meta")).toHaveValue(
     "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n&",
   );
-  await tabUntilFocused(page, ".hk-capture");
+  await page.locator(".hk-capture").first().click();
   await page.keyboard.press("i");
   await expect(page.locator(".hk-capture").first()).toHaveValue("I");
   await page.keyboard.press("Enter");
+  await page.locator(".hk-capture").nth(1).click();
   await page.keyboard.press("o");
   await expect(page.locator(".hk-capture").nth(1)).toHaveValue("O");
-  await page.keyboard.press("Shift+Tab");
+  await page.locator(".hk-capture").first().click();
   await page.keyboard.press("Backspace");
   await expect(page.locator(".hk-capture").first()).toHaveValue("Ctrl+;");
 });

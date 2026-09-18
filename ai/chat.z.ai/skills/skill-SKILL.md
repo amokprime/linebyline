@@ -1,34 +1,58 @@
 ---
 name: skill
-description: Create new skills and update existing ones for the LineByLine project. Use this skill whenever you need to create a skill from scratch, revise an existing skill, extract knowledge from Memory.md into a skill, or decide whether something belongs in a skill versus Memory.md. Also use when planning a skill-creation or skill-update session, or when evaluating whether existing skills need updating based on recent code changes.
+description: Create new skills and update existing ones for the LineByLine project. Use this skill whenever you need to create a skill from scratch, revise an existing skill, extract knowledge from MEMORY.md into a skill, or decide whether something belongs in a skill versus MEMORY.md. Also use when planning a skill-creation or skill-update session, when evaluating whether existing skills need updating based on recent code changes, OR when consolidating duplicated information across agent-facing files (MEMORY.md, AGENTS.md, skills, roadmap) — the consolidation direction protocol lives here. Also use when the user mentions "consolidation", "single source of truth", "duplicate knowledge", or asks to clean up MEMORY.md bloat.
 ---
 
-A skill bakes substantive, reusable knowledge into a persistent artifact so it doesn't bloat Memory.md or get lost between sessions. Covers when to create or update skills, how to write them, and how to keep them current.
+A skill bakes substantive, reusable knowledge into a persistent artifact so it doesn't bloat MEMORY.md or get lost between sessions. Covers when to create or update skills, how to write them, and how to keep them current.
 
 ---
 
 When to create a skill
 
-1. Accumulated patterns — the same class of problem recurs across versions (SonarQube Cloud remediation, ARIA remediation, Playwright test writing). If you've written the same explanation three times in Memory.md, it belongs in a skill.
-2. Procedural knowledge — a multi-step workflow the model must follow in a specific order (read export → categorize → assess → plan → deliver). Memory.md can note that the workflow exists, but the steps belong in a skill.
+1. Accumulated patterns — the same class of problem recurs across versions (SonarQube Cloud remediation, ARIA remediation, Playwright test writing). If you've written the same explanation three times in MEMORY.md, it belongs in a skill.
+2. Procedural knowledge — a multi-step workflow the model must follow in a specific order (read export → categorize → assess → plan → deliver). MEMORY.md can note that the workflow exists, but the steps belong in a skill.
 3. Domain reference — a catalog of rules, patterns, or gotchas the model needs to look up (SonarQube false positive categories, ARIA role-to-element mappings, Playwright assertion strategies). Reference tables belong in skills.
 4. Architecture documentation — structural knowledge about the codebase that guides where to read and how to patch (section index, function layout). Changes slowly and is expensive to rediscover each session.
 
-When not to create a skill: one-off bug fixes (stay in Memory.md), app-specific state that doesn't generalize, information already well-covered by an existing skill (update that skill instead).
+When not to create a skill: one-off bug fixes (stay in MEMORY.md), app-specific state that doesn't generalize, information already well-covered by an existing skill (update that skill instead).
 
 ---
 
-Memory.md vs skills
+MEMORY.md vs skills
 
-Memory.md holds: app-specific bugs and their root causes, architectural decisions unique to this app, one-off pitfalls (e.g. "don't delete `_peelLastParen` during refactoring"), version-by-version change log, known limitations (e.g. browser-native dialog focus).
+MEMORY.md holds: app-specific bugs and their root causes, architectural decisions unique to this app, one-off pitfalls (e.g. "don't delete `_peelLastParen` during refactoring"), version-by-version change log, known limitations (e.g. browser-native dialog focus).
 
 Skills hold: general patterns that caused those bugs, reusable architectural patterns, general cautions (e.g. "audit all pre-existing callees after extracting helpers"), workflow that applies across versions, workarounds and best practices.
 
-If you'd need to explain it to a fresh model in a new session and it's not specific to one app's state, put it in a skill. If it's a historical fact needed to understand why something broke or was changed, keep it in Memory.md.
+If you'd need to explain it to a fresh model in a new session and it's not specific to one app's state, put it in a skill. If it's a historical fact needed to understand why something broke or was changed, keep it in MEMORY.md.
 
-When extracting from Memory.md into a skill, prune the Memory.md entry to a brief reference. Don't duplicate — Memory.md should point to the skill, not restate it.
+When extracting from MEMORY.md into a skill, prune the MEMORY.md entry to a brief reference. Don't duplicate — MEMORY.md should point to the skill, not restate it.
 
-Within a single version's Memory.md section, write one bullet per parallel thread of work, not one bullet per turn. If a thread evolves across multiple turns (fix → regression catch → follow-up), update the existing bullet in-place to reflect the final state rather than appending a new bullet per turn. (See "Memory.md discipline" in project-workflow-SKILL.md for the full protocol.)
+Within a single version's MEMORY.md section, write one bullet per parallel thread of work, not one bullet per turn. If a thread evolves across multiple turns (fix → regression catch → follow-up), update the existing bullet in-place to reflect the final state rather than appending a new bullet per turn. (See "MEMORY.md discipline" in project-workflow-SKILL.md for the full protocol.)
+
+---
+
+Consolidation direction
+
+When the same piece of information appears in multiple agent-facing files, consolidate upstream so each unique piece of info has exactly one canonical home. The consolidation direction, in priority order (highest = most authoritative, lowest = most specific):
+
+1. Skill file (`ai/chat.z.ai/skills/*-SKILL.md`) — general patterns, bug classes, rule rationales, procedural workflows, reference tables. The most reusable layer; skills are read by name when their `description` matches the current task.
+2. Roadmap file (`archive/modular/plan/0-Roadmap.md`, Onboard bundle) — large, structured, app-specific but non-event-driven content: the modular refactor plan, Phase A–E tranche implementation notes, port deltas per tranche, file lists per tranche. A roadmap section is the canonical home when content is too large for MEMORY.md and too app-specific for a skill.
+3. `AGENTS.md` (Onboard bundle) — cross-cutting project context needed at Onboard before any skill is read: Repomix caveats, project structure, harness sandbox limits, the consolidation direction itself. When a topic is covered by a skill, AGENTS.md points to it rather than restating the rule.
+4. `MEMORY.md` — app-specific events, per-version dispositions, invariants tied to specific versions, CI/repo automation history. The most specific layer; entries here point to skills/roadmap for the general rule and record only the instance.
+
+Direction of consolidation: when you discover the same information duplicated across these files, move it upstream (skill or roadmap), then replace every duplicate with a one-line pointer (e.g. `see \`code-quality-SKILL.md\` → "Section Name" for the rule`). Never duplicate a rule across files — that creates a synchronization burden and the copies drift.
+
+When to consolidate proactively: any meta-session involving agent scaffolding (a Skills step), and any time you finish a Build/Review/Test step and notice a rule or pattern that has been written into MEMORY.md three or more times. The third repetition is the trigger to extract.
+
+Concrete examples from the Sep 2026 consolidation sessions:
+
+- SonarQube rule rationales (S2083 taint analysis, S6819 ARIA exceptions, S7927 icon-only-button false positives, etc.) — duplicated across MEMORY.md and sonarqube-workflow-SKILL.md → consolidated into the skill; MEMORY.md keeps per-version Accept/Won't-Fix decisions only.
+- Phase D tranche implementation notes (port deltas, test quirks, file lists per tranche) — duplicated across MEMORY.md and 0-Roadmap.md → consolidated into the roadmap; MEMORY.md's "Architectural decisions" section is now a 3-paragraph pointer. The roadmap's "Tranche N implementation notes" subsections are the single source of truth.
+- Bash workflow script patterns (strict mode, ${var:?} guards, scoped cleanup, no line continuations in quoted strings) — duplicated across MEMORY.md and code-quality-SKILL.md → consolidated into the skill's "Bash workflow scripts" section.
+- Cross-bundle pointers — when a skill references a file in a different bundle (e.g. sonarqube-workflow-SKILL.md → project-workflow-SKILL.md), annotate the pointer with the bundle name so a fresh chat session knows whether it can read the target immediately or must wait for that step's bundle upload.
+
+The same direction applies inside a single file: prefer one section per topic, with subsections pointing back rather than parallel summaries.
 
 ---
 
@@ -76,9 +100,9 @@ Prefer plain structure over decorative formatting. Indentation and numbered list
 
 Creating a new skill
 
-1. Identify the domain — look at Memory.md entries that share a common theme. If multiple entries about the same domain are verbose and would benefit from a shared reference, that domain needs a skill.
+1. Identify the domain — look at MEMORY.md entries that share a common theme. If multiple entries about the same domain are verbose and would benefit from a shared reference, that domain needs a skill.
 2. Scope the skill — decide what it covers and what it doesn't. Narrow, actionable skills are better than broad, vague ones. ("Process SonarQube Cloud issue exports and guide remediation decisions" is a good scope. "Write better code" is not.)
-3. Extract from Memory.md — for each related entry: if it describes a general pattern, extract the pattern into the skill and prune Memory.md to a brief reference; if it describes an app-specific event, keep it in Memory.md as-is; if it straddles both, extract the general principle into the skill and keep the specific instance in Memory.md.
+3. Extract from MEMORY.md — for each related entry: if it describes a general pattern, extract the pattern into the skill and prune MEMORY.md to a brief reference; if it describes an app-specific event, keep it in MEMORY.md as-is; if it straddles both, extract the general principle into the skill and keep the specific instance in MEMORY.md.
 4. Write the skill — follow the anatomy and writing style above. Draft it, then read it with fresh eyes and improve. Would a fresh model in a new session be able to follow this without additional context?
 5. Cross-reference with existing skills — check that the new skill doesn't duplicate or contradict existing ones. If it overlaps, merge the overlapping content, split the domain more clearly, or add a cross-reference note in both skills.
 6. Update project-workflow-SKILL.md if the new skill changes how the model should work (e.g. "always consult the ARIA skill before adding ARIA attributes").
@@ -89,7 +113,7 @@ Updating an existing skill
 
 Per project-workflow-SKILL.md: update a skill when a patch changes the architecture the skill documents. Don't update for a pure bug fix that doesn't change the documented architecture.
 
-Also update when: a new pattern or gotcha is discovered that the skill should cover; reference data is stale (section line numbers shifted, new SonarQube rules encountered); Memory.md entries reveal knowledge that belongs in the skill instead.
+Also update when: a new pattern or gotcha is discovered that the skill should cover; reference data is stale (section line numbers shifted, new SonarQube rules encountered); MEMORY.md entries reveal knowledge that belongs in the skill instead.
 
 Stale reference hygiene — skills that reference specific line numbers go stale quickly. Prefer structural descriptions over exact numbers. Stale-prone: "The global keydown handler starts at line 2571." Durable: "The global keydown handler is in the `Keyboard → Global KD` section — find it by grepping for `// ──` section markers." When line numbers must appear, label them as a point-in-time reference.
 
@@ -109,12 +133,12 @@ Evaluating skill quality
 
 Lessons from practice
 
-Knowledge offload reduces Memory.md bloat. Extracting SonarQube remediation knowledge from Memory.md into `sonarqube-workflow-SKILL.md` turned about 30 verbose lines of per-version SonarQube details into one-line references. Memory.md is now a compact historical overview for regression investigation, not a how-to guide.
+Knowledge offload reduces MEMORY.md bloat. Extracting SonarQube remediation knowledge from MEMORY.md into `sonarqube-workflow-SKILL.md` turned about 30 verbose lines of per-version SonarQube details into one-line references. MEMORY.md is now a compact historical overview for regression investigation, not a how-to guide.
 
 SECTIONS moved from code to skill. The embedded `// SECTIONS:` comment in the app HTML was redundant with `linebyline-section-index-SKILL.md`. Removing it from code and keeping it in the skill eliminated a synchronization burden — the skill now uses a grep protocol that finds section markers dynamically.
 
 Skills prevent re-discovery. Without `browser-hotkey-system-SKILL.md`, each new session would need to re-learn that Tab must be handled before `e.stopPropagation()` in search fields, that `RESTRICTED_ALL` should include Ctrl+M and Ctrl+O, and that focus traps must enumerate focusable elements at Tab-time rather than open-time. These are subtle patterns that are expensive to re-discover and easy to get wrong.
 
-General patterns emerge from specific incidents. The `single-file-html-app-SKILL.md` "single source of truth" section was extracted from three separate Memory.md entries: the masterVolume/masterMuted double-flag bug, the `_volWheeling` race condition, and the undo/redo double-push pattern. No single entry justified its own section, but together they pointed to a general principle: when two variables represent the same underlying state, they will eventually disagree.
+General patterns emerge from specific incidents. The `single-file-html-app-SKILL.md` "single source of truth" section was extracted from three separate MEMORY.md entries: the masterVolume/masterMuted double-flag bug, the `_volWheeling` race condition, and the undo/redo double-push pattern. No single entry justified its own section, but together they pointed to a general principle: when two variables represent the same underlying state, they will eventually disagree.
 
-Procedural rules about Memory.md writing discipline, companion file updates, and cross-skill consistency are now in project-workflow-SKILL.md (see "Memory.md discipline" and "Wrap Up" sections) — they're action rules the agent follows every session, not meta-knowledge about skill creation.
+Procedural rules about MEMORY.md writing discipline, companion file updates, and cross-skill consistency are now in project-workflow-SKILL.md (see "MEMORY.md discipline" and "Wrap Up" sections) — they're action rules the agent follows every session, not meta-knowledge about skill creation.
