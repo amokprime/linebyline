@@ -17,6 +17,7 @@ snippet() {
     include+=",tsconfig.vitest.json"
     include+=",tests/**"
     repomix --output "$upload/repomix-build-test.xml" --include "$include"
+    return 0
 }
 # shellcheck source=.base.sh
 . "$(dirname "$(readlink -f "$0")")/.base.sh"

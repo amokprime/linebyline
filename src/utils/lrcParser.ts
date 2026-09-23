@@ -1,3 +1,4 @@
+
 // Ported from docs/index.html "── LRC parsing utilities ──" (roadmap item 3
 // Phase C, tranche 1). Only the pure functions moved here; getSeekOffset,
 // suppressAuto and advanceActiveLine read DOM/state globals and stay in the
@@ -70,9 +71,10 @@ export function findLastMetaIdx(lines: string[]): number {
 }
 
 // Check if an imported LRC raw text has a meaningful [ti:] tag
+const TI_RE = /^\[ti:\s*(.*)\]$/i;
 export function lrcHasTi(raw: string): boolean {
   return raw.split('\n').some((l) => {
-    const m = l.match(/^\[ti:\s*(.*)\]$/i);
+    const m = TI_RE.exec(l);
     return m !== null && m[1]!.trim() !== '' && m[1]!.trim().toLowerCase() !== 'unknown';
   });
 }

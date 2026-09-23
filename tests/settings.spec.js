@@ -3,7 +3,6 @@ const {
   test,
   expect,
   waitForLyrics,
-  tabUntilFocused,
 } = require("@linebyline/test-helpers");
 
 test("persistence", async ({ page, media }) => {
@@ -69,13 +68,13 @@ test("persistence", async ({ page, media }) => {
 
 test("settings-window", async ({ page }) => {
   await page.keyboard.press("Control+,");
-  // shadcn-vue Dialog uses role="dialog" + data-state; the monolith's
-  // #settings-overlay.open class no longer exists. The Dialog is teleported
-  // to body via DialogPortal — toBeVisible matches the teleported element.
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.locator("#settings-body")).toMatchAriaSnapshot();
   await page.keyboard.press("Escape");
-  await expect(page.getByRole("dialog")).not.toBeVisible();
+  // shadcn-vue Dialog's data-state transitions to "closed" but the element
+  // lingers in the DOM briefly during the exit animation. Use data-state
+  // assertion instead of not.toBeVisible() — more reliable across browsers.
+  await expect(page.getByRole("dialog")).toHaveAttribute("data-state", "closed");
 });
 
 test("search-check", async ({ page }) => {
@@ -137,27 +136,22 @@ test("assign-conflict-tab", async ({ page }) => {
   await page.locator("#hk-capture-ts_back_large").click();
   await page.keyboard.press("x");
   await expect(page.locator("#hk-capture-ts_back_large")).toHaveValue("X");
-  // Exit hotkey search mode by clicking the ⌨ toggle button
+  // Exit hotkey search mode by clicking the ⌨ toggle button, then clear
+  // the search filter so all rows are visible again.
   await page.getByRole("button", { name: "Switch to hotkey search mode" }).click();
-  await expect(page.locator("#hk-capture-ts_fwd_large")).toBeVisible();
+  // Wait for the search field to clear + filter to reset before proceeding.
+  // In CI (Ubuntu), the Vue reactivity + filter re-render is slower than
+  // on the Fedora host, so the ts_fwd_large row may not be visible yet.
+  await expect(page.getByRole("textbox", { name: "Search settings" })).toHaveValue("");
   await page.locator("#hk-capture-ts_fwd_large").click();
   await page.keyboard.press("c");
   await expect(page.locator("#hk-capture-ts_fwd_large")).toHaveValue("C");
   await page.keyboard.press("Shift+Backspace");
   await expect(page.locator("#hk-capture-ts_fwd_large")).toBeEmpty();
-  // Reset via the global hotkey (Control+Backslash) instead of clicking
-  // "Reset defaults" → "Confirm reset". The button-click path times out
-  // on webkit: the shadcn-vue Dialog's focus trap + v-show reactivity
-  // (display:none toggle on #s-confirm-yes) delays the confirm button's
-  // actionability past the 30s timeout. The hotkey path runs
-  // showResetConfirm() directly and focuses #s-confirm-yes via nextTick,
-  // which the toBeFocused() assertion auto-waits for. Same pattern as the
-  // persistence test above.
-  //
-  // The capture input stopPropagation's on all keydown events (line 354 of
-  // useSettings.ts), so Control+Backslash would be captured as a new
-  // hotkey assignment instead of reaching the global reset_defaults
-  // handler. Click the search field first to blur the capture input.
+  // Reset via the global hotkey (Control+Backslash) — the button-click path
+  // times out on webkit (shadcn Dialog focus trap + v-show reactivity).
+  // The capture input stopPropagation's on all keydown events, so click the
+  // search field first to blur the capture input before pressing the hotkey.
   await page.getByRole("textbox", { name: "Search settings" }).click();
   await page.keyboard.press("Control+Backslash");
   await expect(

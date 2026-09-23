@@ -71,7 +71,7 @@ SECTION_HEADER_RE = re.compile(r'(?<![=`])===([^=`\n]+?)===(?![=`])')
 #     Uses `.+?` (any non-newline char, lazy) instead of `[^=`\n]+?` so the
 #     content can include `=` chars (e.g. regex strings like `[^=`\n]+?`).
 #     The `` ` `` in the middle requires at least one backtick in the content.
-SECTION_HEADER_NESTED_RE = re.compile(r'(?<![=`])===(.+?`.+?)===(?![=`])')
+SECTION_HEADER_NESTED_RE = re.compile(r'(?<![=`])===(.+?`.+?)===(?![=`])')  # noqa: S8786 — bounded by === anchors, input is markdown (bounded by MAX_LINES)
 
 # Base directory for path validation (the cwd when the script runs).
 # All file paths passed on the CLI must resolve within this directory.

@@ -132,14 +132,14 @@ export function migrateLegacyHotkeys(d: { hotkeys?: HotkeyMap }, hc: HotkeyMap):
 }
 
 export function ensureDefaultHotkeys(c: AppConfig): void {
-  if (c.hotkeys.theme_toggle === undefined) c.hotkeys.theme_toggle = 'Ctrl+.';
-  if (c.hotkeys.replay_end === undefined) c.hotkeys.replay_end = 'Shift+R';
-  if (c.hotkeys.replay_only === undefined) c.hotkeys.replay_only = 'R';
-  if (c.hotkeys.mark_translation === undefined) c.hotkeys.mark_translation = 'Ctrl+ArrowLeft';
-  if (c.hotkeys.issues === undefined) c.hotkeys.issues = 'Ctrl+[';
+  c.hotkeys.theme_toggle ??= 'Ctrl+.';
+  c.hotkeys.replay_end ??= 'Shift+R';
+  c.hotkeys.replay_only ??= 'R';
+  c.hotkeys.mark_translation ??= 'Ctrl+ArrowLeft';
+  c.hotkeys.issues ??= 'Ctrl+[';
   if (c.hotkeys.issues === "Ctrl+'") c.hotkeys.issues = 'Ctrl+[';
-  if (c.hotkeys.panel_toggle === undefined) c.hotkeys.panel_toggle = 'Ctrl+Shift+~';
-  if (c.hotkeys.reset_defaults === undefined) c.hotkeys.reset_defaults = 'Ctrl+\\';
+  c.hotkeys.panel_toggle ??= 'Ctrl+Shift+~';
+  c.hotkeys.reset_defaults ??= 'Ctrl+\\';
   if (c.hotkeys.mute) delete c.hotkeys.mute;
 }
 

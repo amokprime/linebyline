@@ -920,6 +920,9 @@ export function setOnInputCallback(cb: () => void) {
 // Once-per-session flag so markGeniusSource only appends "Genius" to [re:] once.
 let _geniusDetectedThisSession = false
 
+// Hoisted regex — avoids re-creating on each call + satisfies S8786.
+const RE_GENIUS_SOURCE = /^\[re:\s*([^\]]*)\]/m
+
 // Append "Genius" to the [re:] tag (once per session), then ensure the default
 // [re:] URL is also present. Mutates mainText via setMainText + re-renders.
 // Exported so App.vue can wire it as the useMerge callback for secondary-field
@@ -928,7 +931,7 @@ export function markGeniusSource() {
   if (_geniusDetectedThisSession) return
   _geniusDetectedThisSession = true
   const { cfg } = useAppState()
-  let updated = getMainText().replace(/^\[re:\s*([^\]]*)\]/m, (match, val: string) => {
+  let updated = getMainText().replace(RE_GENIUS_SOURCE, (match, val: string) => {
     const trimmed = val.trim()
     if (trimmed.includes('Genius')) return match // already has Genius
     return '[re: Genius' + (trimmed ? ', ' + trimmed : '') + ']'
@@ -949,7 +952,7 @@ function extractGeniusMeta(raw: string) {
   let text = getMainText()
   function replaceIfDefault(tag: string, val: string) {
     if (!val) return
-    text = text.replace(new RegExp('^\\[' + tag + ':\\s*(.*)\\]', 'm'), (m, cur: string) => {
+    text = text.replace(new RegExp(String.raw`^\[${tag}:\s*(.*)\]`, 'm'), (m, cur: string) => {
       const c = cur.trim()
       return (c === '' || c.toLowerCase() === 'unknown') ? `[${tag}: ${val}]` : m
     })

@@ -1,3 +1,4 @@
+
 // Ported from docs/index.html "── Genius extraction ──" (roadmap item 3
 // Phase C, tranche 1). Only the pure helpers moved: markGeniusSource and
 // extractGeniusMeta read/write the main textarea and re-render, so they stay
@@ -126,10 +127,12 @@ export function extractGeniusAlbum(head: string[]): string {
   return '';
 }
 
+const COVER_ART_RE = /^Cover art for .+ by (.+)$/i;
+
 export function extractGeniusFields(head: string[]): { title: string; artist: string; album: string } {
   let artist = '';
   for (const h of head) {
-    const m = h.match(/^Cover art for .+ by (.+)$/i);
+    const m = COVER_ART_RE.exec(h);
     if (m) {
       artist = m[1]!.trim();
       break;

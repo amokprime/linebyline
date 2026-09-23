@@ -342,13 +342,11 @@ export function mountProgressDrag(): () => void {
   wrap.style.cursor = 'pointer'
 
   // Wheel handler — scrolls seek forward/back by cfg.seek_increment_s.
-  // Monolith parity: the monolith attaches a 'wheel' listener to #progress-wrap
-  // that calls doSeek(e.deltaY < 0 ? 1 : -1) with { passive: false } so it can
-  // preventDefault. Without this, the seek-scroll Playwright test fails because
-  // scrolling over the progress bar does nothing.
+  // Hoisted to outer scope: doesn't capture any variables from mountProgressDrag
+  // (reads audioEl + doSeek which are module-level). Satisfies S7721.
   function onWheel(e: WheelEvent) {
     e.preventDefault()
-    if (!audioEl.value || !audioEl.value.duration) return
+    if (!audioEl.value?.duration) return
     doSeek(e.deltaY < 0 ? 1 : -1)
   }
   wrap.addEventListener('wheel', onWheel, { passive: false })

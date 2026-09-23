@@ -1,0 +1,60 @@
+name: Playwright Snapshot Regen
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_filter:
+        description: 'Test filter (e.g. -g "paste-genius") or empty for all'
+        required: false
+        default: ''
+      target_branch:
+        description: 'Branch to regenerate on (default: staging)'
+        required: false
+        default: 'staging'
+
+jobs:
+  regen:
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      LBL_VITE_TARGET: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 #v4
+        with:
+          ref: ${{ inputs.target_branch }}
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 #v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install Playwright Browsers
+        run: ./node_modules/.bin/playwright install --with-deps
+
+      - name: Build dist/
+        run: npm run build
+
+      - name: Regenerate snapshots
+        run: ./node_modules/.bin/playwright test ${{ inputs.test_filter }} --update-snapshots
+
+      - name: Commit to ${{ inputs.target_branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add tests/
+          if git diff --cached --quiet; then
+            echo "No snapshot changes — baselines are already up to date"
+          else
+            git commit -m "chore: regenerate Playwright snapshots via CI
+
+            Triggered by workflow_dispatch (run #${{ github.run_id }})
+            Branch: ${{ inputs.target_branch }}
+            Filter: ${{ inputs.test_filter || '(all tests)' }}"
+            git push origin ${{ inputs.target_branch }}
+            echo "Snapshots pushed to ${{ inputs.target_branch }}"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
