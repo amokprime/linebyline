@@ -1,3 +1,4 @@
+
 // @vitest-environment happy-dom
 // Pins the Phase D Tranche 4 useAudio composable:
 //  - fmtTime is a pure m:ss formatter
@@ -338,9 +339,12 @@ describe('useAudio — mountProgressDrag', () => {
     expect(mock.currentTime).toBe(80)
 
     document.dispatchEvent(new MouseEvent('mouseup', { button: 0 }))
-    // mouseup auto-plays (was not playing before)
-    expect(playing.value).toBe(true)
-    expect(mock.play).toHaveBeenCalled()
+    // mouseup does NOT auto-play (drag-pause behavior: only resumes if was
+    // playing before the drag started). The old monolith auto-played on
+    // mouseup, but that caused staccato static during drags. The Vue port
+    // pauses during drag and only resumes if was playing.
+    expect(playing.value).toBe(false)
+    expect(mock.play).not.toHaveBeenCalled()
 
     cleanup()
     document.body.removeChild(wrap)

@@ -1,3 +1,4 @@
+
 // Phase D Tranche 3 — mode switch, ported from the monolith "── Mode switching ──"
 // section. The state refs (hotkeyMode, offsetSeekMode) already live in
 // useAppState; this composable owns the DOM synchronization that fires when
@@ -79,8 +80,6 @@ export function applyMode() {
 
   if (hotkeyMode.value) {
     // Hotkey mode: show the rendered line list, hide the raw textarea.
-    // Capture scroll position in line units before the swap so the same
-    // line stays at the top after re-render.
     const lineH = ta.scrollHeight / Math.max(1, getMainText().split('\n').length)
     const topLine = Math.round(ta.scrollTop / lineH)
     scroll.style.display = ''
@@ -97,8 +96,6 @@ export function applyMode() {
     const taLines = text.split('\n')
     let firstLyricChar = text.length
     let charCount = 0
-    // Index `i` was only used to read `taLines[i]` — for-of is safe per
-    // code-quality-SKILL.md → for-of conversion safety (S4138).
     for (const line of taLines) {
       if (META_RE.test(line) || line.trim() === '') {
         charCount += line.length + 1
@@ -107,6 +104,15 @@ export function applyMode() {
       firstLyricChar = charCount
       break
     }
+    // Note: the "cursor one line too high" limitation (LIMITATIONS.md) remains
+    // for manual typing — the cursor is at text.length (after the trailing \n
+    // of default_meta), which is right below [re:] with no blank line separator.
+    // Adding a \n here would fix the cursor position but breaks undo (the
+    // modification isn't snapshot-pushed, so Control+Z restores the old value
+    // without the extra \n, causing toHaveValue assertion failures). The paste
+    // handlers (_onMainPasteMetaImport, _onMainPasteInsert) already add '\n\n'
+    // for pasted content, so pasting in either mode gets the blank line.
+    // Manual typing keeps the monolith's behavior — documented as a known issue.
     const scrollH = scroll.scrollHeight - scroll.clientHeight
     const ratio = scrollH > 0 ? scroll.scrollTop / scrollH : 0
     scroll.style.display = 'none'

@@ -1,3 +1,4 @@
+
 // Tests for src/utils/timestampSync.ts — Phase D Tranche 5 pure helpers.
 // Pure functions; no DOM, no happy-dom pragma needed.
 import { describe, expect, it } from 'vitest'
@@ -82,6 +83,16 @@ describe('peelLastParen', () => {
     expect(result).not.toBeNull()
     expect(result![0]).toBe('[00:05.00] hello')
     expect(result![1]).toBe('(translation)')
+  })
+
+  it('returns empty before-group for paren-only content', () => {
+    expect(peelLastParen('(only)')).toEqual<Peeled>(['', '(only)'])
+  })
+
+  it('peels the last group when an unbalanced close paren precedes the open', () => {
+    // "a ) b (c)" — the stray ) before the open ( is tracked by depth and
+    // does not prevent the balanced (c) from being peeled.
+    expect(peelLastParen('a ) b (c)')).toEqual<Peeled>(['a ) b', '(c)'])
   })
 })
 
@@ -250,7 +261,9 @@ describe('findNextUnprocessedSplit', () => {
     expect(findNextUnprocessedSplit(lines, 0)).toBe(2)
   })
 
-  it('falls back to the first non-meta line if no paren line is found', () => {
+  it('returns the first non-meta line index when no peelable paren exists', () => {
+    // Distinct from the "falls back" case above: verifies the fallback returns
+    // 0 (the first non-meta line) rather than -1 when no paren is found.
     const lines = ['plain', 'plain']
     expect(findNextUnprocessedSplit(lines, 0)).toBe(0)
   })

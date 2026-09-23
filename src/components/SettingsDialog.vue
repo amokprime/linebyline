@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 // Settings dialog — the monolith's #settings-overlay ported onto the
 // shadcn-vue Dialog (reka-ui gives the focus trap, Escape, and backdrop
@@ -290,6 +291,13 @@ function onSearchKd(e: KeyboardEvent) {
 
 function onSearchBtnClick() {
   setSearchHkMode(!searchHkMode())
+  // Monolith parity: refocus the search field after toggling hk mode.
+  // Without this, activating hk mode via the ⌨ button leaves focus on the
+  // button (outline-highlighted) instead of returning to the search input.
+  nextTick(() => {
+    const search = document.getElementById('s-search') as HTMLInputElement | null
+    if (search) search.focus()
+  })
 }
 
 // Reset confirm handlers.

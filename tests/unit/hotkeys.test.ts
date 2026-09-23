@@ -1,3 +1,4 @@
+
 import { describe, expect, it } from 'vitest'
 
 import { DEFAULT_CFG, ensureDefaultHotkeys, migrateHotkeys, migrateLegacyHotkeys } from '@/config'
@@ -12,12 +13,28 @@ describe('keyStr / normKey', () => {
     expect(keyStr({ ctrlKey: true, shiftKey: false, altKey: true, key: 'ArrowLeft' })).toBe('Ctrl+Alt+ArrowLeft')
   })
 
+  it('normalizes Shift+ArrowUp', () => {
+    expect(keyStr({ ctrlKey: false, shiftKey: true, altKey: false, key: 'ArrowUp' })).toBe('Shift+ArrowUp')
+  })
+
   it('maps Space and Escape (monolith quirk: Escape becomes Esc)', () => {
     expect(keyStr({ ctrlKey: true, shiftKey: false, altKey: false, key: ' ' })).toBe('Ctrl+Space')
     expect(keyStr({ ctrlKey: false, shiftKey: false, altKey: false, key: 'Escape' })).toBe('Esc')
     expect(normKey('Escape')).toBe('Esc')
     expect(normKey(' ')).toBe('Space')
     expect(normKey('F5')).toBe('F5')
+  })
+
+  it('uppercases single characters via normKey', () => {
+    expect(normKey('a')).toBe('A')
+  })
+
+  it('passes multi-char keys through unchanged via normKey', () => {
+    expect(normKey('ArrowUp')).toBe('ArrowUp')
+  })
+
+  it('normalizes bare Space (no modifiers) to "Space"', () => {
+    expect(keyStr({ ctrlKey: false, shiftKey: false, altKey: false, key: ' ' })).toBe('Space')
   })
 
   it('drops bare modifier presses', () => {
@@ -45,15 +62,35 @@ describe('restricted hotkey rules', () => {
     expect(RESTRICTED_ALL.has('Ctrl+Shift+I')).toBe(true)
   })
 
+  it('blocks Ctrl+C, Tab, and Alt combos as browser-reserved', () => {
+    expect(isRestrictedForAll('Ctrl+C')).toContain('reserved by the browser')
+    expect(isRestrictedForAll('Tab')).toContain('reserved by the browser')
+    expect(isRestrictedForAll('Alt+F')).toContain('reserved by the browser')
+  })
+
+  it('allows non-reserved Ctrl+; and ArrowDown', () => {
+    expect(isRestrictedForAll('Ctrl+;')).toBeNull()
+    expect(isRestrictedForAll('ArrowDown')).toBeNull()
+  })
+
   it('blocks letters/digits/Space only for toggle_mode and offset_mode_toggle', () => {
     expect(isRestrictedForKey('Q', 'toggle_mode')).toContain('Letters, numbers, and Space')
     expect(isRestrictedForKey('5', 'toggle_mode')).toContain('Letters, numbers, and Space')
     expect(isRestrictedForKey('Space', 'toggle_mode')).toContain('Letters, numbers, and Space')
     expect(isRestrictedForKey('Shift+A', 'toggle_mode')).toContain('Letters, numbers, and Space')
+    expect(isRestrictedForKey('Shift+A', 'offset_mode_toggle')).toContain('Letters, numbers, and Space')
     expect(isRestrictedForKey('`', 'toggle_mode')).toBeNull()
     expect(isRestrictedForKey('Shift+~', 'offset_mode_toggle')).toBeNull()
     expect(isRestrictedForKey('Q', 'sync')).toBeNull()
     expect(isRestrictedForKey('Ctrl+9', 'seek_back')).toBeNull()
+  })
+
+  it('allows Ctrl+; for toggle_mode (Ctrl combos bypass the alpha/num/Space block)', () => {
+    expect(isRestrictedForKey('Ctrl+;', 'toggle_mode')).toBeNull()
+  })
+
+  it('allows non-alpha non-numeric keys like BracketLeft for toggle_mode', () => {
+    expect(isRestrictedForKey('BracketLeft', 'toggle_mode')).toBeNull()
   })
 })
 

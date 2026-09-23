@@ -1,3 +1,4 @@
+
 // Phase D Tranche 5 — sync/timestamp, ported from the monolith "── Sync /
 // timestamp ──" + "── Render / line UI ──" sections. Owns:
 //  - renderMainLines + _handleLineClick + _handleLineClickPlain
@@ -73,8 +74,8 @@ import {
   findNextUnprocessedSplit,
   peelLastParen,
 } from '@/utils/timestampSync'
-import { cleanGenius } from '@/utils/geniusExtractor'
-import { cleanPaste, mergeLrcMeta } from '@/utils/pasteHandlers'
+import { cleanGenius, extractGeniusFields } from '@/utils/geniusExtractor'
+import { cleanPaste, ensureReTagDefault, mergeLrcMeta } from '@/utils/pasteHandlers'
 
 // ── Refs + callbacks (set by initSync) ──────────────────────────────────────
 export interface SyncRefs {
@@ -910,13 +911,84 @@ export function setOnInputCallback(cb: () => void) {
   _onInputCallback = cb
 }
 
+// ── Genius source marking + metadata extraction ────────────────────────────
+// Ported from the monolith's markGeniusSource() + extractGeniusMeta() (lines
+// 935–995). These were stubbed out as "Tranche 6 owns these" during the Phase D
+// port but never actually implemented — the paste-genius-* Playwright tests
+// caught the gap.
+
+// Once-per-session flag so markGeniusSource only appends "Genius" to [re:] once.
+let _geniusDetectedThisSession = false
+
+// Append "Genius" to the [re:] tag (once per session), then ensure the default
+// [re:] URL is also present. Mutates mainText via setMainText + re-renders.
+// Exported so App.vue can wire it as the useMerge callback for secondary-field
+// Genius paste (the monolith's secondary paste handler also calls markGeniusSource).
+export function markGeniusSource() {
+  if (_geniusDetectedThisSession) return
+  _geniusDetectedThisSession = true
+  const { cfg } = useAppState()
+  let updated = getMainText().replace(/^\[re:\s*([^\]]*)\]/m, (match, val: string) => {
+    const trimmed = val.trim()
+    if (trimmed.includes('Genius')) return match // already has Genius
+    return '[re: Genius' + (trimmed ? ', ' + trimmed : '') + ']'
+  })
+  updated = ensureReTagDefault(updated, cfg.value.default_meta)
+  if (updated !== getMainText()) {
+    _callbacks.setMainText(updated)
+    _callbacks.updateTitleFromText()
+  }
+}
+
+// Extract title/artist/album from the raw Genius paste and replace [ti:]/[ar:]
+// /[al:] only if the current value is empty or "Unknown". Mutates mainText via
+// setMainText + updateTitleFromText.
+function extractGeniusMeta(raw: string) {
+  const lines = raw.split('\n').map((l) => l.trim()).filter(Boolean)
+  const { title, artist, album } = extractGeniusFields(lines.slice(0, 40))
+  let text = getMainText()
+  function replaceIfDefault(tag: string, val: string) {
+    if (!val) return
+    text = text.replace(new RegExp('^\\[' + tag + ':\\s*(.*)\\]', 'm'), (m, cur: string) => {
+      const c = cur.trim()
+      return (c === '' || c.toLowerCase() === 'unknown') ? `[${tag}: ${val}]` : m
+    })
+  }
+  replaceIfDefault('ti', title)
+  replaceIfDefault('ar', artist)
+  replaceIfDefault('al', album)
+  if (text !== getMainText()) {
+    _callbacks.setMainText(text)
+    _callbacks.updateTitleFromText()
+  }
+}
+
+// Check if the text before the caret ends with a meta line (no trailing blank
+// line). If so, prepend '\n' to create the blank line separator that matches
+// hotkey-mode paste formatting. Extracted from onMainPaste to reduce CC (S3776).
+function _geniusInsertPrefix(v: string, start: number): string {
+  const before = v.slice(0, start)
+  const beforeLines = before.split('\n')
+  let lastNonBlank = ''
+  for (let i = beforeLines.length - 1; i >= 0; i--) {
+    if (beforeLines[i]!.trim() !== '') {
+      lastNonBlank = beforeLines[i]!
+      break
+    }
+  }
+  if (lastNonBlank && META_RE.test(lastNonBlank) && !before.endsWith('\n\n')) {
+    return '\n'
+  }
+  return ''
+}
+
 // ── Main textarea @paste handler (typing mode) ─────────────────────────────
 // Port of the monolith's main-textarea paste handler. Hotkey-mode paste
 // goes to #main-lines (onMainLinesPaste below) — it always overwrites.
 // Typing-mode paste inserts at the caret + runs the input chain + pushes
 // a snapshot.
 export function onMainPaste(e: ClipboardEvent) {
-  const { hotkeyMode, pasteJustHappened } = useAppState()
+  const { hotkeyMode } = useAppState()
   if (hotkeyMode.value) {
     return // typing-mode-only handler
   }
@@ -933,27 +1005,40 @@ export function onMainPaste(e: ClipboardEvent) {
   // If pasted content has metadata fields, treat like an lrc import (merge + overwrite)
   const hasMeta = !geniusCleaned && raw.split('\n').some((l) => META_RE.test(l))
   if (hasMeta) {
-    const normalized = normalizeLrcTimestamps(raw)
-    let mergedMeta = mergeLrcMeta(normalized, useAppState().cfg.value.default_meta)
-    let lines = normalized.split('\n').filter((l) => !META_RE.test(l))
-    let text = mergedMeta + '\n' + lines.join('\n').trim()
-    if ((document.getElementById('main-split-check') as HTMLInputElement | null)?.checked) {
-      text = batchSplitParens(text)
-    }
-    pasteJustHappened.value = true
-    _callbacks.setMainText(text)
-    const ta = _refs.current?.mainTextarea.value
-    if (ta) {
-      ta.setSelectionRange(text.length, text.length)
-      // Trigger an input event so the textarea's :value syncs to mainText
-      // (setMainText already wrote mainText, but the textarea's own value
-      // was set by the user's paste action — re-sync from mainText).
-      ta.value = text
-    }
+    _onMainPasteMetaImport(raw)
     return
   }
+  _onMainPasteInsert(raw, geniusCleaned)
+}
+
+// Typing-mode paste with metadata: merge meta + overwrite lyrics.
+// Extracted from onMainPaste to reduce cognitive complexity (S3776).
+function _onMainPasteMetaImport(raw: string) {
+  const { pasteJustHappened } = useAppState()
+  const normalized = normalizeLrcTimestamps(raw)
+  const mergedMeta = mergeLrcMeta(normalized, useAppState().cfg.value.default_meta)
+  const lines = normalized.split('\n').filter((l) => !META_RE.test(l))
+  // Use '\n\n' (blank line separator) to match hotkey-mode paste formatting.
+  let text = mergedMeta.trimEnd() + '\n\n' + lines.join('\n').trim()
+  if ((document.getElementById('main-split-check') as HTMLInputElement | null)?.checked) {
+    text = batchSplitParens(text)
+  }
+  pasteJustHappened.value = true
+  _callbacks.setMainText(text)
+  const ta = _refs.current?.mainTextarea.value
+  if (ta) {
+    ta.setSelectionRange(text.length, text.length)
+    ta.value = text
+  }
+}
+
+// Typing-mode paste without metadata (or Genius): insert at caret.
+// Extracted from onMainPaste to reduce cognitive complexity (S3776).
+function _onMainPasteInsert(raw: string, geniusCleaned: string | null) {
+  const { pasteJustHappened } = useAppState()
   const cleaned = geniusCleaned || cleanPaste(raw, 'paste')
-  const ta = e.target as HTMLTextAreaElement
+  const ta = _refs.current?.mainTextarea.value
+  if (!ta) return
   const start = ta.selectionStart
   const end = ta.selectionEnd
   const v = ta.value
@@ -961,15 +1046,18 @@ export function onMainPaste(e: ClipboardEvent) {
   const finalCleaned = (document.getElementById('main-split-check') as HTMLInputElement | null)?.checked
     ? batchSplitParens(strippedCleaned)
     : strippedCleaned
+  // For Genius paste in typing mode, insert with '\n\n' separator if the
+  // caret is at the end of the meta block (matching hotkey-mode formatting).
+  const prefix = geniusCleaned ? _geniusInsertPrefix(v, start) : ''
+  const insertText = prefix + finalCleaned
   pasteJustHappened.value = true
-  const newVal = v.slice(0, start) + finalCleaned + v.slice(end)
+  const newVal = v.slice(0, start) + insertText + v.slice(end)
   ta.value = newVal
-  ta.setSelectionRange(start + finalCleaned.length, start + finalCleaned.length)
-  // Run the side-effect chain + push a snapshot via setMainText
+  ta.setSelectionRange(start + insertText.length, start + insertText.length)
   _callbacks.setMainText(newVal)
   if (geniusCleaned) {
-    // markGeniusSource + extractGeniusMeta — Tranche 6 owns these (they
-    // write to secondary fields + the [re:] tag). For now, no-op.
+    markGeniusSource()
+    extractGeniusMeta(raw)
   }
 }
 
@@ -1012,7 +1100,7 @@ function _onMainLinesPasteNonGenius(raw: string, cfg: { default_meta: string }) 
 
 // Genius hotkey-mode paste: overwrite lyrics, preserve existing meta.
 // Extracted from onMainLinesPaste to reduce its cognitive complexity.
-function _onMainLinesPasteGenius(geniusCleaned: string, cfg: { default_meta: string }) {
+function _onMainLinesPasteGenius(raw: string, geniusCleaned: string, cfg: { default_meta: string }) {
   const { activeLine } = useAppState()
   const cleanedTrimmed = geniusCleaned.split('\n').map((l) => l.trimEnd()).join('\n')
   const finalTrimmed = (document.getElementById('main-split-check') as HTMLInputElement | null)?.checked
@@ -1022,7 +1110,8 @@ function _onMainLinesPasteGenius(geniusCleaned: string, cfg: { default_meta: str
   const lmi = findLastMetaIdx(taLines)
   const existingMeta = lmi >= 0 ? taLines.slice(0, lmi + 1).join('\n') : cfg.default_meta.trimEnd()
   _callbacks.setMainText((existingMeta ? existingMeta.trimEnd() + '\n\n' : '') + finalTrimmed.trimStart())
-  // markGeniusSource + extractGeniusMeta — Tranche 6 owns these
+  markGeniusSource()
+  extractGeniusMeta(raw)
   if (activeLine.value < 0) {
     const lines = getMainText().split('\n')
     for (let i = 0; i < lines.length; i++) {
@@ -1055,7 +1144,7 @@ export function onMainLinesPaste(e: ClipboardEvent) {
     _onMainLinesPasteNonGenius(raw, cfg.value)
     return
   }
-  _onMainLinesPasteGenius(geniusCleaned, cfg.value)
+  _onMainLinesPasteGenius(raw, geniusCleaned, cfg.value)
 }
 
 // ── Exported for App.vue / EditorArea / LeftPanel ──────────────────────────
@@ -1085,5 +1174,6 @@ export function useSync() {
     tickSeekOffset,
     setOffsetMode,
     doSyncFile,
+    markGeniusSource,
   }
 }

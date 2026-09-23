@@ -204,6 +204,7 @@ onBeforeUnmount(() => {
             class="fs-tick"
             title="Increase speed"
             @click="changeSpeed(1)"
+            @mousedown.prevent
           >
             ▲
           </button>
@@ -212,6 +213,7 @@ onBeforeUnmount(() => {
             class="fs-tick"
             title="Reduce speed"
             @click="changeSpeed(-1)"
+            @mousedown.prevent
           >
             ▼
           </button>
@@ -222,6 +224,7 @@ onBeforeUnmount(() => {
           title="Seek back 5s (Ctrl+A)"
           aria-label="Seek back"
           @click="doSeekBack"
+          @mousedown.prevent
         >
           <svg
             aria-hidden="true"
@@ -243,6 +246,7 @@ onBeforeUnmount(() => {
           :title="playing ? 'Pause (Ctrl+Space)' : 'Play (Ctrl+Space)'"
           :aria-label="playing ? 'Pause' : 'Play'"
           @click="togglePlay"
+          @mousedown.prevent
         >
           <svg
             id="media-play-icon"
@@ -281,6 +285,7 @@ onBeforeUnmount(() => {
           title="Seek forward 5s (Ctrl+D)"
           aria-label="Seek forward"
           @click="doSeekFwd"
+          @mousedown.prevent
         >
           <svg
             aria-hidden="true"
@@ -317,6 +322,7 @@ onBeforeUnmount(() => {
             class="fs-tick"
             title="Increase seek offset"
             @click="onSeekOffsetTick(1)"
+            @mousedown.prevent
           >
             ▲
           </button>
@@ -325,6 +331,7 @@ onBeforeUnmount(() => {
             class="fs-tick"
             title="Decrease seek offset"
             @click="onSeekOffsetTick(-1)"
+            @mousedown.prevent
           >
             ▼
           </button>
@@ -334,6 +341,7 @@ onBeforeUnmount(() => {
           title="Sync file"
           aria-label="Sync file"
           @click="onSyncFile"
+          @mousedown.prevent
         >
           Sync file
           <span
@@ -349,6 +357,7 @@ onBeforeUnmount(() => {
           :title="muted ? 'Unmute (Ctrl+M)' : 'Mute (Ctrl+M)'"
           :aria-label="muted ? 'Unmute' : 'Mute'"
           @click="toggleMute"
+          @mousedown.prevent
         >
           <svg
             id="vol-icon"

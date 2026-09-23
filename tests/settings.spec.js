@@ -1,3 +1,4 @@
+
 const {
   test,
   expect,
@@ -144,8 +145,25 @@ test("assign-conflict-tab", async ({ page }) => {
   await expect(page.locator("#hk-capture-ts_fwd_large")).toHaveValue("C");
   await page.keyboard.press("Shift+Backspace");
   await expect(page.locator("#hk-capture-ts_fwd_large")).toBeEmpty();
-  await page.getByRole("button", { name: "Reset defaults" }).click();
-  await page.getByRole("button", { name: "Confirm reset" }).click();
+  // Reset via the global hotkey (Control+Backslash) instead of clicking
+  // "Reset defaults" → "Confirm reset". The button-click path times out
+  // on webkit: the shadcn-vue Dialog's focus trap + v-show reactivity
+  // (display:none toggle on #s-confirm-yes) delays the confirm button's
+  // actionability past the 30s timeout. The hotkey path runs
+  // showResetConfirm() directly and focuses #s-confirm-yes via nextTick,
+  // which the toBeFocused() assertion auto-waits for. Same pattern as the
+  // persistence test above.
+  //
+  // The capture input stopPropagation's on all keydown events (line 354 of
+  // useSettings.ts), so Control+Backslash would be captured as a new
+  // hotkey assignment instead of reaching the global reset_defaults
+  // handler. Click the search field first to blur the capture input.
+  await page.getByRole("textbox", { name: "Search settings" }).click();
+  await page.keyboard.press("Control+Backslash");
+  await expect(
+    page.getByRole("button", { name: "Confirm reset" }),
+  ).toBeFocused();
+  await page.keyboard.press("Enter");
   await page.getByRole("textbox", { name: "Search settings" }).press("`");
   await page.getByRole("textbox", { name: "Search settings" }).press("x");
   await expect(page.locator("#hk-capture-ts_back_large")).toHaveValue("X");

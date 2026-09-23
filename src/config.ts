@@ -1,3 +1,4 @@
+
 // Ported from docs/index.html "── Config ──" (roadmap item 3 Phase C, tranche 1).
 // Pure data + hotkey migration helpers only: loadCfg/saveCfg stay in the
 // monolith until the persistence composable lands (Phase D). Functions renamed
@@ -56,7 +57,7 @@ export const DEFAULT_CFG: AppConfig = {
     save: "Ctrl+'", help: 'Ctrl+/', theme_toggle: 'Ctrl+.',
     mark_translation: 'Ctrl+ArrowLeft',
     issues: 'Ctrl+[',
-    panel_toggle: 'Ctrl+`',
+    panel_toggle: 'Ctrl+Shift+~',
     reset_defaults: 'Ctrl+\\',
   },
   speed_ratio: 1.1,
@@ -118,6 +119,7 @@ export const LEGACY_HOTKEY_MAP: Record<string, Record<string, string>> = {
   add_field: { 'Ctrl+1': 'Ctrl+4' },
   remove_field: { 'Ctrl+2': 'Ctrl+5' },
   merge_fields: { 'Ctrl+3': 'Ctrl+6' },
+  panel_toggle: { 'Ctrl+`': 'Ctrl+Shift+~' },
 };
 
 export function migrateLegacyHotkeys(d: { hotkeys?: HotkeyMap }, hc: HotkeyMap): void {
@@ -136,7 +138,7 @@ export function ensureDefaultHotkeys(c: AppConfig): void {
   if (c.hotkeys.mark_translation === undefined) c.hotkeys.mark_translation = 'Ctrl+ArrowLeft';
   if (c.hotkeys.issues === undefined) c.hotkeys.issues = 'Ctrl+[';
   if (c.hotkeys.issues === "Ctrl+'") c.hotkeys.issues = 'Ctrl+[';
-  if (c.hotkeys.panel_toggle === undefined) c.hotkeys.panel_toggle = 'Ctrl+`';
+  if (c.hotkeys.panel_toggle === undefined) c.hotkeys.panel_toggle = 'Ctrl+Shift+~';
   if (c.hotkeys.reset_defaults === undefined) c.hotkeys.reset_defaults = 'Ctrl+\\';
   if (c.hotkeys.mute) delete c.hotkeys.mute;
 }

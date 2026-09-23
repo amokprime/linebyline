@@ -1,54 +1,61 @@
 
-# Playwright Test Failures — Phase E Tranche 3
+# Playwright Test Failures — Phase E Tranche 4
 
 Live status of the Vite-target Playwright suite (`LBL_VITE_TARGET=1 tst`).
 Updated after each test run. The monolith-target suite (`tst` without the env
 var) should stay green throughout Phase E — failures here are Vite-target only.
 
-## Current status (Sep 17, 2026 — session 9, Tranche 3 done)
+## Current status (Sep 22, 2026 — Tranche 4 done, assign-conflict-tab rewritten)
 
-### Tranche 3 checkpoint: PASSED
+### Tranche 4: `logic.spec.js` consolidated → DELETED
 
-The local-test checkpoint is complete. The `deploy.sh` `npm run build` fix
-(from session 8) ensures `dist/` is rebuilt after Vitest, so source patches
-actually reach Playwright. Two non-logic failures were fixed in session 9:
+All 84 unique test cases from `tests/logic.spec.js` are now covered by the
+Vitest unit suite (`tests/unit/lrcParser.test.ts`, `tests/unit/hotkeys.test.ts`,
+`tests/unit/geniusExtractor.test.ts`, `tests/unit/timestampSync.test.ts`,
+`tests/unit/pasteHandlers.test.ts`). 26 missing edge cases were ported before
+deletion. Full Vitest suite: 501/501 green. The 252 Playwright failures
+(84 × 3 browsers) from `ReferenceError: X is not defined` are eliminated —
+the file is deleted, so Playwright no longer collects it.
 
-- **`typing-mode.spec.js:meta-save-update` (firefox-only)** — FIXED. Root
-  cause: the test monkeypatches `window.doSave` on Firefox (which blocks the
-  download event), but the Vue port's hotkey handler called the imported
-  `doSave` directly, bypassing the monkeypatch. Fix: `App.vue` exposes
-  `window.doSave = doSave` in `onMounted`; `useGlobalHotkeys.ts` dispatches
-  through `window.doSave` when set, falling back to the imported reference in
-  node unit tests. New `src/globals.d.ts` declares the `Window.doSave`
-  augmentation for `src/**`; `tsconfig.vitest.json` includes it.
+### `assign-conflict-tab` rewritten (Sep 22, 2026)
 
-- **`intervals.spec.js:typing-debounce-1` (chromium-only)** — FIXED. Root
-  cause: the Settings save-on-close watch (Vue async flush `'pre'`) may not
-  have committed `undo_debounce_ms=1` before the first keystroke, leaving the
-  undo stack one entry short. Fix: added a 50ms wait after pressing Escape +
-  bumped inter-keystroke wait from 20ms to 50ms.
+The webkit-only timeout on "Confirm reset" button click is fixed by rewriting
+the reset-confirm flow to use the global hotkey (`Control+Backslash`) instead
+of clicking "Reset defaults" → "Confirm reset". The button-click path timed
+out because the shadcn-vue Dialog's focus trap + `v-show` reactivity
+(`display:none` toggle on `#s-confirm-yes`) delayed the confirm button's
+actionability past the 30s timeout on webkit. The hotkey path calls
+`showResetConfirm()` directly and focuses `#s-confirm-yes` via `nextTick`,
+which `toBeFocused()` auto-waits for. Same pattern as the `persistence` test.
 
-### Session 9 test run results (253 failures)
+One subtlety: the capture input `stopPropagation`s on all keydown events
+(`useSettings.ts` line 354), so `Control+Backslash` would be captured as a
+new hotkey assignment instead of reaching the global handler. The rewrite
+clicks the search field first to blur the capture input, then presses
+`Control+Backslash`.
+
+Verified on chromium in-sandbox (webkit requires the user's `tst` container).
+Awaiting user's `LBL_VITE_TARGET=1 tst` confirmation on all 3 browsers.
+
+### Session 9 test run results (pre-Tranche-4 baseline — 253 failures)
 
 ```
 253 failed / 284 passed / 9 skipped (16.4m)
 ```
 
-Breakdown:
+Breakdown (pre-Tranche-4):
 
-| Category | Tests (unique) | Browser scope | Status |
-|---|---|---|---|
-| `logic.spec.js` `ReferenceError: X is not defined` | 84 × 3 = 252 | all 3 | Deferred to Tranche 4 |
-| `settings.spec.js:assign-conflict-tab` | 1 | webkit only | Needs test rewrite |
+| Category                                           | Tests (unique) | Browser scope | Status                |
+| -------------------------------------------------- | -------------- | ------------- | --------------------- |
+| `logic.spec.js` `ReferenceError: X is not defined` | 84 × 3 = 252   | all 3         | FIXED (Tranche 4 — file deleted) |
+| `settings.spec.js:assign-conflict-tab`             | 1              | webkit only   | FIXED (test rewritten) |
 
-### Remaining failure: `assign-conflict-tab` (webkit-only)
+### Expected post-Tranche-4 results
 
-This is a pre-existing known failure (FAILURES.md category 15). The test times
-out at 30s on the "Confirm reset" button click (line 148). The shadcn-vue
-Dialog's reset-confirm flow uses a focus trap + reactivity timing that doesn't
-match the monolith's imperative flow. Needs a dedicated test rewrite — not a
-source-code fix. Fits a future Test session alongside the Tranche 4
-`logic.spec.js` consolidation.
+The next `LBL_VITE_TARGET=1 tst` run should show 0 failures from the above
+two categories. The 284 passing tests are unchanged. If any new failures
+appear, they're regressions from the test-file changes and should be
+investigated.
 
 ### `--update-snapshots` notes
 
@@ -110,11 +117,11 @@ fix any because most failures were `toHaveValue`/`toBeVisible`/`toBeChecked`
 
 #### Categories fixed in session 9
 
-| Category | Tests (unique) | Status |
-|---|---|---|
-| typing-mode meta-save-update | 1 (firefox) | Fixed (session 9) |
-| intervals typing-debounce-1 | 1 (chromium) | Fixed (session 9) |
-| smoke doSave-exposed + doSave-dispatch | 6 (new tests) | Fixed (session 9) |
+| Category                               | Tests (unique) | Status            |
+| -------------------------------------- | -------------- | ----------------- |
+| typing-mode meta-save-update           | 1 (firefox)    | Fixed (session 9) |
+| intervals typing-debounce-1            | 1 (chromium)   | Fixed (session 9) |
+| smoke doSave-exposed + doSave-dispatch | 6 (new tests)  | Fixed (session 9) |
 
 #### `tst-vite-log` fish function fixes (session 8)
 

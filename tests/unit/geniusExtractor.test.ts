@@ -1,3 +1,4 @@
+
 import { describe, expect, it } from 'vitest'
 
 import {
@@ -69,6 +70,23 @@ describe('cleanGenius', () => {
 
   it('returns null for non-Genius text', () => {
     expect(cleanGenius('[ti: Song]\n[00:01.00] lyric')).toBeNull()
+    expect(cleanGenius('Just some regular lyrics\nNothing special here')).toBeNull()
+  })
+
+  it('filters the "You might also like" block out of the cleaned output', () => {
+    const result = cleanGenius(
+      'Song Lyrics\nRead More\nLyric line\nYou might also like\nRelated Song\n[Chorus]\nFinal line\nAbout',
+    )
+    expect(result).toContain('Lyric line')
+    expect(result).toContain('Final line')
+    expect(result).not.toContain('You might also like')
+    expect(result).not.toContain('Related Song')
+  })
+
+  it('strips Genius section headers from the cleaned lyrics', () => {
+    const result = cleanGenius('Song Lyrics\nRead More\n[Verse]\nLyric here\nAbout')
+    expect(result).not.toContain('[Verse]')
+    expect(result).toContain('Lyric here')
   })
 })
 

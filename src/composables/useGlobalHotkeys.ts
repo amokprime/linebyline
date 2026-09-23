@@ -60,6 +60,7 @@ import { doImport, doSave } from './useImport'
 import { cycleTheme } from './useTheme'
 import { usePanelCollapse } from './usePanelCollapse'
 import { useSettings, getSettingsFocusable, showResetConfirm, hideResetConfirm, doResetDefaults } from './useSettings'
+import { nextTick } from 'vue'
 
 // ── Callbacks (set by initGlobalHotkeys) ──────────────────────────────────
 export interface GlobalHotkeyCallbacks {
@@ -190,8 +191,16 @@ function handleSettingsHotkeyDispatch(
   }
   if (hk.reset_defaults && hkMatch(ks, hk.reset_defaults)) {
     e.preventDefault()
-    if (!settingsOpen) cb.toggleSettings()
-    showResetConfirm()
+    if (!settingsOpen) {
+      cb.toggleSettings()
+      // Wait for the Settings dialog to open (Vue reactivity is async) before
+      // showing the reset confirm. Without nextTick, showResetConfirm fires
+      // before the dialog's v-show elements are visible, so the confirm
+      // buttons don't render and the focus call in showResetConfirm fails.
+      nextTick(() => showResetConfirm())
+    } else {
+      showResetConfirm()
+    }
     return true
   }
   return false

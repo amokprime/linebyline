@@ -43,6 +43,7 @@ import {
   setSyncCallbacks,
   updateActiveLineFromTime,
   scrollToPlaying,
+  markGeniusSource,
 } from './composables/useSync'
 import {
   initMerge,
@@ -218,7 +219,7 @@ initMerge({
   scheduleSecInputSnapshot: () =>
     undoRedo.scheduleInputSnapshot(useAppState().cfg.value.undo_debounce_ms || 150),
   markGeniusSource: () => {
-    // Tranche 9 owns markGeniusSource (writes to the [re:] tag).
+    markGeniusSource()
   },
 })
 
@@ -324,11 +325,14 @@ onMounted(() => {
   // monolith Init: restoreAudioDisplay — reactive bindings handle display
   restoreAudioDisplay()
   // monolith Init: loadAutosave — restores text + secondaries + seeds undo.
-  // **Port delta**: the monolith clears sessionStorage before loadAutosave
-  // (`sessionStorage.removeItem('lbl_autosave')`), which means autosave never
-  // restores. The Vue port does NOT clear — the single-file-html-app skill
-  // says "reload on init to survive accidental refresh". If the user wants
-  // the clear behavior, add `sessionStorage.removeItem('lbl_autosave')` here.
+  // **Monolith parity**: the monolith clears sessionStorage before loadAutosave
+  // (`sessionStorage.removeItem('lbl_autosave')` at line 2821), so refresh
+  // always starts fresh — only the current session's edits are in memory.
+  // The Vue port previously did NOT clear (citing "survive accidental refresh"),
+  // but that diverges from monolith behavior and breaks the "Reloading or
+  // closing the tab resets song and lyrics" contract in HELP.md. Now clearing
+  // to match the monolith.
+  sessionStorage.removeItem('lbl_autosave')
   useAutosave().loadAutosave()
   // monolith Init: renderMainLines — already called by loadAutosave's callback,
   // but call once more to ensure the line list reflects post-init state.

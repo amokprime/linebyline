@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 """Lint markdown files for Obsidian prettify issues per AGENTS.md rules.
 
@@ -56,7 +55,8 @@ WIKILINK_RE = re.compile(r'\[\[([^\]]+)\]\]')
 TAG_RE = re.compile(r'(?<![\w`/])#([a-zA-Z][a-zA-Z0-9_-]*)')
 # 3. [link-label] — not preceded by [ (to skip [[...]] inner match),
 #    not followed by ( (to skip real [text](url) links).
-LINK_LABEL_RE = re.compile(r'(?<!\[)\[([^\]\[`]+)\](?!\()')
+#    Negative lookahead (?![ xX]\]) skips checkbox syntax [ ]/[x]/[X].
+LINK_LABEL_RE = re.compile(r'(?<!\[)\[(?![ xX]\])([^\]\[`]+)\](?!\()')
 # 4. === section headers === — Obsidian's ==highlight== extension greedily
 #    matches the outer == of === text ===, applying a yellow background to
 #    the contained text. Wrapping in backticks renders them as literal code.

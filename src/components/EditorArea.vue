@@ -1,3 +1,4 @@
+
 <script setup lang="ts">
 // Editor area — structure ported from the monolith (#editor-wrapper >
 // #editor-scroll > #editor-area > the main field column: header with the
@@ -218,6 +219,15 @@ onBeforeUnmount(() => {
   list-style: none;
   margin: 0;
 }
+</style>
+
+<!-- Lyric line styles are GLOBAL (not scoped) because renderMainLines() in
+     useSync.ts builds the <li class="lrc-line"> children via innerHTML. Vue's
+     scoped CSS adds a data-v-* attribute to template-rendered elements only;
+     innerHTML-created elements don't get the attribute, so scoped .lrc-line
+     selectors silently fail to match. This is the root cause of the "no
+     highlighting blue bar" UI bug reported during Phase E Tranche 3 testing. -->
+<style>
 .lrc-line {
   padding: 1px 8.8px;
   white-space: nowrap;
@@ -277,6 +287,9 @@ onBeforeUnmount(() => {
 .dark .lrc-line.cursor {
   background: rgba(88, 166, 255, 0.07);
 }
+</style>
+
+<style scoped>
 #main-textarea {
   flex: 1;
   font-family: var(--editor-font);

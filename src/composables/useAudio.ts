@@ -1,3 +1,4 @@
+
 // Phase D Tranche 4 — audio playback, ported from the monolith "── Audio ──"
 // section. Owns the Audio element lifecycle, volume/mute, play/pause, seek,
 // and speed. Does NOT own: updateActiveLineFromTime (Tranche 5), seekPrevLine
@@ -279,10 +280,16 @@ export function doSeekFwd() { doSeek(1) }
 // Progress bar drag — mousedown on progressWrap, document mousemove/mouseup.
 // Returns a cleanup function that removes the document listeners. LeftPanel
 // calls this in onMounted and calls the cleanup in onBeforeUnmount.
+//
+// DRAG PAUSE: during drag, the audio is paused (not seeked continuously).
+// Continuous seeking causes staccato static bursts as the audio rapidly
+// plays segments at each intermediate position. Instead, pause on mousedown,
+// seek on mousemove, and resume on mouseup (only if was playing before drag).
 export function mountProgressDrag(): () => void {
   const wrap = _refs?.progressWrap.value
   if (!wrap) return () => {}
   let seeking = false
+  let wasPlaying = false
 
   function getPct(clientX: number): number {
     const r = wrap!.getBoundingClientRect()
@@ -301,6 +308,14 @@ export function mountProgressDrag(): () => void {
   function onDown(e: MouseEvent) {
     if (e.button !== 0) return
     seeking = true
+    const el = audioEl.value
+    const { playing } = useAppState()
+    wasPlaying = playing.value
+    // Pause during drag to prevent staccato static
+    if (el && wasPlaying) {
+      el.pause()
+      playing.value = false
+    }
     seekTo(e.clientX)
     e.preventDefault()
   }
@@ -310,14 +325,14 @@ export function mountProgressDrag(): () => void {
     e.preventDefault()
   }
   function onUp(e: MouseEvent) {
-    if (e.button === 0 && seeking) {
-      seeking = false
-      const el = audioEl.value
-      const { playing } = useAppState()
-      if (el && !playing.value) {
-        el.play()
-        playing.value = true
-      }
+    if (e.button !== 0 || !seeking) return
+    seeking = false
+    const el = audioEl.value
+    const { playing } = useAppState()
+    // Resume only if was playing before the drag started
+    if (el && wasPlaying) {
+      el.play()
+      playing.value = true
     }
   }
 
