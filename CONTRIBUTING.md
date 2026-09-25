@@ -1,16 +1,14 @@
-See this [Obsidian Share Note](https://share.note.sx/9wimmaly) for what's planned in the near future.
-
 ### Architecture and workflows
 
 LineByLine is a no-dependencies 2.7k+ LOC .html file (with JavaScript and CSS all inside). See the [ai](https://github.com/amokprime/linebyline/tree/main/ai) folder README or specific subfolders to reproduce my workflows. `omp/` is the current one and still very WIP as it's the first CLI harness I've used. `chat.z.ai/` and `claude.ai/` are both web chat based.
 
 #### CI
 
-All code changes must pass [ESLint](https://github.com/amokprime/linebyline/tree/main/archive/modular/plan/2-Zed-ESLint.md) (i.e. `npx eslint . > local/log.txt 2>&1`) after the upcoming HTML modular [refactor](https://github.com/amokprime/linebyline/tree/main/archive/modular/plan/0-Roadmap.md). Any changes to app code **must** pass CodeQL and SonarCloud GitHub Actions. When Sonar issues are found, fetch them with the [sonar-issue-exporter](https://github.com/amokprime/sonar-issue-exporter) tool and put them in an "issues" folder inside the app version folder, minus the why.md and how.md files (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license).
+All code changes **must** pass [ESLint](https://github.com/amokprime/linebyline/tree/main/archive/modular/plan/2-Zed-ESLint.md) (i.e. `npx eslint . > local/log.txt 2>&1`), CodeQL, and SonarCloud GitHub Actions. When issues are found, fetch them locally with [`sie`](https://github.com/amokprime/sonar-issue-exporter) (the consolidated `sonar-issue-exporter` CLI) — it produces a single Markdown report combining SonarCloud issues and CodeQL code-scanning alerts, with `#### Why` / `#### How to fix` rationale per rule when `SONAR_API_KEY` is set. Run `sie -c` / `--clean` to drop the licensed Sonar Why/How sections before committing (they're public information but also technically Sonar IP which conflicts with LineByLine's GPL 3 license). Save the report to `archive/semantic/<version>/issues.md` (auto-increments to `issues1.md`, `issues2.md`, …).
 
 LineByLine has two types of QA tests: Playwright and [MANUAL.md.](https://github.com/amokprime/linebyline/tree/main/tests/MANUAL.md). Playwright CI **must** pass. See [PLAYWRIGHT_SETUP.md](https://github.com/amokprime/linebyline/tree/main/tests/PLAYWRIGHT_SETUP.md) for help running them pre-commit.
 
-#### Writing tests
+#### Test helpers
 
 The helper [tests/helpers/index.js](https://github.com/amokprime/linebyline/tree/main/tests/helpers.index.js) provides several code-saving shortcuts. Every real test file will most likely require at least this structure:
 ```js

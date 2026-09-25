@@ -1,0 +1,43 @@
+{
+  "key": "AaB4pk2IDk5q6SaK23Im",
+  "rule": "typescript:S8786",
+  "severity": "MAJOR",
+  "component": "amokprime_linebyline:src/utils/lrcParser.ts",
+  "project": "amokprime_linebyline",
+  "line": 72,
+  "hash": "3634dcb84177d9df2203f21ec4143fda",
+  "textRange": {
+    "startLine": 72,
+    "endLine": 72,
+    "startOffset": 22,
+    "endOffset": 41
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Simplify this regular expression to reduce its runtime, as it has super-linear performance due to backtracking.",
+  "effort": "20min",
+  "debt": "20min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "performance",
+    "regex"
+  ],
+  "creationDate": "2026-09-06T21:34:57+0000",
+  "updateDate": "2026-09-06T21:35:23+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "71df398b-b2fa-4293-9fa9-44ba11067af1",
+  "lastChangeSource": "ANALYSIS"
+}

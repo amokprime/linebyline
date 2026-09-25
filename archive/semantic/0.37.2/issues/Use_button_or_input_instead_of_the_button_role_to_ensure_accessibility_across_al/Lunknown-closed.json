@@ -1,0 +1,22 @@
+{
+  "rule": "Web:S6819",
+  "component": "amokprime_linebyline:src/components/HotkeyCell.vue",
+  "textRange": {
+    "startLine": 33,
+    "endLine": 47,
+    "startOffset": 2,
+    "endOffset": 3
+  },
+  "message": "Use <button> or <input> instead of the button role to ensure accessibility across all devices.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

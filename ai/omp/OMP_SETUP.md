@@ -147,8 +147,8 @@ sudo ln -s $(which wl-copy) /usr/local/bin/pbcopy #md-export clipboard dependenc
 
 This section covers free and nominally unlimited API providers that are OpenAI-endpoint compatible.
 - [Gratisfy](https://gratisfy.xyz/) can be used as a free provider router, or just as a [reference](https://gratisfy.xyz/providers)
-- Of the available providers, [Logfare](https://logfare.ai/) is the most usable for vibecoding (when [performance](https://logfare.ai/status) is not degraded). ⚠️ **You must opt into model data training to enable most models** — see their [privacy policy](https://logfare.ai/privacy). I consider this acceptable for LineByLine because it's already public and open source, right down to my chat transcripts. See the [sandbox](https://github.com/amokprime/linebyline/tree/main/ai/omp/OMP_SETUP.md#Sandbox) section again to exclude any personal files or folders.
-- [FreeRouter](https://freerouter.eu.cc/) most often provides subagent-tier models (i.e. 128K context windows). Their selection fluctuates dramatically from day to day. ⚠️ They don't seem to log your data themselves, but it's safe to assume the upstream providers train on your data.
+- Of the available providers, [Logfare](https://logfare.ai/) is the most usable for vibecoding (when [performance](https://logfare.ai/status) is not degraded). They sometimes have a 1M context window model (i.e. `deepseek-v4-flash-0731`) that can be used as a default agent. ⚠️ **You must opt into model data training to enable most models** — see their [privacy policy](https://logfare.ai/privacy). I consider this acceptable for LineByLine because it's already public and open source, right down to my chat transcripts. See the [sandbox](https://github.com/amokprime/linebyline/tree/main/ai/omp/OMP_SETUP.md#Sandbox) section again to exclude any personal files or folders. Availability ebbs and flows in waves (i.e. down for weeks, up for weeks).
+- [NVIDIA NIM](https://build.nvidia.com/models?filters=nimType%3Anim_type_preview) also logs everything. Their more [reliable](https://vadash.github.io/NIMStats/) models can be used as fallbacks . `nvidia/nemotron-3-super-120b-a12b`  can be used as a fallback advisor (fast + 1M context window); models like `meta/muse-glimmer-30b` or `google/diffusiongemma-26b-a4b-it` as fallback Tiny/Smol models. Not shown in `models.yml` since they're covered by OMP `/providers` OAuth onboarding.
 - Use `~/.omp/agent/models.yml` to set these up. They may not show up in OMP's Providers onboarding menu. Example syntax:
 ```yml
 providers:
@@ -163,16 +163,4 @@ providers:
         reasoning: true
         thinkingLevelMap:
           xhigh: max
-  freerouter:
-    baseUrl: https://freerouter.eu.cc/v1
-    api: openai-completions
-    apiKey: FREEROUTER_API_KEY
-    models:
-      - id: qwen-3.8-27b
-        input:
-          - text
-          - image
-        reasoning: true
-        thinkingLevelMap:
-          xhigh: xhigh
 ```

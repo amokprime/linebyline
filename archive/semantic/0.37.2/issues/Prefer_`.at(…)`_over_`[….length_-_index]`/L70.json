@@ -1,0 +1,46 @@
+{
+  "key": "AaCC2RPU3vu4aE8Mnjr1",
+  "rule": "typescript:S7755",
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:src/utils/geniusExtractor.ts",
+  "project": "amokprime_linebyline",
+  "line": 70,
+  "hash": "2ed71b4ce3a47ef75a7605ade345df7e",
+  "textRange": {
+    "startLine": 70,
+    "endLine": 70,
+    "startOffset": 28,
+    "endOffset": 42
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Prefer `.at(\u2026)` over `[\u2026.length - index]`.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "editable-source",
+    "es2022",
+    "performance",
+    "readability",
+    "type-dependent"
+  ],
+  "creationDate": "2026-09-08T21:06:34+0000",
+  "updateDate": "2026-09-08T21:07:02+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "db52b0a3-0ed8-4386-a2fe-254c5557b0b4",
+  "lastChangeSource": "ANALYSIS"
+}

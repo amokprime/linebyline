@@ -193,6 +193,19 @@ You must proactively identify these before the user runs tests. When you modify 
 
 After making code changes: always tell the user which test snapshots will need regeneration, and which specific snapshot files are affected.
 
+### NEVER manually edit snapshot baselines — always regenerate
+
+Manual edits to snapshot `.txt`/`.png`/`.yml` files risk byte-level mismatches: trailing newlines added by text editors (nano adds `\n` by default), encoding artifacts from file extraction, or wrong content from misunderstanding the app's actual output. Playwright's `toMatchSnapshot` is byte-exact — even a single extra `\n` causes a failure.
+
+Always regenerate with:
+```sh
+tst -g testname --update-snapshots
+```
+
+The `--update-snapshots` flag writes the app's actual output directly to the baseline file, preserving the exact byte format. After regenerating, verify with `tst -g testname` (without `--update-snapshots`).
+
+The `tst` fish function strips a leading `--` so `tst -- --update-snapshots` also works. The flag only affects `toMatchSnapshot` / `toHaveScreenshot` / `toMatchAriaSnapshot` — NOT `toHaveValue` / `toBeVisible` / `toBeChecked` (those are value assertions with hardcoded expected values in the test source, not snapshot files). For those, update the expected value in the test source code directly.
+
 ---
 
 ## Common test patterns

@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      LBL_VITE_TARGET: "1"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 #v4
 
@@ -24,6 +25,9 @@ jobs:
 
       - name: Install Playwright Browsers
         run: ./node_modules/.bin/playwright install --with-deps
+
+      - name: Build dist/
+        run: npm run build
 
       - name: Run Playwright tests
         run: ./node_modules/.bin/playwright test

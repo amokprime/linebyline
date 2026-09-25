@@ -30,7 +30,6 @@ test("sync-start-end", async ({ page, media }) => {
   let lines = await lyricLinesText(page);
   expect(lines).toContain("[00:00.00] I wish I could");
   await page.keyboard.press("Space");
-  // Covers seamless trailing timestamp sync added in 0.37.0
   await expect(page.locator("#time-pos")).toHaveText(/^0:0[1-3]$/);
   await expect(page.locator("#time-dur")).toHaveText(/^0:1[2-4]$/);
   await page.keyboard.press("t");
@@ -104,7 +103,7 @@ test("replay-moving-next", async ({ page, media }) => {
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
   await page.keyboard.press("Control+,");
-  await page.getByText("Moving to next line").check();
+  await page.getByRole("checkbox", { name: "Moving to next line" }).check();
   await page.keyboard.press("Escape");
   await page.keyboard.press("e");
   await triggerTimeUpdate(page);
@@ -119,7 +118,7 @@ test("replay-sync-time", async ({ page, media }) => {
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
   await page.keyboard.press("Control+,");
-  await page.getByText("Adjusting timestamp").check();
+  await page.getByRole("checkbox", { name: "Adjusting timestamp" }).check();
   await page.keyboard.press("Escape");
   await page.keyboard.press("ArrowDown");
   await page.keyboard.press("c");
@@ -139,7 +138,7 @@ test("replay-resume", async ({ page, media }) => {
     .getByRole("checkbox", { name: "Resuming currently playing" })
     .check();
   await page.keyboard.press("Escape");
-  await page.locator("#left-panel-header").click(); //Not needed in real browser; Playwright loses focus
+  await page.locator("#left-panel-header").click();
   await page.keyboard.press("Space");
   await expect(page.locator("#audio-box")).toContainText("0:01");
   await page.keyboard.press("Space");
@@ -156,11 +155,9 @@ test("replay-another-line", async ({ page, media }) => {
   await page.keyboard.press("Escape");
   await page.getByText("[00:03.06] That smell").click();
   await waitForAudioPlayback(page);
-  await page.keyboard.press("Space"); //Not needed in real browser; purely to freeze state for screenshot
+  await page.keyboard.press("Space");
   await waitForAudioPaused(page);
-  await expect(page).toHaveScreenshot({
-    maxDiffPixelRatio: 0.1,
-  });
+  await expect(page).toHaveScreenshot({ maxDiffPixelRatio: 0.1 });
 });
 
 test("sync-empty", async ({ page }) => {
@@ -168,4 +165,48 @@ test("sync-empty", async ({ page }) => {
   const list = page.getByLabel("Lyric lines");
   await expect(list).toBeEmpty();
   await expect(list).toHaveRole("list");
+});
+
+// Tranche 4.5 — cursor moves with Q/E.
+test("cursor-moves-with-q-e", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
+  await expect(page.locator(".lrc-line.cursor")).toContainText("I wish I could identify that smell");
+  await page.keyboard.press("e");
+  await expect(page.locator(".lrc-line.cursor")).toContainText("That smell");
+  await page.keyboard.press("q");
+  await expect(page.locator(".lrc-line.cursor")).toContainText("I wish I could identify that smell");
+});
+
+// Tranche 4.5 — highlight moves with W/Enter. Audio is not in DOM so
+// triggerTimeUpdate is a no-op; use real playback to fire timeupdate.
+test("highlight-moves-with-w-enter", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
+  await page.keyboard.press("Space");
+  await page.waitForTimeout(300);
+  await page.keyboard.press("Space");
+  await expect(page.locator(".lrc-line.active")).toContainText("I wish I could identify that smell");
+  await page.keyboard.press("e");
+  await expect(page.locator(".lrc-line.cursor")).toContainText("That smell");
+  await expect(page.locator(".lrc-line.active")).toContainText("I wish I could identify that smell");
+  await page.keyboard.press("w");
+  await expect(page.locator(".lrc-line.active")).toContainText("That smell");
+});
+
+// Tranche 4.5 — active line cursor border (light + dark).
+test("active-line-cursor-border", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
+  await expect(page.locator("html")).not.toHaveClass(/dark/);
+  await expect(page.locator(".lrc-line.cursor")).toHaveCSS("border-left-color", "rgb(9, 105, 218)");
+  await page.keyboard.press("Control+.");
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expect(page.locator(".lrc-line.cursor")).toHaveCSS("border-left-color", "rgb(88, 166, 255)");
 });
