@@ -213,3 +213,4 @@ else
 fi
 
 # trap cleanup handles: rm $RAW, print "Done.", cat $LOG
+notify-send "Changes deployed"

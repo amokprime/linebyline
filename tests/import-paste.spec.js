@@ -224,3 +224,15 @@ test("naughty-strings", async ({ page }) => {
     await page.keyboard.press("Backspace");
   }
 });
+// Tranche 4.5 — 10k line import blocking. Covers MANUAL.md "Open 10k_lines.lrc
+// and verify a blocking popup appears and does not allow importing".
+test("import-10k-blocking", async ({ page, media }) => {
+  page.on("dialog", async (dialog) => {
+    expect(dialog.message()).toMatch(/exceeds.*500.*line/i);
+    await dialog.dismiss();
+  });
+  await page.locator("#file-picker").setInputFiles([media("10k_lines.lrc")]);
+  await expect(page.locator("#main-textarea")).toHaveValue(
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n",
+  );
+});

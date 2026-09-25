@@ -113,6 +113,7 @@ GitHub Actions workflow rules (target `.github/workflows/*.yml`):
 | `githubactions:S6505` | `npx`/`npm ci` supply-chain | Replace `npx <pkg>` with `./node_modules/.bin/<pkg>` (direct binary, no on-demand install); add `--ignore-scripts` to `npm ci` to prevent lifecycle scripts from running during install | Low — both fixes are mechanical and eliminate the attack surface without breaking functionality. The `npx` binary is already in `node_modules/.bin/` after `npm ci`, so the direct path works. `--ignore-scripts` is safe when the only postinstall that matters (e.g. Playwright browser download) is explicitly handled by a separate step. |
 | `githubactions:S8543` | Pin exact package version | Collapses into the S6505 fix — `./node_modules/.bin/<pkg>` runs the version pinned in `package.json`, so no on-demand install can pull an unverified release. For action pins (`actions/checkout@v4`), pin to the commit SHA (`actions/checkout@11d5960a...`) | Low — SHA-pinning is best practice. Version-tag pins (`@v4`) are mutable and can be re-pointed by the action maintainer. |
 | `githubactions:S7631` | Fork-code in workflow | Compare-API check that the head SHA is on `main` (or `behind`/`identical`) before merging | Low — Won't Fix when the workflow never checks out or executes the event SHA, only merges commits verified to be on main. Marked False Positive in the SonarCloud UI; a resolved security issue plus this marking flips the retroactively-computed quality gate green. |
+| `githubactions:S7630` | Script injection via workflow inputs | Move `${{ inputs.* }}` interpolations in `run:` blocks into the step's `env:` block, then reference as `$VAR` (shell variable expansion, not GitHub expression syntax) | Low — mechanical fix. The `env:` assignment is still a GitHub expression, but the shell sees the value as a literal string (no re-evaluation). |
 | `githubactions:S8264/S8233` | Permissions scope | Split workflow-level permissions to job level (build: `contents: read`; deploy: `pages: write` + `id-token: write`) | Low |
 
 Shell rules (target `ai/chat.z.ai/scripts/*.sh`, `ai/zcode/transcript.sh`):
@@ -141,7 +142,7 @@ Step 3: Assess each finding individually
 
 Never apply a rule category wholesale. Assess each instance:
 
-for-of conversion (S4138) — convert only when the loop index is not used for accumulation via index, output assignment keyed to index, indexed mutation of a parallel array, or any expression involving i other than arr[i]. When in doubt, skip and document as Won't Fix — a broken for-of conversion is worse than a SonarQube warning.
+for-of conversion (S4138) — convert only when the loop index is not used for accumulation via index, output assignment keyed to index, indexed mutation of a parallel array, or any expression involving i other than arr`[i]`. When in doubt, skip and document as Won't Fix — a broken for-of conversion is worse than a SonarQube warning.
 
 replaceAll (S1321) — convert only when the search value is a fixed string. Skip if the regex has quantifiers (+, *, ?, {n}), character classes, or anchors — replaceAll with a regex argument behaves the same as replace with /g, which SonarQube already accepted.
 
@@ -158,6 +159,8 @@ githubactions:S6505 (`npx` supply-chain) — always fix. Replace `npx <pkg>` wit
 githubactions:S8543 (pin exact version) — always fix for `npx` calls (collapsed into the S6505 fix — direct binary uses package.json-pinned version). For GitHub Actions (`actions/checkout@v4`), pin to commit SHA. No false positives observed.
 
 githubactions:S7631 (fork-code) — Won't Fix when the workflow only merges commits verified to be on `main`, never checks out or executes the event SHA. Marked False Positive in the SonarCloud UI; a resolved security issue plus this marking flips the retroactively-computed quality gate green.
+
+githubactions:S7630 (script injection via workflow inputs) — fix by moving every `${{ inputs.* }}` interpolation in a `run:` block into the step's `env:` block, then referencing it as `$VAR` (shell variable expansion). Example: `run: ./bin/test ${{ inputs.filter }}` → `env: FILTER: ${{ inputs.filter }}` + `run: ./bin/test $FILTER`. The `env:` assignment still uses GitHub expression syntax, but the shell receives the value as a literal string (variable expansion, not expression re-evaluation), so shell metacharacters in the input can't inject commands. Applied to `playwright-snapshot-regen.yml` (Sep 24, 2026): 4 instances at L41 (`test_filter`), L54/L56/L57 (`target_branch`) all fixed via `env: TEST_FILTER:` / `env: TARGET_BRANCH:` + `$TEST_FILTER` / `$TARGET_BRANCH` in the shell. The `Filter: ${TEST_FILTER:-(all tests)}` in the commit message is also shell expansion (safe), not a GitHub expression.
 
 shelldre:S7682 (explicit return) — Won't Fix for `.base.sh`'s snippet-caller functions where the exit status is intentionally the last command's (repomix); an explicit `return 0` would mask a repomix failure and zip/copy missing output. Fix elsewhere.
 
@@ -241,6 +244,7 @@ False positive summary
 | Verbatim monolith port, modernization deferred | S8786/S6557/S7755/S4138 | Accept — post-Phase-E pass |
 | Fork-code in workflow that only merges verified main commits | githubactions:S7631 | False Positive — workflow never executes the event SHA |
 | `|| {}` after spread is dead code | S7744 | Fix — drop the `|| {}` |
+| Script injection via `${{ inputs.* }}` in `run:` blocks | githubactions:S7630 | Fix — move to `env:` + `$VAR` shell expansion |
 
 ---
 

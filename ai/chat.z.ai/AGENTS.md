@@ -68,9 +68,9 @@ A `build-test.sh` script has been added (see `ai/chat.z.ai/scripts/build-test.sh
     - Longer code fragments, URLs with query params, and multi-line examples should be fenced in codeblocks.
     - Bare inline code either spills (Obsidian syntax-highlighting with no closing HTML tag) or gets rendered as an embedded element hiding the source (with closing HTML tag).
 - Inline fence strings with certain special characters when the following Obsidian behaviors are not desired:
-        - `#audio-box`: tag "audio-box", displays as pill
-        - `[blah]` -> Markdown link label with no URL, syntax highlighted anyway
-        - `[[blah]]` -> Wikilink to note "blah.md"
+	- `#audio-box`: tag "audio-box", displays as pill
+	- `[blah]` -> Markdown link label with no URL, syntax highlighted anyway
+	- `[[blah]]` -> Wikilink to note "blah.md"
 - For test-running workflows (when to write tests, when the user runs them, what the Vitest unit suite covers) see `project-workflow-SKILL.md` (Onboard bundle) → "Build" / "Test" steps and "Post-patch verification", plus `playwright-testing-SKILL.md` (Test bundle) for snapshot strategy and the `tst` / `tsta` / CI environment matrix.
 
 ## Running LineByLine tests

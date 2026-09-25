@@ -152,6 +152,12 @@ export default [
       "sonarjs/super-linear-regex": "off",
       "sonarjs/empty-string-repetition": "off",
       "no-empty-pattern": "off", // ← NEW: Playwright fixture idiom
+      // waitForTimeout is intentional for clipboard-paste settling + undo
+      // debounce timing — see playwright-testing-SKILL.md "Common test patterns".
+      "sonarjs/no-fixed-wait-in-tests": "off",
+      // test.skip(webkit) in workaroundPaste is intentional — webkit clipboard
+      // is unreliable per playwright-testing-SKILL.md.
+      "sonarjs/no-skipped-tests": "off",
     },
   },
 
@@ -241,6 +247,18 @@ export default [
     rules: {
       ...sonarjs.configs.recommended.rules,
       "sonarjs/cognitive-complexity": "warn",
+      // Audio currentTime + volume comparisons need exact float equality —
+      // the values are deterministic in unit tests (no real audio element).
+      "sonarjs/no-floating-point-equality": "off",
+      // Parameterized tests are a style preference; the existing per-case
+      // tests are clearer for the LineByLine test suite's audience.
+      "sonarjs/parameterized-tests": "off",
+      // toBe vs toHaveLength is a style preference; leave as warning for
+      // Tranche 4.7 triage, not a blocking error.
+      "sonarjs/prefer-specific-assertions": "warn",
+      // void-use: the remaining instances are intentional (void el.play()
+      // suppresses floating-promise warnings). Tranche 4.7 will audit.
+      "sonarjs/void-use": "warn",
     },
   },
 ];

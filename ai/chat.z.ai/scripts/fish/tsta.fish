@@ -1,9 +1,5 @@
 function tsta --description 'Playwright UI mode against the Vite build'
-    if not test -f playwright.config.js
-        echo "tsta: not in a Playwright repo (no playwright.config.js in $PWD)"
-        echo "tsta: cd into your repo first, e.g. cd ~/GitHub/linebyline"
-        return 1
-    end
+    cd ~/GitHub/linebyline
 
     # vite preview requires dist/ — build if missing
     if not test -d dist

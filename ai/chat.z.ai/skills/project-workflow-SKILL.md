@@ -218,4 +218,3 @@ Cross-references
 - `Vibecoding workflow` (ai/chat.z.ai/Vibecoding-workflow.md) — the human-directed session flow with step diagrams; documents the known workflows (Building features, Improving AI scaffolding, Remediating latent Sonar issues, Improving Playwright tests, Researching and implementing high-level plans). The user may follow any of these, stitch them together, or invent custom ones.
 - `Repomix snippets` (ai/chat.z.ai/Repomix-snippets.md) — the Repomix commands and step-to-bundle mapping. Step headers there are intentionally not numbered to reflect that steps can be used in any order.
 - `Diagrammo flowcharts` (ai/chat.z.ai/Diagrammo-flowcharts.md) — syntax reference for reading `dgmo` codeblocks in the Vibecoding workflow
-</file>

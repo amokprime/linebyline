@@ -1,4 +1,4 @@
-const { test, expect, tabUntilFocused } = require("@linebyline/test-helpers");
+const { test, expect, tabUntilFocused, waitForImport } = require("@linebyline/test-helpers");
 
 test("tab-font", async ({ page }) => {
   await tabUntilFocused(page, "#font-select");
@@ -75,4 +75,18 @@ test("arrow-nav-settings", async ({ page }) => {
   await expect(firstCapture).not.toBeFocused();
   await page.keyboard.press("ArrowUp");
   await expect(firstCapture).toBeFocused();
+});
+// Tranche 4.5 — Ctrl+Shift+~ panel toggle. Covers MANUAL.md "Ctrl+Shift+~ toggle
+// panel collapses/expands the NOW PLAYING panel". The original Ctrl+` was
+// remapped because Chromium-based browsers intercept it before the page.
+test("toggle-panel-ctrl-shift-tilde", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
+  await expect(page.locator("#left-panel")).toBeVisible();
+  await page.keyboard.press("Control+Shift+~");
+  await expect(page.locator("#left-panel")).toHaveClass(/collapsed/);
+  await page.keyboard.press("Control+Shift+~");
+  await expect(page.locator("#left-panel")).not.toHaveClass(/collapsed/);
 });

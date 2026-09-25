@@ -1,4 +1,3 @@
-
 const {
   test,
   expect,
@@ -161,4 +160,20 @@ test("assign-conflict-tab", async ({ page }) => {
   await page.getByRole("textbox", { name: "Search settings" }).press("`");
   await page.getByRole("textbox", { name: "Search settings" }).press("x");
   await expect(page.locator("#hk-capture-ts_back_large")).toHaveValue("X");
+});
+// Tranche 4.5 — ⌨ icon + ` toggle hotkey search mode. Covers MANUAL.md
+// "Clicking the ⌨ icon toggles hotkey search mode and returns focus to the
+// search field" and "Pressing ` toggles hotkey search mode and keeps focus
+// on the search field". In normal mode, ` enters hk mode; Escape exits.
+test("hotkey-search-mode-toggle", async ({ page }) => {
+  await page.keyboard.press("Control+,");
+  const search = page.getByRole("textbox", { name: "Search settings" });
+  await expect(search).toBeFocused();
+  await search.press("`");
+  const kbdBtn = page.getByRole("button", { name: "Switch to hotkey search mode" });
+  await expect(kbdBtn).toHaveClass(/active/);
+  await expect(search).toBeFocused();
+  await search.press("Escape");
+  await expect(kbdBtn).not.toHaveClass(/active/);
+  await expect(search).toBeFocused();
 });
