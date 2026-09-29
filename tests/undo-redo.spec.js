@@ -138,3 +138,59 @@ test("merge", async ({ page, media, importSecondary }) => {
     "merge-after-textarea.txt",
   );
 });
+// Tranche 4.5 — undo debounce timing. Covers 4 MANUAL.md cases.
+test("typing-debounce-fast-inline", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").pressSequentially("abc");
+  await page.waitForTimeout(250);
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});
+
+test("typing-debounce-slow-inline", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  for (const ch of ["a", "b", "c"]) {
+    await page.keyboard.type(ch);
+    await page.waitForTimeout(200);
+  }
+  await page.waitForTimeout(250);
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META + "ab");
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META + "a");
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});
+
+test("typing-debounce-fast-newlines", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  await page.keyboard.type("a");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("b");
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("c");
+  await page.waitForTimeout(250);
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});
+
+test("typing-debounce-slow-newlines", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  await page.keyboard.type("a");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(200);
+  await page.keyboard.type("b");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(200);
+  await page.keyboard.type("c");
+  await page.waitForTimeout(250);
+  for (let i = 0; i < 4; i++) await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META + "a");
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});

@@ -1,0 +1,44 @@
+{
+  "key": "AaCEjWoPsgu35AS-jVFh",
+  "rule": "typescript:S6582",
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:src/composables/useTitle.ts",
+  "project": "amokprime_linebyline",
+  "line": 36,
+  "hash": "acb24ecbc96ccce79c9207d1df9af013",
+  "textRange": {
+    "startLine": 36,
+    "endLine": 36,
+    "startOffset": 4,
+    "endOffset": 19
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Prefer using an optional chain expression instead, as it's more concise and easier to read.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "editable-source",
+    "es2020",
+    "type-dependent"
+  ],
+  "creationDate": "2026-09-09T05:03:03+0000",
+  "updateDate": "2026-09-09T05:03:34+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "a34da5bc-9e5b-4d71-b875-b5d185d363e2",
+  "lastChangeSource": "ANALYSIS"
+}

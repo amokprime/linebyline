@@ -1,0 +1,44 @@
+{
+  "key": "AaCDPDhshoGEu_MZKhpr",
+  "rule": "typescript:S7784",
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:src/composables/useAppState.ts",
+  "project": "amokprime_linebyline",
+  "line": 60,
+  "hash": "eff41d65c8b66042cfe34da23d3036a2",
+  "textRange": {
+    "startLine": 60,
+    "endLine": 60,
+    "startOffset": 26,
+    "endOffset": 51
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Prefer `structuredClone(\u2026)` over `JSON.parse(JSON.stringify(\u2026))` to create a deep clone.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "es2022",
+    "modernize",
+    "performance"
+  ],
+  "creationDate": "2026-09-08T22:54:53+0000",
+  "updateDate": "2026-09-08T22:55:22+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "8103ecfb-29ea-4aae-af1e-c5c0bf0a1f70",
+  "lastChangeSource": "ANALYSIS"
+}
