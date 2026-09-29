@@ -1,6 +1,8 @@
 
 ## Fedora 44
 
+> **Sandbox note (Tranche 4.6, Sep 2026)**: this document describes the **user-side** Playwright workflow (SSH + Syncthing + Podman on the Server). The chat.z.ai web-channel sandbox CANNOT SSH and cannot invoke `tst`/`tst-locked`/`agent-tst`. For sandbox-side sample Playwright tests, see `AGENTS.md` → "Sample Playwright tests in sandbox" (uses the `playwright` package directly against `vite preview`). The `agent-tst` restricted-key path was a legacy OMP/ZCode artifact, dropped in Tranche 4.6.
+
 ### Headless — SSH + Syncthing workflow (primary)
 
 The primary test workflow offloads Playwright to a second machine (the Server)

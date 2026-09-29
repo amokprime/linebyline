@@ -1,6 +1,6 @@
 ### Architecture and workflows
 
-LineByLine is a no-dependencies 2.7k+ LOC .html file (with JavaScript and CSS all inside). See the [ai](https://github.com/amokprime/linebyline/tree/main/ai) folder README or specific subfolders to reproduce my workflows. `omp/` is the current one and still very WIP as it's the first CLI harness I've used. `chat.z.ai/` and `claude.ai/` are both web chat based.
+LineByLine is a no-dependencies 2.7k+ LOC .html file (with JavaScript and CSS all inside). See the [ai](https://github.com/amokprime/linebyline/tree/main/ai) folder README and the [skills/](https://github.com/amokprime/linebyline/tree/main/skills) folder for the chat.z.ai web-channel workflow. Legacy claude.ai / OMP / ZCode harness scaffolding has been dropped. If you use a local harness, you might need to fork the repo to migrate context files to the expected structure.
 
 #### CI
 
@@ -56,10 +56,10 @@ test("mytest", async ({ page, media, readMedia, importSecondary})) => {
 What they do:
 - `tabUntilFocused` holds `Tab` until a certain element is focused. It is only used in `keyboard-nav.spec.js` for now. It refers to elements either by their HTML fixed locator name or by a selector and index number for element names rebuilt dynamically when loaded (i.e. secondary fields, Settings window buttons).
 - These are only used in `sync-adjust.spec.js` for now:
-	- `waitForImport` waits for the main lyrics to load, the first line to become active (left blue border), and audio metadata to load
-	- `triggerTimeUpdate` forces the app to update the highlighted line and the time in the media box instead of waiting (which breaks in headless)
+        - `waitForImport` waits for the main lyrics to load, the first line to become active (left blue border), and audio metadata to load
+        - `triggerTimeUpdate` forces the app to update the highlighted line and the time in the media box instead of waiting (which breaks in headless)
 - `lyricLinesText` replaces flaky ARIA snapshots that broke in headless with a capture of the main lyrics as a single string of list items and newlines. This is used in `intervals.spec.js` and `sync-adjust.spec.js`.
 - These are used in multiple files:
-	- `media` imports audio and main field lyrics
-	- `readMedia` loads a .lrc file to the clipboard for paste tests
-	- `importSecondary` imports secondary field lyrics
+        - `media` imports audio and main field lyrics
+        - `readMedia` loads a .lrc file to the clipboard for paste tests
+        - `importSecondary` imports secondary field lyrics

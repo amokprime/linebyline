@@ -1,6 +1,8 @@
 
 # Playwright Test Failures — Phase E Tranche 4
 
+> **Sandbox note (Tranche 4.6, Sep 2026)**: this document tracks failures seen when the user runs `tst` (the user-side fish function that SSHes to the Server). The chat.z.ai sandbox cannot run `tst` — it runs sample Playwright tests via the `playwright` package directly (see `AGENTS.md` → "Sample Playwright tests in sandbox"). References to `tst` below are user-side.
+
 Live status of the Vite-target Playwright suite (`LBL_VITE_TARGET=1 tst`).
 Updated after each test run. The monolith-target suite (`tst` without the env
 var) should stay green throughout Phase E — failures here are Vite-target only.

@@ -9,9 +9,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -22,9 +19,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
@@ -39,9 +33,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -52,9 +43,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
@@ -69,9 +57,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -82,9 +67,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
@@ -99,9 +81,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -112,9 +91,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
@@ -129,9 +105,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -142,9 +115,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
@@ -159,9 +129,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -172,9 +139,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
@@ -189,9 +153,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -202,9 +163,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
@@ -219,9 +177,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -232,9 +187,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
@@ -249,9 +201,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -262,9 +211,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
@@ -279,9 +225,6 @@ start: "{{date}}"
 
 
 
-**Attachments:**
-
-
 ---
 ### Agent:
 
@@ -292,9 +235,6 @@ start: "{{date}}"
 
 #### User:
 
-
-
-**Attachments:**
 
 
 ---
