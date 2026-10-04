@@ -4,13 +4,23 @@
 # from a terminal (NOT double-clicked) so ssh + npm output is visible.
 #
 # Thin wrapper: extracts deliver.zip to scratch/, snapshots the zip contents
-# so deploy.sh can do scoped cleanup, runs deploy.sh, then removes deploy.sh
-# + deliver.zip + .deliver-files.list.
+# so deploy.sh can do scoped cleanup, runs deploy.sh inside a bwrap sandbox
+# for extra safety, then removes deploy.sh + deliver.zip + .deliver-files.list.
 #
 # The heavy lifting (deploy files, npm install, run tests, scoped cleanup)
 # lives in deploy.sh — keeps unpack.sh a thin wrapper that just handles
-# extraction + handoff. This mirrors the sonar-issue-exporter pattern
-# (see skills/delivery/scripts/ in that repo).
+# extraction + sandbox setup + handoff.
+#
+# bwrap sandbox (if available):
+#   --clearenv: clears all env vars, then re-adds only what deploy.sh needs
+#   Read-only overlays: .git/, archive/, unpack.sh itself (the bwrap filter)
+#   Blocked (tmpfs): trash/, playwright-report/, test-results/, blob-report/,
+#     .obsidian/, .stfolder/, .stversions/
+#   If bwrap isn't installed, deploy.sh runs directly with a warning.
+#
+# Tradeoff: unpack.sh is read-only inside the sandbox. Future edits to
+# unpack.sh must be deployed manually (copy the file, don't use dpl) — a
+# malicious deliver.zip can't modify the bwrap filter for future runs.
 #
 # Code quality per code-quality-SKILL.md → "Bash workflow scripts":
 #   - set -euo pipefail
@@ -18,10 +28,7 @@
 #   - LINEBYLINE_ROOT override (config over constants)
 #   - unzip -oqq — -o overwrites stale files from a failed previous run
 #   - EXIT trap cleans up deploy.sh + deliver.zip + .deliver-files.list on
-#     ALL exits (success, failure, signal). This prevents stale files from
-#     colliding with the next download (KDE file picker autonames to
-#     deliver(1).zip if a stale deliver.zip is still in scratch/).
-#   - Errors on stderr with explicit exit codes
+#     ALL exits (success, failure, signal).
 
 set -euo pipefail
 
@@ -32,16 +39,7 @@ DEPLOY_SH="$SCRATCH/deploy.sh"
 DELIVER_LIST="$SCRATCH/.deliver-files.list"
 
 # ── EXIT-trap cleanup ────────────────────────────────────────────────────────
-# Runs on ALL exits — success, set -e failure, INT/TERM signal. This ensures
-# deliver.zip + deploy.sh + .deliver-files.list are always removed, so the
-# next download doesn't collide with a stale deliver.zip (which KDE's file
-# picker would autoname deliver(1).zip, requiring manual rename before dpl).
-#
-# The previous design (trap on INT/TERM only, leaving files on set -e failure
-# "for debugging") caused the stale-file collision problem. Since deploy.sh
-# is regenerated each session and deliver.zip is re-downloaded from the chat,
-# there's no debugging value in leaving them behind — the user can always
-# re-download.
+# Runs on ALL exits — success, set -e failure, INT/TERM signal.
 cleanup() {
   rm -f -- "${DEPLOY_SH:?}" "${DELIVER_ZIP:?}" "${DELIVER_LIST:?}"
   echo "" >&2
@@ -64,18 +62,108 @@ cd "$SCRATCH"
 
 # Snapshot the zip's contents before extraction so deploy.sh can clean up
 # ONLY the files that came from the zip (plus deliver.zip and deploy.sh).
-# This protects pre-existing files in scratch/ (e.g. scratch.md notes,
-# prior session's upload zips) from being swept by the cleanup phase.
-# Writes one filename per line to .deliver-files.list (hidden dotfile so
-# it doesn't collide with any real deliverable).
 unzip -l "$DELIVER_ZIP" | awk 'NR>3 && $4 != "" {print $4}' > "$DELIVER_LIST"
 
 # Extract (-o overwrites stale files from a failed previous run; -qq = quiet).
 unzip -oqq "$DELIVER_ZIP"
 
-# Run deploy.sh (deploys files, runs npm install + npm run test:unit, then
-# cleans up only the zip-extracted files).
+# Run deploy.sh
 chmod +x "$DEPLOY_SH"
-./deploy.sh
+
+# ── bwrap sandbox ────────────────────────────────────────────────────────────
+# If bwrap is available, run deploy.sh inside a sandbox with:
+#   - Cleared env (only essential vars passed through)
+#   - Read-only system paths (/usr, /etc, /lib, /bin, /sbin, /run)
+#   - Read-write: /tmp, /dev, /proc, repo root ($DEST)
+#   - Read-only SSH keys (~/.ssh)
+#   - Read-only overlays on .git/, archive/, unpack.sh (the filter itself)
+#   - Blocked (tmpfs): trash/, playwright-report/, test-results/,
+#     blob-report/, .obsidian/, .stfolder/, .stversions/
+#
+# Warnings when a deploy runs into the filter:
+#   - Read-only paths: EROFS errors from deploy.sh commands naturally appear
+#     in deploy.log (deploy.sh tees output to $LOG).
+#   - Blocked (tmpfs) paths: writes silently go to tmpfs (discarded on exit).
+#     deploy.sh doesn't access these locally (only on the server via SSH).
+#
+# If bwrap is NOT available, run deploy.sh directly with a warning.
+if command -v bwrap >/dev/null 2>&1; then
+  # Build bwrap args array
+  bwrap_args=()
+
+  # ── Clear env, re-add essentials ─────────────────────────────────────────
+  bwrap_args+=(
+    --clearenv
+    --setenv HOME "$HOME"
+    --setenv USER "${USER:-$(whoami)}"
+    --setenv PATH "$PATH"
+    --setenv LINEBYLINE_ROOT "$DEST"
+  )
+
+  # Syncthing env vars (optional — deploy.sh uses them for pre-Playwright sync)
+  [[ -n "${SYNCTHING_API_KEY:-}" ]] && bwrap_args+=(--setenv SYNCTHING_API_KEY "$SYNCTHING_API_KEY")
+  [[ -n "${SYNCTHING_LBL_ID:-}" ]] && bwrap_args+=(--setenv SYNCTHING_LBL_ID "$SYNCTHING_LBL_ID")
+  [[ -n "${SYNCTHING_SERVER_ID:-}" ]] && bwrap_args+=(--setenv SYNCTHING_SERVER_ID "$SYNCTHING_SERVER_ID")
+
+  # Display/DBus for notify-send at the end of deploy.sh (optional)
+  [[ -n "${DISPLAY:-}" ]] && bwrap_args+=(--setenv DISPLAY "$DISPLAY")
+  [[ -n "${DBUS_SESSION_BUS_ADDRESS:-}" ]] && bwrap_args+=(--setenv DBUS_SESSION_BUS_ADDRESS "$DBUS_SESSION_BUS_ADDRESS")
+  [[ -n "${XDG_RUNTIME_DIR:-}" ]] && bwrap_args+=(--setenv XDG_RUNTIME_DIR "$XDG_RUNTIME_DIR")
+
+  # ── System paths (read-only) ────────────────────────────────────────────
+  # /usr contains binaries (npm, node, ssh, curl, jq) + libraries.
+  # /etc contains resolv.conf (DNS), ssh_config, npm config, etc.
+  bwrap_args+=(
+    --ro-bind /usr /usr
+    --ro-bind /etc /etc
+    --bind /tmp /tmp
+    --dev /dev
+    --proc /proc
+  )
+
+  # Distro-specific symlink paths (Fedora: /lib → /usr/lib, /bin → /usr/bin, etc.)
+  for p in /lib /lib64 /bin /sbin; do
+    [[ -e "$p" ]] && bwrap_args+=(--ro-bind "$p" "$p")
+  done
+
+  # /run for D-Bus socket, SSH agent socket (read-only — connectable but
+  # can't create/delete files in /run).
+  [[ -d /run ]] && bwrap_args+=(--ro-bind /run /run)
+
+  # ── SSH keys (read-only) ────────────────────────────────────────────────
+  [[ -d "$HOME/.ssh" ]] && bwrap_args+=(--ro-bind "$HOME/.ssh" "$HOME/.ssh")
+
+  # ── Repo root (read-write — deploy.sh deploys files here) ───────────────
+  bwrap_args+=(--bind "$DEST" "$DEST")
+
+  # ── Read-only overlays (must come AFTER --bind above to take effect) ────
+  # .git/ — git history shouldn't be modified by deploy
+  [[ -d "$DEST/.git" ]] && bwrap_args+=(--ro-bind "$DEST/.git" "$DEST/.git")
+  # archive/ — historical artifacts, read-only
+  [[ -d "$DEST/archive" ]] && bwrap_args+=(--ro-bind "$DEST/archive" "$DEST/archive")
+  # unpack.sh itself — the bwrap filter; must be deployed manually
+  [[ -f "$DEST/skills/delivery/scripts/unpack.sh" ]] && bwrap_args+=(--ro-bind "$DEST/skills/delivery/scripts/unpack.sh" "$DEST/skills/delivery/scripts/unpack.sh")
+
+  # ── Blocked paths (tmpfs — empty, writes discarded on exit) ─────────────
+  # These paths are NOT needed locally by deploy.sh:
+  #   trash/ — Playwright artifacts (accessed on server via SSH)
+  #   playwright-report/ — Playwright HTML report (server-side)
+  #   test-results/ — Playwright test results (server-side)
+  #   blob-report/ — Playwright blob report (server-side)
+  #   .obsidian/ — Obsidian config (not a deploy target)
+  #   .stfolder/ — Syncthing marker (not a deploy target)
+  #   .stversions/ — Syncthing versioning (not a deploy target)
+  for p in trash playwright-report test-results blob-report .obsidian .stfolder .stversions; do
+    bwrap_args+=(--tmpfs "$DEST/$p")
+  done
+
+  # ── Run deploy.sh inside the sandbox ─────────────────────────────────────
+  # shellcheck disable=SC2086
+  bwrap "${bwrap_args[@]}" -- "$DEPLOY_SH"
+else
+  echo "WARNING: bwrap not installed — running deploy.sh without sandbox." >&2
+  echo "WARNING: install bubblewrap (dnf install bubblewrap) for sandbox isolation." >&2
+  "$DEPLOY_SH"
+fi
 
 echo "Done."

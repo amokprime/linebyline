@@ -210,6 +210,86 @@ After setup, prove both properties before trusting it:
 
 ---
 
+## 5. Syncthing + Playwright artifacts (Sep 2026)
+
+The Server syncs the LineByLine repo via Syncthing. Playwright writes test
+artifacts (traces, screenshots, videos) into `trash/` and bundles them as
+zips inside `playwright-report/data/`. Both folders are gitignored but
+sync to the Server, where stale zips accumulate across `tst` runs.
+
+### What was broken
+
+A `*.zip` entry on the Server's `.stignore` was intended to skip the
+deliver.zip scratch file. It also matched every zip Playwright wrote
+into `playwright-report/data/` and `trash/`. When the PC deleted those
+subfolders (Playwright cleanup, or a manual `rm`), Syncthing's sync
+failed with:
+
+```
+playwright-report/data     syncing: delete dir: directory has been deleted
+                           on a remote device but is not empty; the contents
+                           are probably ignored on that remote device, but
+                           not locally
+trash/accessibility-axe-scan-landing-chromium
+                           (same)
+```
+
+**Quick fix (applied)**: removed the `*.zip` entry from the Server's
+`.stignore`. Zips now sync normally — cleanup on one device propagates
+to the other.
+
+### What NOT to ignore on the server
+
+- **Do NOT use `*.zip` as a top-level `.stignore` pattern.** It's too
+  broad — it matches legitimate artifacts (Playwright trace zips,
+  snapshot attachment zips) inside gitignored folders, not just the
+  scratch `deliver.zip`. When one device deletes those subfolders and
+  the other has the contents locally-ignored, Syncthing's directory
+  delete can't complete and the folder lingers in a "syncing: delete
+  dir" state.
+- **Do NOT ignore `trash/` or `playwright-report/` either.** Both
+  folders ARE gitignored, but they should still sync so cleanup on
+  one device propagates to the other. Ignoring them on the server
+  means the server keeps stale artifacts forever — exactly the disk
+  bloat this section is meant to prevent.
+- **DO ignore build artifacts the server doesn't need**: `node_modules`
+  and `dist` rebuild natively on each host (the server's `tst` runs
+  `vite build` inside Podman). Putting these in `.stignore` skips
+  pointless multi-GB sync churn without breaking Playwright cleanup.
+
+### Final disposition (Sep 2026, Tranche 4.7)
+
+Three layers cooperate to keep `trash/` and `playwright-report/`
+small:
+
+1. **`playwright.config.js`** — `trace: "retain-on-failure"` +
+   `screenshot: "only-on-failure"`. Passing tests' artifacts are
+   discarded after the run; only failures persist. `video` is left
+   at the default (`"off"`) — recording video for every test (the
+   `retain-on-failure` setting) was tried and caused 30s timeouts on
+   firefox/webkit from the real-time WebM encoding overhead. Traces +
+   screenshots give sufficient debugging context without the per-test
+   cost. Caps per-run growth at the failure count (~5-15) instead of
+   the full suite (~540).
+2. **`deploy.sh`** — after every Playwright run, prunes files older
+   than 1 day from `trash/` and `playwright-report/` on the **Server**
+   (via SSH), not on the PC. Pruning on the PC was useless (artifacts
+   hadn't synced yet from the server) and could race with Syncthing's
+   sync, leaving the PC's `trash/` empty when the user checked it.
+   Pruning on the server (where artifacts are written) avoids the
+   race — Syncthing syncs the deletion to the PC naturally. The
+   1-day window preserves the most recent run's artifacts for review.
+3. **`.stignore`** — `*.zip` entry removed; `node_modules` and `dist`
+   stay ignored (build artifacts that rebuild natively per host).
+   `trash/` and `playwright-report/` are NOT ignored — they sync so
+   cleanup on one device propagates to the other.
+
+If a longer retention is needed for debugging, raise the `-mtime`
+value in `deploy.sh`'s SSH prune call or comment out the prune block
+temporarily.
+
+---
+
 ## Concrete deployment: LineByLine / OMP agent (worked example)
 
 This is the real instance of the pattern above. It uses **three scripts across two

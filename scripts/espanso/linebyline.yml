@@ -23,9 +23,8 @@ matches:
 # This could be a build turn with test verification, or a test-writing turn grounded in app code. Either way, code changes happen. LIMITATIONS moved here since app code changes are the direct cause of limitation uplift or regression. AGENTS is silently re-read.
   - trigger: ":code"
     replace: |
-      Read these from the `linebyline/` repo folder.
+      Read these from the `linebyline/` repo folder:
       ```
-      AGENTS.md
       LIMITATIONS.md
       docs/index.html
       Everything in src/
@@ -42,7 +41,6 @@ matches:
       Read these from the `linebyline/` repo folder (Skills meta-session — work on agent scaffolding):
       ```
       CONTRIBUTING.md
-      AGENTS.md
       MEMORY.md
       Everything in skills/ except skills/{linebyline,skill,delivery}/SKILL.md (auto-loaded via .setup-sandbox.sh)
       Everything in scripts/

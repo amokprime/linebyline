@@ -13,13 +13,15 @@
 #      warn about overlong bullets — see lint_markdown.py for details)
 #   2. Verify every file listed in deploy.sh's deploy_file calls exists
 #      in download/ (catches forgotten deliverables BEFORE zipping)
-#   3. Run ESLint + Vitest in the sandbox (if src/ or tests/ files are present)
-#      to catch code quality + unit test failures BEFORE zipping
+#   3. Run the shared lint gate (lint_gate.sh: Shellcheck + Ruff + ESLint)
+#      on the deliverables in download/ AND on the sandbox project tree
+#      (if node_modules is installed) — catches code quality failures
+#      BEFORE zipping.
 #   4. Zip everything into deliver.zip + clean up loose files
 #
-# The linter + expected-files check + ESLint/Vitest are JIT reminders: if
-# you forgot to copy a file, wrote bare #tokens in MEMORY.md, introduced an
-# ESLint violation, or broke a unit test, this script fails before the zip
+# The linter + expected-files check + lint gate are JIT reminders: if
+# you forgot to copy a file, wrote bare #tokens in MEMORY.md, introduced a
+# lint violation, or broke a unit test, this script fails before the zip
 # is created. Fix the issues, then re-run.
 
 set -euo pipefail
@@ -89,55 +91,33 @@ fi
 
 echo "  ${#expected_files[@]} expected files found in download/ — all present."
 
-# ── Step 3: Run lint gate on deliverables (Shellcheck + Ruff + ESLint) ───────
-# The gate checks *.sh + *.py files in download/ (the deliverables) + ESLint
-# on the sandbox project tree's src/ if available. Blocking: if any installed
-# linter finds issues after autofix, the script aborts before zipping.
+# ── Step 3: Run lint gate on deliverables in download/ ──────────────────────
+# The gate runs Shellcheck on *.sh deliverables + Ruff on *.py deliverables.
+# ESLint is auto-skipped (download/ has no eslint.config.mjs — deliverables
+# are flat files, not a project tree). This is the consolidated gate call
+# that replaces the previous inline shellcheck+ruff loop. The gate is
+# blocking: if any installed linter finds issues after autofix, the script
+# aborts before zipping.
 echo ""
 if type run_lint_gate >/dev/null 2>&1; then
-  # Lint the deliverables in download/ (for .sh and .py files there)
-  # The sandbox project tree is linted separately below for ESLint + Vitest.
-  # For download/ deliverables, run shellcheck + ruff only (no ESLint scope).
   echo "=== Running lint gate on deliverables in download/ ==="
-  # Run shellcheck on *.sh deliverables in download/
-  if command -v shellcheck >/dev/null 2>&1; then
-    sh_failed=0
-    while IFS= read -r f; do
-      if ! shellcheck -x "$f" 2>&1; then
-        echo "  FAIL: $f" >&2
-        sh_failed=1
-      fi
-    done < <(find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.sh' -type f | sort)
-    if [[ "$sh_failed" -ne 0 ]]; then
-      echo "ERROR: Shellcheck gate failed on deliverables — fix before zipping." >&2
-      exit 1
-    fi
-    echo "  Shellcheck clean (deliverables)."
-  else
-    echo "  (skipped: shellcheck not installed in sandbox)"
-  fi
-  # Run ruff on *.py deliverables in download/
-  if command -v ruff >/dev/null 2>&1; then
-    py_files=()
-    while IFS= read -r f; do
-      py_files+=("$f")
-    done < <(find "$DOWNLOAD_DIR" -maxdepth 1 -name '*.py' -type f | sort)
-    if [[ ${#py_files[@]} -gt 0 ]]; then
-      ruff check --fix "${py_files[@]}" 2>&1 || true
-      if ! ruff check "${py_files[@]}" 2>&1; then
-        echo "ERROR: Ruff gate failed on deliverables — fix before zipping." >&2
-        exit 1
-      fi
-      echo "  Ruff clean (${#py_files[@]} deliverables)."
-    fi
+  if ! run_lint_gate "$DOWNLOAD_DIR"; then
+    echo "ERROR: Lint gate failed on deliverables — fix before zipping." >&2
+    exit 1
   fi
 else
   echo "  (skipped: lint_gate.sh not sourced — run_lint_gate unavailable)"
+  echo "  This means lint_gate.sh is missing from skills/delivery/scripts/."
+  echo "  Shellcheck + Ruff checks on deliverables were NOT run."
 fi
 
-# ── Step 4: Run ESLint + vue-tsc + Vitest in sandbox (if project tree exists) ─
+# ── Step 4: Run lint gate + vue-tsc + Vitest in sandbox (if project tree exists) ─
+# The sandbox project tree (with node_modules) lets us run ESLint + vue-tsc +
+# Vitest against the patched src/ + tests/ files before zipping. This is the
+# same gate deploy.sh runs on the user's machine — catching failures here
+# means the user doesn't have to ship a broken deliver.zip back.
 echo ""
-echo "=== Running ESLint + vue-tsc + Vitest in sandbox ==="
+echo "=== Running lint gate + vue-tsc + Vitest in sandbox ==="
 
 # Check if the sandbox project tree exists (with package.json + node_modules)
 if [[ ! -d "$SANDBOX_DIR" ]] || [[ ! -f "$SANDBOX_DIR/package.json" ]]; then
@@ -159,19 +139,24 @@ else
     fi
   done < <(awk '$1 == "deploy_file" {print $2, $3}' "$DOWNLOAD_DIR/deploy.sh" | tr -d "\"'")
 
+  # Run the shared lint gate (Shellcheck + Ruff + ESLint) on the sandbox
+  # project tree. This replaces the previous inline ESLint call — the gate
+  # function already does autofix + gate, and shellcheck/ruff will no-op
+  # if no .sh/.py files are present in the sandbox project root.
   echo ""
-  echo "  Running ESLint (autofix + gate)..."
-  cd "$SANDBOX_DIR"
-  ./node_modules/.bin/eslint src/ --fix || true
-  if ! ./node_modules/.bin/eslint src/; then
-    echo "" >&2
-    echo "ERROR: ESLint gate failed — fix the violations above before zipping." >&2
-    exit 1
+  if type run_lint_gate >/dev/null 2>&1; then
+    if ! run_lint_gate "$SANDBOX_DIR" "src/"; then
+      echo "" >&2
+      echo "ERROR: Lint gate failed in sandbox — fix the violations above before zipping." >&2
+      exit 1
+    fi
+  else
+    echo "  (skipped: run_lint_gate not available — lint_gate.sh not sourced)" >&2
   fi
-  echo "  ESLint gate passed."
 
   echo ""
   echo "  Running vue-tsc type check..."
+  cd "$SANDBOX_DIR"
   if ! ./node_modules/.bin/vue-tsc -b 2>&1; then
     echo "" >&2
     echo "ERROR: vue-tsc type check failed — fix the type errors above before zipping." >&2

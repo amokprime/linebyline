@@ -166,11 +166,15 @@ test("typing-debounce-slow-inline", async ({ page }) => {
 test("typing-debounce-fast-newlines", async ({ page }) => {
   await page.keyboard.press("Backquote");
   await page.locator("#main-textarea").click();
-  await page.keyboard.type("a");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("b");
-  await page.keyboard.press("Enter");
-  await page.keyboard.type("c");
+  // Use pressSequentially for the whole sequence — separate keyboard.type/
+  // keyboard.press API calls are slow on webkit in Podman (each call takes
+  // >100ms to dispatch), and the gap between calls exceeds the 150ms debounce
+  // timer, causing a snapshot to fire mid-sequence. pressSequentially
+  // dispatches all characters in one API call with minimal inter-character
+  // delay, keeping the gap well under 150ms. \n is dispatched as Enter
+  // (e.key === "Enter"), so handleEnterTrim fires normally.
+  // Same root cause as intervals.spec.js:typing-debounce-1 (MEMORY.md → Sep 2026).
+  await page.locator("#main-textarea").pressSequentially("a\nb\nc");
   await page.waitForTimeout(250);
   await page.keyboard.press("Control+z");
   await expect(page.locator("#main-textarea")).toHaveValue(META);
