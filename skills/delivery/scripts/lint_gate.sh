@@ -5,10 +5,9 @@
 # (user-side, after deploying files). Runs every linter that's installed;
 # fails (exit 1) if any linter finds issues after autofix.
 #
-# Usage (source this file, then call run_lint_gate <target_dir>):
-#   LINT_GATE_LOG=/dev/stdout  # or a log file path
+# Usage (source this file, then call run_lint_gate):
 #   . /path/to/lint_gate.sh
-#   run_lint_gate "$TARGET_DIR"
+#   run_lint_gate "$TARGET_DIR" "src/" "${changed_files[@]}"
 #
 # Linters run (in order):
 #   1. Shellcheck — *.sh files (no autofix; blocking on findings)
@@ -21,10 +20,7 @@
 #
 # Also defines check_sonar_exclusions() — a non-blocking JIT reminder that
 # warns when deploy_file rel-paths are not covered by sonarcloud.yml's
-# Dsonar.exclusions or Dsonar.coverage.exclusions. Called by deploy.sh
-# after the lint gate. Reading the existing exclusion list lets the agent
-# ship a one-line sonarcloud.yml edit in the SAME deliver.zip as the new
-# file, instead of a separate follow-up commit.
+# Dsonar.exclusions or Dsonar.coverage.exclusions.
 
 set -euo pipefail
 
@@ -44,6 +40,7 @@ run_lint_gate() {
   local changed_files=("$@")
   local lint_failed=0
 
+  echo "=== Lint gate (Shellcheck + Ruff + ESLint) ==="
   echo "Target: $target_dir"
   if [[ ${#changed_files[@]} -gt 0 ]]; then
     echo "Mode: changed-files-only (${#changed_files[@]} file(s))"
@@ -166,13 +163,12 @@ run_lint_gate() {
     if [[ "$has_src_changes" -eq 0 ]]; then
       echo "  (no $eslint_scope files changed this deploy — skipping ESLint)"
       # Jump to summary
+      echo ""
       if [[ "$lint_failed" -ne 0 ]]; then
-        echo "" >&2
         echo "=== Lint gate: FAILED ===" >&2
         echo "Fix the issues above, then re-run." >&2
         return 1
       else
-        echo ""
         echo "=== Lint gate: PASSED ==="
       fi
       return 0
@@ -217,14 +213,8 @@ run_lint_gate() {
 #   covered by either Dsonar.exclusions or Dsonar.coverage.exclusions in
 #   <repo_root>/.github/workflows/sonarcloud.yml.
 #
-#   Why: if the agent ships a new file at a path SonarCloud would scan but
-#   isn't excluded, the next push trips the gate and the user has to ship
-#   a separate one-line sonarcloud.yml edit. Catching this at deploy time
-#   surfaces the gap in deploy.log so the next turn's agent can ship the
-#   sonarcloud.yml edit alongside the new file.
-#
 #   Non-blocking: returns 0 even if uncovered paths are found (warning only).
-#   Skips silently if sonarcloud.yml is missing (e.g. fresh repo checkout).
+#   Skips silently if sonarcloud.yml is missing.
 check_sonar_exclusions() {
   local deploy_sh="$1"
   local repo_root="$2"
@@ -234,21 +224,10 @@ check_sonar_exclusions() {
     return 0
   fi
   if [[ ! -f "$sonar_yml" ]]; then
-    echo "  (skipped: $sonar_yml not found — sonar exclusion coverage check needs the workflow file)"
+    echo "  (skipped: $sonar_yml not found)"
     return 0
   fi
 
-  # Extract the value after `Dsonar.exclusions=` (or coverage variant).
-  # The line in sonarcloud.yml looks like:
-  #   -Dsonar.exclusions=archive/**,tests/**,playwright.config.js
-  #   -Dsonar.coverage.exclusions=src/**,vite.config.mts,scripts/**,skills/**
-  # Both lists are comma-separated globs. Combine them — coverage exclusions
-  # also exempt the path from the quality gate's "new code" coverage check,
-  # which is the practical "doesn't trip the gate" guarantee the agent wants.
-  # We rely on `IFS= read -r` to deliver the line verbatim (no field
-  # splitting, no escape eating); the YAML folded-scalar style in
-  # sonarcloud.yml puts each `-Dsonar.*=` on its own line with no trailing
-  # quotes or whitespace, so no post-trim is needed.
   local exclusions=""
   local coverage_exclusions=""
   while IFS= read -r line; do
@@ -264,23 +243,13 @@ check_sonar_exclusions() {
 
   local all_excludes="${exclusions},${coverage_exclusions}"
   if [[ -z "$exclusions" && -z "$coverage_exclusions" ]]; then
-    echo "  (skipped: no Dsonar.exclusions or Dsonar.coverage.exclusions found in $sonar_yml)"
+    echo "  (skipped: no Dsonar.exclusions found in $sonar_yml)"
     return 0
   fi
 
-  # Build the array of exclusion patterns (comma-separated → array).
   local patterns=()
   IFS=',' read -r -a patterns <<< "$all_excludes"
 
-  # For each deploy_file rel-path, check if it matches any exclusion pattern.
-  # We handle two pattern shapes:
-  #   1. Exact path (e.g. `playwright.config.js`) — direct string equality.
-  #   2. `dir/**` glob — strip the trailing `/**`, then check if the rel-path
-  #      starts with `<dir>/`. This catches multi-segment paths like
-  #      `archive/semantic/0.37.2/issues.md` against `archive/**`.
-  # We deliberately do NOT use `[[ $rel == $pat ]]` for the `dir/**` case:
-  # without `shopt -s globstar`, `*` and `**` in `[[ ]]` do NOT match `/`,
-  # so `src/**` would fail to match `src/composables/useAudio.ts`.
   local uncovered=()
   local rel
   while IFS= read -r rel; do
@@ -288,12 +257,10 @@ check_sonar_exclusions() {
     local matched=0
     for pat in "${patterns[@]}"; do
       [[ -z "$pat" ]] && continue
-      # Shape 1: exact path match.
       if [[ "$rel" == "$pat" ]]; then
         matched=1
         break
       fi
-      # Shape 2: dir/** prefix match.
       if [[ "${pat: -3}" == "/**" ]]; then
         local prefix="${pat:0:-3}"
         if [[ "$rel" == "$prefix"/* ]]; then
@@ -309,18 +276,14 @@ check_sonar_exclusions() {
 
   if [[ ${#uncovered[@]} -gt 0 ]]; then
     echo "  SonarCloud exclusion coverage warning:"
-    echo "    The following deploy_file rel-paths are NOT covered by either"
-    echo "    Dsonar.exclusions or Dsonar.coverage.exclusions in"
-    echo "    .github/workflows/sonarcloud.yml:"
+    echo "    The following deploy_file rel-paths are NOT covered:"
     for f in "${uncovered[@]}"; do
       echo "      $f"
     done
     echo ""
-    echo "    If any of these are non-source files (docs, configs, scripts) that"
-    echo "    SonarCloud would otherwise scan, add them to the appropriate"
-    echo "    exclusion list — saves a separate commit for a one-line edit."
-    echo "    Source files in src/ are EXPECTED to be uncovered (issue analysis"
-    echo "    runs on src/ even though coverage is excluded)."
+    echo "    If any of these are non-source files, add them to the appropriate"
+    echo "    exclusion list in sonarcloud.yml — saves a separate commit."
+    echo "    Source files in src/ are EXPECTED to be uncovered."
     echo ""
     echo "    (Non-blocking warning — the gate still proceeds.)"
   else

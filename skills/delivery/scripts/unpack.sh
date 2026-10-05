@@ -37,6 +37,7 @@ SCRATCH="$DEST/scratch"
 DELIVER_ZIP="$SCRATCH/deliver.zip"
 DEPLOY_SH="$SCRATCH/deploy.sh"
 DELIVER_LIST="$SCRATCH/.deliver-files.list"
+TST="$DEST/scripts/tst"
 
 # ── EXIT-trap cleanup ────────────────────────────────────────────────────────
 # Runs on ALL exits — success, set -e failure, INT/TERM signal.
@@ -69,6 +70,7 @@ unzip -oqq "$DELIVER_ZIP"
 
 # Run deploy.sh
 chmod +x "$DEPLOY_SH"
+chmod +x "$TST"
 
 # ── bwrap sandbox ────────────────────────────────────────────────────────────
 # If bwrap is available, run deploy.sh inside a sandbox with:
@@ -98,6 +100,12 @@ if command -v bwrap >/dev/null 2>&1; then
     --setenv USER "${USER:-$(whoami)}"
     --setenv PATH "$PATH"
     --setenv LINEBYLINE_ROOT "$DEST"
+    # SSH: use ~/.ssh/config only, skip /etc/ssh/ssh_config.d/ (the system
+    # config files have ownership issues inside bwrap's user namespace —
+    # "Bad owner or permissions on /etc/ssh/ssh_config.d/...". The user's
+    # ~/.ssh/config has the Server Host block, which is all deploy.sh needs.)
+    --setenv GIT_SSH_COMMAND "ssh -F $HOME/.ssh/config"
+    --setenv SSH_AUTH_SOCK "${SSH_AUTH_SOCK:-}"
   )
 
   # Syncthing env vars (optional — deploy.sh uses them for pre-Playwright sync)
@@ -143,6 +151,9 @@ if command -v bwrap >/dev/null 2>&1; then
   [[ -d "$DEST/archive" ]] && bwrap_args+=(--ro-bind "$DEST/archive" "$DEST/archive")
   # unpack.sh itself — the bwrap filter; must be deployed manually
   [[ -f "$DEST/skills/delivery/scripts/unpack.sh" ]] && bwrap_args+=(--ro-bind "$DEST/skills/delivery/scripts/unpack.sh" "$DEST/skills/delivery/scripts/unpack.sh")
+  # scripts/tst — the canonical server tst script; deployed manually (symlinked
+  # to ~/.local/bin/tst). Read-only so a malicious deliver.zip can't modify it.
+  [[ -f "$DEST/scripts/tst" ]] && bwrap_args+=(--ro-bind "$DEST/scripts/tst" "$DEST/scripts/tst")
 
   # ── Blocked paths (tmpfs — empty, writes discarded on exit) ─────────────
   # These paths are NOT needed locally by deploy.sh:
