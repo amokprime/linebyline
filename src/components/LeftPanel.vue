@@ -243,7 +243,7 @@ onBeforeUnmount(() => {
         <button
           id="btn-play-pause"
           class="media-btn"
-          :title="playing ? 'Pause (Ctrl+Space)' : 'Play (Ctrl+Space)'"
+          :title="playing ? 'Pause (Shift+Space)' : 'Play (Shift+Space)'"
           :aria-label="playing ? 'Pause' : 'Play'"
           @click="togglePlay"
           @mousedown.prevent

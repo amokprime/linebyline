@@ -216,15 +216,22 @@ export function onVolWheel(e: WheelEvent) {
 // _applySeekForPlay — ported verbatim. Decides whether to apply the seek
 // offset when pressing play on a line. Uses cfg.replay_resume_current /
 // replay_play_other. Calls getSeekOffset() which reads the #seek-offset input.
+// Phase E Tranche 4.5: Space (togglePlay) ALWAYS seeks to the focused line's
+// timestamp when the line has one -- even when isCurrentLine is true. This
+// makes Space "follow timestamps" on unpause, distinct from Shift+Space
+// (togglePlayFromSlider) which plays from the audio's current position.
 function _applySeekForPlay(lineMs: number | null, isCurrentLine: boolean) {
   const el = audioEl.value
   if (!el) return
   const cfg = useAppState().cfg.value
+  if (lineMs === null) return
   if (isCurrentLine) {
-    if (cfg.replay_resume_current && lineMs !== null) {
+    if (cfg.replay_resume_current) {
       el.currentTime = Math.max(0, (lineMs + getSeekOffset()) / 1000)
+    } else {
+      el.currentTime = lineMs / 1000
     }
-  } else if (lineMs !== null) {
+  } else {
     el.currentTime = cfg.replay_play_other ? Math.max(0, (lineMs + getSeekOffset()) / 1000) : lineMs / 1000
   }
 }
@@ -258,6 +265,48 @@ export function togglePlay() {
   if (!didOffsetSeek || getSeekOffset() === 0) {
     useAppState().playingLine.value = activeLine.value
   }
+  _callbacks.renderMainLines()
+}
+
+// Pause if currently playing; returns true if a pause actually happened.
+// Called by nav handlers to freeze the highlighter during playback — Phase
+// E Tranche 4.5 latent-issue fix per ROADMAP.md.
+export function pauseIfPlaying(): boolean {
+  const el = audioEl.value
+  const { playing } = useAppState()
+  if (!playing.value) return false
+  if (el) el.pause()
+  playing.value = false
+  return true
+}
+
+// Play/pause from current audioEl.currentTime (no seek to activeLine's
+// ts). Bound to Ctrl+Space — Phase E Tranche 4.5 latent-issue fix.
+export function togglePlayFromSlider() {
+  const el = audioEl.value
+  if (!el) return
+  const { playing, activeLine } = useAppState()
+  if (playing.value) {
+    el.pause()
+    playing.value = false
+    return
+  }
+  // No seek — play from current audioEl.currentTime (distinguishing behavior
+  // vs togglePlay, which seeks to activeLine's ts).
+  try {
+    el.volume = masterVolume.value
+    el.muted = masterVolume.value === 0
+  } catch (e) {
+    console.warn('audioEl.volume read-only in this context:', e)
+  }
+  el.play()
+  playing.value = true
+  // lastPlayingLine follows activeLine so a subsequent Space at the same
+  // line resumes from current audio position (togglePlay isCurrentLine path).
+  lastPlayingLine.value = activeLine.value
+  // Sync playingLine to the audio's actual position (may differ from
+  // activeLine if the slider was dragged). Also runs cursor-follows logic.
+  _callbacks.updateActiveLineFromTime(el.currentTime * 1000)
   _callbacks.renderMainLines()
 }
 
@@ -489,6 +538,8 @@ export function useAudio() {
     playing: useAppState().playing,
     // Actions
     togglePlay,
+    togglePlayFromSlider,
+    pauseIfPlaying,
     toggleMute,
     onVolInput,
     onVolWheel,

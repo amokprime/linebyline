@@ -5,6 +5,12 @@ test("title", async ({ page }) => {
   await expect(page).toHaveTitle(/LineByLine/);
 });
 
+// Phase E Tranche 4.5 (ROADMAP.md) — pins the version-in-title contract; the Vue port
+// regressed this (had <title>LineByLine</title> with no version).
+test("title has app version", async ({ page }) => {
+  await expect(page).toHaveTitle(/^LineByLine \d+\.\d+\.\d+$/);
+});
+
 test("favicon", async ({ page }) => {
   const href = await page.locator('link[rel="icon"]').getAttribute("href");
   expect(href).toContain("image/svg+xml");

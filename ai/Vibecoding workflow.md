@@ -65,7 +65,7 @@ direction-lr
 Same loop, but Test leads and Review follows — the agent writes tests first, then reviews the test code + any app-code patches for quality.
 
 ### Researching and implementing high-level plans
-Example of a high-level plan: [[archive/modular/plan/0-Roadmap|0-Roadmap]]. The exact content of steps varies; what is likely regardless:
+Example of a high-level plan: [[ROADMAP]]. The exact content of steps varies; what is likely regardless:
 - Proposals start out with half-baked criteria and become more refined in follow-up turns or even sessions
 - Investigations need web searches to rule out alternatives or explore overlooked options, and manual follow-ups for taste or to access material behind login portals
 - One idea often leads to another within the same session — this produces large buckets of proposed items for the agent to triage later

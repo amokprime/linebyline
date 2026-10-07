@@ -56,3 +56,4 @@ my-systemdcoredum.*
 # Vite (roadmap item 3)
 dist/
 *.local
+.lint-deps/

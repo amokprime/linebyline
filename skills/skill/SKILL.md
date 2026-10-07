@@ -37,7 +37,7 @@ Consolidation direction
 When the same piece of information appears in multiple agent-facing files, consolidate upstream so each unique piece of info has exactly one canonical home. The consolidation direction, in priority order (highest = most authoritative, lowest = most specific):
 
 1. Skill file (`skills/*-SKILL.md`) — general patterns, bug classes, rule rationales, procedural workflows, reference tables. The most reusable layer; skills are read by name when their `description` matches the current task.
-2. Roadmap file (`archive/modular/plan/0-Roadmap.md`) — large, structured, app-specific but non-event-driven content: the modular refactor plan, Phase A–E tranche implementation notes, port deltas per tranche, file lists per tranche. A roadmap section is the canonical home when content is too large for MEMORY.md and too app-specific for a skill.
+2. Roadmap file (`ROADMAP.md`) — large, structured, app-specific but non-event-driven content: the modular refactor plan, Phase A–E tranche implementation notes, port deltas per tranche, file lists per tranche. A roadmap section is the canonical home when content is too large for MEMORY.md and too app-specific for a skill.
 3. `AGENTS.md` — cross-cutting project context needed at Onboard before any skill is read: project structure, harness sandbox limits, the consolidation direction itself. When a topic is covered by a skill, AGENTS.md points to it rather than restating the rule.
 4. `MEMORY.md` — app-specific events, per-version dispositions, invariants tied to specific versions, CI/repo automation history. The most specific layer; entries here point to skills/roadmap for the general rule and record only the instance.
 
@@ -48,7 +48,7 @@ When to consolidate proactively: any meta-session involving agent scaffolding (a
 Concrete examples from the Sep 2026 consolidation sessions:
 
 - SonarQube rule rationales (S2083 taint analysis, S6819 ARIA exceptions, S7927 icon-only-button false positives, etc.) — duplicated across MEMORY.md and sonarqube-workflow-SKILL.md → consolidated into the skill; MEMORY.md keeps per-version Accept/Won't-Fix decisions only.
-- Phase D tranche implementation notes (port deltas, test quirks, file lists per tranche) — duplicated across MEMORY.md and 0-Roadmap.md → consolidated into the roadmap; MEMORY.md's "Architectural decisions" section is now a 3-paragraph pointer. The roadmap's "Tranche N implementation notes" subsections are the single source of truth.
+- Phase D tranche implementation notes (port deltas, test quirks, file lists per tranche) — duplicated across MEMORY.md and ROADMAP.md → consolidated into the roadmap; MEMORY.md's "Architectural decisions" section is now a 3-paragraph pointer. The roadmap's "Tranche N implementation notes" subsections are the single source of truth.
 - Bash workflow script patterns (strict mode, ${var:?} guards, scoped cleanup, no line continuations in quoted strings) — duplicated across MEMORY.md and code-quality-SKILL.md → consolidated into the skill's "Bash workflow scripts" section.
 - Cross-bundle pointers — when a skill references a file in a different bundle (e.g. sonarqube-workflow-SKILL.md → linebyline-SKILL.md), annotate the pointer with the bundle name so a fresh chat session knows whether it can read the target immediately or must wait for that step's bundle upload.
 
@@ -81,7 +81,7 @@ Writing style
 Explain the why. Don't rely on MUST and NEVER — explain the reasoning so the model understands why something matters and can adapt to situations the skill doesn't explicitly cover.
 
 Weak: "NEVER convert a for loop to for-of if the index is used."
-Strong: "Convert only when the loop index is not used for accumulation via index, output assignment keyed to index, indexed mutation of a parallel array, or any expression involving i other than arr[i]. When in doubt, skip and document as Won't Fix — a broken for-of conversion is worse than a SonarQube warning."
+Strong: "Convert only when the loop index is not used for accumulation via index, output assignment keyed to index, indexed mutation of a parallel array, or any expression involving i other than arr`[i]`. When in doubt, skip and document as Won't Fix — a broken for-of conversion is worse than a SonarQube warning."
 
 Generalize, don't overfit. Skills should capture patterns that apply across many invocations. If you're writing instructions that only make sense for one particular function, step back and find the general principle.
 

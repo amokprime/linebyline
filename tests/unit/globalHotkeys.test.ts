@@ -31,6 +31,8 @@ let _lastHandler: ((e: KeyboardEvent) => void) | null = null
 // the dispatch happens, not that the action itself runs correctly.
 const mocks = {
   togglePlay: vi.fn(),
+  togglePlayFromSlider: vi.fn(),
+  pauseIfPlaying: vi.fn(() => false),
   doSeekBack: vi.fn(),
   doSeekFwd: vi.fn(),
   toggleMute: vi.fn(),
@@ -57,6 +59,8 @@ const mocks = {
 
 vi.mock('@/composables/useAudio', () => ({
   togglePlay: mocks.togglePlay,
+  togglePlayFromSlider: mocks.togglePlayFromSlider,
+  pauseIfPlaying: mocks.pauseIfPlaying,
   doSeekBack: mocks.doSeekBack,
   doSeekFwd: mocks.doSeekFwd,
   toggleMute: mocks.toggleMute,
@@ -72,6 +76,8 @@ vi.mock('@/composables/useAudio', () => ({
     ariaValueText: { value: '0:00 of 0:00' },
     playing: { value: false },
     togglePlay: mocks.togglePlay,
+    togglePlayFromSlider: mocks.togglePlayFromSlider,
+    pauseIfPlaying: mocks.pauseIfPlaying,
     toggleMute: mocks.toggleMute,
     onVolInput: vi.fn(),
     onVolWheel: vi.fn(),

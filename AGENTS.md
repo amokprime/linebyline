@@ -25,7 +25,7 @@ What would normally live here, and where it actually lives:
 - `docs/` — `index.html` single-file LineByLine app code (the live monolith, pre-modular-refactor). This folder is also the GitHub Pages source until the Phase E cutover switches to `dist/`.
 - `skills/` — Project skills (auto-load via `scripts/.setup-sandbox.sh`). Each skill lives at `skills/<name>/SKILL.md` with optional co-located `scripts/` (e.g. `skills/delivery/scripts/`).
 - `scripts/` — `.setup-sandbox.sh` (skill installer), `blank.sh` + `.base.sh` (pure-zip utility for ad-hoc uploads), fish functions (`fish/tst.fish`, `fish/tsta.fish`, `fish/cgn.fish`, `fish/srv.fish`), `espanso/linebyline.yml` (Espanso snippets), and `README.md`.
-- `src/` — Modular Vite + Vue + Tailwind + shadcn-vue app (refactor in progress; see `archive/modular/plan/0-Roadmap.md`).
+- `src/` — Modular Vite + Vue + Tailwind + shadcn-vue app (refactor in progress; see `ROADMAP.md`).
 - `tests/` — Playwright test suite and supporting docs (`SSH_SETUP.md`, `PLAYWRIGHT_SETUP.md`, `FAILURES.md`, `MANUAL.md`).
 - `scratch/` — gitignored scratch directory. The user drafts prompts at `scratch/scratch.md` — do not save files at that name (collision).
 

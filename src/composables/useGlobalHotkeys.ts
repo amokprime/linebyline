@@ -53,7 +53,7 @@ import {
   scrollToActive,
   tickSeekOffset,
 } from './useSync'
-import { changeSpeed, doSeekBack, doSeekFwd, toggleMute, togglePlay } from './useAudio'
+import { changeSpeed, doSeekBack, doSeekFwd, pauseIfPlaying, toggleMute, togglePlay, togglePlayFromSlider } from './useAudio'
 import { toggleMode } from './useModeSwitch'
 import { addSecondary, mergeTranslations, removeSecondary } from './useMerge'
 import { doImport, doSave } from './useImport'
@@ -277,7 +277,7 @@ function handleGlobalHotkeyDispatch(e: KeyboardEvent, ks: string, hk: Record<str
     [hk.speed_reset ?? '']: () => changeSpeed(0),
     [hk.seek_back ?? '']: doSeekBack,
     [hk.seek_fwd ?? '']: doSeekFwd,
-    [hk.play_pause_alt ?? '']: togglePlay,
+    [hk.play_pause_alt ?? '']: togglePlayFromSlider,
     [hk.toggle_mode ?? '']: () => {
       toggleMode()
     },
@@ -421,6 +421,9 @@ function handlePageKeys(e: KeyboardEvent, allLines: string[]) {
 }
 
 function handleHotkeyModeNav(e: KeyboardEvent, allLines: string[], lineCount: number) {
+  // Auto-pause on first nav key press during playback (no-op if already
+  // paused). Phase E Tranche 4.5 latent-issue fix per ROADMAP.md.
+  pauseIfPlaying()
   const { activeLine, selectedLines } = useAppState()
   if (e.key === 'Home' || e.key === 'End') {
     e.preventDefault()
@@ -467,11 +470,10 @@ function handleHotkeyModeReplay(e: KeyboardEvent, ks: string, hk: Record<string,
     replayActiveLine(true)
     return true
   }
-  if (e.shiftKey && hkMatch('Space', hk.play_pause) && e.key === ' ') {
-    e.preventDefault()
-    replayActiveLine(true)
-    return true
-  }
+  // Shift+Space was previously a shortcut for replayActiveLine(true), but
+  // is now bound to play_pause_alt (togglePlayFromSlider) in the global
+  // dispatch. The global dispatch runs before this fn, so Shift+Space
+  // never reaches here. Use Shift+R (replay_end) for replay-end instead.
   return false
 }
 

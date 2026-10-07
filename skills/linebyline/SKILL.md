@@ -38,7 +38,7 @@ The user may pick and choose steps in any order, stitch multiple workflows toget
 
 Onboard
 
-Trigger: `:onb`. Read `AGENTS.md`, `MEMORY.md`, `archive/modular/plan/0-Roadmap.md`, `package.json`, `README.md`, and `skills/delivery/scripts/{prepare,deploy,unpack}.sh`. Run `bash scripts/.setup-sandbox.sh` to install project skills into the sandbox.
+Trigger: `:onb`. Read `AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `README.md`, and `skills/delivery/scripts/{prepare,deploy,unpack}.sh`. Run `bash scripts/.setup-sandbox.sh` to install project skills into the sandbox.
 
 1. Read `AGENTS.md` (minimal pointer to this skill + project structure) and `MEMORY.md` for development history.
 2. Read this skill (the `linebyline` skill — you're reading it now) and the `delivery` skill.
@@ -127,8 +127,8 @@ Post-turn updates
 Apply after every turn, regardless of whether a code patch was made. The user may push at any moment without notifying the agent — on the off chance that any turn is the last before a push, the documentation artifacts must already be current.
 
 1. Update MEMORY.md when:
- - You finished a new, distinctive set of code changes — future sessions need to know what changed and why.
- - A code change failed in a way that would surprise a fresh model in a new chat if it wasn't documented — failures are the most valuable MEMORY.md entries because they prevent re-discovery.
+- You finished a new, distinctive set of code changes — future sessions need to know what changed and why.
+- A code change failed in a way that would surprise a fresh model in a new chat if it wasn't documented — failures are the most valuable MEMORY.md entries because they prevent re-discovery.
  Apply the update inline — produce the updated MEMORY.md in `download/` for the user to apply. Do not propose it as a draft for the user to approve. If the turn produces no distinctive changes worth remembering, skip this.
 2. Re-index the section index if a code patch shifted line numbers — update `linebyline-section-index-SKILL.md`. The section structure (names and contents) is the durable part; line numbers are point-in-time references.
 3. Update a skill when a patch changes the architecture the skill documents. Don't update a skill for a pure bug fix that doesn't change the documented architecture. Apply the update inline (deliver the updated skill file in `download/`). Check cross-skill consistency: when updating one skill, check whether existing skills already cover the pattern — if they do, update them rather than just adding to MEMORY.md.
@@ -170,4 +170,4 @@ Cross-references
 - `ai/Vibecoding workflow.md` — the human-directed session flow with step diagrams + division of labor
 - `ai/Diagrammo flowcharts.md` — syntax reference for reading `dgmo` codeblocks
 - `ai/README.md` — the current Espanso trigger list
-- `archive/modular/plan/0-Roadmap.md` — the modular refactor plan + tranche implementation notes
+- `ROADMAP.md` — the modular refactor plan + tranche implementation notes

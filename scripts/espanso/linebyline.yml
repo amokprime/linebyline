@@ -15,7 +15,7 @@ matches:
       README.md
       AGENTS.md
       MEMORY.md
-      archive/modular/plan/0-Roadmap.md
+      ROADMAP.md
       skills/delivery/scripts/prepare.sh
       skills/delivery/scripts/deploy.sh
       skills/delivery/scripts/unpack.sh

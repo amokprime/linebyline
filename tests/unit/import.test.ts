@@ -167,7 +167,7 @@ describe('useImport — doSave', () => {
     expect(anchorClick).toHaveBeenCalled()
     // Filename should be "My_Song_.lrc" (sanitised / and ?)
     const anchor = (document.createElement as any).mock.calls.length
-    void anchor
+    expect(anchor).toBeGreaterThan(0)
     vi.unstubAllGlobals()
     ;(document.createElement as any).mockRestore()
   })

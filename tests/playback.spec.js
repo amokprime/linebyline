@@ -25,16 +25,37 @@ test("play-pause-typing", async ({ page, media }) => {
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
   await page.keyboard.press("Backquote");
-  await page.keyboard.press("Control+Space");
+  await page.keyboard.press("Shift+Space");
   await expect(page.locator("#time-pos")).toHaveText(/^0:0[1-3]$/);
   await expect(page.locator("#time-dur")).toHaveText(/^0:1[2-4]$/);
-  await page.keyboard.press("Control+Space");
+  await page.keyboard.press("Shift+Space");
   await expect(
     page.getByRole("button", { name: "Play", exact: true }),
   ).toBeVisible();
 });
 
-// Tranche 4.5 — multi-position seek-click catches the session-10 "click-to-seek halfway" bug.
+// Phase E Tranche 4.5 (ROADMAP.md) — Shift+Space plays from current audio slider position
+// (no seek to activeLine's ts). Distinguishing behavior vs Space.
+test("shift-space-plays-from-slider-position", async ({ page, media }) => {
+  await page
+    .locator("#file-picker")
+    .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
+  await waitForImport(page);
+  // Cursor is on line 0 ([00:00.00] I wish...). Drag slider to ~50%.
+  const box = await page.locator("#progress-wrap").boundingBox();
+  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height / 2);
+  await page.waitForTimeout(100);
+  // fmtTime pads seconds to 2 digits, so 6-7s is "0:06" / "0:07".
+  await expect(page.locator("#time-pos")).toHaveText(/^0:0[67]$/);
+  // Shift+Space should play from current audio (~6-7s), NOT seek back to
+  // line 0's ts (0:00). If togglePlay were used, it would seek to 0:00.
+  await page.keyboard.press("Shift+Space");
+  await page.waitForTimeout(100);
+  await expect(page.locator("#time-pos")).toHaveText(/^0:0[67]$/);
+  await page.keyboard.press("Shift+Space");
+});
+
+// Tranche 4.5 (ROADMAP.md) — multi-position seek-click catches the session-10 "click-to-seek halfway" bug.
 // Uses #time-pos text (not audio.currentTime) because the audio element is not in the DOM.
 test("seek-click", async ({ page, media }) => {
   await page
@@ -120,7 +141,7 @@ test("audio-missing-noop", async ({ page, media }) => {
   await expect(page.getByText("Unknown Artist")).toBeVisible();
 });
 
-// Tranche 4.5 — seek-bar drag. Audio element is not in DOM; verify via #time-pos.
+// Tranche 4.5 (ROADMAP.md) — seek-bar drag. Audio element is not in DOM; verify via #time-pos.
 test("seek-drag", async ({ page, media }) => {
   await page
     .locator("#file-picker")
@@ -135,7 +156,7 @@ test("seek-drag", async ({ page, media }) => {
   await expect(page.locator("#time-pos")).toHaveText(/^0:(09|1[0123])$/);
 });
 
-// Tranche 4.5 — focus-not-stolen. Uses button[title=...] and #id for buttons
+// Tranche 4.5 (ROADMAP.md) — focus-not-stolen. Uses button[title=...] and #id for buttons
 // whose accessible name is ▲/▼ text or whose title is dynamic (play/pause, mute).
 test("focus-not-stolen", async ({ page, media }) => {
   await page
@@ -158,7 +179,16 @@ test("focus-not-stolen", async ({ page, media }) => {
   for (const sel of buttons) {
     await page.locator(sel).click();
   }
+  // Reset cursor to first line + pause playback (auto-pause on nav) before
+  // measuring. Without Home, the #main-lines click + Space might leave the
+  // cursor on a line followed by a blank, causing ArrowDown to skip the
+  // blank and jump by 2 instead of 1.
+  await page.keyboard.press("Home");
   await page.keyboard.press("Space");
+  await page.waitForTimeout(50);
+  await page.keyboard.press("Space"); // pause (auto-pause on Home nav)
+  await page.keyboard.press("Home"); // reset cursor to first line
+  await page.waitForTimeout(50);
   const cursorBefore = await page
     .locator(".lrc-line.cursor")
     .evaluate((el) => Array.from(el.parentNode.children).indexOf(el));
@@ -169,7 +199,7 @@ test("focus-not-stolen", async ({ page, media }) => {
   expect(cursorAfter).toBe(cursorBefore + 1);
 });
 
-// Tranche 4.5 — focus-not-stolen on Collapse/Expand toggle.
+// Tranche 4.5 (ROADMAP.md) — focus-not-stolen on Collapse/Expand toggle.
 test("focus-not-stolen-collapse-toggle", async ({ page, media }) => {
   await page
     .locator("#file-picker")
@@ -178,6 +208,9 @@ test("focus-not-stolen-collapse-toggle", async ({ page, media }) => {
   await page.locator("#main-lines").click();
   await page.getByRole("button", { name: "Collapse panel" }).click();
   await page.getByRole("button", { name: "Expand panel" }).click();
+  // Reset cursor to first line to avoid blank-line-skip on ArrowDown.
+  await page.keyboard.press("Home");
+  await page.waitForTimeout(50);
   const cursorBefore = await page
     .locator(".lrc-line.cursor")
     .evaluate((el) => Array.from(el.parentNode.children).indexOf(el));

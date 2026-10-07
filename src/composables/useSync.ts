@@ -76,6 +76,7 @@ import {
 } from '@/utils/timestampSync'
 import { cleanGenius, extractGeniusFields } from '@/utils/geniusExtractor'
 import { cleanPaste, ensureReTagDefault, mergeLrcMeta } from '@/utils/pasteHandlers'
+import { pauseIfPlaying } from './useAudio'
 
 // ── Refs + callbacks (set by initSync) ──────────────────────────────────────
 export interface SyncRefs {
@@ -760,7 +761,12 @@ export function onSeekOffsetChange(e: Event) {
 
 // ── Playback navigation ────────────────────────────────────────────────────
 export function seekPrevLine() {
-  const { activeLine, cfg } = useAppState()
+  const { activeLine, cfg, playing } = useAppState()
+  // Auto-pause on first nav key press during playback when replay_prev_line
+  // is off. Phase E Tranche 4.5 latent-issue fix per ROADMAP.md.
+  if (playing.value && !cfg.value.replay_prev_line) {
+    pauseIfPlaying()
+  }
   if (activeLine.value >= 0 && activeLine.value === firstLyricLine()) {
     return
   }
@@ -786,7 +792,12 @@ export function seekPrevLine() {
 }
 
 export function seekNextLine() {
-  const { activeLine, cfg } = useAppState()
+  const { activeLine, cfg, playing } = useAppState()
+  // Auto-pause on first nav key press during playback when replay_next_line
+  // is off — see seekPrevLine for rationale. Phase E Tranche 4.5.
+  if (playing.value && !cfg.value.replay_next_line) {
+    pauseIfPlaying()
+  }
   if (activeLine.value >= 0 && activeLine.value === lastLyricLine()) {
     return
   }
@@ -837,7 +848,7 @@ export function replayActiveLine(seekEnd: boolean) {
 
 // ── timeupdate handler — port of updateActiveLineFromTime ──────────────────
 export function updateActiveLineFromTime(posMs: number) {
-  const { playingLine } = useAppState()
+  const { playingLine, activeLine } = useAppState()
   const lines = getMainText().split('\n')
   let best = -1
   for (let i = 0; i < lines.length; i++) {
@@ -857,6 +868,12 @@ export function updateActiveLineFromTime(posMs: number) {
     return
   }
   playingLine.value = best
+  // Cursor follows highlighter DOWN only (avoid race when syncing a line
+  // above cursor — syncLine sets playingLine directly, bypassing this fn).
+  // Phase E Tranche 4.5 latent-issue fix per ROADMAP.md.
+  if (best > activeLine.value && !isAutoLineSuppressed()) {
+    activeLine.value = best
+  }
   renderMainLines()
   scrollToPlaying()
   _callbacks.syncSecScroll()

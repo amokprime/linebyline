@@ -278,8 +278,13 @@ onBeforeUnmount(() => {
   text-underline-offset: 3px;
 }
 .lrc-line.active.cursor {
+  /* Restore .active background/color/weight that .lrc-line.cursor overrode
+     (later rule wins on equal specificity) — Phase E Tranche 4.5 regression. */
   border-left: 3px solid var(--primary);
   padding-left: calc(8.8px - 3px);
+  background: var(--active-bg);
+  color: var(--active-text);
+  font-weight: 600;
 }
 .lrc-line.cursor .ts {
   color: var(--active-ts);

@@ -1,0 +1,21 @@
+# Python dev dependencies for the LineByLine project.
+# Installed by scripts/.setup-lint-deps.sh (shared by the sandbox
+# scripts/.setup-sandbox.sh and the local deploy.sh) into a project-contained
+# venv at .lint-deps/ -- via `uv venv`/`uv pip install` when uv is available,
+# else stdlib `python3 -m venv` + pip:
+#   uv venv .lint-deps && uv pip install -p .lint-deps/bin/python -r requirements-dev.txt
+# This installs ruff to .lint-deps/bin/ruff (contained in the project, not
+# cluttering the user's ~/.local/bin). The lint gate
+# (skills/delivery/scripts/lint_gate.sh) checks .lint-deps/bin/ruff as a
+# fallback when ruff is not in PATH.
+#
+# Ruff ships as a Rust binary via PyPI/GitHub, NOT via npm (the npm package
+# named `ruff` is an unrelated ES6-coroutines library). That is why this is a
+# pip requirement rather than a package.json devDependency.
+#
+# Pinned versions (not >=) to head off Sonar hash-pinning complaints.
+# .lint-deps/ is gitignored -- not tracked, not scanned by Sonar.
+#
+# Re-run scripts/.setup-lint-deps.sh after bumping the pinned version.
+
+ruff==0.15.20

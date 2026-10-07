@@ -40,7 +40,7 @@ export const DEFAULT_CFG: AppConfig = {
   replay_after_offset: false, replay_after_sync: false, replay_after_ts: false,
   undo_debounce_ms: 150,
   hotkeys: {
-    toggle_mode: '`', play_pause: 'Space', play_pause_alt: 'Ctrl+Space', sync: 'W', end_line: 'T',
+    toggle_mode: '`', play_pause: 'Space', play_pause_alt: 'Shift+Space', sync: 'W', end_line: 'T',
     prev_line: 'Q', next_line: 'E',
     ts_back_tiny: 'Z', ts_fwd_tiny: 'V',
     ts_back_small: 'A', ts_fwd_small: 'F',

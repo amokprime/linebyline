@@ -88,3 +88,77 @@ echo "Done. Installed $installed skill(s), skipped $skipped."
 echo ""
 echo "Project skill descriptions are now in available_skills."
 echo "Invoke via: Skill(command=\"<name>\") — e.g. Skill(command=\"project-workflow\")."
+
+# ── Install lint gate dependencies ──────────────────────────────────────────
+# The lint gate (skills/delivery/scripts/lint_gate.sh) runs Shellcheck on
+# *.sh files, Ruff on *.py files, and ESLint on src/. The sandbox doesn't
+# preinstall Shellcheck or Ruff — install them here so prepare.sh's lint
+# gate actually runs (instead of skipping with "shellcheck not installed").
+#
+# Shellcheck: installed via the `shellcheck` npm devDependency (downloads
+#   the binary on first invocation). Falls back to a direct binary download
+#   if npm install fails or the npm package's binary download is rate-limited.
+# Ruff: installed via pip from requirements-dev.txt (the `ruff` npm package
+#   is an unrelated coroutine library, NOT the Python linter).
+# ESLint: already available via npm devDependencies (no extra install needed).
+echo ""
+echo "=== Installing lint gate dependencies ==="
+
+# Resolve repo root (for requirements-dev.txt + npm install).
+repo_root="${LINEBYLINE_ROOT:-$HOME/GitHub/linebyline}"
+if [[ ! -d "$repo_root" ]]; then
+  repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+fi
+
+# 1. npm install (gets shellcheck npm package + ESLint + all other devDeps).
+if [[ -f "$repo_root/package.json" ]]; then
+  echo "  Running npm install --ignore-scripts (gets shellcheck + ESLint)..."
+  (cd "$repo_root" && npm install --ignore-scripts 2>&1 | tail -3) || true
+else
+  echo "  (skipped: package.json not found at $repo_root)"
+fi
+
+# 2. Ruff via pip (Python linter — NOT the npm package of the same name).
+if [[ -f "$repo_root/requirements-dev.txt" ]]; then
+  if [[ -f "$repo_root/scripts/.setup-lint-deps.sh" ]]; then
+    bash "$repo_root/scripts/.setup-lint-deps.sh" "$repo_root" 2>&1 | tail -5 || true
+  else
+    echo "  (skipped: .setup-lint-deps.sh not found)"
+  fi
+else
+  echo "  (skipped: requirements-dev.txt not found at $repo_root)"
+fi
+
+# 3. Shellcheck fallback: if the npm package's binary download failed (GitHub
+#    API rate limit), download the static binary directly.
+if ! command -v shellcheck >/dev/null 2>&1; then
+  sh_npm_bin="$repo_root/node_modules/.bin/shellcheck"
+  if [[ -f "$sh_npm_bin" ]] && "$sh_npm_bin" --version >/dev/null 2>&1; then
+    echo "  shellcheck available via node_modules/.bin/"
+  else
+    echo "  shellcheck npm package binary not ready — downloading static binary..."
+    sc_url="https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz"
+    if command -v curl >/dev/null 2>&1; then
+      tmp_dir="$(mktemp -d)"
+      if curl -sL "$sc_url" -o "$tmp_dir/sc.tar.xz" 2>/dev/null; then
+        tar -xJf "$tmp_dir/sc.tar.xz" -C "$tmp_dir/" 2>/dev/null
+        mkdir -p "$HOME/.local/bin"
+        cp "$tmp_dir/shellcheck-v0.10.0/shellcheck" "$HOME/.local/bin/shellcheck" 2>/dev/null
+        chmod +x "$HOME/.local/bin/shellcheck"
+        echo "  shellcheck installed to ~/.local/bin/shellcheck"
+        echo "  (add ~/.local/bin to PATH if not already there)"
+      else
+        echo "  (skipped: shellcheck download failed — GitHub rate limit?)"
+      fi
+      rm -rf -- "$tmp_dir"
+    else
+      echo "  (skipped: curl not available to download shellcheck)"
+    fi
+  fi
+else
+  echo "  shellcheck already in PATH"
+fi
+
+echo ""
+echo "Lint gate dependencies installed. The lint gate in prepare.sh /"
+echo "deploy.sh will now run Shellcheck + Ruff + ESLint instead of skipping."

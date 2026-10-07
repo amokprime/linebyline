@@ -57,7 +57,7 @@ All six scripts live at `skills/delivery/scripts/`:
 
 4. **`lint_markdown.py`** (sandbox-side, auto-run by `prepare.sh`) — auto-fixes bare `#identifier` / `[identifier]` outside backticks, normalizes bullet indentation to 4-space steps, auto-fixes `=== text ===` patterns, and warns about `[[wikilink]]` occurrences and bullet lines >400 chars. Skips YAML frontmatter, inline backtick spans, and fenced code blocks.
 
-5. **`lint_gate.sh`** (shared, sourced by both `prepare.sh` and `deploy.sh`) — the blocking lint gate for Bash + Python + JavaScript/TypeScript. Runs Shellcheck on `*.sh` files, Ruff on `*.py` files (autofix via `--fix`, then gate), and ESLint on `src/` (autofix via `--fix`, then gate). Each linter is skipped if not installed or if no matching files exist. Blocking: if any installed linter finds issues after autofix, the function returns 1 and the caller aborts. Both `prepare.sh` (sandbox-side, on deliverables) and `deploy.sh` (user-side, on the repo) source this script so the gate is consistent across both environments.
+5. **`lint_gate.sh`** (shared, sourced by both `prepare.sh` and `deploy.sh`) — the blocking lint gate for Bash + Python + JavaScript/TypeScript. Runs Shellcheck on `*.sh` files, Ruff on `*.py` files (autofix via `--fix`, then gate), and ESLint on `src/` (autofix via `--fix`, then gate). Ruff is resolved as PATH → `~/.local/bin/ruff` → `.lint-deps/bin/ruff` → `node_modules/.bin/ruff`; the project-contained `.lint-deps/` copy is installed by `scripts/.setup-lint-deps.sh` (reused by `scripts/.setup-sandbox.sh` in the sandbox and run by `deploy.sh` locally when no system Ruff resolves). Each linter is skipped if not installed or if no matching files exist. Blocking: if any installed linter finds issues after autofix, the function returns 1 and the caller aborts. Both `prepare.sh` (sandbox-side, on deliverables) and `deploy.sh` (user-side, on the repo) source this script so the gate is consistent across both environments.
 
 6. **`split_bullets.py`** (sandbox-side, manual run) — splits overlong bullet lines (>400 chars) at natural break points. Use when `lint_markdown.py` warns about overlong bullets.
 
@@ -65,7 +65,7 @@ All six scripts live at `skills/delivery/scripts/`:
 
 Workflow (high-level)
 
-1. Fill out `deploy.sh` FIRST (write the `deploy_file <flat> <repo_path>` lines as a checklist of what you plan to deliver). This is the JIT reminder mechanism — `prepare.sh` verifies every expected file exists before zipping.
+1. Fill out `deploy.sh` FIRST (write the `deploy_file <flat> <repo_path>` lines as a checklist of what you plan to deliver). This is the JIT reminder mechanism — `prepare.sh` verifies every expected file exists before zipping. **Only include files that CHANGED this turn** — files already deployed + unchanged will be "skip (identical)" and waste the user's time (deploy.sh has to cmp each one, and the zip is inflated with unnecessary files). The user reports issues with specific files — only those + their dependencies go in deploy.sh.
 2. Place all deliverables in `/home/z/my-project/download/` with flat hyphenated names (e.g. `src-composables-useAudio.ts`, not `src/composables/useAudio.ts`).
 3. Place the filled-in `deploy.sh` in `download/` too (it gets included in the zip).
 4. Run `bash /home/z/my-project/scripts/prepare.sh` (or wherever the sandbox-side copy lives). The script lints, verifies, runs Shellcheck + ESLint/Vitest if available, zips everything into `deliver.zip`, touches `download/` to refresh the widget, and removes the loose files.

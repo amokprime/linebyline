@@ -97,18 +97,10 @@ if [ -z "$SYNCTHING_API_KEY" ] && [ -n "$syncthing_config" ] && [ -f "$syncthing
 fi
 
 # ── Syncthing pre-test sync (automatic if API key is available) ──────────────
-# From the SERVER's perspective:
-#   1. Find the LineByLine folder ID (by path match — scan only that folder,
-#      not all folders).
-#   2. Trigger a local rescan of that folder (detect local changes).
-#   3. Poll /rest/db/status?folder=X until state=="idle" and needBytes==0.
-#      - needBytes > 0 → the server is receiving data from the client (wait)
-#      - state != "idle" → scanning or syncing (wait)
-#      - needBytes==0 && state=="idle" → server has everything (proceed)
-#   This is the correct PoV: the server checks ITS OWN status, not the
-#   client's completion (which would be the server→client direction — wrong
-#   for pre-test sync).
-if [ -n "$SYNCTHING_API_KEY" ]; then
+# Skip for scoped runs (-g flag) — the files are already synced from the
+# deploy; the user just wants to re-run specific tests without waiting for
+# a full rescan + poll cycle.
+if [ -n "$SYNCTHING_API_KEY" ] && ! echo "$@" | grep -q -- '-g'; then
   # Auto-detect the LineByLine folder ID: find the folder whose path contains
   # "linebyline". This scans only the folders list (cheap), not all folder data.
   folder_id="${SYNCTHING_LBL_ID:-}"

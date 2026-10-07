@@ -145,17 +145,28 @@ def normalize_bullet_indent(line: str) -> tuple[str, bool]:
 
     Level 1 (base) = 0 spaces, level 2 = 4 spaces, level 3 = 8 spaces, etc.
 
-    Detection is idempotent: if the indent is already a multiple of 4, the
-    level is indent // 4 (already normalized). If it's a multiple of 2 but
-    not 4 (old-style 2-space indents), the level is indent // 2.
+    Handles both space-indented and tab-indented bullets:
+    - Tabs are expanded to 4 spaces before measuring (so 1 tab = level 2).
+    - 4-space multiples stay as-is (already normalized).
+    - 2-space indents (old-style) are upgraded to 4-space multiples.
+    - 8-space doubled indents (where 4 is expected) are collapsed to 4
+      when the doubled pattern is detected (indent_spaces > 4 and
+      indent_spaces is a multiple of 8 but not a multiple of 4 that
+      naturally arises from nesting — heuristically, if every sub-bullet
+      in the file uses 8 spaces, they're doubled, not level 3).
 
     Non-bullet lines are returned unchanged.
     """
-    m = re.match(r'^( +)([-*] )', line)
+    # Match both space and tab indentation before a bullet marker.
+    m = re.match(r'^(\s+)([-*] )', line)
     if not m:
         return line, False
 
-    indent_spaces = len(m.group(1))
+    # Expand tabs to 4 spaces for consistent measurement.
+    raw_indent = m.group(1)
+    indent_str = raw_indent.expandtabs(4)
+    indent_spaces = len(indent_str)
+
     if indent_spaces == 0:
         return line, False
 
@@ -313,6 +324,23 @@ def lint_file(path_str: str) -> tuple[bool, list[str], int, int]:
             messages.append(f'{path.name}:{i}: {msg}')
         overlong_total += overlong
         nested_total += nested
+
+    # Post-processing: collapse doubled indentation.
+    # If the file has bullets at 8+ spaces but NO bullets at 4 spaces, the
+    # 8-space bullets are likely doubled level-2 (should be 4). Collapse.
+    has_4space = False
+    has_8space = False
+    for nl in new_lines:
+        if re.match(r'^    [-*] ', nl):
+            has_4space = True
+        elif re.match(r'^        [-*] ', nl):
+            has_8space = True
+    if has_8space and not has_4space:
+        for i, nl in enumerate(new_lines):
+            m = re.match(r'^(        )([-*] )', nl)
+            if m:
+                new_lines[i] = '    ' + nl[m.start(2):]
+        messages.append(f'{path.name}: collapsed doubled indent (8->4 spaces)')
 
     changed = ''.join(new_lines) != original
     if changed:

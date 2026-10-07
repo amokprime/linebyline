@@ -1,6 +1,6 @@
 name: Deploy to GitHub Pages
 
-# Roadmap item 3 (archive/modular/plan/0-Roadmap.md), Phase A: this pipeline
+# Roadmap item 3 (ROADMAP.md), Phase A: this pipeline
 # is scaffolded but disarmed — workflow_dispatch is the ONLY trigger.
 #
 # DO NOT dispatch this before the Phase E cutover. A deploy-pages run repoints

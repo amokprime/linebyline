@@ -38,7 +38,7 @@ async function setupSync(opts: {
 } = {}) {
   const mod = await import('@/composables/useSync')
   const appState = await import('@/composables/useAppState')
-  const { mainText, hotkeyMode, activeLine, playingLine, cfg } = appState.useAppState()
+  const { mainText, hotkeyMode, activeLine, playingLine, playing, cfg } = appState.useAppState()
   mainText.value = opts.mainText ?? '[ti: song]\n[00:00.00]\nlyric one\nlyric two\n[00:05.00]\n'
   hotkeyMode.value = opts.hotkeyMode ?? true
 
@@ -108,6 +108,7 @@ async function setupSync(opts: {
     hotkeyMode,
     activeLine,
     playingLine,
+    playing,
     cfg,
     mainLines,
     mainTextarea,
@@ -153,7 +154,7 @@ describe('useSync — renderMainLines', () => {
     const lis = mainLines.value!.querySelectorAll('.lrc-line')
     // The meta line + the blank that follows it are both skipped.
     // The visible lyric line is the only one rendered.
-    expect(lis.length).toBe(1)
+    expect(lis).toHaveLength(1)
   })
 
   it('preserves blank lines that follow non-meta lines', async () => {
@@ -163,7 +164,7 @@ describe('useSync — renderMainLines', () => {
     mod.renderMainLines()
     const lis = mainLines.value!.querySelectorAll('.lrc-line')
     // lyric one + blank separator + lyric two = 3 lis.
-    expect(lis.length).toBe(3)
+    expect(lis).toHaveLength(3)
   })
 
   it('no-ops when mainLines ref is unbound (pre-mount, pure-node)', async () => {
@@ -665,6 +666,122 @@ describe('useSync — updateActiveLineFromTime', () => {
     playingLine.value = 0
     mod.updateActiveLineFromTime(7000)
     expect(callbacks.announce).not.toHaveBeenCalled()
+  })
+
+  // Phase E Tranche 4.5 — cursor follows highlighter DOWN only.
+  it('drags activeLine DOWN to best when best > activeLine (cursor follows highlighter)', async () => {
+    const { mod, activeLine, playingLine } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n[00:15.00] three\n',
+    })
+    activeLine.value = 0
+    playingLine.value = 0
+    mod.updateActiveLineFromTime(12000) // best = 1 (line 1's ts = 10s <= 12s)
+    expect(playingLine.value).toBe(1)
+    expect(activeLine.value).toBe(1) // cursor dragged down with highlighter
+  })
+
+  it('does NOT drag activeLine UP when best < activeLine (avoid race with syncLine jumps)', async () => {
+    const { mod, activeLine, playingLine } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n[00:15.00] three\n',
+    })
+    activeLine.value = 2 // cursor below
+    playingLine.value = 2
+    mod.updateActiveLineFromTime(6000) // best = 0 (line 0's ts = 5s <= 6s)
+    expect(playingLine.value).toBe(0)
+    expect(activeLine.value).toBe(2) // cursor stays — no upward drag
+  })
+
+  it('does NOT drag activeLine when isAutoLineSuppressed() is true (post-nav window)', async () => {
+    const { mod, activeLine, playingLine } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n[00:15.00] three\n',
+    })
+    activeLine.value = 0
+    playingLine.value = 0
+    // Trigger suppressAuto via seekNextLine — moves cursor + sets the
+    // 1.5s suppression flag.
+    mod.seekNextLine()
+    // activeLine is now 1 (seekNextLine moved it). Reset playingLine so
+    // updateActiveLineFromTime has somewhere to go.
+    playingLine.value = 0
+    mod.updateActiveLineFromTime(15000) // best = 2 (line 2's ts = 15s)
+    expect(playingLine.value).toBe(2)
+    // activeLine is still 1 — suppressed (seekNextLine set the flag).
+    expect(activeLine.value).toBe(1)
+  })
+
+  it('leaves activeLine alone when no line has ts <= posMs (song start, no highlighter yet)', async () => {
+    const { mod, activeLine, playingLine } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n',
+    })
+    activeLine.value = 0
+    playingLine.value = -1
+    mod.updateActiveLineFromTime(2000) // no line has ts <= 2s
+    expect(playingLine.value).toBe(-1) // unchanged
+    expect(activeLine.value).toBe(0) // cursor stays put
+  })
+})
+
+describe('useSync — seekPrevLine / seekNextLine (auto-pause on nav)', () => {
+  it('seekNextLine auto-pauses the song when playing and replay_next_line is off (default)', async () => {
+    const { mod, activeLine, playing, cfg } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n[00:15.00] three\n',
+    })
+    activeLine.value = 0
+    playing.value = true
+    cfg.value.replay_next_line = false
+    mod.seekNextLine()
+    expect(playing.value).toBe(false) // auto-paused
+    expect(activeLine.value).toBe(1) // cursor moved
+  })
+
+  it('seekNextLine does NOT auto-pause when replay_next_line is on (user wants seek+play)', async () => {
+    const { mod, activeLine, playing, cfg, callbacks } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n[00:15.00] three\n',
+      audioReady: true,
+    })
+    activeLine.value = 0
+    playing.value = true
+    cfg.value.replay_next_line = true
+    mod.seekNextLine()
+    expect(playing.value).toBe(true) // NOT paused — replay enabled
+    expect(callbacks.seekToMs).toHaveBeenCalledWith(10000) // seek to line 1's ts
+  })
+
+  it('seekPrevLine auto-pauses the song when playing and replay_prev_line is off (default)', async () => {
+    const { mod, activeLine, playing, cfg } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n[00:15.00] three\n',
+    })
+    activeLine.value = 1
+    playing.value = true
+    cfg.value.replay_prev_line = false
+    mod.seekPrevLine()
+    expect(playing.value).toBe(false) // auto-paused
+    expect(activeLine.value).toBe(0) // cursor moved
+  })
+
+  it('seekPrevLine does NOT auto-pause when replay_prev_line is on', async () => {
+    const { mod, activeLine, playing, cfg, callbacks } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n[00:15.00] three\n',
+      audioReady: true,
+    })
+    activeLine.value = 1
+    playing.value = true
+    cfg.value.replay_prev_line = true
+    mod.seekPrevLine()
+    expect(playing.value).toBe(true) // NOT paused — replay enabled
+    expect(callbacks.seekToMs).toHaveBeenCalledWith(5000) // seek to line 0's ts
+  })
+
+  it('seekNextLine no-ops pause when song is already paused (no pause churn)', async () => {
+    const { mod, activeLine, playing, cfg } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n',
+    })
+    activeLine.value = 0
+    playing.value = false // already paused
+    cfg.value.replay_next_line = false
+    mod.seekNextLine()
+    expect(playing.value).toBe(false) // still paused (no churn)
+    expect(activeLine.value).toBe(1) // cursor moved
   })
 })
 

@@ -287,7 +287,7 @@ describe('useMerge — mergeTranslations', () => {
     //   [00:02.00] lyric2
     //   [00:04.99] trans2  (interpolated: 5000 - 10 = 4990ms = [00:04.99])
     //   [00:05.00]
-    expect(lines.length).toBe(6)
+    expect(lines).toHaveLength(6)
     expect(lines[2]).toBe('[00:01.99] trans1')
     expect(lines[4]).toBe('[00:04.99] trans2')
   })

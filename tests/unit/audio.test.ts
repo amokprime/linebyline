@@ -256,6 +256,93 @@ describe('useAudio — togglePlay', () => {
   })
 })
 
+describe('useAudio — pauseIfPlaying', () => {
+  it('returns false and no-ops when not playing', async () => {
+    const { useAudio } = await import('@/composables/useAudio')
+    const { pauseIfPlaying, playing, audioEl } = useAudio()
+    const mock = makeMockAudio()
+    audioEl.value = mock
+    playing.value = false
+    const result = pauseIfPlaying()
+    expect(result).toBe(false)
+    expect(mock.pause).not.toHaveBeenCalled()
+    expect(playing.value).toBe(false)
+  })
+
+  it('returns true and pauses when playing', async () => {
+    const { useAudio } = await import('@/composables/useAudio')
+    const { pauseIfPlaying, playing, audioEl } = useAudio()
+    const mock = makeMockAudio()
+    audioEl.value = mock
+    playing.value = true
+    const result = pauseIfPlaying()
+    expect(result).toBe(true)
+    expect(mock.pause).toHaveBeenCalled()
+    expect(playing.value).toBe(false)
+  })
+})
+
+describe('useAudio — togglePlayFromSlider', () => {
+  it('no-ops without audioEl', async () => {
+    const { useAudio } = await import('@/composables/useAudio')
+    const { togglePlayFromSlider, playing } = useAudio()
+    expect(() => togglePlayFromSlider()).not.toThrow()
+    expect(playing.value).toBe(false)
+  })
+
+  it('pauses if playing', async () => {
+    const { useAudio } = await import('@/composables/useAudio')
+    const { togglePlayFromSlider, playing, audioEl } = useAudio()
+    const mock = makeMockAudio()
+    audioEl.value = mock
+    playing.value = true
+    togglePlayFromSlider()
+    expect(mock.pause).toHaveBeenCalled()
+    expect(playing.value).toBe(false)
+  })
+
+  it('plays from current audio position WITHOUT seeking to activeLine ts', async () => {
+    const { useAudio, initAudio } = await import('@/composables/useAudio')
+    const { useAppState } = await import('@/composables/useAppState')
+    const { activeLine, playingLine } = useAppState()
+    // Wire updateActiveLineFromTime callback so togglePlayFromSlider's call
+    // to _callbacks.updateActiveLineFromTime sets playingLine based on posMs.
+    const updateActiveLineFromTime = vi.fn((posMs: number) => {
+      // Simplified: line 0 ts=0, line 1 ts=3000, line 2 ts=6000
+      if (posMs >= 6000) playingLine.value = 2
+      else if (posMs >= 3000) playingLine.value = 1
+      else if (posMs >= 0) playingLine.value = 0
+    })
+    initAudio(
+      { progressWrap: { value: null } as any, seekOffset: { value: { value: '0' } } as any },
+      {
+        getMainText: () => '[00:00.00] line0\n[00:03.00] line1\n[00:06.00] line2\n',
+        setMainText: () => {},
+        updateActiveLineFromTime,
+      },
+    )
+
+    const { togglePlayFromSlider, playing, audioEl, lastPlayingLine } = useAudio()
+    // Audio at 4.5s — line 1's ts. Cursor at line 0.
+    const mock = makeMockAudio(10000, 4.5)
+    audioEl.value = mock
+    activeLine.value = 0
+    togglePlayFromSlider()
+    expect(mock.play).toHaveBeenCalled()
+    expect(playing.value).toBe(true)
+    // lastPlayingLine follows activeLine so subsequent Space at the same
+    // line resumes from current audio position.
+    expect(lastPlayingLine.value).toBe(0)
+    // playingLine set from audio's actual position (4.5s → line 1), NOT
+    // from activeLine (line 0). This is the distinguishing behavior.
+    expect(playingLine.value).toBe(1)
+    expect(updateActiveLineFromTime).toHaveBeenCalledWith(4500)
+    // No seek — currentTime unchanged (mock's seek setter not called via
+    // any seekToMs callback). The mock was at 4.5 and stays at 4.5.
+    expect(mock.currentTime).toBe(4.5)
+  })
+})
+
 describe('useAudio — setupAudio', () => {
   it('creates a new Audio element, resets speed to 1, updates song title', async () => {
     const { useAudio, initAudio } = await import('@/composables/useAudio')

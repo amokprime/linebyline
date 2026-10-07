@@ -26,7 +26,7 @@ describe('hkCellKeys', () => {
 
   it('play_pause shows play_pause_alt in Typing mode, the main key in Hotkey mode', () => {
     expect(hkCellKeys('play_pause', hk, true)).toEqual(['Space'])
-    expect(hkCellKeys('play_pause', hk, false)).toEqual(['Ctrl+Space'])
+    expect(hkCellKeys('play_pause', hk, false)).toEqual(['Shift+Space'])
     expect(hkCellKeys('play_pause', { ...hk, play_pause_alt: '' }, false)).toEqual(['Space'])
   })
 

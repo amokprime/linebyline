@@ -194,8 +194,8 @@ describe('useAppState — singleton state defaults match the monolith', () => {
 
   it('selectedLines defaults to an empty Set', async () => {
     const { selectedLines } = await loadAppState()
+    expect(selectedLines.value).toBeInstanceOf(Set)
     expect(selectedLines.value.size).toBe(0)
-    expect(selectedLines.value instanceof Set).toBe(true)
   })
 
   it('mergeDone / playing default to false; suppressScrollSync false', async () => {

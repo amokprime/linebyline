@@ -87,9 +87,32 @@ While the full suite is too heavy, **sample Playwright tests CAN and SHOULD be r
 
 The key lesson (Sep 2026, session 9): a Vitest timeout failure blocks `npm run build` (via `set -euo pipefail` in `deploy.sh`), causing Playwright to run against a stale `dist/` without the patched code — the test suite then reports spurious regressions that look like the patches didn't work.
 
-Running even 2–3 sample Playwright tests in sandbox against the Vite preview catches this before delivery: a passing sandbox sample against a freshly built `dist/` proves the source patch reaches the build.
+Running ALL NEW tests in sandbox against the Vite preview catches this before delivery: a passing sandbox sample against a freshly built `dist/` proves the source patch reaches the build. If a new test can't be verified in the sandbox (e.g. requires a real browser feature Playwright doesn't support), document why in the test's comment + flag it for manual verification.
 
-For the canonical workflow see the `linebyline` skill → "Code" step and "Post-patch verification".
+### Mutation testing standard for new tests (also called "mut" tests)
+
+Every new Playwright or Vitest test that verifies a BEHAVIORAL change (not just a structural assertion) should be mutation-tested before delivery: temporarily revert the source fix, rebuild `dist/`, run the test, verify it FAILS, then restore the fix. This catches tests that pass for the wrong reason (e.g. the test asserts a default value that didn't change, or the build didn't actually include the patch).
+
+**Sandbox mutation workflow** (for Playwright tests):
+1. `cp src/file.ts src/file.ts.bak` -- backup the patched source
+2. `sed -i 's/fix/code/' src/file.ts` -- revert the fix (or comment out the key line)
+3. `npm run build` -- rebuild `dist/` with the mutated source
+4. Copy `dist/` to preview-root
+5. Run the sample Playwright script -- the relevant test should FAIL
+6. `cp src/file.ts.bak src/file.ts` -- restore the fix
+7. `npm run build` -- rebuild with the correct source
+
+**Vitest mutation workflow** (simpler -- no dist/ rebuild needed):
+1. `cp src/file.ts src/file.ts.bak`
+2. Revert the fix in `src/file.ts`
+3. `npm run test:unit` -- the relevant test should FAIL
+4. `cp src/file.ts.bak src/file.ts`
+
+If a mutation test shows the test PASSES even with the fix reverted, the test is not pinning the intended behavior -- rewrite it with a stronger assertion.
+
+**False negatives**: if the `sed` command breaks the source syntax, `vite build` fails and the old `dist/` is used -- the test passes against unmutated code, giving a false negative. Always check the build succeeded before running the test.
+
+For the canonical workflow see the `linebyline` skill -> "Code" step and "Post-patch verification".
 
 ---
 

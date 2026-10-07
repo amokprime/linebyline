@@ -1,6 +1,6 @@
 // eslint.config.js — ESLint 9 flat config
 //
-// Roadmap context (archive/modular/plan/0-Roadmap.md, items 2-4):
+// Roadmap context (ROADMAP.md, items 2-4):
 //   - Item 3 Phase A (2026-09-06) added the Vite + Vue blocks below
 //     (sections 5-6): eslint-plugin-vue for src/**/*.vue, with
 //     @typescript-eslint/parser for <script lang="ts"> and plain .ts.
@@ -253,6 +253,9 @@ export default [
       // Parameterized tests are a style preference; the existing per-case
       // tests are clearer for the LineByLine test suite's audience.
       "sonarjs/parameterized-tests": "off",
+      // Test files use defineComponent inline (not .vue files) — disable
+      // the vue/one-component-per-file rule for test files.
+      "vue/one-component-per-file": "off",
       // toBe vs toHaveLength is a style preference; leave as warning for
       // Tranche 4.7 triage, not a blocking error.
       "sonarjs/prefer-specific-assertions": "warn",
