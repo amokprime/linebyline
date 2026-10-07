@@ -223,7 +223,12 @@ if command -v curl >/dev/null 2>&1 && [[ -f "$ZIP" ]]; then
     page_url="${BASH_REMATCH[1]}"
     # The API returns a page URL like https://tmpfiles.org/<token>/deliver.zip.
     # The actual direct-download URL is on that page; fetch it.
-    dl_url=$(curl -sS --max-time 30 -L "$page_url" 2>/dev/null \
+    # --proto/--proto-redir "=https" pin the fetched page and any redirect it
+    # issues to HTTPS (Sonar shell:S6506). $page_url comes from the upload
+    # response, so an http:// or downgrading URL must fail closed rather than
+    # be fetched in clear text. Failure degrades to printing the page URL.
+    dl_url=$(curl -sS --max-time 30 --proto "=https" --proto-redir "=https" \
+      -L "$page_url" 2>/dev/null \
       | grep -oE 'https://tmpfiles\.org/dl/[^"]+' | head -n1 || true)
     if [[ -n "$dl_url" ]]; then
       echo "  Fallback URL: $dl_url"

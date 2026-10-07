@@ -140,7 +140,12 @@ if ! command -v shellcheck >/dev/null 2>&1; then
     sc_url="https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz"
     if command -v curl >/dev/null 2>&1; then
       tmp_dir="$(mktemp -d)"
-      if curl -sL "$sc_url" -o "$tmp_dir/sc.tar.xz" 2>/dev/null; then
+      # --proto/--proto-redir "=https" pin both the initial request and any
+      # redirect to HTTPS (Sonar shell:S6506) — otherwise the GitHub release
+      # URL could be redirected down to plain HTTP and the binary tampered
+      # with in transit.
+      if curl --proto "=https" --proto-redir "=https" -sL "$sc_url" \
+        -o "$tmp_dir/sc.tar.xz" 2>/dev/null; then
         tar -xJf "$tmp_dir/sc.tar.xz" -C "$tmp_dir/" 2>/dev/null
         mkdir -p "$HOME/.local/bin"
         cp "$tmp_dir/shellcheck-v0.10.0/shellcheck" "$HOME/.local/bin/shellcheck" 2>/dev/null
