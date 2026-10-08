@@ -3,7 +3,6 @@
 This file is a minimal pointer. Most agent-facing context lives in skills under `skills/` (auto-loaded into `available_skills` via `scripts/.setup-sandbox.sh`) and in `MEMORY.md`. If you're a fresh agent looking for onboarding, workflow, or project structure details, invoke `Skill(command="linebyline")` — that skill is the canonical onboarding + workflow reference.
 
 ## Why this file is minimal
-
 Many projects put project structure, coding rules, test-running instructions, sandbox environment details, and consolidation direction in AGENTS.md. This project offloads those to skills instead, because the chat.z.ai sandbox auto-loads skill descriptions into the system prompt's `available_skills` list — skills are invokable on-demand without an explicit Read, and their descriptions surface proactively when the task matches. A bare AGENTS.md cannot do this; it must be Read explicitly every turn.
 
 What would normally live here, and where it actually lives:
@@ -17,7 +16,6 @@ What would normally live here, and where it actually lives:
 - **Linting instructions** → automated by `skills/delivery/scripts/lint_markdown.py` (runs in `prepare.sh`)
 
 ## Project structure
-
 - `/` — Project docs for humans (`CONTRIBUTING.md`, `HELP.md`, `README.md`, `LIMITATIONS.md`, `SECURITY.md`, `CREDITS.md`, `AGENTS.md`, `MEMORY.md`). Evaluate for stale references when the relevant area changes.
 - `.github/` — Issue templates and GitHub Actions workflows (`codeql.yml`, `playwright.yml`, `sonarcloud.yml`, `deploy.yml`, `sync-staging.yml`).
 - `ai/` — Vibecoding docs for humans: `README.md`, `Vibecoding workflow.md` (the high-level workflow flowcharts with division of labor), `Diagrammo flowcharts.md` (syntax reference for the `dgmo` codeblocks), `templates/` (blank Obsidian transcript templates for archiving chat sessions).
@@ -30,7 +28,6 @@ What would normally live here, and where it actually lives:
 - `scratch/` — gitignored scratch directory. The user drafts prompts at `scratch/scratch.md` — do not save files at that name (collision).
 
 ## Getting started
-
 1. Clone the staging branch: `git clone --branch staging https://github.com/amokprime/linebyline.git`
 2. Run `bash scripts/.setup-sandbox.sh` to install project skills into the sandbox's `available_skills`.
 3. Invoke `Skill(command="linebyline")` for onboarding, workflow, and project structure.

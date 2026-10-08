@@ -1,11 +1,11 @@
 ---
 model: DeepSeek V4 Flash 0731
 provider: Logfare
-harness: chat.z.ai (originally authored under OMP; OMP dropped in Tranche 4.6, Sep 2026)
+harness: chat.z.ai (originally authored under OMP; OMP dropped in Tranche 4.6, re-added Oct 7, 2026)
 ---
 # SSH Setup — human master key + restricted agent key
 
-> **Tranche 4.6 note (Sep 29, 2026)**: the chat.z.ai web-channel sandbox is the only supported agent harness. The sandbox CANNOT SSH to the Server — the master key is human-only. The restricted-key profile (`~/.agent-tools/limited-entry/` + `agent-tst`) was a legacy OMP/ZCode artifact and is no longer used by an agent. The SSH setup below is preserved for two reasons: (1) the human's interactive `tst` fish function uses the master key to run Playwright on the Server via Podman; (2) a future CLI harness (if OMP/ZCode is re-promoted) could re-use the restricted-key pattern. The chat.z.ai sandbox runs sample Playwright tests directly via the `playwright` package (see `AGENTS.md` → "Sample Playwright tests in sandbox").
+> **Harness note (Tranche 4.6, Sep 29, 2026; updated Oct 7, 2026)**: two agent harnesses are in play. The **chat.z.ai** web-channel sandbox is the cloud harness and CANNOT SSH to the Server — it runs sample Playwright tests directly via the `playwright` package (see `AGENTS.md` → "Sample Playwright tests in sandbox"). The **local OMP** harness is active again (`~/GitHub/omp-mods/safe-omp/safe-omp.sh`, repo-side `.omp/`): its `bwrap` sandbox binds the restricted-key profile (`~/.agent-tools/limited-entry/`) read-only at `~/.ssh`, so the agent can run Server-side Playwright through `agent-tst` but never reaches the master key. The master key stays human-only; the human's interactive `tst` fish function uses it to run Playwright on the Server via Podman.
 
 Two SSH keys, deliberately separate:
 
@@ -52,10 +52,9 @@ Two SSH keys, deliberately separate:
    ```
 4. Test: `ssh remote 'hostname'` → prints the remote hostname.
 5. For complex troubleshooting on the server, install OMP on it for proper
-   sandboxing (legacy — OMP was dropped in Tranche 4.6; the link is preserved
-   for historical reference: https://github.com/amokprime/linebyline/tree/main/ai/omp/OMP_SETUP.md#Sandbox).
-   A future CLI harness could re-use this pattern; the chat.z.ai sandbox
-   cannot SSH at all.
+   sandboxing. The launcher this project uses is
+   `~/GitHub/omp-mods/safe-omp/safe-omp.sh` (`bwrap` wrapper). A CLI harness
+   re-uses this pattern; the chat.z.ai sandbox cannot SSH at all.
 
 ## 2. Restricted agent key (one-time)
 
@@ -348,7 +347,7 @@ not in `~/GitHub/linebyline/tests/`. Reasons:
   **master key** (full shell, for debugging). The agent instead calls `agent-tst`
   (restricted key, `command=` only). The two are deliberately different commands so
   the master key is never offered by the agent.
-- Project [RULES.md](https://github.com/amokprime/linebyline/tree/main/.omp/RULES.md) (legacy OMP — folder dropped in Tranche 4.6; link preserved for historical reference. Replace `~/.bash/safe-omp.md` with your actual `bwrap` script path if re-implementing.)
+- Project [RULES.md](https://github.com/amokprime/linebyline/tree/main/.omp/RULES.md) (local OMP harness — re-added Oct 7, 2026; `~/GitHub/omp-mods/safe-omp/safe-omp.sh` is the matching `bwrap` launcher).
 
 ### Restriction path (read top to bottom)
 

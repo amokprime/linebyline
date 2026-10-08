@@ -135,6 +135,11 @@ if [ -n "$SYNCTHING_API_KEY" ] && ! echo "$@" | grep -q -- '-g'; then
   else
     echo "tst: WARNING — could not auto-detect linebyline folder ID; skipping sync check" >&2
   fi
+elif echo "$@" | grep -q -- '-g'; then
+  # Scoped run: the sync check is skipped on purpose (see the comment above the
+  # outer `if`). Report that explicitly — the previous code fell through to the
+  # no-key warning below, which read as a failure when sync was working fine.
+  echo "tst: scoped run (-g) — skipping Syncthing sync check"
 else
   echo "tst: WARNING — could not read Syncthing API key; skipping sync check" >&2
   if [ -n "$syncthing_config" ]; then

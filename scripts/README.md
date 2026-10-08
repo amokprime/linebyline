@@ -30,6 +30,17 @@ bash scripts/.setup-sandbox.sh
 ### fish/tst.fish, fish/tsta.fish, fish/cgn.fish, fish/srv.fish
 - User-side Playwright helpers. `tst` runs the full suite via SSH to the Server (Podman container); `tsta` runs UI mode against local Vite preview; `cgn` runs codegen; `srv` starts a Vite preview server for manual testing. These are user-side only — the chat.z.ai sandbox cannot invoke them. See `tests/SSH_SETUP.md` and `tests/PLAYWRIGHT_SETUP.md` for the full setup.
 
+## Syncthing sync helper
+
+### agent-sync
+- Forces the **local** Syncthing instance to push the LineByLine folder to the Server and waits for the Server to report `completion == 100` / `needBytes == 0`. Exits non-zero on timeout so it can gate a test run.
+- Built for the OMP harness: `deploy.sh`'s inline force-sync needs the full user environment, which the sandbox lacks, but the Syncthing GUI API on `127.0.0.1:8384` is reachable from inside `bwrap`.
+- Auto-detects the folder id (path contains `linebyline`), the API key (`~/.local/state/syncthing/config.xml`), and the peer (the SSH `HostName` matched against Syncthing's reported connection addresses). Override with `LBL_SYNC_FOLDER_ID`, `LBL_SYNC_DEVICE_ID`, `SYNCTHING_API_KEY`, or `SYNCTHING_CONFIG`.
+```
+scripts/agent-sync [--timeout SECONDS] [--quiet]
+```
+- Note: `agent-tst -g <pattern>` deliberately skips the Server-side sync check (see `scripts/tst`), so run `agent-sync` first when the Server must see the current working tree.
+
 ## Delivery scripts
 
 The delivery workflow scripts (`prepare.sh`, `deploy.sh`, `unpack.sh`, `lint_markdown.py`, `split_bullets.py`) live at `skills/delivery/scripts/` — packaged as a skill. See `skills/delivery/SKILL.md` for documentation.

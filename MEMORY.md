@@ -283,7 +283,7 @@ For the workflow (when to run the suite, scope of coverage) see the `playwright-
 
 ## AI scaffolding refactor (Tranche 4.6, Sep 29, 2026)
 
-- **Scope**: dropped legacy claude.ai / OMP / ZCode harness scaffolding; flattened chat.z.ai context files to repo root; packaged delivery scripts as a `skills/delivery/` skill; added `scripts/.setup-sandbox.sh` for auto-loading project skills into `/home/z/my-project/skills/`; fixed references to user-side-only tools so a fresh sandbox agent knows which commands run in-sandbox vs. user-side; replaced Repomix-bundle workflow with Espanso-snippet pointer-based workflow (`scripts/espanso/linebyline.yml`).
+- **Scope**: dropped legacy claude.ai / OMP / ZCode harness scaffolding (OMP **re-added** Oct 7, 2026 — see "Local OMP harness" below); flattened chat.z.ai context files to repo root; packaged delivery scripts as a `skills/delivery/` skill; added `scripts/.setup-sandbox.sh` for auto-loading project skills into `/home/z/my-project/skills/`; fixed references to user-side-only tools so a fresh sandbox agent knows which commands run in-sandbox vs. user-side; replaced Repomix-bundle workflow with Espanso-snippet pointer-based workflow (`scripts/espanso/linebyline.yml`).
 - **Deleted**: `.omp/`, `.zcode/`, `ai/claude.ai/`, `ai/omp/`, `ai/zcode/`, `ai/chat.z.ai/` (after extracting its files to root), `skills/web-channel/` (merged into `skills/delivery/`), Repomix workflow scripts (`scripts/{onboard,build,test,review,skills,build-test}.sh` — kept `.base.sh` + `blank.sh` as pure-zip utility).
 - **Moved to root**: `AGENTS.md`, `MEMORY.md`.
 - **Moved to `skills/<name>/SKILL.md`**: 9 skills + new `delivery` skill (10 total). Delivery scripts packaged at `skills/delivery/scripts/`.
@@ -296,6 +296,18 @@ For the workflow (when to run the suite, scope of coverage) see the `playwright-
 - **deliver-checklist audit**: `.zcode/skills/deliver-checklist/SKILL.md` was largely duplicated by `linebyline-SKILL.md`'s Pre-patch/Post-patch/Post-turn sections. NOT migrated — deleted with `.zcode/`. Unique bits should be merged into `linebyline-SKILL.md` in a future session if desired.
 - **Detailed plan + status**: `ROADMAP.md` → "Tranche 4.6" section.
 - **Setup script**: `scripts/.setup-sandbox.sh` copies project skills into `/home/z/my-project/skills/` at session start so their `description` frontmatter auto-loads into `available_skills`. Run once per session (sandboxes expire after 2h). Idempotent.
+
+## Local OMP harness (re-added Oct 7, 2026)
+
+The `.omp/` directory is back at repo root, this time as the **local OMP harness** rather than chat.z.ai scaffolding. It has a Copilot-like purpose: lightweight local tasks, Server-side Playwright via `agent-tst`, Sonar triage when the cloud session is deep, and doc maintenance. `CONTRIBUTING.md` describes it that way; "claude.ai / OMP / ZCode dropped" is now only accurate for claude.ai and ZCode.
+
+- **Layout**: `.omp/AGENTS.md` (local project structure), `.omp/RULES.md` (test-running rules), `.omp/config.yml` (memory backend + autolearn), `.omp/skills/{playwright-testing,skill,sonarqube-workflow}` — **symlinks** into `skills/`, so both harnesses read one canonical copy. Never duplicate a skill into `.omp/skills/`.
+- **Sandbox**: `~/GitHub/omp-mods/safe-omp/safe-omp.sh` (`bwrap`). Binds `~/.local`, `~/.omp`, and the project read-write; `archive/`, `scripts/tst`, `.omp/`, `skills/delivery/unpack.sh` read-only. The restricted SSH profile (`~/.agent-tools/limited-entry/`) is bound read-only at `~/.ssh`, so `agent-tst` works from inside the sandbox and the master key is unreachable.
+- **Verification**: `agent-tst -g landing` → 6 passed (chromium/firefox/webkit), Oct 7, 2026 — `agent-tst` is live.
+- **Syncthing sync messaging (Oct 7, 2026)**: `scripts/tst` skips its sync block when `-g` is present (the scoped-run shortcut saves a full rescan + poll). It used to fall through to the no-key warning (`could not read Syncthing API key`) whenever `-g` was passed, which read as a failure when sync was working. Fixed with a distinct `tst: scoped run (-g) — skipping Syncthing sync check` branch — **applied Oct 7, 2026**. Unscoped runs (`agent-tst --list`) reach the Server sync block and report `sync complete (idle, 0 needBytes)`.
+- **Host Syncthing API reachable from the sandbox**: `127.0.0.1:8384` returns 403 without a key and 200 with one; `POST /rest/db/scan` completes (~10s), so the Server-side sync check needs no extra bind.
+- **`scripts/agent-sync` (new, Oct 7, 2026)** — self-contained Syncthing force-push for the sandbox: rescan the LineByLine folder on the local instance, then wait for the Server to report `completion 100 / needBytes 0`. Auto-detects the folder id, API key, and peer device (the SSH `HostName` matched against Syncthing's connection addresses). Exits non-zero on timeout. Run it before `agent-tst` when the Server must see the current tree. Smoke-tested from inside `bwrap`: 12s, `Server is up to date`. Symlinked as `~/.local/bin/agent-sync`.
+- **`.omp/skills/*` symlinks are relative** (`../../skills/<name>`) so they survive a clone at any path — applied Oct 7, 2026 (they were absolute and broke elsewhere).
 
 ## Project invariants
 

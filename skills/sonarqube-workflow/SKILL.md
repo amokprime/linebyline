@@ -1,6 +1,6 @@
 ---
 name: sonarqube-workflow
-description: Triage SonarCloud and CodeQL findings for the LineByLine project and guide remediation. Use this skill whenever the user uploads a `sie` Markdown report (or a legacy `sonar-export` zip), asks about SonarCloud/CodeQL findings, mentions rules like S3776/S2004/S7761/S6819/S7927 or `py/...` CodeQL rule keys, needs help deciding whether to fix or mark as Won't Fix, or wants to plan a remediation pass before writing any code. Also use when the sandbox API is the only path (the user's `sie` run failed, or a quick staleness cross-check is needed mid-triage).
+description: Triage SonarCloud and CodeQL findings for the LineByLine project and guide remediation. Use this skill whenever the user uploads a `sie` Markdown report (or a legacy `sonar-export` zip), asks about SonarCloud/CodeQL findings, mentions rules like S3776/S2004/S7761/S6819/S7927/S6506 or `py/...` CodeQL rule keys, needs help deciding whether to fix or mark as Won't Fix, or wants to plan a remediation pass before writing any code. Also use when the sandbox API is the only path (the user's `sie` run failed, or a quick staleness cross-check is needed mid-triage).
 ---
 
 SonarCloud and CodeQL scans run on every push via GitHub Actions. The user runs `sie` (the consolidated `sonar-issue-exporter` CLI) locally and uploads the Markdown report — it includes both SonarCloud issues and CodeQL code-scanning alerts in one file, plus the rule "Why"/"How to fix it" rationale when `SONAR_API_KEY` is set. The sandbox cannot authenticate with GitHub or SonarCloud, so it cannot fetch the Why/How rationale, CodeQL alerts, or push back to a build loop on its own. When `sie` is unavailable (script failed, partial fetch, or you need a quick staleness check on a specific issue key), fall back to the public SonarCloud JSON API — it covers issue enumeration but not the rest.
@@ -123,6 +123,9 @@ Shell rules (target `scripts/*.sh`):
 | `shelldre:S7682` | Explicit return | Add `return 0` / `return N` to shell functions | Low — but Won't Fix when the function's exit status is intentionally its last command's (e.g. `.base.sh`'s snippet caller, where masking a zip failure would copy missing output) |
 | `shelldre:S7679` | Positional params → locals | `local foo="$1"` at function top | Low |
 | `shelldre:S7688` | `[` → `[[` | Use bash `[[` for conditionals | Low |
+| `shell:S6506` | Enforce TLS on downloads (VULNERABILITY) | Add `--proto "=https" --proto-redir "=https"` to a redirect-following `curl` (`-L`/`--location`); add `--max-redirect=0` to `wget` | Low — mechanical, but **both** curl flags are required: `--proto` gates the initial request while `--proto-redir` gates redirect hops, and `--proto-redir` defaults to `http+https+ftp+ftps`, so `--proto "=https"` alone still permits an HTTPS→HTTP redirect (verified empirically) |
+
+Analyzer prefixes differ within shell rules: **code smells** come from ShellCheck and use the `shelldre:` prefix, while **vulnerability** rules use the `shell:` prefix. Match the exact key from the report rather than assuming a prefix.
 
 Vue / web rules (target `src/components/*.vue`):
 
@@ -166,6 +169,17 @@ shelldre:S7682 (explicit return) — Won't Fix for `.base.sh`'s snippet-caller f
 
 shelldre:S7688 (`[` → `[[`) — always fix. `[[` is bash's safer test: no word splitting, no pathname expansion on variables, supports `&&`/`||` inside, and is generally preferred for conditional tests. Mechanical: `if [ ! -f "$src" ]` → `if [[ ! -f "$src" ]]`.
 
+shell:S6506 (enforce HTTPS on downloads) — always fix; this is a **blocking** VULNERABILITY, so comply fully (see the blocking-vs-non-blocking disposition above) rather than reasoning around it. A `curl -L`/`--location` that follows redirects can be silently downgraded to plain HTTP by the server, exposing the transfer to interception and modification; the danger is highest when the payload is a binary or script that then executes (supply-chain path).
+
+- Minimum compliant fix per Sonar's own guidance is `--proto "=https"`. Prefer adding **both** `--proto "=https"` and `--proto-redir "=https"` — the former only gates the initial request, the latter gates redirect hops.
+- Quote the value as `"=https"` to mirror Sonar's own example; the leading `=` is the whitelist sigil (without it the protocol list is a blacklist). Quoting is stylistic — an unquoted `--proto =https` also reaches curl intact, since shells do not treat `=https` as an assignment — but quoting is the documented form and survives shellcheck/future edits.
+- `wget` cannot restrict redirect protocols at all: either switch the call to `curl` or add `--max-redirect=0` (disables redirect following entirely — verify the URL does not legitimately redirect first).
+- When the URL is derived from an untrusted source (an upload response, a scraped page), failing closed is correct: curl exits nonzero, the pipeline yields empty output, and the existing fallback path runs. Confirm the fallback still degrades gracefully before shipping.
+
+Applied Oct 7, 2026 (PR #11): `scripts/.setup-sandbox.sh:147` (ShellCheck static-binary download) and `skills/delivery/scripts/prepare.sh:230` (tmpfiles.org page fetch, where `$page_url` comes from the upload response). Both verified with `bash -n` + `shellcheck` (rc 0) and a live `https`→`http` redirect test showing the transfer fails closed.
+
+Note: `scripts/**` and `skills/**` are in `sonar.coverage.exclusions`, not `sonar.exclusions` — coverage exclusions shrink the coverage metric only, so shell rules still analyze these files. A file being "excluded from Sonar coverage to reduce noise" does not mean it is excluded from analysis.
+
 Web:S6819 (ARIA role → native element) — fix when the native element's interaction model fully covers the use case (e.g. `div[role=button]` → `<button type=button>`). Won't Fix when the element has a custom mouse/keyboard interaction model that can't be a native input (e.g. `#progress-wrap` seek bar with mousedown+drag+wheel). Document the Won't Fix rationale and mark Accept in the SonarCloud UI.
 
 Web:S7927 (accessible name contains visible label) — False Positive for icon-only buttons whose `aria-label` can't contain an emoji glyph (e.g. theme toggle button with Vue-interpolated emoji). The emoji siblings go unflagged only because their content is a static character. `aria-label` is the correct accessible name for icon-only buttons (WCAG / aria-accessibility skill Rule 8).
@@ -185,7 +199,7 @@ Group accepted fixes by section (use the linebyline-section-index skill to find 
 3. Helper extraction for nesting depth (S2004)
 4. Cognitive complexity reduction (S3776) — most invasive, do last
 5. Workflow-file rules (S6505, S8543, S7631) — independent of app code, can be done in any order
-6. Shell-script rules (S7682, S7679, S7688) — independent of app code
+6. Shell-script rules (S7682, S7679, S7688, S6506) — independent of app code. Do S6506 (HTTPS enforcement) as its own small pass: it is the only blocking rule in this group, so verify it lands before the non-blocking shell smells that share the same files.
 7. Vue/web rules (S6819, S7927, InputWithoutLabelCheck) — coordinate with the aria-accessibility skill
 8. CodeQL alerts — assess per rule; same triage logic as SonarCloud
 
@@ -245,6 +259,7 @@ False positive summary
 | Fork-code in workflow that only merges verified main commits | githubactions:S7631 | False Positive — workflow never executes the event SHA |
 | `|| {}` after spread is dead code | S7744 | Fix — drop the `|| {}` |
 | Script injection via `${{ inputs.* }}` in `run:` blocks | githubactions:S7630 | Fix — move to `env:` + `$VAR` shell expansion |
+| Redirect-following `curl`/`wget` download | shell:S6506 | Fix — `--proto "=https" --proto-redir "=https"` on curl; `--max-redirect=0` or switch to curl for wget. Blocking: comply, don't bypass |
 
 ---
 

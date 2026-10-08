@@ -1,7 +1,7 @@
 
 ## Fedora 44
 
-> **Sandbox note (Tranche 4.6, Sep 2026)**: this document describes the **user-side** Playwright workflow (SSH + Syncthing + Podman on the Server). The chat.z.ai web-channel sandbox CANNOT SSH and cannot invoke `tst`/`tst-locked`/`agent-tst`. For sandbox-side sample Playwright tests, see `AGENTS.md` → "Sample Playwright tests in sandbox" (uses the `playwright` package directly against `vite preview`). The `agent-tst` restricted-key path was a legacy OMP/ZCode artifact, dropped in Tranche 4.6.
+> **Sandbox note (Tranche 4.6, Sep 2026)**: this document describes the **user-side** Playwright workflow (SSH + Syncthing + Podman on the Server). The chat.z.ai web-channel sandbox CANNOT SSH and cannot invoke `tst`/`tst-locked`/`agent-tst`. For sandbox-side sample Playwright tests, see `AGENTS.md` → "Sample Playwright tests in sandbox" (uses the `playwright` package directly against `vite preview`). The `agent-tst` restricted-key path belongs to the **local OMP harness** (active again since Oct 7, 2026: `.omp/` re-added, sandbox launched by `~/GitHub/omp-mods/safe-omp/safe-omp.sh`), which can invoke the Server-side suite.
 
 ### Headless — SSH + Syncthing workflow (primary)
 
