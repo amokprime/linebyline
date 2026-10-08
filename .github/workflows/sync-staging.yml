@@ -3,6 +3,10 @@ name: Sync staging with main
 # Merges a CI-verified main commit into staging. Triggered by workflow_run
 # (not push) so it can only run after CI finishes; the gate step refuses to
 # merge unless all three CI workflows succeeded for that exact commit SHA.
+#
+# One-way (main -> staging) only: this job NEVER writes to main, and the CI
+# verdict is scoped to push runs on main so PR/cron/dispatch runs for the same
+# SHA can never feed the gate or drag staging-only work toward main.
 
 on:
   workflow_run:
@@ -42,12 +46,18 @@ jobs:
               exit 1 ;;
           esac
 
-          runs="$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100")"
+          # Slim the payload server-side and feed jq via stdin: full run objects
+          # passed through argv hit the runner's ARG_MAX ("Argument list too long").
+          # event=push&branch=main keeps the verdict to main-branch push CI; the
+          # same SHA can also carry pull_request/schedule/workflow_dispatch runs
+          # (and Playwright staging-push runs) which must not decide the gate.
+          runs="$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&event=push&branch=main&per_page=100" \
+            --jq '[.workflow_runs[] | {name, run_number, status, conclusion}]')"
           pending=""
           for wf in "Playwright Tests" "CodeQL Advanced" "SonarCloud analysis"; do
-            conclusion="$(jq -rn --argjson runs "$runs" --arg wf "$wf" '
-              ($runs.workflow_runs | map(select(.name == $wf)) | sort_by(.run_number) | last)
-              | if . == null then "missing" else (.conclusion // .status) end')"
+            conclusion="$(jq -r --arg wf "$wf" '
+              (map(select(.name == $wf)) | sort_by(.run_number) | last)
+              | if . == null then "missing" else (.conclusion // .status) end' <<<"$runs")"
             case "$conclusion" in
               success|skipped)
                 echo "$wf: $conclusion" ;;

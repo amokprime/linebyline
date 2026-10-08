@@ -1,44 +1,17 @@
-## LineByLine project context
-
-This file is the OMP-native `.omp/AGENTS.md` for the project. Edit project context here, not in `ai/chat.z.ai/`. Other files in this slot:
-- `.omp/RULES.md` — sticky hard rules (test wrapper, sandbox, key handling)
-- `.omp/skills/<name>/SKILL.md` — authored project skills (the `native` provider, priority 100; canonical OMP-native location)
-
+The front-facing context files in this repo are designed for a cloud sandbox agent (chat.z.ai) that builds and tests most code. You (the OMP agent) will work with the existing local checkout of the same repo (`~/GitHub/linebyline/`, literally this project) for relatively lightweight tasks such as:
+- Troubleshooting bugs that cannot be reproduced in the cloud sandbox (i.e. due to a local environment quirk). Usually this involves scripts, but sometimes test or app code may share the blame.
+- Patching SonarCloud issues when the chat.z.ai session is 15+ turns in
+- Updating stale documentation or agent context files
+Therefore, you have your own context files, sandbox rules, and a subset of relevant skills.
 ### Project structure
-- `/` — Project docs for humans. Under certain conditions they should be evaluated for stale references:
-    - `CONTRIBUTING.md` — when a vibecoding workflow changes
-    - `HELP.md` — when App UX changes
-    - `README.md` — when core app features change, originally unplanned features are added
-    - `LIMITATIONS.md` — when the underlying technology (i.e. web architecture, Playwright) experiences a breaking change or uplift
-    - `SECURITY.md` — when the app code file splits up, changes languages, or moves folders
-    - `CREDITS.md` — when new licensed content or services are used
-- `.pi/trash/files/` — Recover project files you deleted (from the `@piotr-oles/pi-trash` OMP plugin)
-- `.stversions/`, `.trash/` — Recover files the user deleted manually
-- `.github/` — Issues templates and GitHub Actions `.yml` workflows
-- `ai/` — Vibecoding instructions and tools for humans
-    - `claude.ai/` — Abandoned web chat workflow
-    - `chat.z.ai/` — Web chat workflow used when OMP API providers are down
-    - `omp/` — Setup docs for the OMP harness
-- `.omp/skills/` — Authored project skills, one folder per skill with `SKILL.md` (the `native` discovery provider, priority 100)
-- `archive/` — AI chat transcripts for app code building sessions
-    - `autohotkey/` — Abandoned scripts
-    - `pre-semantic/` — AI chat transcripts for abandoned versions of LineByLine that did not use semver
-    - `semantic/` — AI chat transcripts for older versions of LineByLine that used semver
-    - `modular/` — AI chat transcripts for emerging versions of LineByLine that use semver and are refactored into a modular architecture
-        - plan/ — The plan for refactoring LineByLine
-            - `0-Roadmap.md` — high-level roadmap
-            - `1-Playwright/` — completed roadmap item
-            - `2-Zed-ESLint.md` — completed roadmap item
-- `docs/` — `index.html` single-file LineByLine app code
-- `scratch/` — gitignored scratch directory (renamed from `local/`; the OMP `local://` URL scheme is a separate OMP-internal concept and is unaffected). The `@piotr-oles/pi-reflag` OMP plugin hides gitignored folders from `grep`/`find`; pass full paths or use the `local://` URL scheme. The user drafts prompts at `scratch/scratch.md` — do not save files at that name. Staging files for the OMP `memory.backend: local` seed are at `scratch/lb-seed-*.md` (e.g. `scratch/lb-seed-prompt.md`, `scratch/lb-seed-MEMORY.md`); the `scratch/` directory and the OMP `local` backend are unrelated.
-- `security/` — Older collection of security disclosures — false positives in hindsight. Update when a genuinely scary incident occurs (beyond Dependabot warning to bump versions)
-- `tests/` — Playwright test suite for the project and supporting docs for humans
-
-### Scratch directory rules
-- Do not save files at `scratch/scratch.md` — the user drafts prompts there; the filename will collide.
-
-### Coding and testing
-- Don't put large comment blocks in code files. Separate documentation from source.
-- Run tests to cover the blast radius of code patches (i.e. with `agent-tst -g`)
-- Suggest new Playwright tests to cover new app features
-- Run the entire `agent-tst` Playwright suite before presenting work for the user to commit
+- `/` — Project docs for humans (`CONTRIBUTING.md`, `HELP.md`, `README.md`, `LIMITATIONS.md`, `SECURITY.md`, `CREDITS.md`, `AGENTS.md`, `MEMORY.md`). Evaluate for stale references when the relevant area changes.
+- `.github/` — Issue templates and GitHub Actions workflows (`codeql.yml`, `playwright.yml`, `sonarcloud.yml`, `deploy.yml`, `sync-staging.yml`).
+- `ai/` — Vibecoding docs for humans: `README.md`, `Vibecoding workflow.md` (the high-level workflow flowcharts with division of labor), `Diagrammo flowcharts.md` (syntax reference for the `dgmo` codeblocks), `templates/` (blank Obsidian transcript templates for archiving chat sessions).
+- `archive/` — AI chat transcripts and historical artifacts: `archive/modular/` (modular refactor plan + transcripts), `archive/semantic/` (pre-modular transcripts + Sonar issue exports), `archive/tests/` (test-writing transcripts), `archive/skills/` (skill-creation transcripts), `archive/scripts/` (script-creation transcripts + `autohotkey/`).
+- `docs/` — `index.html` single-file LineByLine app code (the live monolith, pre-modular-refactor). This folder is also the GitHub Pages source until the Phase E cutover switches to `dist/`.
+- `scripts/` — fish functions (`fish/tst.fish`, `fish/tsta.fish`, `fish/cgn.fish`, `fish/srv.fish`) and `README.md`
+- `src/` — Modular Vite + Vue + Tailwind + shadcn-vue app (refactor in progress; see `ROADMAP.md`).
+- `skills/`—The cloud agent's skill folder
+	- `skills/delivery/scripts/`—Scripts used to quickly "install" files the cloud agent generated and packaged into a `deliver.zip` for download
+- `tests/` — Playwright test suite and supporting docs (`SSH_SETUP.md`, `PLAYWRIGHT_SETUP.md`, `FAILURES.md`, `MANUAL.md`).
+- `scratch/` — gitignored scratch directory. The user drafts prompts at `scratch/scratch.md` — do not save files at that name (collision).

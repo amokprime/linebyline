@@ -1,0 +1,23 @@
+{
+  "rule": "Web:S7927",
+  "component": "amokprime_linebyline:src/components/MenuBar.vue",
+  "line": 116,
+  "textRange": {
+    "startLine": 116,
+    "endLine": 121,
+    "startOffset": 4,
+    "endOffset": 5
+  },
+  "message": "The accessible name should be part of the visible label.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "HIGH"
+    }
+  ],
+  "flows": []
+}

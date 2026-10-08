@@ -138,3 +138,63 @@ test("merge", async ({ page, media, importSecondary }) => {
     "merge-after-textarea.txt",
   );
 });
+// Tranche 4.5 — undo debounce timing. Covers 4 MANUAL.md cases.
+test("typing-debounce-fast-inline", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").pressSequentially("abc");
+  await page.waitForTimeout(250);
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});
+
+test("typing-debounce-slow-inline", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  for (const ch of ["a", "b", "c"]) {
+    await page.keyboard.type(ch);
+    await page.waitForTimeout(200);
+  }
+  await page.waitForTimeout(250);
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META + "ab");
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META + "a");
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});
+
+test("typing-debounce-fast-newlines", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  // Use pressSequentially for the whole sequence — separate keyboard.type/
+  // keyboard.press API calls are slow on webkit in Podman (each call takes
+  // >100ms to dispatch), and the gap between calls exceeds the 150ms debounce
+  // timer, causing a snapshot to fire mid-sequence. pressSequentially
+  // dispatches all characters in one API call with minimal inter-character
+  // delay, keeping the gap well under 150ms. \n is dispatched as Enter
+  // (e.key === "Enter"), so handleEnterTrim fires normally.
+  // Same root cause as intervals.spec.js:typing-debounce-1 (MEMORY.md → Sep 2026).
+  await page.locator("#main-textarea").pressSequentially("a\nb\nc");
+  await page.waitForTimeout(250);
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});
+
+test("typing-debounce-slow-newlines", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  await page.keyboard.type("a");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(200);
+  await page.keyboard.type("b");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(200);
+  await page.keyboard.type("c");
+  await page.waitForTimeout(250);
+  for (let i = 0; i < 4; i++) await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META + "a");
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});

@@ -133,13 +133,13 @@ test("paste-secondary", async ({
   workaroundPaste: _workaroundPaste,
 }) => {
   await page.keyboard.press("Control+4");
-  await page.getByLabel("Secondary 1 lyrics").click();
+  await page.getByRole("textbox", { name: "Secondary 1 lyrics" }).click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("plain_french.lrc"));
   await page.waitForTimeout(50);
   await page.keyboard.press("Control+v");
-  expect(await page.getByLabel("Secondary 1 lyrics").inputValue()).toMatchSnapshot(
+  expect(await page.getByRole("textbox", { name: "Secondary 1 lyrics" }).inputValue()).toMatchSnapshot(
     "paste-secondary.txt",
   );
 });
@@ -223,4 +223,16 @@ test("naughty-strings", async ({ page }) => {
     await page.keyboard.press("Control+a");
     await page.keyboard.press("Backspace");
   }
+});
+// Tranche 4.5 — 10k line import blocking. Covers MANUAL.md "Open 10k_lines.lrc
+// and verify a blocking popup appears and does not allow importing".
+test("import-10k-blocking", async ({ page, media }) => {
+  page.on("dialog", async (dialog) => {
+    expect(dialog.message()).toMatch(/exceeds.*500.*line/i);
+    await dialog.dismiss();
+  });
+  await page.locator("#file-picker").setInputFiles([media("10k_lines.lrc")]);
+  await expect(page.locator("#main-textarea")).toHaveValue(
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n",
+  );
 });

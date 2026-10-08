@@ -1,0 +1,49 @@
+# ~/.config/espanso/match/linebyline.yml
+# Tranche 4.6 (Sep 29, 2026) — pointer-based context loading.
+# Skills auto-load via .setup-sandbox.sh; snippets only list non-skill files.
+# Hardlink to scripts/espanso/linebyline.yml to keep both copies in sync.
+matches:
+  - trigger: ":clm"
+    replace: "Clone the main branch of my repo, https://github.com/amokprime/linebyline.\n"
+  - trigger: ":cls"
+    replace: "Clone the staging branch of my repo, https://github.com/amokprime/linebyline.\n"
+  - trigger: ":onb"
+    replace: |
+      Clone the staging branch of my repo, https://github.com/amokprime/linebyline. Then read and run `bash scripts/.setup-sandbox.sh` from the repo folder — this installs the project skills into the sandbox's available_skills so their descriptions auto-load (invoke via `Skill(command="name")` instead of Read). Then read these from the repo folder:
+      ```
+      package.json
+      README.md
+      AGENTS.md
+      MEMORY.md
+      ROADMAP.md
+      skills/delivery/scripts/prepare.sh
+      skills/delivery/scripts/deploy.sh
+      skills/delivery/scripts/unpack.sh
+      ```
+# This could be a build turn with test verification, or a test-writing turn grounded in app code. Either way, code changes happen. LIMITATIONS moved here since app code changes are the direct cause of limitation uplift or regression. AGENTS is silently re-read.
+  - trigger: ":code"
+    replace: |
+      Read these from the `linebyline/` repo folder:
+      ```
+      LIMITATIONS.md
+      docs/index.html
+      Everything in src/
+      eslint.config.mjs
+      vite.config.mts
+      tsconfig.json
+      tsconfig.app.json
+      tsconfig.node.json
+      tsconfig.vitest.json
+      Everything in tests/unit/ and tests/helpers/
+      ```
+  - trigger: ":skl"
+    replace: |
+      Read these from the `linebyline/` repo folder (Skills meta-session — work on agent scaffolding):
+      ```
+      CONTRIBUTING.md
+      MEMORY.md
+      Everything in skills/ except skills/{linebyline,skill,delivery}/SKILL.md (auto-loaded via .setup-sandbox.sh)
+      Everything in scripts/
+      Everything in ai/ except ai/templates/
+      ```
+      (Historical skill-creation transcripts are at `archive/skills/`; script-creation transcripts at `archive/scripts/`; test-creation transcripts at `archive/tests/` — read those if directly relevant to the meta-work being done.)

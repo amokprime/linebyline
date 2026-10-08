@@ -9,10 +9,14 @@ test('link-hrefs', async ({ page }) => {
   );
 });
 
+// Tranche 4.5 — structural assertion + screenshot (secondary visual check).
 test('theme-toggle', async ({ page }) => {
+  await expect(page.locator('html')).not.toHaveClass(/dark/);
   await page.keyboard.press('Control+.');
+  await expect(page.locator('html')).toHaveClass(/dark/);
   await expect(page).toHaveScreenshot('dark-mode.png');
   await page.keyboard.press('Control+.');
+  await expect(page.locator('html')).not.toHaveClass(/dark/);
   await expect(page).toHaveScreenshot('light-mode.png');
 });
 

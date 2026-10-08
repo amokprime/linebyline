@@ -1,0 +1,44 @@
+{
+  "key": "AaB4pk4RDk5q6SaK23Iw",
+  "rule": "typescript:S6594",
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:src/utils/pasteHandlers.ts",
+  "project": "amokprime_linebyline",
+  "line": 51,
+  "hash": "d0332ea767c199ab8ff1198488c9f591",
+  "textRange": {
+    "startLine": 51,
+    "endLine": 51,
+    "startOffset": 38,
+    "endOffset": 43
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Use the \"RegExp.exec()\" method instead.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "editable-source",
+    "regex",
+    "type-dependent"
+  ],
+  "creationDate": "2026-09-06T21:34:57+0000",
+  "updateDate": "2026-09-06T21:35:23+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "71df398b-b2fa-4293-9fa9-44ba11067af1",
+  "lastChangeSource": "ANALYSIS"
+}
