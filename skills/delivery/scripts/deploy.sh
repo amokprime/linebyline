@@ -6,7 +6,7 @@
 # Called by unpack.sh after extraction. This file is committed at
 # skills/delivery/scripts/deploy.sh as a template -- each session, the
 # agent fills in the file mappings below and includes the filled-in copy
-# inside deliver.zip. The user's `dpl` fish abbreviation runs unpack.sh which
+# inside deliver.zip. The user double-clicks unpack.sh (or runs it from a terminal), which
 # extracts the zip and calls this script.
 #
 # Output is streamed live to the terminal. A filtered log (errors + summaries)
@@ -33,8 +33,10 @@ mkdir -p "$(dirname "$LOG")"
 # lint_gate.sh BEFORE deploy_file updates it, so the FIRST run after a
 # lint_gate.sh change uses the OLD version. Sourcing from scratch/ avoids
 # this: the zip's copy is always the latest.)
-LINT_GATE_SCRATCH="$SCRATCH/skills-delivery-scripts-lint_gate.sh"
-LINT_GATE_REPO="$DEST/skills/delivery/scripts/lint_gate.sh"
+# lint_gate.sh lives at skills/code-quality/scripts/lint_gate.sh (moved out
+# of delivery/ because it enforces code-quality rules).
+LINT_GATE_SCRATCH="$SCRATCH/skills-code-quality-scripts-lint_gate.sh"
+LINT_GATE_REPO="$DEST/skills/code-quality/scripts/lint_gate.sh"
 if [[ -f "$LINT_GATE_SCRATCH" ]]; then
   # shellcheck disable=SC1090,SC1091
   . "$LINT_GATE_SCRATCH"
@@ -52,9 +54,9 @@ cleanup() {
   local exit_code=$?
   rm -f -- "${RAW:?}" 2>/dev/null || true
   echo ""
-  echo "Done. (exit $exit_code)"
+  echo "  Done. (exit $exit_code)"
   echo ""
-  echo "Done. (exit $exit_code)" >> "$LOG"
+  echo "  Done. (exit $exit_code)" >> "$LOG"
   echo ""
   echo "=== deploy.log (filtered) ==="
   cat "$LOG" 2>/dev/null || true
@@ -99,19 +101,19 @@ deploy_file() {
 
   if [[ ! -f "$src" ]]; then
     skipped_missing+=("$src")
-    echo "skip (missing): $src"
+    echo "  skip (missing): $src" >> "$LOG"
     return 0
   fi
 
   if [[ -f "$dst" ]] && cmp -s "$src" "$dst"; then
     skipped_identical+=("$rel")
-    echo "skip (identical): $rel"
+    echo "  skip (identical): $rel" >> "$LOG"
     rm -- "${src:?}"
   else
     mkdir -p "$(dirname "$dst")"
     # Use cp instead of mv when the destination is hardlinked to another file
-    # (e.g. scripts/espanso/linebyline.yml ↔ ~/.config/espanso/match/linebyline.yml,
-    # or scripts/fish/*.fish ↔ ~/.config/fish/functions/*.fish). cp overwrites the
+    # (e.g. scripts/local/espanso.yml ↔ ~/.config/espanso/match/linebyline.yml,
+    # or scripts/local/*.fish ↔ ~/.config/fish/functions/*.fish). cp overwrites the
     # file contents in place, preserving the inode and its hardlinks. mv would
     # replace the file (new inode), breaking the hardlink.
     # Detect hardlinks by checking if the destination has a link count > 1.
@@ -130,12 +132,12 @@ deploy_file() {
         {
           echo ""
           echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, or scripts/tst,"
+          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
           echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
         } >&2
         {
           echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, or scripts/tst,"
+          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
           echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
         } >> "$LOG"
         exit 1
@@ -148,12 +150,12 @@ deploy_file() {
         {
           echo ""
           echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, or scripts/tst,"
+          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
           echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
         } >&2
         {
           echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, or scripts/tst,"
+          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
           echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
         } >> "$LOG"
         exit 1
@@ -166,25 +168,25 @@ deploy_file() {
       {
         echo ""
         echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-        echo "  (if this is a bwrap --ro-bind path like archive/, .git/, or scripts/tst,"
+        echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
         echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
       } >&2
       {
         echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-        echo "  (if this is a bwrap --ro-bind path like archive/, .git/, or scripts/tst,"
+        echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
         echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
       } >> "$LOG"
       exit 1
     fi
     changed+=("$rel")
-    echo "deployed: $rel"
+    echo "  deployed: $rel" >> "$LOG"
   fi
 }
 
 # deploy_manual: for files in read-only bwrap paths (archive/, .git/,
-# unpack.sh itself, scripts/tst). The bwrap sandbox protects these paths
-# from modification by a malicious deliver.zip. The file is LEFT in
-# scratch/ for the user to copy manually after the deploy completes.
+# unpack.sh itself, scripts/server/ — tst + tst-locked). The bwrap sandbox
+# protects these paths from modification by a malicious deliver.zip. The file
+# is LEFT in scratch/ for the user to copy manually after the deploy completes.
 # Tracks in manual_deploys[] for the deploy summary + collision cleanup skip.
 deploy_manual() {
   local src="$1"
@@ -192,18 +194,18 @@ deploy_manual() {
 
   if [[ ! -f "$src" ]]; then
     skipped_missing+=("$src")
-    echo "skip (missing): $src"
+    echo "  skip (missing): $src" >> "$LOG"
     return 0
   fi
   manual_deploys+=("$src")
-  echo "MANUAL DEPLOY: $rel (bwrap-protected path -- copy after deploy completes)"
-  echo "  cp $SCRATCH/$src $DEST/$rel"
-  echo "MANUAL DEPLOY: $rel (bwrap-protected path)" >> "$LOG"
-  echo "  cp $SCRATCH/$src $DEST/$rel" >> "$LOG"
+  echo "  MANUAL DEPLOY: $rel (bwrap-protected path -- copy after deploy completes)"
+  echo "    cp $SCRATCH/$src $DEST/$rel"
+  echo "  MANUAL DEPLOY: $rel (bwrap-protected path)" >> "$LOG"
+  echo "    cp $SCRATCH/$src $DEST/$rel" >> "$LOG"
 }
 
 # deploy_hardlinked: same as deploy_file but always uses cp (for files known to
-# be hardlinked). Use this for scripts/espanso/linebyline.yml and scripts/fish/*.fish
+# be hardlinked). Use this for scripts/local/espanso.yml and scripts/local/*.fish
 # so the user's hardlinks to ~/.config/ are preserved across deploys.
 deploy_hardlinked() {
   local src="$1"
@@ -212,13 +214,13 @@ deploy_hardlinked() {
 
   if [[ ! -f "$src" ]]; then
     skipped_missing+=("$src")
-    echo "skip (missing): $src"
+    echo "  skip (missing): $src" >> "$LOG"
     return 0
   fi
 
   if [[ -f "$dst" ]] && cmp -s "$src" "$dst"; then
     skipped_identical+=("$rel")
-    echo "skip (identical): $rel"
+    echo "  skip (identical): $rel" >> "$LOG"
     rm -- "${src:?}"
   else
     mkdir -p "$(dirname "$dst")"
@@ -230,13 +232,13 @@ deploy_hardlinked() {
     if [[ ! -f "$dst" ]]; then
       echo "" >&2
       echo "ERROR: cannot deploy $rel -- destination is read-only or write failed." >&2
-      echo "  Review the changes and deploy manually, then re-run dpl:" >&2
+      echo "  Review the changes and deploy manually, then re-run unpack.sh:" >&2
       echo "    cp $src $dst" >&2
       echo "" >&2
       exit 1
     fi
     changed+=("$rel")
-    echo "deployed (hardlink-safe): $rel"
+    echo "  deployed (hardlink-safe): $rel" >> "$LOG"
   fi
 }
 
@@ -253,31 +255,31 @@ deploy_hardlinked() {
 # ── Summary ────────────────────────────────────────────────────────────────
 log_section "Deploy Summary"
 {
-  echo "Changed:           ${#changed[@]}"
-  echo "Skipped (same):    ${#skipped_identical[@]}"
-  echo "Skipped (missing): ${#skipped_missing[@]}"
-  echo "Manual deploy:     ${#manual_deploys[@]}"
+  echo "  Changed:           ${#changed[@]}"
+  echo "  Skipped (same):    ${#skipped_identical[@]}"
+  echo "  Skipped (missing): ${#skipped_missing[@]}"
+  echo "  Manual deploy:     ${#manual_deploys[@]}"
 } | tee -a "$LOG"
 
 if [[ ${#changed[@]} -gt 0 ]]; then
   echo ""
-  echo "Changed files:"
+  echo "  Changed files:"
   echo "" >> "$LOG"
-  echo "Changed files:" >> "$LOG"
+  echo "  Changed files:" >> "$LOG"
   for f in "${changed[@]}"; do
-    echo "  $f"
-    echo "  $f" >> "$LOG"
+    echo "    $f"
+    echo "    $f" >> "$LOG"
   done
 fi
 
 if [[ ${#manual_deploys[@]} -gt 0 ]]; then
   echo ""
-  echo "Manual deploy files (bwrap-protected -- copy after deploy):"
+  echo "  Manual deploy files (bwrap-protected -- copy after deploy):"
   echo "" >> "$LOG"
-  echo "Manual deploy files (bwrap-protected -- copy after deploy):" >> "$LOG"
+  echo "  Manual deploy files (bwrap-protected -- copy after deploy):" >> "$LOG"
   for f in "${manual_deploys[@]}"; do
-    echo "  $f"
-    echo "  $f" >> "$LOG"
+    echo "    $f"
+    echo "    $f" >> "$LOG"
   done
 fi
 
@@ -292,7 +294,7 @@ if ! command -v npm >/dev/null 2>&1; then
   exit 1
 fi
 
-npm install --ignore-scripts 2>&1 | tee "$RAW"
+npm install --ignore-scripts 2>&1 | sed 's/^/  /' | tee "$RAW"
 log_filter
 
 # ── Lint gate (Shellcheck + Ruff + ESLint, shared with prepare.sh) ──────────
@@ -310,9 +312,9 @@ if [[ ${#changed[@]} -gt 0 ]] && type run_lint_gate >/dev/null 2>&1; then
   if ! command -v ruff >/dev/null 2>&1 && \
      ! [[ -x "$HOME/.local/bin/ruff" ]] && \
      ! [[ -x "$DEST/.lint-deps/bin/ruff" ]]; then
-    if [[ -f "$DEST/scripts/.setup-lint-deps.sh" ]]; then
+    if [[ -f "$DEST/skills/delivery/scripts/setup-lint-deps.sh" ]]; then
       echo "  No ruff found — auto-installing .lint-deps/..." | tee -a "$LOG"
-      bash "$DEST/scripts/.setup-lint-deps.sh" "$DEST" 2>&1 | tee -a "$LOG" || true
+      bash "$DEST/skills/delivery/scripts/setup-lint-deps.sh" "$DEST" 2>&1 | tee -a "$LOG" || true
     fi
   fi
 fi
@@ -325,12 +327,12 @@ if [[ ${#changed[@]} -eq 0 ]]; then
     echo ""
     echo "=== Lint gate (Shellcheck + Ruff + ESLint) ==="
     echo "  (skipped: no files changed this deploy)"
-    echo "=== Lint gate: SKIPPED ==="
+    echo "  === Lint gate: SKIPPED ==="
   }
   {
     echo "=== Lint gate (Shellcheck + Ruff + ESLint) ==="
     echo "  (skipped: no files changed this deploy)"
-    echo "=== Lint gate: SKIPPED ==="
+    echo "  === Lint gate: SKIPPED ==="
   } >> "$LOG"
 else
   if type run_lint_gate >/dev/null 2>&1; then
@@ -343,7 +345,7 @@ else
       echo "ERROR: Lint gate failed -- fix the issues above before deploying." >> "$LOG"
       exit 1
     fi
-    echo "Lint gate passed." >> "$LOG"
+    echo "  Lint gate passed." >> "$LOG"
   else
     echo "  (skipped: run_lint_gate not available -- lint_gate.sh not sourced)" >&2
     echo "  (skipped: run_lint_gate not available)" >> "$LOG"
@@ -359,7 +361,15 @@ fi
 # archive/ mv failure in the bwrap sandbox).
 run_pw=0
 for rel in "${changed[@]}" "${skipped_identical[@]}"; do
-  if [[ "$rel" == src/* || "$rel" == tests/* ]]; then
+  # src/ — all files are code, always trigger
+  if [[ "$rel" == src/* ]]; then
+    run_pw=1
+    break
+  fi
+  # tests/ — skip .md docs (SSH_SETUP.md, PLAYWRIGHT_SETUP.md, MANUAL.md,
+  # FAILURES.md); only actual test code (.spec.js, .test.ts, helpers/, etc.)
+  # triggers Playwright/Vitest/Vite build
+  if [[ "$rel" == tests/* && "$rel" != *.md ]]; then
     run_pw=1
     break
   fi
@@ -382,7 +392,7 @@ fi
 if [[ "$run_pw" -eq 1 ]]; then
   log_section "Building Vite dist/"
   run_and_log npm run build
-  echo "dist/ rebuilt." | tee -a "$LOG"
+  echo "  dist/ rebuilt." | tee -a "$LOG"
 else
   log_section "Building Vite dist/"
   echo "  No app/test code in repo -- skipping Vite build." | tee -a "$LOG"
@@ -404,7 +414,7 @@ echo "  Pruned trace.zip + stale artifacts on server." | tee -a "$LOG"
 # behavior -- running the full suite for those would be ~10 min wasted.
 #
 # Pre-Playwright Syncthing sync: if deliver.zip is still in scratch/ (deploy
-# via dpl), trigger a client-side rescan + poll the SERVER device's completion.
+# via unpack.sh), trigger a client-side rescan + poll the SERVER device's completion.
 # This pushes the freshly-deployed files to the server before tests run.
 # If deliver.zip is gone (manual re-run), skip -- the server already has the
 # files. This check lives in deploy.sh (not the server tst) because only the

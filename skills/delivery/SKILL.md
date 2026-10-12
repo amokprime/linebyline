@@ -1,6 +1,6 @@
 ---
 name: delivery
-description: Package and deploy session deliverables from the chat.z.ai sandbox to the user's local LineByLine repo, and the behavioral rules for the chat.z.ai web channel that apply every turn. Use this skill whenever you need to ship files (run `prepare.sh` to zip the download folder, fill out `deploy.sh` with file mappings), when the user mentions `deliver.zip`, `dpl`, `unpack.sh`, the prepare → download → deploy pattern, chat.z.ai, download folder, web chat, Agent mode, uploads, or when the agent is unsure about file visibility, output format, comment density, or when to re-read context after compaction. Also use when linting markdown files for Obsidian prettify issues or splitting overlong bullet lines.
+description: Package and deploy session deliverables from the chat.z.ai sandbox to the user's local LineByLine repo, and the behavioral rules for the chat.z.ai web channel that apply every turn. Use this skill whenever you need to ship files (run `prepare.sh` to zip the download folder, fill out `deploy.sh` with file mappings), when the user mentions `deliver.zip`, `unpack.sh`, the prepare → download → deploy pattern, chat.z.ai, download folder, web chat, Agent mode, uploads, or when the agent is unsure about file visibility, output format, comment density, or when to re-read context after compaction. Also use when linting markdown files for Obsidian prettify issues or splitting overlong bullet lines.
 ---
 
 This skill covers two related concerns: (1) the delivery workflow (prepare → zip → deploy) and the five scripts that automate it, and (2) the chat.z.ai web-channel behavioral rules that apply every turn. The web channel is the only interaction surface — the agent cannot see the user's filesystem directly; deliverables must be copied to `download/` for the user to retrieve. The agent's context window compacts over long sessions, making early-turn instructions less reliable later — re-read this skill mid-session when that happens.
@@ -33,11 +33,17 @@ Output format
 
 Comment density
 
-Avoid 3+ consecutive lines of source comments, both inline and multiline blocks like Python's `""" """`. Instead:
+Large comment blocks in code files are hard to maintain (comments rot faster than code). The rule differs by file type:
 
-- Pair each non-trivial `name.ext` source file with a `name.md` readme, explaining intent, usage, suggested core patches (if a workaround or monkeypatch), and known limitations. If such a file is already provided, use it as a starting point.
-- Don't use readmes as memory dumping grounds — preserve their structure for naive users and developers.
-- Reserve 1-2 line source comments for non-obvious decisions like workarounds, deferred bugs, intentional smells.
+- **Component and test files** (e.g. `src/*.vue`, `src/*.ts`, `tests/*.spec.js`): minimal comments. Reserve 1-2 line comments for non-obvious decisions like workarounds, deferred bugs, intentional smells. Don't pedantically document every file — a folder-level `README.md` covering the shared intent of multiple files is better than one readme per file.
+- **Standalone scripts** (e.g. `scripts/unpack.sh`, `skills/delivery/scripts/deploy.sh`): larger header comment blocks are acceptable when they serve a functional purpose — usage examples, env var list, exit codes, or the chain of trust a reader needs before opening the file. But don't write a monolithic wall of text. The patterns to follow:
+    - Lead with a one-line description of what the script does, then a blank line before the longer block.
+    - Group related information into labeled sections (`# Usage:`, `# Env:`, `# Exit codes:`) so a reader can scan to what they need.
+    - For CLI tools with flags, document each flag inline at the argparse/getopts level (Python `help=` strings, Bash `case` blocks with `# -h: show help`) rather than in a single monolithic header — this keeps the help close to the code that implements it.
+    - If the script sources or is sourced by another file, note the dependency in both files (the `# shellcheck source=` directive in Bash, or a `# Depends on:` line).
+    - Keep the header under ~30 lines. If the script needs more documentation than that, it belongs in a paired `README.md` in the same folder.
+
+For documentation that doesn't fit in a comment, pair a folder with a `README.md` (the Notebook Navigator plugin supports a global folder note name — `README.md` is the conventional choice). Several files in a folder may share one README unless it would be massive — then consider splitting the folder into subfolders with their own READMEs, monorepo style. Don't use readmes as memory dumping grounds — preserve their structure for naive users and developers.
 
 Context compaction
 
@@ -47,19 +53,23 @@ The agent has a large native context (~1M tokens) but may compact or re-read upl
 
 Scripts packaged in this skill
 
-All six scripts live at `skills/delivery/scripts/`:
+Four delivery scripts live at `skills/delivery/scripts/`; two setup scripts are co-located here because they install the delivery pipeline's lint dependencies. The user-side `unpack.sh` lives at `scripts/unpack.sh` (it's the user entry point, double-clicked in a file manager); the shared `lint_gate.sh` lives at `skills/code-quality/scripts/` (owned by the code-quality skill).
 
-1. **`prepare.sh`** (sandbox-side, agent-run) — zips all loose files in `/home/z/my-project/download/` into `deliver.zip`, after (a) linting all `*.md` files via `lint_markdown.py`, (b) verifying every file listed in `deploy.sh`'s `deploy_file` calls exists in `download/`, (c) running the shared lint gate (`lint_gate.sh`) on `*.sh` + `*.py` deliverables, and (d) running ESLint + vue-tsc + Vitest in `/home/z/my-project/sandbox/` if a sandbox project tree with `node_modules` exists. Removes loose files after zipping. Also touches `download/` to refresh the chat.z.ai "All files in task" widget.
+1. **`prepare.sh`** (sandbox-side, agent-run) — zips all loose files in `/home/z/my-project/download/` into `deliver.zip`, after (a) linting all `*.md` files via `lint_markdown.py`, (b) verifying every file listed in `deploy.sh`'s `deploy_file` calls exists in `download/`, (c) running the shared lint gate (`skills/code-quality/scripts/lint_gate.sh`) on `*.sh` + `*.py` deliverables, and (d) running ESLint + vue-tsc + Vitest in `/home/z/my-project/sandbox/` if a sandbox project tree with `node_modules` exists. Removes loose files after zipping. Also touches `download/` to refresh the chat.z.ai "All files in task" widget.
 
 2. **`deploy.sh`** (template, agent-filled per session) — deploys files from the extracted zip location to the LineByLine repo, then runs `npm install` + the shared lint gate + Vitest + Vite build + Playwright (via SSH + Syncthing). The agent fills in the `deploy_file <flat> <repo_path>` lines as a checklist. Uses `cmp -s` to skip byte-identical files. The `deploy_file` function auto-detects hardlinked destinations (via `stat -c '%h'`) and uses `cp` instead of `mv` to preserve the hardlink. For files known to be hardlinked, use `deploy_hardlinked` instead. The committed template lives at `skills/delivery/scripts/deploy.sh`; the session copy is ephemeral.
 
-3. **`unpack.sh`** (user-side, run via `dpl` fish abbreviation) — thin wrapper that extracts `deliver.zip` to `scratch/`, snapshots the zip contents to `.deliver-files.list`, runs `deploy.sh`, then cleans up. Must be run from a terminal (not double-clicked) so ssh + npm output is visible.
+3. **`unpack.sh`** (user-side, double-clicked) — thin wrapper that extracts `deliver.zip` to `scratch/`, snapshots the zip contents to `.deliver-files.list`, runs `deploy.sh` inside a bwrap sandbox for extra safety, then cleans up. When double-clicked in a file manager (stdout not a TTY), the script re-launches itself in a popup ghostty window (`ghostty -e bash -c 'LBL_POPUP=1 exec "$@"' _ "$0" "$@"`) so ssh + npm output is visible. The popup stays open after the script finishes (`read -rp "Press Enter..."` gated on `LBL_POPUP=1`). Lives at `scripts/unpack.sh` (not `skills/delivery/scripts/`) because it's the user-side entry point — discoverable at the repo's top-level `scripts/` folder. The bwrap sandbox makes it read-only inside the sandbox, so future edits to `unpack.sh` must be deployed manually (copy the file, don't use deliver.zip) — a malicious `deliver.zip` can't modify the bwrap filter for future runs.
 
 4. **`lint_markdown.py`** (sandbox-side, auto-run by `prepare.sh`) — auto-fixes bare `#identifier` / `[identifier]` outside backticks, normalizes bullet indentation to 4-space steps, auto-fixes `=== text ===` patterns, and warns about `[[wikilink]]` occurrences and bullet lines >400 chars. Skips YAML frontmatter, inline backtick spans, and fenced code blocks.
 
-5. **`lint_gate.sh`** (shared, sourced by both `prepare.sh` and `deploy.sh`) — the blocking lint gate for Bash + Python + JavaScript/TypeScript. Runs Shellcheck on `*.sh` files, Ruff on `*.py` files (autofix via `--fix`, then gate), and ESLint on `src/` (autofix via `--fix`, then gate). Ruff is resolved as PATH → `~/.local/bin/ruff` → `.lint-deps/bin/ruff` → `node_modules/.bin/ruff`; the project-contained `.lint-deps/` copy is installed by `scripts/.setup-lint-deps.sh` (reused by `scripts/.setup-sandbox.sh` in the sandbox and run by `deploy.sh` locally when no system Ruff resolves). Each linter is skipped if not installed or if no matching files exist. Blocking: if any installed linter finds issues after autofix, the function returns 1 and the caller aborts. Both `prepare.sh` (sandbox-side, on deliverables) and `deploy.sh` (user-side, on the repo) source this script so the gate is consistent across both environments.
+5. **`split_bullets.py`** (sandbox-side, manual run) — splits overlong bullet lines (>400 chars) at natural break points. Use when `lint_markdown.py` warns about overlong bullets.
 
-6. **`split_bullets.py`** (sandbox-side, manual run) — splits overlong bullet lines (>400 chars) at natural break points. Use when `lint_markdown.py` warns about overlong bullets.
+6. **`setup-sandbox.sh`** (sandbox-side, one-time per session) — copies project skills into `/home/z/my-project/skills/` so their `description` frontmatter auto-loads into the system prompt's `available_skills` list. Also installs Shellcheck (npm package + static binary fallback) and Ruff (via `setup-lint-deps.sh`). Idempotent; re-run if the sandbox resets. Lives at `skills/delivery/scripts/` because it installs the delivery pipeline's dependencies (skills + lint tools) — the delivery workflow can't run without them.
+
+7. **`setup-lint-deps.sh`** (sandbox-side + user-side) — installs Python lint tools (ruff) into a project-contained venv at `.lint-deps/`. Called by `setup-sandbox.sh` (sandbox-side) and `deploy.sh` (user-side, auto-installs when no system ruff resolves). Uses `uv` if available, falls back to `python3 -m venv` + `pip`. Idempotent.
+
+The shared **`lint_gate.sh`** (Shellcheck + Ruff + ESLint) lives at `skills/code-quality/scripts/lint_gate.sh` — see `code-quality-SKILL.md` → "Bash workflow scripts" for its behavior.
 
 ---
 
@@ -69,7 +79,7 @@ Workflow (high-level)
 2. Place all deliverables in `/home/z/my-project/download/` with flat hyphenated names (e.g. `src-composables-useAudio.ts`, not `src/composables/useAudio.ts`).
 3. Place the filled-in `deploy.sh` in `download/` too (it gets included in the zip).
 4. Run `bash /home/z/my-project/scripts/prepare.sh` (or wherever the sandbox-side copy lives). The script lints, verifies, runs Shellcheck + ESLint/Vitest if available, zips everything into `deliver.zip`, touches `download/` to refresh the widget, and removes the loose files.
-5. The user downloads `deliver.zip` (via the "All files in task" widget, or from https://tmpfiles.org if the widget is broken), runs `dpl` (which runs `unpack.sh`), which extracts, runs `deploy.sh`, and cleans up.
+5. The user downloads `deliver.zip` (via the "All files in task" widget, or from https://tmpfiles.org if the widget is broken), double-clicks `scripts/unpack.sh` (or runs it from a terminal), which extracts, runs `deploy.sh`, and cleans up.
 
 ---
 
@@ -96,12 +106,13 @@ The chat.z.ai sandbox and the user's local machine are different environments. C
 | SonarCloud / CodeQL | Public JSON API only (no Why/How, no CodeQL) | `sie` CLI; produces Markdown report combining both |
 | GitHub CLI | NOT available — sandbox can't auth | `gh`; PR checks, failed runs, Dependabot alerts |
 
-The user-side `tst`/`tsta`/`cgn` fish functions live at `scripts/fish/` for reference but cannot be invoked from the sandbox.
+The user-side `tst`/`tsta`/`cgn` fish functions live at `scripts/local/` for reference but cannot be invoked from the sandbox. The bash `tst`, `agent-tst`, and `agent-sync` scripts (server-side and OMP-side Playwright runners) live at `skills/playwright-testing/scripts/` — see `playwright-testing-SKILL.md` for details.
 
 ---
 
 Cross-references
 
 - `linebyline-SKILL.md` → "Download copy" — the brief download-folder rules; this skill has the full deliver-zip protocol + linter details.
-- `code-quality-SKILL.md` → "Bash workflow scripts" — the bash patterns all five scripts follow (`set -euo pipefail`, `${var:?}` guards, scoped cleanup, no line continuations in quoted strings).
+- `code-quality-SKILL.md` → "Bash workflow scripts" — the bash patterns all delivery scripts follow (`set -euo pipefail`, `${var:?}` guards, scoped cleanup, no line continuations in quoted strings) and the `lint_gate.sh` behavior (owned by the code-quality skill at `skills/code-quality/scripts/lint_gate.sh`).
+- `ROADMAP.md` → "Deploy Workflow" (item 1) + "Phase E — Verify and Swap" — the post-cutover build pipeline. `dist/` is gitignored (never committed); the `deploy.yml` GitHub Actions workflow rebuilds it on the ubuntu-runner from `src/` on every push to `main`, then deploys via `actions/deploy-pages`. Pre-cutover, `deploy.sh` builds `dist/` locally (via `npm run build`) for Playwright verification against the Vite preview. Post-cutover, the local `deploy.sh` build is for verification only; the CI `deploy.yml` build is what ships to GitHub Pages.
 

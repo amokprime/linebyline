@@ -120,7 +120,7 @@ Shell rules (target `scripts/*.sh`):
 
 | Rule | Name | Typical fix | False positive risk |
 |---|---|---|---|
-| `shelldre:S7682` | Explicit return | Add `return 0` / `return N` to shell functions | Low — but Won't Fix when the function's exit status is intentionally its last command's (e.g. `.base.sh`'s snippet caller, where masking a zip failure would copy missing output) |
+| `shelldre:S7682` | Explicit return | Add `return 0` / `return N` to shell functions | Low — but Won't Fix when the function's exit status is intentionally its last command's (e.g. a wrapper that should propagate a zip failure, where an explicit `return 0` would mask it) |
 | `shelldre:S7679` | Positional params → locals | `local foo="$1"` at function top | Low |
 | `shelldre:S7688` | `[` → `[[` | Use bash `[[` for conditionals | Low |
 | `shell:S6506` | Enforce TLS on downloads (VULNERABILITY) | Add `--proto "=https" --proto-redir "=https"` to a redirect-following `curl` (`-L`/`--location`); add `--max-redirect=0` to `wget` | Low — mechanical, but **both** curl flags are required: `--proto` gates the initial request while `--proto-redir` gates redirect hops, and `--proto-redir` defaults to `http+https+ftp+ftps`, so `--proto "=https"` alone still permits an HTTPS→HTTP redirect (verified empirically) |
@@ -165,7 +165,7 @@ githubactions:S7631 (fork-code) — Won't Fix when the workflow only merges comm
 
 githubactions:S7630 (script injection via workflow inputs) — fix by moving every `${{ inputs.* }}` interpolation in a `run:` block into the step's `env:` block, then referencing it as `$VAR` (shell variable expansion). Example: `run: ./bin/test ${{ inputs.filter }}` → `env: FILTER: ${{ inputs.filter }}` + `run: ./bin/test $FILTER`. The `env:` assignment still uses GitHub expression syntax, but the shell receives the value as a literal string (variable expansion, not expression re-evaluation), so shell metacharacters in the input can't inject commands. Applied to `playwright-snapshot-regen.yml` (Sep 24, 2026): 4 instances at L41 (`test_filter`), L54/L56/L57 (`target_branch`) all fixed via `env: TEST_FILTER:` / `env: TARGET_BRANCH:` + `$TEST_FILTER` / `$TARGET_BRANCH` in the shell. The `Filter: ${TEST_FILTER:-(all tests)}` in the commit message is also shell expansion (safe), not a GitHub expression.
 
-shelldre:S7682 (explicit return) — Won't Fix for `.base.sh`'s snippet-caller functions where the exit status is intentionally the last command's (zip); an explicit `return 0` would mask a zip failure and copy missing output. Fix elsewhere.
+shelldre:S7682 (explicit return) — Won't Fix for wrapper functions where the exit status is intentionally the last command's (e.g. a zip-and-copy wrapper that should propagate a zip failure); an explicit `return 0` would mask the failure and let downstream copy a missing file. Fix elsewhere.
 
 shelldre:S7688 (`[` → `[[`) — always fix. `[[` is bash's safer test: no word splitting, no pathname expansion on variables, supports `&&`/`||` inside, and is generally preferred for conditional tests. Mechanical: `if [ ! -f "$src" ]` → `if [[ ! -f "$src" ]]`.
 
@@ -176,7 +176,7 @@ shell:S6506 (enforce HTTPS on downloads) — always fix; this is a **blocking** 
 - `wget` cannot restrict redirect protocols at all: either switch the call to `curl` or add `--max-redirect=0` (disables redirect following entirely — verify the URL does not legitimately redirect first).
 - When the URL is derived from an untrusted source (an upload response, a scraped page), failing closed is correct: curl exits nonzero, the pipeline yields empty output, and the existing fallback path runs. Confirm the fallback still degrades gracefully before shipping.
 
-Applied Oct 7, 2026 (PR #11): `scripts/.setup-sandbox.sh:147` (ShellCheck static-binary download) and `skills/delivery/scripts/prepare.sh:230` (tmpfiles.org page fetch, where `$page_url` comes from the upload response). Both verified with `bash -n` + `shellcheck` (rc 0) and a live `https`→`http` redirect test showing the transfer fails closed.
+Applied Oct 7, 2026 (PR #11): the ShellCheck static-binary download in `setup-sandbox.sh` (was `scripts/.setup-sandbox.sh:147`, now at `skills/delivery/scripts/setup-sandbox.sh` — line number is a point-in-time reference) and `skills/delivery/scripts/prepare.sh:230` (tmpfiles.org page fetch, where `$page_url` comes from the upload response). Both verified with `bash -n` + `shellcheck` (rc 0) and a live `https`→`http` redirect test showing the transfer fails closed.
 
 Note: `scripts/**` and `skills/**` are in `sonar.coverage.exclusions`, not `sonar.exclusions` — coverage exclusions shrink the coverage metric only, so shell rules still analyze these files. A file being "excluded from Sonar coverage to reduce noise" does not mean it is excluded from analysis.
 

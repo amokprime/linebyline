@@ -1,5 +1,5 @@
 #!/bin/bash
-# .setup-lint-deps.sh — install Python lint tools (ruff) into a project-contained
+# setup-lint-deps.sh — install Python lint tools (ruff) into a project-contained
 # venv at .lint-deps/. Works both sandbox-side (chat.z.ai) and locally.
 #
 # Uses `uv` if available (faster), falls back to `python3 -m venv` + `pip`.
@@ -13,13 +13,16 @@
 # (which uses a bare #!/usr/bin/python3 shebang + ambient package discovery).
 #
 # Called by:
-#   - scripts/.setup-sandbox.sh (delegates its pip block here)
+#   - skills/delivery/scripts/setup-sandbox.sh (delegates its pip block here)
 #   - skills/delivery/scripts/deploy.sh (auto-installs when no system ruff)
-#   - manually: bash scripts/.setup-lint-deps.sh
+#   - manually: bash skills/delivery/scripts/setup-lint-deps.sh
 
 set -euo pipefail
 
-repo_root="${1:-${LINEBYLINE_ROOT:-$(cd "$(dirname "$0")/.." && pwd)}}"
+# Script lives at $REPO/skills/delivery/scripts/setup-lint-deps.sh.
+# Default to $1, then $LINEBYLINE_ROOT, then 3 levels up from this script
+# (scripts/ -> delivery/ -> skills/ -> repo root).
+repo_root="${1:-${LINEBYLINE_ROOT:-$(cd "$(dirname "$0")/../../.." && pwd)}}"
 lint_deps="$repo_root/.lint-deps"
 req_file="$repo_root/requirements-dev.txt"
 

@@ -73,6 +73,17 @@ The project uses multiple Playwright entry points that run in different OS envir
 
 `playwright.config.js` uses `PW_CONTAINER` and `CI` to enable webkit (unstable on Fedora host) and tighten CI settings. Tests can gate on these env vars to skip font-fragile screenshots in UI mode (see "Font-fragile screenshots" below).
 
+### Co-located bash scripts
+
+Two bash scripts live at `skills/playwright-testing/scripts/` (OMP sandbox helpers):
+
+- **`agent-tst`** — the OMP sandbox's wrapper around `ssh Server tst-locked`. Uses the locked OMP agent SSH key (`~/.agent-tools/limited-entry/config`). The ONLY command an OMP agent should use to run server-side tests; `ssh Server` directly fails (sandbox `/etc/ssh/ssh_config.d` is broken inside bwrap) and would use the wrong key. Uses `--` to stop ssh from consuming Playwright flags itself (e.g. `-g title` passed bare would make ssh read `-g` as its own GatewayPorts option and send NO remote command → full suite). Symlinked to `~/.local/bin/agent-tst`.
+- **`agent-sync`** — force the LOCAL Syncthing instance to push the LineByLine folder to the Server, then wait until the Server is caught up. Built for the OMP harness: `deploy.sh`'s inline force-sync needs the full user environment, which the sandbox lacks, but the Syncthing GUI API on `127.0.0.1:8384` is reachable from inside `bwrap`. Auto-detects folder id (path contains `linebyline`), API key (`~/.local/state/syncthing/config.xml`), and peer (the SSH `HostName` matched against Syncthing's reported connection addresses). Override with `LBL_SYNC_FOLDER_ID`, `LBL_SYNC_DEVICE_ID`, `SYNCTHING_API_KEY`, or `SYNCTHING_CONFIG`. Exits non-zero on timeout so it can gate a test run. Symlinked to `~/.local/bin/agent-sync`.
+
+The server-side Playwright runner (`tst`) and the SSH key gate (`tst-locked`) live at `scripts/server/` — they are defense-in-depth against the OMP agent itself, so they live outside the skill folder and the bwrap sandbox tmpfs'es the whole `scripts/server/` folder to prevent a malicious `deliver.zip` from modifying either file. See `scripts/README.md` → "Server-side Playwright scripts" for details.
+
+Run `agent-sync` first when the Server must see the current working tree — `agent-tst -g <pattern>` deliberately skips the Server-side sync check (see `tst`), so unscoped runs (`agent-tst --list`) reach the Server sync block and report `sync complete (idle, 0 needBytes)`.
+
 ---
 
 ## Sandbox-side sample tests

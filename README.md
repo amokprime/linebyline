@@ -27,12 +27,12 @@ LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are require
 
 **Enhanced LRCGET-style replay**
 - LineByLine can jump to the start (`R`) or end (`Shift+R`) of a line with a seek offset
-        - The default is -600ms before to give you more reaction time
-        - Adjust seek offset with the same keys that offset timestamps by toggling from Offset time → Offset sync mode (``Shift+` ``) 
+    - The default is -600ms before to give you more reaction time
+    - Adjust seek offset with the same keys that offset timestamps by toggling from Offset time → Offset sync mode (``Shift+` ``) 
 - Optional triggers for more frequent replays
-        - Play every line with the seek offset
-        - Batch offset all timestamps by the seek offset
-        - Replay after every timestamp sync or seek offset adjustment to check timing
+    - Play every line with the seek offset
+    - Batch offset all timestamps by the seek offset
+    - Replay after every timestamp sync or seek offset adjustment to check timing
 
 **Lyrics and metadata extraction**
 - Get song title from filename (prioritizing audio file then .lrc file)
@@ -44,7 +44,6 @@ LineByLine combines 2-4 and eliminates 5, maybe 6 if no translations are require
 How I used to add translations:
 - Translations are parenthesized inline and wrap if the viewer is too narrow
 - Every line gets highlighted (marked below with `**`)
-
 ```
 [00:00.00] **I wish I could identify that smell (J'aimerais pouvoir identifier cette odeur) (Ojalá pudiera identificar ese olor)**
 [00:03.06] **That smell (Cette odeur) (Ese olor)**
@@ -54,7 +53,6 @@ How I used to add translations:
 How LineByLine merges translations:
 - Translations go on their own line so every line is a sane length and alignment
 - Music players highlight the 0.01s duration translations for a split second or not at all
-
 ```
 [00:00.00] **I wish I could identify that smell**
 [00:03.04] (J'aimerais pouvoir identifier cette odeur)
@@ -66,7 +64,6 @@ How LineByLine merges translations:
 ```
 
 Sometimes songs intersperse other languages for dramatic effect. Mark translations for such lines individually with `Ctrl+ArrowLeft`:
-
 ```
 [00:00.00] **I wish I could identify that smell**
 [00:03.06] **That smell**
@@ -97,9 +94,7 @@ After↓
 [00:06.34] (Ese olor)
 [00:06.35]
 ```
-
 ### Getting started
 Visit the app's GitHub Page or download from the [Releases](https://github.com/amokprime/linebyline/releases) page or [/docs/index.html](https://github.com/amokprime/linebyline/tree/main/docs/index.html). Also see the [HELP](https://github.com/amokprime/linebyline/blob/main/HELP.md) file (linked to with the "?" button in the app).
-
 ### Contributing
 See [CONTRIBUTING.md](https://github.com/amokprime/linebyline/tree/main/CONTRIBUTING.md) and [MAYBE.md](https://github.com/amokprime/linebyline/tree/main/MAYBE.md).

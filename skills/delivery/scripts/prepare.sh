@@ -32,7 +32,8 @@ LINTER="/home/z/my-project/skills/delivery/scripts/lint_markdown.py"
 SANDBOX_DIR="/home/z/my-project/sandbox"
 
 # Source the shared lint gate (Shellcheck + Ruff + ESLint).
-LINT_GATE="/home/z/my-project/skills/delivery/scripts/lint_gate.sh"
+# lint_gate.sh lives at skills/code-quality/scripts/ — owned by the code-quality skill.
+LINT_GATE="/home/z/my-project/skills/code-quality/scripts/lint_gate.sh"
 if [[ -f "$LINT_GATE" ]]; then
   # shellcheck disable=SC1090,SC1091 # dynamic path -- can't follow source at lint time
   . "$LINT_GATE"
@@ -107,7 +108,7 @@ if type run_lint_gate >/dev/null 2>&1; then
   fi
 else
   echo "  (skipped: lint_gate.sh not sourced -- run_lint_gate unavailable)"
-  echo "  This means lint_gate.sh is missing from skills/delivery/scripts/."
+  echo "  This means lint_gate.sh is missing from skills/code-quality/scripts/."
   echo "  Shellcheck + Ruff checks on deliverables were NOT run."
 fi
 

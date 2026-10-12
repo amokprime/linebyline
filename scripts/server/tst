@@ -2,6 +2,12 @@
 #### tst — run Playwright tests in a one-shot podman container.
 #### Server-only script. Invoke it via SSH from the client, or run it
 #### directly when sitting at the Server.
+#### Lives at scripts/server/tst in the repo. Symlinked to ~/.local/bin/tst
+#### on the Server so a bare `ssh Server tst` works. NOT directly usable
+#### from the chat.z.ai sandbox (no SSH) or the OMP sandbox (the agent uses
+#### agent-tst + tst-locked — see scripts/server/tst-locked). The
+#### scripts/server/ folder is tmpfs'd inside the bwrap sandbox so neither
+#### tst nor tst-locked can be modified by a malicious deliver.zip.
 #
 #### Usage: tst [playwright args...]
 ####   e.g. tst --list

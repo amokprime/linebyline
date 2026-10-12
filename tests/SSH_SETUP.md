@@ -321,19 +321,19 @@ on Fedora.
 
 ### Server-side files
 
-- `~/.local/bin/tst` — the podman runner (real file, no symlink).
-- `~/.local/bin/tst-locked` — the enforcement wrapper (real file, no symlink).
-  **This path is baked into `authorized_keys` and `tst-locked`'s own
-  `exec /home/user/.local/bin/tst`; renaming either file breaks the lock.**
+- `~/.local/bin/tst` — symlink to `~/GitHub/linebyline/scripts/server/tst` (the podman runner). Symlinked so the repo copy stays the source of truth; updates flow via Syncthing + the user manually re-creating the symlink after a fresh checkout. `tst` is not security-sensitive — `tst-locked` sits in front of it.
+- `~/.local/bin/tst-locked` — the enforcement wrapper. COPY of `~/GitHub/linebyline/scripts/server/tst-locked` (NOT a symlink, NOT a hardlink). A plain copy keeps the two files independent: tampering the repo file via Syncthing can't affect the deployed gate. **This path is baked into `authorized_keys` and `tst-locked`'s own `exec /home/user/.local/bin/tst`; renaming either file breaks the lock.**
 - `~/.local/bin/tst-locked` last line: `exec /home/user/.local/bin/tst "${clean[@]:-}"`.
 
-**Deliberately NOT in a synced folder.** These live on the Server's own filesystem,
-not in `~/GitHub/linebyline/tests/`. Reasons:
-1. The human (master key) is the only one who edits them.
-2. A future agent editing the *synced repo* cannot silently alter what the restricted
-   key runs — the server files are outside any share the agent can write.
-3. `authorized_keys` pins absolute paths; a synced copy that could drift is a
-   footgun.
+**Why copy (not symlink or hardlink) for `tst-locked`?** A symlink would follow the repo file — if a malicious agent on the client side replaces `scripts/server/tst-locked` and Syncthing syncs the replacement, the server's `~/.local/bin/tst-locked` would silently run the tampered code. A hardlink would pin the inode (Syncthing's temp+rename creates a new inode, leaving the hardlink on the old one), but this provides no benefit over a copy: both approaches require manual re-linking/re-copying after a legitimate change, and the copy is simpler to reason about (two independent files, no inode tracking). When `tst-locked` legitimately changes, update the Server's copy manually:
+```sh
+# Fish abbreviations (defined in the user's fish config):
+#   tlkdf  — ssh Server diff ~/GitHub/linebyline/scripts/server/tst-locked ~/.local/bin/tst-locked
+#   tlkcp  — ssh Server cp ~/GitHub/linebyline/scripts/server/tst-locked ~/.local/bin/tst-locked
+```
+Run `tlkdf` to check if they've drifted; run `tlkcp` to update the copy.
+
+**Why `tst` IS a symlink but `tst-locked` is NOT.** `tst` is the podman runner — not security-sensitive (the `tst-locked` gate sits in front of it, filtering all args). If a malicious agent replaces `scripts/server/tst` via Syncthing, the worst they can do is run a different Playwright invocation (still arg-allowlisted by `tst-locked`). `tst-locked` is the gate itself — if it's replaced, the agent controls what the restricted key can run. The copy ensures the gate can't be silently swapped.
 
 ### Client-side files
 

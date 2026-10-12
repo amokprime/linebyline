@@ -1,54 +1,92 @@
 ---
-summary: Utility scripts for the LineByLine repo — sandbox setup, ad-hoc zip, fish functions, Espanso snippets.
+summary: Utility scripts for the LineByLine repo — sandbox setup, ad-hoc zip, fish functions, Espanso snippets, diff-staging capture, and the user-side deployment wrapper.
 links:
   - "[[ai/Vibecoding workflow|Vibecoding workflow]]"
 ---
 
-## Sandbox setup
-
-### .setup-sandbox.sh
-- Copies project skills from `skills/<name>/SKILL.md` into the chat.z.ai sandbox's `/home/z/my-project/skills/` folder so their `description` frontmatter auto-loads into the agent's `available_skills` list. Run once at Onboard after cloning the repo; idempotent.
+### Sandbox setup
 ```
-bash scripts/.setup-sandbox.sh
+skills/delivery/scripts/setup-sandbox.sh
 ```
-
-## Ad-hoc zip utility
-
-### blank.sh + .base.sh
-- `blank.sh` zips whatever is in `~/GitHub/linebyline/scratch/upload/` into a uniquely-named zip in `scratch/`, then copies the path to clipboard via `wl-copy`. Used for ad-hoc uploads of non-deliverable files (e.g. a single screenshot or test fixture).
-- `.base.sh` is sourced by `blank.sh` (and was historically sourced by the now-deleted Repomix workflow scripts). It handles the zip + clipboard + stale-zip-cleanup logic.
+- Copies project skills from `skills/<name>/SKILL.md` into the chat.z.ai sandbox's `/home/z/my-project/skills/` folder so their `description` frontmatter auto-loads into the agent's `available_skills` list. Also installs Shellcheck (npm package + static binary fallback) and Ruff (via `setup-lint-deps.sh`). Run once at Onboard after cloning the repo; idempotent.
+```
+bash skills/delivery/scripts/setup-sandbox.sh
+```
+- Lives at `skills/delivery/scripts/` (not `scripts/`) because it's owned by the `delivery` skill — it installs the delivery pipeline's dependencies (skills + lint tools).
+### Ad-hoc zip utility
+```
+scripts/zip.sh
+```
+- Zips whatever is in `~/GitHub/linebyline/scratch/upload/` into a uniquely-named zip in `scratch/`, then copies the path to clipboard via `wl-copy`. Used for ad-hoc uploads of non-deliverable files (e.g. a single screenshot or test fixture).
 - Can be double-clicked after setup. Aborts with an error if the upload folder is empty.
-
-## Espanso snippets
-
-### espanso/linebyline.yml
+### Local state capture (for AI agent handoff)
+```
+scripts/diff-staging.sh
+```
+- Captures the local working tree state (uncommitted + untracked + unpushed commits) as a portable patch + metadata so an AI agent in another sandbox can reproduce the local state by cloning the staging branch and applying the patch.
+- Output goes to `~/GitHub/linebyline/scratch/upload/`:
+  - `changes.patch` — `git diff --binary $BASE_SHA` covering tracked + untracked files (uses `git add -N .` to mark untracked files as intent-to-add, then `git reset` to undo)
+  - `changes.status` — `git status --porcelain` (the authoritative pre-mutation state)
+  - `changes.meta` — `base_ref`, `base_sha`, `head_sha`, `branch`, `status_file` pointer
+- See [archive/scripts/3.md](https://github.com/amokprime/linebyline/tree/main/archive/scripts/3.md) for the design rationale (DeepSeek session that worked through `origin/staging` vs local `staging`, intent-to-add + reset pattern, no status duplication in meta).
+- Manual deployment only — must be copied to the user's `scripts/` folder outside the deliver.zip workflow.
+### Espanso snippets
+```
+scripts/local/espanso.yml
+```
 - Espanso match file with triggers for the standard vibecoding-step context-loading instructions. See `ai/README.md` for the current trigger list and descriptions.
-- Install: `ln ~/.config/espanso/match/linebyline.yml scripts/espanso/linebyline.yml` (hardlink so both copies stay in sync).
-
-## Fish functions
-
-### fish/tst.fish, fish/tsta.fish, fish/cgn.fish, fish/srv.fish
-- User-side Playwright helpers. `tst` runs the full suite via SSH to the Server (Podman container); `tsta` runs UI mode against local Vite preview; `cgn` runs codegen; `srv` starts a Vite preview server for manual testing. These are user-side only — the chat.z.ai sandbox cannot invoke them. See `tests/SSH_SETUP.md` and `tests/PLAYWRIGHT_SETUP.md` for the full setup.
-
-## Syncthing sync helper
-
-### agent-sync
-- Forces the **local** Syncthing instance to push the LineByLine folder to the Server and waits for the Server to report `completion == 100` / `needBytes == 0`. Exits non-zero on timeout so it can gate a test run.
-- Built for the OMP harness: `deploy.sh`'s inline force-sync needs the full user environment, which the sandbox lacks, but the Syncthing GUI API on `127.0.0.1:8384` is reachable from inside `bwrap`.
-- Auto-detects the folder id (path contains `linebyline`), the API key (`~/.local/state/syncthing/config.xml`), and the peer (the SSH `HostName` matched against Syncthing's reported connection addresses). Override with `LBL_SYNC_FOLDER_ID`, `LBL_SYNC_DEVICE_ID`, `SYNCTHING_API_KEY`, or `SYNCTHING_CONFIG`.
+- Install (hardlink so both copies stay in sync):
+```sh
+ln ~/.config/espanso/match/linebyline.yml scripts/local/espanso.yml
 ```
-scripts/agent-sync [--timeout SECONDS] [--quiet]
+### Fish functions
 ```
-- Note: `agent-tst -g <pattern>` deliberately skips the Server-side sync check (see `scripts/tst`), so run `agent-sync` first when the Server must see the current working tree.
-
-## Delivery scripts
-
-The delivery workflow scripts (`prepare.sh`, `deploy.sh`, `unpack.sh`, `lint_markdown.py`, `split_bullets.py`) live at `skills/delivery/scripts/` — packaged as a skill. See `skills/delivery/SKILL.md` for documentation.
-
+scripts/local/tst.fish
+scripts/local/tsta.fish
+scripts/local/cgn.fish
+scripts/local/srv.fish
+```
+- User-side Playwright helpers. `tst` runs the full suite via SSH to the Server (Podman container); `tsta` runs UI mode against local Vite preview; `cgn` runs Codegen; `srv` starts a Vite preview server for manual testing. These are user-side only — the chat.z.ai sandbox cannot invoke them. See [SSH_SETUP](https://github.com/amokprime/linebyline/tree/main/tests/SSH_SETUP.md) and [PLAYWRIGHT_SETUP](https://github.com/amokprime/linebyline/tree/main/tests/PLAYWRIGHT_SETUP.md) for the full setup.
+### User-side deployment wrapper
+```
+scripts/unpack.sh
+```
+- User-side wrapper that extracts `deliver.zip` to `scratch/`, snapshots the zip contents to `.deliver-files.list`, runs `deploy.sh` inside a bwrap sandbox for extra safety, then cleans up. Double-clicked in a file manager OR run from a terminal — the script re-launches itself in a popup ghostty window when it detects a non-TTY stdout, so ssh + npm output is visible either way.
+- The bwrap sandbox makes it read-only inside the sandbox, so future edits to `unpack.sh` must be deployed manually (copy the file, don't use deliver.zip) — a malicious `deliver.zip` can't modify the bwrap filter for future runs.
+### Server-side Playwright scripts (tst + tst-locked)
+```
+scripts/server/tst
+scripts/server/tst-locked
+```
+- `tst` — Server-side Playwright runner (Podman Ubuntu container, Syncthing auto-sync, trash/ artifact pull). Symlinked to `~/.local/bin/tst` on the Server so a bare `ssh Server tst` works.
+- `tst-locked` — Server-side gate for the OMP agent's locked SSH key. The `command=` target in `authorized_keys` — allowlists Playwright args, rejects everything else. Deployed to `~/.local/bin/tst-locked` on the Server as a COPY of `scripts/server/tst-locked` (two independent files — tampering the repo copy can't affect the deployed gate). When `tst-locked` changes, update the Server's copy via fish abbreviations: `tlkdf` to diff, `tlkcp` to copy. See [SSH_SETUP](https://github.com/amokprime/linebyline/tree/main/tests/SSH_SETUP.md) → "Why copy (not symlink or hardlink) for `tst-locked`?" for the rationale.
+- The whole `scripts/server/` folder is tmpfs'd inside the bwrap sandbox so neither file can be modified by a malicious `deliver.zip`.
+- See tests/[SSH_SETUP](https://github.com/amokprime/linebyline/tree/main/tests/SSH_SETUP.md) → "Concrete deployment: LineByLine / OMP agent" for the chain-of-trust diagram (agent-tst → sshd → tst-locked → tst → podman).
+### OMP sandbox Playwright helpers
+```
+skills/playwright-testing/scripts/agent-tst
+skills/playwright-testing/scripts/agent-sync
+```
+- `agent-tst` — OMP sandbox wrapper around `ssh Server tst-locked` using the locked OMP agent SSH key. Symlinked to `~/.local/bin/agent-tst`. The ONLY command an OMP agent should use to run server-side tests.
+- `agent-sync` — Force the local Syncthing instance to push to the Server before `agent-tst`. Symlinked to `~/.local/bin/agent-sync`.
+- See playwright-testing [SKILL](https://github.com/amokprime/linebyline/tree/main/skills/playwright-testing/SKILL.md) → "Co-located bash scripts" for full details.
+## Delivery + setup scripts
+The delivery workflow scripts:
+```
+skills/delivery/scripts/prepare.sh
+skills/delivery/scripts/deploy.sh
+skills/delivery/scripts/lint_markdown.py
+skills/delivery/scripts/split_bullets.py
+```
+The lint gate (Shellcheck, Ruff, ESLint): is sourced by both `prepare.sh` (sandbox-side) and `deploy.sh` (user-side). See code-quality [SKILL](https://github.com/amokprime/linebyline/tree/main/skills/code-quality/SKILL.md) → "Bash workflow scripts" for its behavior.
+```
+skills/code-quality/scripts/lint_gate.sh
+```
 ## Setup
-- Scripts default to the repo root `~/GitHub/linebyline`; set the `LINEBYLINE_ROOT` environment variable to point somewhere else
-- If not on a Fedora distro, replace `wl-copy` with the equivalent
-- Make the scripts executable (except for `.base.sh`, `prepare.sh`, and `deploy.sh`)
-- They assume that the repo is at `~/GitHub/linebyline`, and that zips are downloaded into `~/GitHub/linebyline/scratch/`
-- If your paths differ, customize paths and add an exception for `unpack.sh`'s path (i.e. `nano .git/info/exclude`)
-- `unpack.sh` should be run from the terminal to view output
+
+- Scripts default to the repo root `~/GitHub/linebyline`; set the `LINEBYLINE_ROOT` environment variable to point somewhere else.
+- If not on a Fedora distro, replace `wl-copy` with the equivalent.
+- Make the scripts executable (except for `prepare.sh` and `deploy.sh` — those are not directly invoked).
+- They assume that the repo is at `~/GitHub/linebyline`, and that zips are downloaded into `~/GitHub/linebyline/scratch/`.
+- If your paths differ, customize paths and add an exception for `unpack.sh`'s path (i.e. `nano .git/info/exclude`).
+- `unpack.sh` can be double-clicked (popup terminal) or run from a terminal.

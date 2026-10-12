@@ -23,9 +23,9 @@
 # etc.) are never touched — only project skill names are written.
 #
 # After running, the agent's available_skills list will include:
-#   project-workflow, web-channel, skill, linebyline-section-index,
+#   linebyline, delivery, skill, linebyline-section-index,
 #   single-file-html-app, browser-hotkey-system, aria-accessibility,
-#   code-quality, sonarqube-workflow, playwright-testing, delivery
+#   code-quality, sonarqube-workflow, playwright-testing
 
 set -euo pipefail
 
@@ -87,10 +87,10 @@ echo ""
 echo "Done. Installed $installed skill(s), skipped $skipped."
 echo ""
 echo "Project skill descriptions are now in available_skills."
-echo "Invoke via: Skill(command=\"<name>\") — e.g. Skill(command=\"project-workflow\")."
+echo "Invoke via: Skill(command=\"<name>\") — e.g. Skill(command=\"linebyline\")."
 
 # ── Install lint gate dependencies ──────────────────────────────────────────
-# The lint gate (skills/delivery/scripts/lint_gate.sh) runs Shellcheck on
+# The lint gate (skills/code-quality/scripts/lint_gate.sh) runs Shellcheck on
 # *.sh files, Ruff on *.py files, and ESLint on src/. The sandbox doesn't
 # preinstall Shellcheck or Ruff — install them here so prepare.sh's lint
 # gate actually runs (instead of skipping with "shellcheck not installed").
@@ -105,9 +105,13 @@ echo ""
 echo "=== Installing lint gate dependencies ==="
 
 # Resolve repo root (for requirements-dev.txt + npm install).
+# In the chat.z.ai sandbox, LINEBYLINE_ROOT is unset and $HOME/GitHub/linebyline
+# doesn't exist — fall back to the script's own location. The script lives at
+# $REPO/skills/delivery/scripts/setup-sandbox.sh, so repo_root is three levels
+# up: scripts/ -> delivery/ -> skills/ -> repo root.
 repo_root="${LINEBYLINE_ROOT:-$HOME/GitHub/linebyline}"
 if [[ ! -d "$repo_root" ]]; then
-  repo_root="$(cd "$(dirname "$0")/.." && pwd)"
+  repo_root="$(cd "$(dirname "$0")/../../.." && pwd)"
 fi
 
 # 1. npm install (gets shellcheck npm package + ESLint + all other devDeps).
@@ -120,10 +124,10 @@ fi
 
 # 2. Ruff via pip (Python linter — NOT the npm package of the same name).
 if [[ -f "$repo_root/requirements-dev.txt" ]]; then
-  if [[ -f "$repo_root/scripts/.setup-lint-deps.sh" ]]; then
-    bash "$repo_root/scripts/.setup-lint-deps.sh" "$repo_root" 2>&1 | tail -5 || true
+  if [[ -f "$repo_root/skills/delivery/scripts/setup-lint-deps.sh" ]]; then
+    bash "$repo_root/skills/delivery/scripts/setup-lint-deps.sh" "$repo_root" 2>&1 | tail -5 || true
   else
-    echo "  (skipped: .setup-lint-deps.sh not found)"
+    echo "  (skipped: setup-lint-deps.sh not found)"
   fi
 else
   echo "  (skipped: requirements-dev.txt not found at $repo_root)"

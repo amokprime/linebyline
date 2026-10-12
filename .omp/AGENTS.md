@@ -9,7 +9,7 @@ Therefore, you have your own context files, sandbox rules, and a subset of relev
 - `ai/` — Vibecoding docs for humans: `README.md`, `Vibecoding workflow.md` (the high-level workflow flowcharts with division of labor), `Diagrammo flowcharts.md` (syntax reference for the `dgmo` codeblocks), `templates/` (blank Obsidian transcript templates for archiving chat sessions).
 - `archive/` — AI chat transcripts and historical artifacts: `archive/modular/` (modular refactor plan + transcripts), `archive/semantic/` (pre-modular transcripts + Sonar issue exports), `archive/tests/` (test-writing transcripts), `archive/skills/` (skill-creation transcripts), `archive/scripts/` (script-creation transcripts + `autohotkey/`).
 - `docs/` — `index.html` single-file LineByLine app code (the live monolith, pre-modular-refactor). This folder is also the GitHub Pages source until the Phase E cutover switches to `dist/`.
-- `scripts/` — fish functions (`fish/tst.fish`, `fish/tsta.fish`, `fish/cgn.fish`, `fish/srv.fish`) and `README.md`
+- `scripts/` — fish functions (`fish/tst.fish`, `fish/tsta.fish`, `fish/cgn.fish`, `fish/srv.fish`), user scripts, `espanso.yml,` and `README.md`
 - `src/` — Modular Vite + Vue + Tailwind + shadcn-vue app (refactor in progress; see `ROADMAP.md`).
 - `skills/`—The cloud agent's skill folder
 	- `skills/delivery/scripts/`—Scripts used to quickly "install" files the cloud agent generated and packaged into a `deliver.zip` for download

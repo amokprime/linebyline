@@ -73,7 +73,7 @@ test file locations, and the final passed/failed/skipped summary — cutting
 the hundreds of `[N/540]` progress lines that would otherwise flood the
 terminal. Output streams live (no log file buffering).
 
-4. After `dpl` deploys + builds on the PC, wait for Syncthing to sync `dist/`
+4. After `unpack.sh` deploys + builds on the PC, wait for Syncthing to sync `dist/`
    to the Server, then run `tst` from the Client PC. The simplest sync check
    is a `stat` mtime comparison:
 ```sh

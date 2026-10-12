@@ -4,7 +4,7 @@ Harness-agnostic, git-tracked memory for AI coding agents. When a turn produces 
 
 ## Context loading
 
-Context files are loaded via the Espanso snippets in `scripts/espanso/linebyline.yml`. Each trigger expands to a clone + read instruction. If `scripts/.setup-sandbox.sh` has been run, project skills auto-load into `available_skills` — the agent invokes them via `Skill(command="name")` instead of reading the SKILL.md explicitly. The snippets list only the non-skill context files (`AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `README.md`, source/test code). See `ai/README.md` for the current trigger list.
+Context files are loaded via the Espanso snippets in `scripts/local/espanso.yml`. Each trigger expands to a clone + read instruction. If `skills/delivery/scripts/setup-sandbox.sh` has been run, project skills auto-load into `available_skills` — the agent invokes them via `Skill(command="name")` instead of reading the SKILL.md explicitly. The snippets list only the non-skill context files (`AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `README.md`, source/test code). See `ai/README.md` for the current trigger list.
 
 ## Knowledge map
 
@@ -258,7 +258,7 @@ Per-version Accept / Won't-Fix / False-Positive decisions. Read alongside `sonar
     - Taint analysis does not cross function boundaries or recognize module-level constants.
 - `deploy.sh` cleanup loop replaced `find . -maxdepth 1 -type f ! -name deploy.sh ! -name deliver.zip` with the zip's own file list via `unzip -Z1` (or a `.deliver-files.list` manifest written before extraction). Pre-existing `scratch/` files like `scratch.md` are NOT touched. General rule in `code-quality-SKILL.md` (Review bundle) → "Bash workflow scripts → Scoped cleanup".
 - `unpack.sh` trap changed from `trap cleanup INT TERM` to `trap cleanup EXIT` (Sep 2026, Phase E Tranche 1 session).
-    - Previous design left `deliver.zip` + `deploy.sh` behind on `set -e` failure ("for debugging"), but this caused stale-file collisions: the next `deliver.zip` download got autonamed `deliver(1).zip` by the KDE file picker, requiring manual rename before `dpl`.
+    - Previous design left `deliver.zip` + `deploy.sh` behind on `set -e` failure ("for debugging"), but this caused stale-file collisions: the next `deliver.zip` download got autonamed `deliver(1).zip` by the KDE file picker, requiring manual rename before running `unpack.sh`.
     - The EXIT trap cleans up on ALL exits (success, failure, signal) — `deploy.sh` is regenerated each session and `deliver.zip` is re-downloaded from the chat, so there's no debugging value in leaving them behind.
     - The `echo "Done."` at the end of `unpack.sh` only prints on success (on failure, `set -e` exits before reaching it, but the EXIT trap still fires cleanup).
 - Syncthing `sleep 60` + Playwright `ssh Server tst` blocks in `unpack.sh` are commented out for `src/**` patches — Playwright targets `docs/index.html` until Phase E (per "Project invariants"), so running it on `src/**` patches is ~8.3 minutes wasted per deploy.
@@ -292,7 +292,7 @@ For the workflow (when to run the suite, scope of coverage) see the `playwright-
 - **Moved to `archive/`**: `archive/skills-chat/`, `archive/scripts-chat/`, `archive/tests/` (from `tests/chat/`), `archive/scripts/autohotkey/` (from `archive/autohotkey/`).
 - **Linter fix**: `lint_markdown.py` now skips YAML frontmatter and warns-only for `[[wikilink]]` (does NOT auto-wrap — `[[...]]` is intentional Obsidian syntax). Previously broke real wikilinks in frontmatter `links:` and body text.
 - **Shellcheck added to prepare.sh**: catches future bash script issues in `deploy.sh` + `*.sh` deliverables.
-- **Deferred to Tranche 4.6.1**: git clone + `deliver.zip` → `git push` replacement. The `deliver.zip` + `dpl` workflow remains in place.
+- **Deferred to Tranche 4.6.1**: git clone + `deliver.zip` → `git push` replacement. The `deliver.zip` + `unpack.sh` workflow remains in place.
 - **deliver-checklist audit**: `.zcode/skills/deliver-checklist/SKILL.md` was largely duplicated by `linebyline-SKILL.md`'s Pre-patch/Post-patch/Post-turn sections. NOT migrated — deleted with `.zcode/`. Unique bits should be merged into `linebyline-SKILL.md` in a future session if desired.
 - **Detailed plan + status**: `ROADMAP.md` → "Tranche 4.6" section.
 - **Setup script**: `scripts/.setup-sandbox.sh` copies project skills into `/home/z/my-project/skills/` at session start so their `description` frontmatter auto-loads into `available_skills`. Run once per session (sandboxes expire after 2h). Idempotent.
@@ -308,6 +308,17 @@ The `.omp/` directory is back at repo root, this time as the **local OMP harness
 - **Host Syncthing API reachable from the sandbox**: `127.0.0.1:8384` returns 403 without a key and 200 with one; `POST /rest/db/scan` completes (~10s), so the Server-side sync check needs no extra bind.
 - **`scripts/agent-sync` (new, Oct 7, 2026)** — self-contained Syncthing force-push for the sandbox: rescan the LineByLine folder on the local instance, then wait for the Server to report `completion 100 / needBytes 0`. Auto-detects the folder id, API key, and peer device (the SSH `HostName` matched against Syncthing's connection addresses). Exits non-zero on timeout. Run it before `agent-tst` when the Server must see the current tree. Smoke-tested from inside `bwrap`: 12s, `Server is up to date`. Symlinked as `~/.local/bin/agent-sync`.
 - **`.omp/skills/*` symlinks are relative** (`../../skills/<name>`) so they survive a clone at any path — applied Oct 7, 2026 (they were absolute and broke elsewhere).
+
+## Script + config folder structure (Oct 12, 2026)
+
+The repo's bash scripts are organized by ownership: delivery scripts at `skills/delivery/scripts/`, the shared lint gate at `skills/code-quality/scripts/lint_gate.sh`, OMP sandbox Playwright helpers at `skills/playwright-testing/scripts/`, server-side Playwright scripts at `scripts/server/` (tst + tst-locked, tmpfs'd in the bwrap sandbox as defense-in-depth against the OMP agent), and user-side utility scripts (`zip.sh`, `unpack.sh`, `diff-staging.sh`, `local/` for fish functions + espanso.yml) at `scripts/`.
+
+- **`scripts/server/`** holds `tst` (Server-side Podman runner, symlinked from `~/.local/bin/tst`) + `tst-locked` (the `command=` gate in the Server's `authorized_keys`, copied to `~/.local/bin/tst-locked` — two independent files so tampering the repo copy can't affect the deployed gate). The whole folder is tmpfs'd inside the bwrap sandbox so neither file can be modified by a malicious deliver.zip. When `tst-locked` changes, update the Server's copy via fish abbreviations: `tlkdf` (diff), `tlkcp` (copy). A hardlink was considered but provides no benefit over a copy (Syncthing's temp+rename breaks the shared inode anyway), and a symlink would follow a tampered repo file.
+- **`scripts/local/`** holds fish functions (`tst.fish`, `tsta.fish`, `cgn.fish`, `srv.fish` — user-side Playwright helpers) and `espanso.yml` (hardlinked to `~/.config/espanso/match/linebyline.yml`). Renamed from `scripts/fish/` + `scripts/espanso.yml` to consolidate user-local config that isn't edited often.
+- **`scripts/unpack.sh`** re-launches itself in a popup ghostty window when stdout is not a TTY (double-click case). Passes `LBL_POPUP=1` so the re-launched script pauses at the end (`read -rp "Press Enter to close..."`) — without this, ghostty closes immediately after the script finishes. Terminal invocations already have a TTY and skip the popup branch.
+- **`scripts/diff-staging.sh`** captures local working tree state (uncommitted + untracked + unpushed commits) as a portable patch + metadata so an AI agent in another sandbox can reproduce the local state. Output goes to `scratch/upload/{changes.patch, changes.status, changes.meta}`. User-side only; based on the DeepSeek session at `archive/scripts/3.md`.
+- **`run_pw` detection in deploy.sh**: `tests/SSH_SETUP.md` and other `.md` docs under `tests/` do NOT trigger Playwright/Vitest/Vite build — only actual test code (`.spec.js`, `.test.ts`, `tests/helpers/`, etc.) does. The `tests/*` glob in the `run_pw` loop excludes `*.md`. Same fix applied to `lint_gate.sh`'s `has_code_changes` check for ESLint.
+- **`skills/delivery/` folder rename evaluated, rejected**: considered renaming to `skills/sandbox/`, `skills/web-channel/`, or `skills/chat.z.ai/`. Kept `delivery/` because 4 of 6 scripts are delivery workflow, the web-channel behavioral rules are tightly coupled to delivery, setup-sandbox.sh + setup-lint-deps.sh install the delivery pipeline's dependencies, `web-channel` was deliberately merged into `delivery` in Tranche 4.6, `chat.z.ai` ties the skill to one platform and dots in folder names are unconventional, and `sandbox` is ambiguous between the chat.z.ai sandbox and the OMP bwrap sandbox.
 
 ## Project invariants
 

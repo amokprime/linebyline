@@ -9,9 +9,22 @@ This is the canonical project onboarding + workflow skill. It covers context loa
 
 Context loading
 
-The chat.z.ai web channel does not auto-inject context files — the agent must Read them explicitly. To streamline this, `scripts/.setup-sandbox.sh` copies the project skills into `/home/z/my-project/skills/` so their `description` frontmatter auto-loads into the sandbox's `available_skills` list (invokable via `Skill(command="name")`). Run it once at Onboard after cloning the repo; it's idempotent. Root-level `AGENTS.md` and `MEMORY.md` do NOT auto-load — they must be Read explicitly (the Espanso snippets in `scripts/espanso/linebyline.yml` insert the clone + read instructions).
+The chat.z.ai web channel does not auto-inject context files — the agent must Read them explicitly. To streamline this, `skills/delivery/scripts/setup-sandbox.sh` copies the project skills into `/home/z/my-project/skills/` so their `description` frontmatter auto-loads into the sandbox's `available_skills` list (invokable via `Skill(command="name")`). Run it once at Onboard after cloning the repo; it's idempotent. Root-level `AGENTS.md` and `MEMORY.md` do NOT auto-load — they must be Read explicitly (the Espanso snippets in `scripts/local/espanso.yml` insert the clone + read instructions).
 
 The Espanso snippets define which files to read per step. See `ai/README.md` for the current trigger list (`:onb`, `:code`, `:skl`).
+
+Context loading strategy
+
+The repo tree is large (src/ has many Vue components + composables, tests/ has many spec files + snapshot directories, archive/ has hundreds of historical transcripts). Don't blindly read everything — be targeted:
+
+- Use Glob to list files matching a pattern (e.g. `src/composables/*.ts`) instead of LS on the repo root. LS on a large tree produces a massive listing that wastes context.
+- Use Grep to find files containing a keyword (e.g. `useAudio` across `src/`) before reading them.
+- For `docs/index.html` (~2600 lines), use the `linebyline-section-index` skill to locate sections by grepping for `// ──` markers, then read only those ranges.
+- For `src/` and `tests/`, read only the files relevant to the current task. The Espanso `:code` snippet says "read only the files relevant to the current task" — don't interpret "Everything in src/" as "read all of src/".
+
+When the task spans multiple files (e.g. a patch touching `src/composables/useAudio.ts` + `tests/unit/audio.test.ts` + `docs/index.html`), use subagents (Task tool, `Explore` type) to read files in parallel. Launch them in a single message with multiple tool calls. Each subagent reads its assigned files and returns a summary. This is faster than sequential reads and doesn't bloat the main context — the subagent's full output is not loaded, only its summary.
+
+Caveat: subagents do NOT have access to the full conversation context or skill instructions. Only delegate file-reading/exploration tasks — not tasks requiring skill compliance, content depth standards, or document formatting rules. For those, read the files yourself.
 
 ---
 
@@ -38,7 +51,7 @@ The user may pick and choose steps in any order, stitch multiple workflows toget
 
 Onboard
 
-Trigger: `:onb`. Read `AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `README.md`, and `skills/delivery/scripts/{prepare,deploy,unpack}.sh`. Run `bash scripts/.setup-sandbox.sh` to install project skills into the sandbox.
+Trigger: `:onb`. Read `AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `README.md`, `skills/delivery/scripts/{prepare,deploy}.sh`, and `scripts/unpack.sh`. Run `bash skills/delivery/scripts/setup-sandbox.sh` to install project skills into the sandbox.
 
 1. Read `AGENTS.md` (minimal pointer to this skill + project structure) and `MEMORY.md` for development history.
 2. Read this skill (the `linebyline` skill — you're reading it now) and the `delivery` skill.

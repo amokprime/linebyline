@@ -7,7 +7,7 @@ assignees: ''
 
 ---
 
-**Operating system if not Windows 11**
+**Operating system if not Fedora 44 KDE**
 Mobile is not officially supported for now.
 
 **What version of the app is this for?**

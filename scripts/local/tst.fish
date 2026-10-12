@@ -1,6 +1,6 @@
 function tst --description 'Run Playwright tests on the Server (bare ssh wrapper)'
-    # The server's `tst` bash script (staged at linebyline/scripts/tst, symlinked
-    # to ~/.local/bin/tst) now handles ALL the pre/post-test logic:
+    # The server's `tst` bash script (staged at linebyline/scripts/server/tst,
+    # symlinked to ~/.local/bin/tst) now handles ALL the pre/post-test logic:
     #   - Syncthing sync (auto-detects API key from the server's own Syncthing
     #     config XML — no env vars needed for a bare `ssh Server tst`)
     #   - LBL_VITE_TARGET=1 (hardcoded in the server script)

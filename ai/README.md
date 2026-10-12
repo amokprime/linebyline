@@ -14,6 +14,6 @@ Caveats to work around:
 - Downgrade to a lower model, chats failing to submit or load or timing out, during peak hours. Use the 'previous flagship model' during off-peak hours to mitigate these issues.
 - The "All files in task" download widget can go stale or disappear after multiple sandbox-side file operations. The agent will touch `download/` to force a refresh, and provide a fallback https://tmpfiles.org link in case that doesn't work.
 
-The website auto-loads project skill descriptions (from `/home/z/my-project/skills/<name>/SKILL.md`) into the agent's `available_skills` list — but does NOT auto-load root `AGENTS.md` or `MEMORY.md`. For `AGENTS.md` and `MEMORY.md`, use the Espanso snippets in `scripts/espanso/linebyline.yml` (`:onb`, `:code`, `:skl` triggers) or copy paste to insert clone + read instructions.
+The website auto-loads project skill descriptions (from `/home/z/my-project/skills/<name>/SKILL.md`) into the agent's `available_skills` list — but does NOT auto-load root `AGENTS.md` or `MEMORY.md`. For `AGENTS.md` and `MEMORY.md`, use the Espanso snippets in `scripts/espanso.yml` (`:onb`, `:code`, `:skl` triggers) or copy paste to insert clone + read instructions.
 
 chat.z.ai also had a more recent bug where the same named zip file can persist across sandboxes. This prevents the agent from reading future uploaded zips of the same name. So I use [scripts](https://github.com/amokprime/linebyline/tree/main/scripts/README.md) to generate the zip files with a unique name.

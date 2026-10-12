@@ -1,7 +1,8 @@
 #!/bin/bash
 # lint_gate.sh -- shared blocking lint gate for Bash + Python + JavaScript/TypeScript.
 #
-# Sourced by both prepare.sh (sandbox-side, before zipping) and deploy.sh
+# Lives at skills/code-quality/scripts/lint_gate.sh — owned by the code-quality
+# skill. Sourced by both prepare.sh (sandbox-side, before zipping) and deploy.sh
 # (user-side, after deploying files). Runs every linter that's installed;
 # fails (exit 1) if any linter finds issues after autofix.
 #
@@ -41,11 +42,11 @@ run_lint_gate() {
   local lint_failed=0
 
   echo "=== Lint gate (Shellcheck + Ruff + ESLint) ==="
-  echo "Target: $target_dir"
+  echo "  Target: $target_dir"
   if [[ ${#changed_files[@]} -gt 0 ]]; then
-    echo "Mode: changed-files-only (${#changed_files[@]} file(s))"
+    echo "  Mode: changed-files-only (${#changed_files[@]} file(s))"
   else
-    echo "Mode: depth-0 scan"
+    echo "  Mode: depth-0 scan"
   fi
 
   # ── Shellcheck ──────────────────────────────────────────────────────────────
@@ -74,7 +75,7 @@ run_lint_gate() {
       while IFS= read -r f; do
         sh_files+=("$f")
       done < <(find "$target_dir" -maxdepth 1 -name '*.sh' -type f | sort)
-      # Also check .base.sh-style dotfiles
+      # Also check dotfile scripts (e.g. .foo.sh)
       while IFS= read -r f; do
         sh_files+=("$f")
       done < <(find "$target_dir" -maxdepth 1 -name '.*.sh' -type f | sort)
@@ -120,7 +121,7 @@ run_lint_gate() {
   fi
   if [[ -z "$ruff_bin" ]]; then
     echo "  (skipped: ruff not installed)"
-    echo "  Install via: bash scripts/.setup-sandbox.sh (installs to .lint-deps/)"
+    echo "  Install via: bash skills/delivery/scripts/setup-sandbox.sh (installs to .lint-deps/)"
     echo "  Debug: PATH=$PATH"
     echo "  Debug: command -v ruff: $(command -v ruff 2>&1 || echo 'not found')"
     if [[ -L "$HOME/.local/bin/ruff" && ! -e "$HOME/.local/bin/ruff" ]]; then
@@ -179,13 +180,20 @@ run_lint_gate() {
   local eslint_bin="$target_dir/node_modules/.bin/eslint"
   local eslint_config="$target_dir/eslint.config.mjs"
 
-  # Check if any changed file is under src/ or tests/.
+  # Check if any changed file is under src/ or tests/ (and is actual code, not .md).
+  # tests/ docs (SSH_SETUP.md, MANUAL.md, etc.) don't affect ESLint results.
   local has_code_changes=0
   if [[ ${#changed_files[@]} -gt 0 ]]; then
     local src_prefix="$target_dir/src"
     local tests_prefix="$target_dir/tests"
     for f in "${changed_files[@]}"; do
-      if [[ "$f" == "$src_prefix"/* || "$f" == "$tests_prefix"/* ]]; then
+      # src/ — all files are code
+      if [[ "$f" == "$src_prefix"/* ]]; then
+        has_code_changes=1
+        break
+      fi
+      # tests/ — skip .md docs; only actual test code triggers ESLint
+      if [[ "$f" == "$tests_prefix"/* && "$f" != *.md ]]; then
         has_code_changes=1
         break
       fi
@@ -194,11 +202,11 @@ run_lint_gate() {
       echo "  (no src/ or tests/ files changed this deploy -- skipping ESLint)"
       echo ""
       if [[ "$lint_failed" -ne 0 ]]; then
-        echo "=== Lint gate: FAILED ===" >&2
-        echo "Fix the issues above, then re-run." >&2
+        echo "  === Lint gate: FAILED ===" >&2
+        echo "  Fix the issues above, then re-run." >&2
         return 1
       else
-        echo "=== Lint gate: PASSED ==="
+        echo "  === Lint gate: PASSED ==="
       fi
       return 0
     fi
@@ -206,11 +214,11 @@ run_lint_gate() {
     echo "  (depth-0 scan -- no changed files, skipping ESLint to save time)"
     echo ""
     if [[ "$lint_failed" -ne 0 ]]; then
-      echo "=== Lint gate: FAILED ===" >&2
-      echo "Fix the issues above, then re-run." >&2
+      echo "  === Lint gate: FAILED ===" >&2
+      echo "  Fix the issues above, then re-run." >&2
       return 1
     else
-      echo "=== Lint gate: PASSED ==="
+      echo "  === Lint gate: PASSED ==="
     fi
     return 0
   fi
@@ -241,11 +249,11 @@ run_lint_gate() {
   # ── Summary ─────────────────────────────────────────────────────────────────
   echo ""
   if [[ "$lint_failed" -ne 0 ]]; then
-    echo "=== Lint gate: FAILED ===" >&2
-    echo "Fix the issues above, then re-run." >&2
+    echo "  === Lint gate: FAILED ===" >&2
+    echo "  Fix the issues above, then re-run." >&2
     return 1
   else
-    echo "=== Lint gate: PASSED ==="
+    echo "  === Lint gate: PASSED ==="
   fi
 }
 
