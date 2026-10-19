@@ -48,7 +48,7 @@ fi
 
 echo "srv: starting Vite preview on $url"
 # Start server in background, poll until ready, then open browser
-npx vite preview --port 5173 --strictPort >/dev/null 2>&1 &
+npx --ignore-scripts vite preview --port 5173 --strictPort >/dev/null 2>&1 &
 srv_pid=$!
 
 # Poll up to 10s for the server to be ready

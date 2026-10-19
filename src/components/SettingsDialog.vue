@@ -466,6 +466,7 @@ function onConfirmNo() {
                   :id="'hk-capture-' + key"
                   class="hk-capture"
                   :value="captureDisplay(key)"
+                  :aria-label="HK_LABELS[key] || key"
                   readonly
                   @focus="onFocus(key)"
                   @blur="onBlur(key)"

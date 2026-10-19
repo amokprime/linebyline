@@ -407,7 +407,7 @@ fi
 # so leftover trash/ from a previous manual tst is cleaned up even when
 # this deploy skips Playwright (run_pw=0).
 log_section "Pruning server trash/ (trace.zip + stale >1 day)"
-ssh -F "$HOME/.ssh/config" Server "find ~/GitHub/linebyline/trash -type f -name 'trace.zip' -delete 2>/dev/null; find ~/GitHub/linebyline/trash ~/GitHub/linebyline/playwright-report -type f -mtime +1 -delete 2>/dev/null" || true
+ssh -F "$HOME/.ssh/config" -o ControlMaster=no -o ControlPath=none Server "find ~/GitHub/linebyline/trash -type f -name 'trace.zip' -delete 2>/dev/null; find ~/GitHub/linebyline/trash ~/GitHub/linebyline/playwright-report -type f -mtime +1 -delete 2>/dev/null" || true
 echo "  Pruned trace.zip + stale artifacts on server." | tee -a "$LOG"
 
 # ── Playwright suite via SSH (skip if no app/test code in repo) ─────────────
@@ -466,7 +466,7 @@ if [[ "$run_pw" -eq 1 ]]; then
     env $TST_ENV LBL_NO_POPUP=1 bash "$TST_SH" 2>&1 | tee "$RAW" || true
   else
     # Fallback: bare ssh (e.g. pre-Tranche-4.7.2 deploys without the .sh).
-    ssh -F "$HOME/.ssh/config" Server tst 2>&1 | tee "$RAW" || true
+    ssh -F "$HOME/.ssh/config" -o ControlMaster=no -o ControlPath=none Server tst 2>&1 | tee "$RAW" || true
   fi
   grep -vE "^\[[0-9]+/[0-9]+\] \[" "$RAW" >> "$LOG" 2>/dev/null || true
   : > "$RAW"
@@ -475,7 +475,7 @@ if [[ "$run_pw" -eq 1 ]]; then
   # Keep a server-side prune here too as defense-in-depth for the >1-day stale
   # artifacts (tst.sh only prunes trace.zip, not stale playwright-report/).
   log_section "Pruning stale Playwright artifacts on Server (>1 day)"
-  ssh -F "$HOME/.ssh/config" Server "find ~/GitHub/linebyline/trash ~/GitHub/linebyline/playwright-report -type f -mtime +1 -delete 2>/dev/null" || true
+  ssh -F "$HOME/.ssh/config" -o ControlMaster=no -o ControlPath=none Server "find ~/GitHub/linebyline/trash ~/GitHub/linebyline/playwright-report -type f -mtime +1 -delete 2>/dev/null" || true
   echo "  Pruned stale artifacts on server." | tee -a "$LOG"
 
 

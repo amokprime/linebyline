@@ -79,20 +79,20 @@ fi
 # ── Run Playwright on the server ──────────────────────────────────────────────
 # Use -F "$HOME/.ssh/config" to bypass system SSH config files — inside the
 # bwrap sandbox (deploy.sh), /etc/ssh/ssh_config.d/*.conf may have wrong
-# ownership/permissions, causing "Bad owner or permissions" errors. The user's
-# ~/.ssh/config has the Server host entry, so explicit -F is sufficient.
+# ownership/permissions, causing "Bad owner or permissions" errors.
+# Use -o ControlMaster=no -o ControlPath=none to disable connection multiplexing
+# — the bwrap sandbox makes ~/.ssh/ read-only, so ssh can't create the
+# ControlPath socket. Disabling multiplexing is safe here (each tst run is a
+# single ssh invocation; no benefit from multiplexing).
 # shellcheck disable=SC2029
 # Intentional: args expand client-side so the server's `tst` script receives
-# them as positional args. The server's tst is a bash script (not fish), so
-# client-side expansion is correct.
-ssh -F "$HOME/.ssh/config" Server tst "${TST_ARGS[@]}" 2>&1 | \
+# them as positional args.
+ssh -F "$HOME/.ssh/config" -o ControlMaster=no -o ControlPath=none Server tst "${TST_ARGS[@]}" 2>&1 | \
   grep -E "^\s+[0-9]+\) \[|Error:|Expected:|Received:|at /workspace/tests/|passed|failed|skipped|writing actual|does not match|tst:|WARNING" || true
 
 # ── Post-test trace.zip prune ─────────────────────────────────────────────────
-# trace.zip files (one per trash snapshot folder) inflate Syncthing upload
-# size by 26MB+ per run. Prune on the server so the next Syncthing sync
-# doesn't pull them back to the client.
-ssh -F "$HOME/.ssh/config" Server "find ~/GitHub/linebyline/trash -type f -name 'trace.zip' -delete 2>/dev/null" || true
+# trace.zip files inflate Syncthing upload size. Prune on the server.
+ssh -F "$HOME/.ssh/config" -o ControlMaster=no -o ControlPath=none Server "find ~/GitHub/linebyline/trash -type f -name 'trace.zip' -delete 2>/dev/null" || true
 # Also prune any trace.zip that already synced to the client's scratch/upload/trash/.
 find "$DEST/scratch/upload/trash" -type f -name 'trace.zip' -delete 2>/dev/null || true
 

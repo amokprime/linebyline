@@ -37,7 +37,7 @@ need_cleanup=false
 # Ensure Vite preview server is running on port 5173
 if ! curl -s -o /dev/null -w '' http://localhost:5173/linebyline/ 2>/dev/null; then
   echo "cgn: starting Vite preview on :5173 ..."
-  npx vite preview --port 5173 --strictPort >/dev/null 2>&1 &
+  npx --ignore-scripts vite preview --port 5173 --strictPort >/dev/null 2>&1 &
   need_cleanup=true
   # Wait up to 5s for it to be ready
   for _ in $(seq 1 20); do
@@ -49,7 +49,7 @@ if ! curl -s -o /dev/null -w '' http://localhost:5173/linebyline/ 2>/dev/null; t
 fi
 
 # Vite preview serves at /linebyline/ (base config for GitHub Pages project URL)
-npx playwright codegen "http://localhost:5173/linebyline/" "$@"
+npx --ignore-scripts playwright codegen "http://localhost:5173/linebyline/" "$@"
 
 # Kill the server we started; leave pre-existing ones alone
 if [[ "$need_cleanup" == true ]]; then
