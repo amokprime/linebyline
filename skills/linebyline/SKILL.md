@@ -106,6 +106,12 @@ No turn numbers in MEMORY.md bullets. Turn numbers are session-local: a version 
 
 Verbose Memory entries signal skill gaps. When a MEMORY.md entry starts explaining how to do something rather than just what happened, that's a sign the knowledge belongs in a skill. MEMORY.md should say "Fixed X by doing Y (root cause: Z)." If it needs to say "When doing X, always do Y because Z, and here are the three cases to watch for," that's a skill.
 
+**MEMORY.md is for the unexpected, not the expected.** Don't record "Verification: 533/533 Vitest pass" — passing is the statistical norm; recording it adds noise. Record persistent failures, reproducible gotchas, and counterintuitive constraints — the things a fresh agent would get wrong without reading MEMORY. If nothing unexpected happened, write nothing.
+
+**Don't record transient/intermediate states.** If a feature was added then removed in the same session (never committed), it doesn't belong in MEMORY — it's not visible to git history. Transcripts record transient decisions (see `archive/modular/plan/`). MEMORY records the final settled state. When in doubt about whether a change is settled, wait a turn for user feedback (including silence/"no notes" for what worked out of the box) before writing the MEMORY entry.
+
+**Don't duplicate canonical comparison tables.** If a front-facing doc (e.g. README's feature-comparison table) is the canonical source for a comparison, don't restate the comparison in MEMORY. MEMORY points to the canonical doc, not duplicates it.
+
 Pruning preserves history. Pruning a MEMORY.md entry means condensing it to a brief reference, not deleting it. Past session entries are historical records. Only prune entries you created or updated this session; leave past session entries intact unless they are now fully redundant with a skill.
 
 The agent edits MEMORY.md in-sandbox and produces the updated file in `download/` for the user to apply to the repo. Apply updates inline — do not propose them as drafts for the user to approve.

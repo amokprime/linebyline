@@ -43,7 +43,7 @@ const {
   ariaValueNow,
   ariaValueText,
   playing,
-  togglePlay,
+  togglePlayFromSlider,
   toggleMute,
   onVolInput,
   onVolWheel,
@@ -245,7 +245,7 @@ onBeforeUnmount(() => {
           class="media-btn"
           :title="playing ? 'Pause (Shift+Space)' : 'Play (Shift+Space)'"
           :aria-label="playing ? 'Pause' : 'Play'"
-          @click="togglePlay"
+          @click="togglePlayFromSlider"
           @mousedown.prevent
         >
           <svg

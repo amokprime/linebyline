@@ -510,6 +510,25 @@ describe('useSync — doSyncFile', () => {
     mod.doSyncFile()
     expect(callbacks.setMainText).not.toHaveBeenCalled()
   })
+
+  it('resets seek_offset to DEFAULT after applying delta (Tranche 4.7 refinement 1)', async () => {
+    const { mod, mainText, seekOffset, cfg } = await setupSync({
+      mainText: '[00:05.00] line one\n[00:10.00] line two\n',
+    })
+    seekOffset.value!.value = '500'
+    cfg.value.seek_offset = 500
+    mod.doSyncFile()
+    // delta applied to both timestamps
+    expect(mainText.value.split('\n')[0]).toBe('[00:05.50] line one')
+    expect(mainText.value.split('\n')[1]).toBe('[00:10.50] line two')
+    // offset reset to DEFAULT (-600), not 0 — the user's original request was
+    // "revert to previous position (or default if too kludgy)". Tracking the
+    // previous position across input changes is kludgy, so we fall back to
+    // DEFAULT_CFG.seek_offset (-600).
+    expect(cfg.value.seek_offset).toBe(-600)
+    expect(seekOffset.value!.value).toBe('-600')
+    expect(localStorage.getItem('lbl_cfg')).toContain('"seek_offset":-600')
+  })
 })
 
 describe('useSync — tickSeekOffset / onSeekOffsetChange', () => {
@@ -719,6 +738,53 @@ describe('useSync — updateActiveLineFromTime', () => {
     expect(playingLine.value).toBe(-1) // unchanged
     expect(activeLine.value).toBe(0) // cursor stays put
   })
+
+  it('clears playingLine + re-renders when seeking before line 1 (Tranche 4.7 latent-issue 2)', async () => {
+    const { mod, playingLine } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n',
+    })
+    // Pretend playback was on line 1, then user seeks to 2s (before line 0's ts).
+    playingLine.value = 1
+    mod.updateActiveLineFromTime(2000) // no line has ts <= 2s
+    // Previously the function early-returned, leaving playingLine at 1 (highlighter stuck).
+    // Now it should clear to -1 so the `.active` class is removed.
+    expect(playingLine.value).toBe(-1)
+  })
+
+  it('cursor follows highlighter UP when _userSeekActive flag is set (Tranche 4.7 latent-issue 3)', async () => {
+    const { mod, activeLine, playingLine } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n[00:15.00] three\n',
+    })
+    // User had cursor + highlighter on line 2, then clicked seek bar at ~6s.
+    activeLine.value = 2
+    playingLine.value = 2
+    // Simulate useAudio.markUserSeek() — sets the flag for the next update.
+    mod.markUserSeek()
+    mod.updateActiveLineFromTime(6000) // best = 0 (line 0's ts = 5s <= 6s)
+    expect(playingLine.value).toBe(0)
+    // Cursor follows UP because the flag was set.
+    expect(activeLine.value).toBe(0)
+  })
+
+  it('_userSeekActive flag is one-shot — second natural-playback call does NOT drag cursor UP', async () => {
+    const { mod, activeLine, playingLine } = await setupSync({
+      mainText: '[00:05.00] one\n[00:10.00] two\n[00:15.00] three\n',
+    })
+    // First: user-seek flag set, cursor follows UP to line 0.
+    activeLine.value = 2
+    playingLine.value = 2
+    mod.markUserSeek()
+    mod.updateActiveLineFromTime(6000) // best = 0, cursor → 0 (flag consumed)
+    expect(activeLine.value).toBe(0)
+    // Second: cursor moves DOWN to line 2 manually, then natural playback
+    // brings highlighter back UP. Cursor should NOT follow UP (flag cleared).
+    activeLine.value = 2
+    playingLine.value = 2
+    mod.updateActiveLineFromTime(6000) // best = 0 (line 0's ts = 5s <= 6s)
+    expect(playingLine.value).toBe(0)
+    // Cursor stays at 2 — no upward drag without the flag.
+    expect(activeLine.value).toBe(2)
+  })
 })
 
 describe('useSync — seekPrevLine / seekNextLine (auto-pause on nav)', () => {
@@ -857,7 +923,36 @@ describe('useSync — markAsTranslation', () => {
     mod.markAsTranslation()
     expect(callbacks.setMainText).toHaveBeenCalled()
     // nextMs = 10000 (the trailing [00:10.00]); stamp = 10000 - 10 = 9990.
-    expect(mainText.value.split('\n')[0]).toBe('[00:09.99] (lyric one)')
+    // Tranche 4.7 refinement 3 — first letter capitalized inside parens.
+    expect(mainText.value.split('\n')[0]).toBe('[00:09.99] (Lyric one)')
+  })
+
+  it('normal mode capitalizes lowercase first letter in parens (Tranche 4.7 refinement 3)', async () => {
+    const { mod, mainText, activeLine } = await setupSync({
+      mainText: '[00:05.00] it disturbs my concentration\n[00:10.00]\n',
+    })
+    activeLine.value = 0
+    mod.markAsTranslation()
+    expect(mainText.value.split('\n')[0]).toBe('[00:09.99] (It disturbs my concentration)')
+  })
+
+  it('normal mode leaves already-capitalized content unchanged', async () => {
+    const { mod, mainText, activeLine } = await setupSync({
+      mainText: '[00:05.00] It disturbs my concentration\n[00:10.00]\n',
+    })
+    activeLine.value = 0
+    mod.markAsTranslation()
+    expect(mainText.value.split('\n')[0]).toBe('[00:09.99] (It disturbs my concentration)')
+  })
+
+  it('normal mode leaves non-alphabetic first character unchanged', async () => {
+    const { mod, mainText, activeLine } = await setupSync({
+      mainText: '[00:05.00] "quoted" translation\n[00:10.00]\n',
+    })
+    activeLine.value = 0
+    mod.markAsTranslation()
+    // First char is `"` — capitalizer is a no-op.
+    expect(mainText.value.split('\n')[0]).toBe('[00:09.99] ("quoted" translation)')
   })
 
   it('split mode peels trailing parens into separate lines', async () => {
@@ -873,5 +968,90 @@ describe('useSync — markAsTranslation', () => {
     const lines = mainText.value.split('\n')
     expect(lines[0]).toBe('[00:05.00] lyric')
     expect(lines[1]).toMatch(/^\[00:09\.99\] \(translation\)$/)
+  })
+})
+
+describe('useSync — deleteActiveLine', () => {
+  it('deletes the active line + moves activeLine to the previous lyric line', async () => {
+    const { mod, mainText, activeLine } = await setupSync({
+      mainText: '[00:01.00] one\n[00:02.00] two\n[00:03.00] three\n',
+    })
+    activeLine.value = 2 // line "three"
+    const result = mod.deleteActiveLine()
+    expect(result).toBe(true)
+    const lines = mainText.value.split('\n')
+    expect(lines).toHaveLength(3) // two lyric lines + trailing newline → 3
+    expect(lines[0]).toBe('[00:01.00] one')
+    expect(lines[1]).toBe('[00:02.00] two')
+    // activeLine moves to the previous lyric line.
+    expect(activeLine.value).toBe(1)
+  })
+
+  it('deletes the first lyric line — activeLine falls to the new first lyric line', async () => {
+    const { mod, mainText, activeLine } = await setupSync({
+      mainText: '[00:01.00] one\n[00:02.00] two\n[00:03.00] three\n',
+    })
+    activeLine.value = 0 // line "one"
+    const result = mod.deleteActiveLine()
+    expect(result).toBe(true)
+    const lines = mainText.value.split('\n')
+    expect(lines[0]).toBe('[00:02.00] two')
+    // activeLine moves to the new first lyric line (index 0).
+    expect(activeLine.value).toBe(0)
+  })
+
+  it('returns false (no-op) when activeLine < 0', async () => {
+    const { mod, callbacks } = await setupSync({
+      mainText: '[00:01.00] one\n[00:02.00] two\n',
+    })
+    // activeLine starts at -1 by default in fresh useAppState.
+    const result = mod.deleteActiveLine()
+    expect(result).toBe(false)
+    expect(callbacks.setMainText).not.toHaveBeenCalled()
+  })
+
+  it('returns false (no-op) when activeLine is a metadata line', async () => {
+    const { mod, mainText, callbacks } = await setupSync({
+      mainText: '[ti: Song]\n[ar: Artist]\n[00:01.00] one\n[00:02.00] two\n',
+    })
+    const linesBefore = mainText.value
+    // activeLine on the [ti: Song] line.
+    const { activeLine } = await import('@/composables/useAppState').then(m => m.useAppState())
+    activeLine.value = 0
+    const result = mod.deleteActiveLine()
+    expect(result).toBe(false)
+    expect(mainText.value).toBe(linesBefore)
+    expect(callbacks.setMainText).not.toHaveBeenCalled()
+  })
+
+  it('returns false (no-op) when there is only one content line', async () => {
+    const { mod, mainText, callbacks } = await setupSync({
+      // Two non-meta non-blank lines are required; the trailing timestamp
+      // counts as content (it's not META_RE and not blank). Use a meta + one
+      // lyric line + a trailing timestamp = two content lines, so deleting
+      // the lyric leaves only the trailing timestamp = refuse to delete.
+      mainText: '[ti: Song]\n[00:01.00] only lyric\n[00:05.00]\n',
+    })
+    const linesBefore = mainText.value
+    const { activeLine } = await import('@/composables/useAppState').then(m => m.useAppState())
+    activeLine.value = 1 // the only lyric line
+    const result = mod.deleteActiveLine()
+    // Trailing timestamp counts as content, so 2 content lines → refuse to delete the lyric.
+    expect(result).toBe(false)
+    expect(mainText.value).toBe(linesBefore)
+    expect(callbacks.setMainText).not.toHaveBeenCalled()
+  })
+
+  it('clears the selection if the deleted line was part of it', async () => {
+    const { mod, activeLine } = await setupSync({
+      mainText: '[00:01.00] one\n[00:02.00] two\n[00:03.00] three\n',
+    })
+    const { selectedLines } = await import('@/composables/useAppState').then(m => m.useAppState())
+    activeLine.value = 1
+    selectedLines.value.add(0)
+    selectedLines.value.add(1)
+    selectedLines.value.add(2)
+    mod.deleteActiveLine()
+    expect(selectedLines.value.size).toBe(0)
   })
 })

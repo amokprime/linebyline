@@ -43,14 +43,14 @@ describe('useAppState — cfg loading', () => {
   })
 
   it('runs migrateHotkeys — legacy seek_back value is rewritten to the new default', async () => {
-    // LEGACY_HOTKEY_MAP.seek_back maps 'Ctrl+A' → 'Ctrl+9'. A user with the
+    // LEGACY_HOTKEY_MAP.seek_back maps 'Ctrl+A' → 'Ctrl+1'. A user with the
     // old stored config should see the new default on load.
     localStorage.setItem(
       'lbl_cfg',
       JSON.stringify({ hotkeys: { seek_back: 'Ctrl+A' } }),
     )
     const { cfg } = await loadAppState()
-    expect(cfg.value.hotkeys.seek_back).toBe('Ctrl+9')
+    expect(cfg.value.hotkeys.seek_back).toBe('Ctrl+1')
   })
 
   it('ensureDefaultHotkeys fills in theme_toggle / replay_end / replay_only if absent', async () => {

@@ -166,3 +166,45 @@ describe('useTextareaKeys — bracket/paren autocomplete', () => {
     expect(ta.value).toBe('()[ti: song title]\nhello')
   })
 })
+
+describe('useTextareaKeys — asterisk autocomplete (Tranche 4.7 refinement 4)', () => {
+  it('inserts ** and places caret between when * pressed (typing mode)', async () => {
+    const { ta } = await freshSetup('hello', false)
+    ta.focus()
+    ta.setSelectionRange(0, 0)
+    const e = new KeyboardEvent('keydown', { key: '*', bubbles: true })
+    ta.dispatchEvent(e)
+    expect(ta.value).toBe('**hello')
+    expect(ta.selectionStart).toBe(1)
+  })
+
+  it('wraps selection in *...* when * pressed with selection', async () => {
+    const { ta } = await freshSetup('hello world', false)
+    ta.focus()
+    ta.setSelectionRange(0, 5) // "hello"
+    const e = new KeyboardEvent('keydown', { key: '*', bubbles: true })
+    ta.dispatchEvent(e)
+    expect(ta.value).toBe('*hello* world')
+    expect(ta.selectionStart).toBe(1)
+    expect(ta.selectionEnd).toBe(6)
+  })
+
+  it('inserts ** at caret mid-line (typing mode)', async () => {
+    const { ta } = await freshSetup('hello', false)
+    ta.focus()
+    ta.setSelectionRange(2, 2) // after "he"
+    const e = new KeyboardEvent('keydown', { key: '*', bubbles: true })
+    ta.dispatchEvent(e)
+    expect(ta.value).toBe('he**llo')
+    expect(ta.selectionStart).toBe(3)
+  })
+
+  it('does not trigger autocomplete in hotkey mode', async () => {
+    const { ta } = await freshSetup('hello', true)
+    ta.focus()
+    ta.setSelectionRange(0, 0)
+    const e = new KeyboardEvent('keydown', { key: '*', bubbles: true })
+    ta.dispatchEvent(e)
+    expect(ta.value).toBe('hello') // unchanged
+  })
+})

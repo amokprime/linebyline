@@ -225,6 +225,45 @@ describe('useModeSwitch — applyMode view transitions', () => {
     )
     expect(() => mod.applyMode()).not.toThrow()
   })
+
+  // Tranche 4.7 latent-issue 5 — Typing Mode preserves scroll position from
+  // Hotkey Mode at any ratio (the previous `ratio > 0.01` threshold discarded
+  // any sub-1% scroll, jumping to top even when Hotkey Mode was scrolled down).
+  it('typing mode preserves scroll position from hotkey mode at any ratio (Tranche 4.7 latent-issue 5)', async () => {
+    const text = '[ti:Song]\n[ar:Artist]\nFirst lyric line\nSecond line\n'
+    const { scroll, ta, lines } = mountDom(text)
+    await syncMainText(text)
+    const restoreRaf = mockRaf()
+    const mod = await import('@/composables/useModeSwitch')
+    const { useAppState } = await import('@/composables/useAppState')
+    useAppState().hotkeyMode.value = false
+
+    // Stub layout: scroll container reports scrollHeight=200, clientHeight=100
+    // → scrollable region = 100. Set scrollTop=1 (1% of scrollable — would
+    // have been discarded by the old `ratio > 0.01` threshold).
+    Object.defineProperty(scroll, 'scrollHeight', { value: 200, configurable: true })
+    Object.defineProperty(scroll, 'clientHeight', { value: 100, configurable: true })
+    Object.defineProperty(scroll, 'scrollTop', {
+      value: 1, writable: true, configurable: true,
+    })
+    // Textarea reports same scrollable region so the ratio maps 1:1.
+    Object.defineProperty(ta, 'scrollHeight', { value: 200, configurable: true })
+    Object.defineProperty(ta, 'clientHeight', { value: 100, configurable: true })
+
+    mod.initModeSwitch(
+      {
+        mainScroll: { value: scroll } as any,
+        mainTextarea: { value: ta } as any,
+        mainLines: { value: lines } as any,
+      },
+      () => {},
+    )
+    mod.applyMode()
+    // Previously this would have been 0 (the ratio ≤ 0.01 branch).
+    // Now it preserves the 1% scroll position.
+    expect(ta.scrollTop).toBe(1)
+    restoreRaf()
+  })
 })
 
 describe('useModeSwitch — direct setters', () => {

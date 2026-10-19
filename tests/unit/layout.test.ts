@@ -36,9 +36,9 @@ describe('LeftPanel', () => {
     const wrapper = await mountPanel()
     expect(wrapper.find('#controls-label').text()).toBe('Controls')
     const grid = wrapper.find('#hk-grid')
-    // the mode row is the first grid child, then the 14 action cells
+    // the mode row is the first grid child, then the 15 action cells
     expect((grid.element as HTMLElement).firstElementChild?.className).toContain('mode-row')
-    expect(grid.findAll('.hk-cell')).toHaveLength(16)
+    expect(grid.findAll('.hk-cell')).toHaveLength(17)
     expect(grid.findAll('.hk-cell.mode')).toHaveLength(2)
   })
 

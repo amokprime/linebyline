@@ -39,7 +39,7 @@ test("meta-playing-update", async ({ page }) => {
   await page
     .locator("#main-textarea")
     .fill(
-      "[ti: TestTitle]\n[ar: TestArtist]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n",
+      "[ti: TestTitle]\n[ar: TestArtist]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n",
     );
   await page.keyboard.press("Backquote");
   await expect(page.getByText("TestTitle")).toBeVisible();
@@ -84,7 +84,7 @@ test("meta-save-update", async ({ page, browserName }) => {
 
 test("paren-close", async ({ page }) => {
   const META =
-    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n";
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n";
   await page.keyboard.press("Backquote");
   await expect(page.locator("#main-textarea")).toBeFocused();
   await page.keyboard.press("(");
@@ -94,7 +94,7 @@ test("paren-close", async ({ page }) => {
 
 test("brackets-close", async ({ page }) => {
   const META =
-    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n";
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n";
   await page.keyboard.press("Backquote");
   await expect(page.locator("#main-textarea")).toBeFocused();
   await page.keyboard.press("[");

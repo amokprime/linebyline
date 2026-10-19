@@ -16,13 +16,13 @@ test("tab-lyrics", async ({ page }) => {
   await page.keyboard.press("Backquote");
   await expect(page.locator("#main-textarea")).toBeFocused();
   await page.keyboard.press("1");
-  for (let i = 0; i < 2; i++) await page.keyboard.press("Control+4");
+  for (let i = 0; i < 2; i++) await page.keyboard.press("Control+3");
   await tabUntilFocused(page, ".sec-textarea", { index: 0 });
   await page.keyboard.press("2");
   await tabUntilFocused(page, ".sec-textarea", { index: 1 });
   await page.keyboard.press("3");
   await expect(page.locator("#main-textarea")).toHaveValue(
-    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n1",
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n1",
   );
   await expect(page.locator(".sec-textarea").first()).toHaveValue("2");
   await expect(page.locator(".sec-textarea").nth(1)).toHaveValue("3");
@@ -44,7 +44,7 @@ test("tab-settings", async ({ page }) => {
   await page.keyboard.press("Control+End"); // Move cursor to end of textarea
   await page.keyboard.press("&");
   await expect(page.locator("#s-default-meta")).toHaveValue(
-    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n&",
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n&",
   );
   await page.locator(".hk-capture").first().click();
   await page.keyboard.press("i");

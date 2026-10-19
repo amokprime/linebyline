@@ -340,17 +340,32 @@ function _handleCapturedKey(key: string, newVal: string, newStored: string): boo
   return true
 }
 
+// Returns true if the key is a plain arrow or Tab (no Ctrl/Alt modifier) —
+// these bubble to the global focus trap (ArrowUp/Down nav) and should NOT
+// be captured. Returns false for Ctrl/Alt + arrow combos (valid hotkey captures).
+function _isPlainArrowOrTab(e: KeyboardEvent): boolean {
+  if (!['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+    return false
+  }
+  return !e.ctrlKey && !e.altKey
+}
+
 export function onCaptureKeydown(key: string, e: KeyboardEvent): boolean {
   const { cfg } = useAppState()
   ensureRowInit(key, cfg.value.hotkeys)
 
-  // Tab and arrows bubble to the global focus trap (don't stopPropagation).
-  if (['Tab', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+  // Plain Tab/arrows bubble to the global focus trap (ArrowUp/Down nav).
+  // Ctrl/Alt + arrow combos are valid hotkey captures — fall through to the
+  // assignment logic below.
+  if (_isPlainArrowOrTab(e)) {
     e.preventDefault()
     return false
   }
-  e.preventDefault()
-  e.stopPropagation()
+  // Non-modifier keys: preventDefault + stopPropagation (don't bubble).
+  if (!e.ctrlKey && !e.altKey) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
 
   // Shift+Backspace = clear (unassign), stay focused.
   if (e.key === 'Backspace' && e.shiftKey) {

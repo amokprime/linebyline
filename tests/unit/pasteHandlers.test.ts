@@ -20,7 +20,7 @@ describe('cleanPaste', () => {
 })
 
 describe('ensureReTagDefault', () => {
-  const url = 'https://amokprime.github.io/linebyline/'
+  const url = 'amokprime.github.io/linebyline'
 
   it('appends the configured [re:] value to an existing tag', () => {
     expect(ensureReTagDefault('[re: Genius]\nlyric', DEFAULT_META)).toBe(`[re: Genius, ${url}]\nlyric`)
@@ -48,20 +48,20 @@ describe('mergeLrcMeta', () => {
   it('overrides defaults with LRC values, keeps the rest, appends extra fields', () => {
     const lrc = '[ti: Real Song]\n[by: Someone]\n[00:01.00] lyric'
     expect(mergeLrcMeta(lrc, DEFAULT_META)).toBe(
-      '[ti: Real Song]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n[by: Someone]\n',
+      '[ti: Real Song]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n[by: Someone]\n',
     )
   })
 
   it('drops empty LRC tag values in favor of defaults', () => {
     const lrc = '[ti: ]\n[ar: Real Artist]'
     expect(mergeLrcMeta(lrc, DEFAULT_META)).toBe(
-      '[ti: Unknown]\n[ar: Real Artist]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n',
+      '[ti: Unknown]\n[ar: Real Artist]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n',
     )
   })
 
   it('is case-insensitive on tag keys', () => {
     expect(mergeLrcMeta('[TI: Caps Song]', DEFAULT_META)).toBe(
-      '[ti: Caps Song]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n',
+      '[ti: Caps Song]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n',
     )
   })
 })

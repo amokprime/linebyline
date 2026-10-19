@@ -82,7 +82,7 @@ describe('restricted hotkey rules', () => {
     expect(isRestrictedForKey('`', 'toggle_mode')).toBeNull()
     expect(isRestrictedForKey('Shift+~', 'offset_mode_toggle')).toBeNull()
     expect(isRestrictedForKey('Q', 'sync')).toBeNull()
-    expect(isRestrictedForKey('Ctrl+9', 'seek_back')).toBeNull()
+    expect(isRestrictedForKey('Ctrl+1', 'seek_back')).toBeNull()
   })
 
   it('allows Ctrl+; for toggle_mode (Ctrl combos bypass the alpha/num/Space block)', () => {
@@ -99,7 +99,7 @@ describe('hotkey migration (config.ts)', () => {
     const cfg = structuredClone(DEFAULT_CFG)
     const stored = { hotkeys: { seek_back: 'Ctrl+A', save: 'Ctrl+S' } }
     migrateLegacyHotkeys(stored, cfg.hotkeys)
-    expect(cfg.hotkeys.seek_back).toBe('Ctrl+9')
+    expect(cfg.hotkeys.seek_back).toBe('Ctrl+1')
     expect(cfg.hotkeys.save).toBe("Ctrl+'")
     expect(cfg.hotkeys.sync).toBe('W') // untouched default
   })
@@ -118,6 +118,7 @@ describe('hotkey migration (config.ts)', () => {
     expect(cfg.hotkeys.theme_toggle).toBe('Ctrl+.')
     expect(cfg.hotkeys.replay_end).toBe('Shift+R')
     expect(cfg.hotkeys.reset_defaults).toBe('Ctrl+\\')
+    expect(cfg.hotkeys.delete_line).toBe('G')
   })
 
   it('removes the removed mute action', () => {
@@ -131,7 +132,7 @@ describe('hotkey migration (config.ts)', () => {
     const cfg = structuredClone(DEFAULT_CFG)
     cfg.hotkeys = {}
     migrateHotkeys({ hotkeys: { seek_fwd: 'Alt+W' } }, cfg)
-    expect(cfg.hotkeys.seek_fwd).toBe('Ctrl+0')
+    expect(cfg.hotkeys.seek_fwd).toBe('Ctrl+2')
     expect(cfg.hotkeys.replay_only).toBe('R')
     expect(cfg.hotkeys.issues).toBe('Ctrl+[')
   })

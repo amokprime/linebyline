@@ -1,10 +1,10 @@
-This has random ideas I don't feel like working on yet. Ordered top to bottom roughly in order of my current willingness to spend time vibecoding/dogfooding them:
+This organizes ideas I don't feel like working on yet into proposals. They're ordered top to bottom roughly in order of my current willingness to spend time learning -> vibecoding -> dogfooding them. Shorter proposals mean I know little about the subject(s). So the learning curve might be substantial before I even know what I want to prompt for.
 ### Find and Replace popup
 - LRCGET already has this (even Regex!) and is needed anyway for linting/publishing
 - Hardcoded to `Ctrl+F` and flat rather than tall and hug the bottom of the viewport to avoid blocking lyrics or titlebar elements. Like  Firefox's `Ctrl+F` Find popup
 - It should have the typical fields and buttons of find-and-replace. Remind me if I left anything out:
 	- "Find" text input field
-	- "Replace" text input field 
+	- "Replace" text input field
 	- "⌃" button (tooltip: "Find previous") that doesn't replace
 	- "⌄" button (tooltip: "Find next") that doesn't replace
 	- "Replace" button that replaces next match (in order left → right and top → down)
@@ -31,18 +31,23 @@ This has random ideas I don't feel like working on yet. Ordered top to bottom ro
 	- If Instant Replay -> Syncing line is unchecked, the grace period is available to hit `R` if I want to re-sync the current line.
 	- If either current or next line timestamp doesn't exist this feature should no-op locally. If the whole song has no timestamps, no-op the whole song. If some lines have no timestamps and others do in the same song, the feature should work when both ends of the difference exist locally (relative to current position), and no-op locally otherwise.
 ### AI transcription
-- Need to look into some local models and whether syncing is viable
+- Need to look into some local models (i.e. with Lemonade server) and whether syncing is viable. If 1 and 2 are consistently handled as well or better than me doing it manually then it might be worth adding some BYOK import time integration. The app could still be used for human review and editing songs with unusual features like filler nonsense syllables, strong accents, overlapping voices, etc.
+	1. What does it take to transcribe plain lyrics from audio and can I run it
+	2. How well can the model detect word boundaries?
 ### Word-by-word syncing
-- LRCGET has this
+- LRCGET has this already. The problem is [human reaction time](https://en.wikipedia.org/wiki/Mental_chronometry#Measurement_and_mathematical_descriptions) and **patience**. It takes a perfectionist like me ~30 minutes to sync line by line for a song, now imagine slowing the song down to get every word. That's why I plan to check local AI transcription first.
 - Would need to refactor LineByLine (enhanced .lrc support and more hotkey modes)
 	- Per-line without trailing timestamp
 	- Per-line with trailing timestamp
 	- Per-word with trailing timestamp
 - Can't [dogfood](https://en.wikipedia.org/wiki/Eating_your_own_dog_food) the output (I use Navidrome/Feishin which don't highlight per word yet)
 ### Desktop app
-- Expensive to iterate a good GUI, ideally this would involve some local or API model with computer use (which is terrible on Wayland Linux AFAIK)
-- On top of that need to pick some architecture with solid equivalent to Playwright that works on Wayland Linux
+- Potentially learning and maintaining a different desktop architecture.
+	- Any UI design substantially outside of established web frameworks with off-the-shelf themes and icons would probably involve iterating with a powerful local or API model with computer use. I use the free chat.z.ai sandbox which has no GPU (besides Linux Wayland computer use is terrible).
+	- It would also need a solid testing framework like Playwright that works on Wayland Linux so I can run tests locally
+- The [original](https://github.com/amokprime/linebyline/tree/main/archive/pre-semantic/0_abandoned) appeal of this was to greatly expand the hotkey space. A webpage has so many [limitations](https://github.com/amokprime/linebyline/tree/main/LIMITATIONS.md) that if I could get desktop + PWA unified and working, I'd probably just drop the GitHub Page (since the mobile UI would either not use hotkeys or use an attached keyboard if tablet) for a nicer overall workflow.
 ### Mobile PWA
-- I don't listen to music on my phone. I was originally tempted to skip most buttons and make LineByLine hotkey-only at one point because it was the most efficient interface on PC. I could see giving buttons on a smaller screen another pass
+- I don't listen to music on my phone. I was originally tempted to skip most buttons and make LineByLine hotkey-only at one point because it was the most efficient interface on PC. I could see giving buttons on a smaller screen another pass, but a ground-up ergonomics pass (i.e. looking into gestures) would be a huge rabbit hole and someone else would need to dogfood it.
 ### Publish directly to LRCLIB
-- Not my project and I'm hesitant to touch any kind of auth
+- Basically make LineByLine an unofficial LRCLIB client (LRCGET being the official one)
+- I'm hesitant to touch any kind of auth with vibecode. I don't want to accidentally spam LRCLIB since it doesn't have accounts or duplicate lyrics prevention

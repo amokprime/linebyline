@@ -122,12 +122,34 @@ function handleParenBracket(e: KeyboardEvent) {
   fireInput(ta)
 }
 
+// Asterisk autocomplete — Tranche 4.7 refinement 4.
+// Mirrors the paren/bracket pattern: selection → wrap (`*...*`, markdown
+// emphasis); no selection → insert `**` and place the caret between. Used
+// for emphasis or non-speech parenthesized comments like `(*Indistinct
+// voices*)` or `(*Soprano voice*)`.
+function handleAsterisk(e: KeyboardEvent) {
+  const ta = e.target as HTMLTextAreaElement
+  const start = ta.selectionStart
+  const end = ta.selectionEnd
+  if (start !== end) {
+    e.preventDefault()
+    wrapSelectionWith(ta, start, end, '*', '*')
+    return
+  }
+  e.preventDefault()
+  const v = ta.value
+  ta.value = v.slice(0, start) + '**' + v.slice(end)
+  ta.setSelectionRange(start + 1, start + 1)
+  fireInput(ta)
+}
+
 // Main textarea keydown. EditorArea binds `@keydown="onMainKeydown"`.
 export function onMainKeydown(e: KeyboardEvent) {
   const { hotkeyMode } = useAppState()
   if (hotkeyMode.value) return
   if (e.key === 'Enter') handleEnterTrim(e)
   if (e.key === '(' || e.key === '[') handleParenBracket(e)
+  if (e.key === '*') handleAsterisk(e)
 }
 
 // Convenience export.

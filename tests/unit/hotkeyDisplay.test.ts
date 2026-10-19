@@ -44,28 +44,30 @@ describe('hkCellKeys', () => {
 })
 
 describe('hkPanelActions', () => {
-  it('lists the 14 action cells in the monolith order with ms labels', () => {
+  it('lists the 15 action cells in the monolith order with ms labels', () => {
     const actions = hkPanelActions(DEFAULT_CFG, false)
     expect(actions.map((a) => a.key)).toEqual([
       'prev_line', 'play_pause', 'next_line', 'sync', 'replay_only', 'end_line',
+      'delete_line',
       'ts_back_tiny', 'ts_fwd_tiny', 'ts_back_small', 'ts_fwd_small',
       'ts_back_medium', 'ts_fwd_medium', 'ts_back_large', 'ts_fwd_large',
     ])
     expect(actions[0].label).toBe('Previous line')
-    expect(actions[6].label).toBe('−100ms time')
-    expect(actions[13].label).toBe('+1000ms time')
+    expect(actions[6].label).toBe('Delete')
+    expect(actions[7].label).toBe('−100ms time')
+    expect(actions[14].label).toBe('+1000ms time')
   })
 
   it('labels read "seek" in offset-seek mode', () => {
     const actions = hkPanelActions(DEFAULT_CFG, true)
-    expect(actions[6].label).toBe('−100ms seek')
-    expect(actions[7].label).toBe('+100ms seek')
+    expect(actions[7].label).toBe('−100ms seek')
+    expect(actions[8].label).toBe('+100ms seek')
   })
 })
 
 describe('typing-mode dimming sets', () => {
   it('matches the monolith sets', () => {
-    expect([...HOTKEY_ONLY]).toHaveLength(16)
+    expect([...HOTKEY_ONLY]).toHaveLength(17)
     expect([...TYPING_AVAILABLE]).toEqual(['play_pause', 'prev_line', 'next_line'])
     // play_pause is hotkey-only-listed but typing-available, so never dimmed
     expect(TYPING_AVAILABLE.has('play_pause')).toBe(true)

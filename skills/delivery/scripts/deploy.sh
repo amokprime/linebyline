@@ -57,9 +57,11 @@ cleanup() {
   echo "  Done. (exit $exit_code)"
   echo ""
   echo "  Done. (exit $exit_code)" >> "$LOG"
-  echo ""
-  echo "=== deploy.log (filtered) ==="
-  cat "$LOG" 2>/dev/null || true
+  # Don't cat $LOG here — the live output (tee + echo) already showed
+  # everything to the terminal. The filtered log is saved to
+  # scratch/upload/deploy.log for the user to review after the deploy if
+  # needed. Catting it at the end causes the section headers + summaries to
+  # appear twice in the terminal (once live, once from the filtered log).
   exit "$exit_code"
 }
 trap cleanup EXIT
@@ -427,52 +429,54 @@ echo "  Pruned trace.zip + stale artifacts on server." | tee -a "$LOG"
 # abort. The deploy.sh post-Playwright block re-runs failures scoped and only
 # pulls persistent (twice-failed) artifacts via scratch/upload/.
 #
-# Output filtering: drop `[N/294] [browser] › ...` progress lines (too verbose),
-# but preserve full error context for failures (from `  N) [browser] › ...`
-# through `Error Context: ...`) and the final summary line. This keeps the
-# log readable while retaining all debugging info.
+# Dedup: the Playwright run itself delegates to scripts/local/tst.sh (the
+# canonical Bash wrapper), which in turn SSHes to the server's tst. This
+# matches the shared-lint-gate pattern: deploy.sh + manual `tst` invocation
+# both drive the same local script, so the output filter + notify-send +
+# popup-terminal behavior are defined in one place.
 
-# Pre-Playwright Syncthing force-sync (only if deliver.zip exists in scratch/).
+# Pre-Playwright Syncthing force-sync is now owned by tst.sh (the canonical
+# Bash wrapper). deploy.sh no longer duplicates the client-side rescan + poll
+# logic — tst.sh does it before the ssh call. This is the full dedup: deploy.sh
+# and manual `tst` both drive the same local script, so the sync behavior is
+# identical either way. deploy.sh just sets LBL_NO_POPUP=1 to skip the popup.
+
 if [[ "$run_pw" -eq 1 ]]; then
-  log_section "Pre-Playwright Syncthing force-sync"
-  if [[ -f "$SCRATCH/deliver.zip" ]]; then
-    echo "  deliver.zip found -- syncing deployed files to Server..." | tee -a "$LOG"
-    if [[ -n "${SYNCTHING_API_KEY:-}" && -n "${SYNCTHING_LBL_ID:-}" && -n "${SYNCTHING_SERVER_ID:-}" ]]; then
-      echo "  Triggering Syncthing rescan..." | tee -a "$LOG"
-      curl -s -X POST -H "X-API-Key: $SYNCTHING_API_KEY" \
-        "http://127.0.0.1:8384/rest/db/scan?folder=$SYNCTHING_LBL_ID" >/dev/null 2>&1 || true
-      echo "  Polling server completion..." | tee -a "$LOG"
-      for i in $(seq 1 120); do
-        pct=$(curl -s -H "X-API-Key: $SYNCTHING_API_KEY" \
-          "http://127.0.0.1:8384/rest/db/completion?folder=$SYNCTHING_LBL_ID&device=$SYNCTHING_SERVER_ID" \
-          2>/dev/null | jq -r '.completion // 0' 2>/dev/null || echo 0)
-        if [[ "$pct" == "100" ]]; then
-          echo "  Sync complete (100%)." | tee -a "$LOG"
-          break
-        fi
-        if (( i % 10 == 0 )); then
-          echo "  Sync at ${pct}%..." | tee -a "$LOG"
-        fi
-        sleep 2
-      done
-    else
-      echo "  (skipped: Syncthing env vars not set)" | tee -a "$LOG"
-    fi
-  else
-    echo "  No deliver.zip -- skipping sync" | tee -a "$LOG"
+  # ── Snapshot regen mode ──────────────────────────────────────────────────
+  # If a .update-snapshots flag file was included in the deliver.zip (placed
+  # by the agent when snapshot changes are expected — e.g. new hotkeys, new
+  # Settings sections, URL changes), set LBL_UPDATE_SNAPSHOTS=1 so tst.sh
+  # passes --update-snapshots to the server's tst. This regenerates snapshots
+  # AND runs the tests in one pass — avoids a guaranteed-failed test run
+  # followed by a manual `tst --update-snapshots` + another `tst`.
+  UPDATE_SNAPSHOTS_FLAG="$SCRATCH/.update-snapshots"
+  TST_ENV=""
+  if [[ -f "$UPDATE_SNAPSHOTS_FLAG" ]]; then
+    TST_ENV="LBL_UPDATE_SNAPSHOTS=1"
+    echo "  .update-snapshots flag found — running tst --update-snapshots" | tee -a "$LOG"
   fi
 
-  log_section "Running Playwright suite via SSH"
+  log_section "Running Playwright suite via scripts/local/tst.sh"
   echo "  App/test code changed -- running full Playwright suite..." | tee -a "$LOG"
-  ssh -F "$HOME/.ssh/config" Server tst 2>&1 | tee "$RAW" || true
+  # Delegate to scripts/local/tst.sh — the canonical Bash wrapper. Avoids
+  # duplicating the SSH + output-filter + trace.zip-prune logic. LBL_NO_POPUP=1
+  # skips the popup-terminal check (deploy.sh's piped stdout would trigger it).
+  TST_SH="$DEST/scripts/local/tst.sh"
+  if [[ -f "$TST_SH" ]]; then
+    env $TST_ENV LBL_NO_POPUP=1 bash "$TST_SH" 2>&1 | tee "$RAW" || true
+  else
+    # Fallback: bare ssh (e.g. pre-Tranche-4.7.2 deploys without the .sh).
+    ssh -F "$HOME/.ssh/config" Server tst 2>&1 | tee "$RAW" || true
+  fi
   grep -vE "^\[[0-9]+/[0-9]+\] \[" "$RAW" >> "$LOG" 2>/dev/null || true
   : > "$RAW"
 
-  # Prune trace.zip + stale artifacts AFTER tst run (trace.zip from this
-  # run's trash/ weren't pruned by the pre-Playwright prune above).
-  log_section "Pruning Playwright artifacts on Server (trace.zip + >1 day)"
-  ssh -F "$HOME/.ssh/config" Server "find ~/GitHub/linebyline/trash -type f -name 'trace.zip' -delete 2>/dev/null; find ~/GitHub/linebyline/trash ~/GitHub/linebyline/playwright-report -type f -mtime +1 -delete 2>/dev/null" || true
-  echo "  Pruned trace.zip + stale artifacts on server." | tee -a "$LOG"
+  # trace.zip + stale artifact prune is now owned by tst.sh (post-test block).
+  # Keep a server-side prune here too as defense-in-depth for the >1-day stale
+  # artifacts (tst.sh only prunes trace.zip, not stale playwright-report/).
+  log_section "Pruning stale Playwright artifacts on Server (>1 day)"
+  ssh -F "$HOME/.ssh/config" Server "find ~/GitHub/linebyline/trash ~/GitHub/linebyline/playwright-report -type f -mtime +1 -delete 2>/dev/null" || true
+  echo "  Pruned stale artifacts on server." | tee -a "$LOG"
 
 
 else

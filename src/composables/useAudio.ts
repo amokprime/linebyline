@@ -54,6 +54,7 @@ import { useAppState } from './useAppState'
 import { useMuted, useSpeed, useVolume } from './usePersistedState'
 import { setSongTitle } from './useTitle'
 import { tsToMs } from '@/utils/lrcParser'
+import { markUserSeek } from './useSync'
 
 // ── Module-level singleton state ────────────────────────────────────────────
 // The Audio element — null until setupAudio creates it. Module-level so the
@@ -365,12 +366,24 @@ export function mountProgressDrag(): () => void {
       el.pause()
       playing.value = false
     }
+    // Tranche 4.7 latent-issue 3 — set the user-seek flag BEFORE seekTo so the
+    // synchronous timeupdate (fired by el.currentTime = ...) consumes it and
+    // drags the cursor in BOTH directions (not just DOWN). The flag is
+    // one-shot — cleared by updateActiveLineFromTime after it consumes it.
+    markUserSeek()
     seekTo(e.clientX)
+    // Explicitly trigger updateActiveLineFromTime so the cursor moves
+    // synchronously with the click (don't wait for the next periodic
+    // timeupdate, which might find best === playingLine and early-return).
+    if (el) _callbacks.updateActiveLineFromTime(el.currentTime * 1000)
     e.preventDefault()
   }
   function onMove(e: MouseEvent) {
     if (!seeking) return
+    markUserSeek()
     seekTo(e.clientX)
+    const el = audioEl.value
+    if (el) _callbacks.updateActiveLineFromTime(el.currentTime * 1000)
     e.preventDefault()
   }
   function onUp(e: MouseEvent) {
@@ -383,6 +396,8 @@ export function mountProgressDrag(): () => void {
       el.play()
       playing.value = true
     }
+    // Flag already set by onDown/onMove + consumed by the explicit
+    // updateActiveLineFromTime calls. No need to set it again here.
   }
 
   wrap.addEventListener('mousedown', onDown)

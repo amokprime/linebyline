@@ -61,7 +61,7 @@ test("persistence", async ({ page, media }) => {
   ).not.toBeChecked();
   await exp("Tiny", "100");
   await expect(page.locator("#s-default-meta")).toHaveValue(
-    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n",
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n",
   );
 });
 

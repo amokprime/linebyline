@@ -122,14 +122,20 @@ export function applyMode() {
     // layout is settled before setSelectionRange + focus. setSelectionRange
     // on a hidden textarea is a no-op on some browsers, hence the wait.
     requestAnimationFrame(() => requestAnimationFrame(() => {
+      // Tranche 4.7 latent-issue 5 — focus WITHOUT auto-scroll (preventScroll:
+      // true), then place the caret, then set scrollTop LAST so it wins over
+      // any focus-induced auto-scroll. Previously focus() was called AFTER
+      // scrollTop, which auto-scrolled the textarea to bring the caret into
+      // view — undoing the scroll preservation and jumping to the top.
+      ta.focus({ preventScroll: true })
       ta.setSelectionRange(firstLyricChar, firstLyricChar)
-      if (ratio > 0.01) {
-        const taH = ta.scrollHeight - ta.clientHeight
-        ta.scrollTop = ratio * taH
-      } else {
-        ta.scrollTop = 0
-      }
-      ta.focus()
+      // Tranche 4.7 latent-issue 5 — preserve scroll position from Hotkey Mode
+      // to Typing Mode. Previously a `ratio > 0.01` threshold forced
+      // `ta.scrollTop = 0` for any sub-1% scroll, discarding even a one-line
+      // scroll. Always apply the ratio now; clamp taH to >= 0 so a
+      // shorter-than-viewport textarea still gets `scrollTop = 0` naturally.
+      const taH = Math.max(0, ta.scrollHeight - ta.clientHeight)
+      ta.scrollTop = ratio * taH
     }))
   }
   // Monolith calls rebuildHkPanel() here — Vue's reactivity re-renders

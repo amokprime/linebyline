@@ -63,10 +63,14 @@ test("adjust-seek", async ({ page, media }) => {
   await page.keyboard.press("Control+i");
   const lines = await lyricLinesText(page);
   expect(lines).toContain("[00:02.56] That smell");
+  // Tranche 4.7 refinement 1 — doSyncFile resets seek_offset to DEFAULT (-600)
+  // after applying the delta. Then `z` (ts_back_tiny: -100ms) makes it -700.
+  // Previously (before the reset), the offset stayed at -500 after Ctrl+I, so
+  // `z` made it -600.
   await page.keyboard.press("z");
   await expect(
     page.getByRole("spinbutton", { name: "Seek offset in milliseconds" }),
-  ).toHaveValue("-600");
+  ).toHaveValue("-700");
 });
 
 test("replay-r", async ({ page, media }) => {

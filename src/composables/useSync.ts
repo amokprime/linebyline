@@ -77,6 +77,7 @@ import {
 import { cleanGenius, extractGeniusFields } from '@/utils/geniusExtractor'
 import { cleanPaste, ensureReTagDefault, mergeLrcMeta } from '@/utils/pasteHandlers'
 import { pauseIfPlaying } from './useAudio'
+import { DEFAULT_CFG } from '@/config'
 
 // ── Refs + callbacks (set by initSync) ──────────────────────────────────────
 export interface SyncRefs {
@@ -187,6 +188,23 @@ let _arrowNavTimer: ReturnType<typeof setTimeout> | null = null
 let _suppressAutoLine = false
 export function isAutoLineSuppressed(): boolean {
   return _suppressAutoLine
+}
+
+// Tranche 4.7 latent-issue 3 — flag set by useAudio on seek bar mouseup so
+// the next updateActiveLineFromTime call knows the position change came
+// from a user click (not natural playback). When set, the cursor follows
+// the highlighter in BOTH directions (up and down). When unset (natural
+// playback), the cursor follows the highlighter DOWN only — preserving the
+// syncLine race protection.
+let _userSeekActive = false
+export function markUserSeek(): void {
+  _userSeekActive = true
+}
+export function isUserSeekActive(): boolean {
+  return _userSeekActive
+}
+export function clearUserSeekFlag(): void {
+  _userSeekActive = false
 }
 
 function suppressAuto() {
@@ -546,6 +564,62 @@ export function insertEndLine() {
   scrollToActive()
 }
 
+// Count lines with actual lyric content (non-meta, non-blank, non-trailing-ts).
+// Used by deleteActiveLine to refuse deleting the last lyric line.
+function _countLyricContentLines(lines: string[]): number {
+  return lines.filter((l) => !META_RE.test(l) && l.trim() !== '' && !isEndTs(l)).length
+}
+
+// Find the new active line index after deleting `deletedIdx` from `lines`.
+// Searches backward from deletedIdx for the previous non-meta non-blank line;
+// if none found (deleted the first lyric line), searches forward from 0.
+// Returns -1 if no suitable line exists.
+function _findNewActiveAfterDelete(lines: string[], deletedIdx: number): number {
+  for (let i = deletedIdx - 1; i >= 0; i--) {
+    if (!META_RE.test(lines[i]!) && lines[i]!.trim() !== '') {
+      return i
+    }
+  }
+  for (let i = 0; i < lines.length; i++) {
+    if (!META_RE.test(lines[i]!) && lines[i]!.trim() !== '') {
+      return i
+    }
+  }
+  return -1
+}
+
+// Delete the active line (the line with the cursor's left-border bar).
+// Returns true if a line was deleted; false if there was nothing to delete
+// (activeLine < 0, out of range, meta line, or no other lyric content).
+// After deletion, activeLine moves to the previous non-meta non-blank line
+// (or stays at index 0 if the deleted line was the first lyric line).
+// No confirmation prompt — Ctrl+Z undo is common muscle memory.
+export function deleteActiveLine(): boolean {
+  const { activeLine, selectedLines } = useAppState()
+  if (activeLine.value < 0) {
+    return false
+  }
+  const lines = getMainText().split('\n')
+  if (activeLine.value >= lines.length) {
+    return false
+  }
+  const targetLine = lines[activeLine.value]!
+  if (META_RE.test(targetLine)) {
+    return false
+  }
+  if (_countLyricContentLines(lines) <= 1) {
+    return false
+  }
+  selectedLines.value.clear()
+  lines.splice(activeLine.value, 1)
+  _callbacks.setMainText(lines.join('\n'))
+  activeLine.value = _findNewActiveAfterDelete(lines, activeLine.value)
+  suppressAuto()
+  renderMainLines()
+  scrollToActive()
+  return true
+}
+
 export function adjustTs(delta: number) {
   const { activeLine, selectedLines, cfg } = useAppState()
   const lines = getMainText().split('\n')
@@ -630,6 +704,10 @@ function _markAsTranslationSplit(
 // Normal mark-as-translation: stamp the next timestamp minus 10ms onto the
 // target line, optionally wrapping content in parens. Extracted from
 // markAsTranslation to reduce its cognitive complexity.
+// Tranche 4.7 refinement 3 — when wrapping in parens, capitalize the first
+// alphabetic character if lowercase. Translations typically start with a
+// capital letter (e.g. "It disturbs my concentration"), so a lowercase
+// source like "it disturbs..." becomes "(It disturbs...)".
 function _markAsTranslationNormal(
   lines: string[],
   targetIdx: number,
@@ -646,7 +724,7 @@ function _markAsTranslationNormal(
     : lines[targetIdx]!
   let newContent = content
   if (useParens && newContent.trim() && !newContent.trim().startsWith('(')) {
-    newContent = '(' + newContent.trim() + ')'
+    newContent = '(' + _capitalizeFirstLetter(newContent.trim()) + ')'
   }
   lines[targetIdx] = msToTs(nextMs - 10) + (newContent ? ' ' + newContent : '')
   _callbacks.setMainText(lines.join('\n'))
@@ -662,6 +740,19 @@ function _markAsTranslationNormal(
       }
     }
   }
+}
+
+// Capitalize the first alphabetic character of `s` if it's lowercase.
+// Tranche 4.7 refinement 3 — helper for _markAsTranslationNormal. Returns `s`
+// unchanged if the first character isn't a lowercase ASCII letter.
+function _capitalizeFirstLetter(s: string): string {
+  if (!s) return s
+  const ch = s.charCodeAt(0)
+  // a-z → A-Z
+  if (ch >= 97 && ch <= 122) {
+    return String.fromCharCode(ch - 32) + s.slice(1)
+  }
+  return s
 }
 
 export function markAsTranslation() {
@@ -730,6 +821,7 @@ export function setOffsetMode(isSeek: boolean) {
 }
 
 export function doSyncFile() {
+  const { cfg } = useAppState()
   const delta = getSeekOffset()
   if (!delta) {
     return
@@ -740,6 +832,24 @@ export function doSyncFile() {
     return ms !== null ? replaceTs(l, ms + delta) : l
   })
   _callbacks.setMainText(updated.join('\n'))
+  // Tranche 4.7 refinement 1 — reset the seek offset to the DEFAULT value
+  // (DEFAULT_CFG.seek_offset = -600ms) after applying it to all timestamps.
+  // The user's original request: "Revert seek offset back to previous position
+  // (or if too kludgy to accommodate, the default position) after syncing file."
+  // Tracking the "previous position" across input changes is kludgy, so we
+  // fall back to the default. Resetting to 0 (my first attempt) was wrong —
+  // the default -600ms is the usual previous value the user wants restored,
+  // and 0ms would make R/Instant Replay seek 600ms too far forward.
+  cfg.value.seek_offset = DEFAULT_CFG.seek_offset
+  const el = _seekOffsetRef?.value
+  if (el) {
+    el.value = String(DEFAULT_CFG.seek_offset)
+  }
+  try {
+    localStorage.setItem('lbl_cfg', JSON.stringify(cfg.value))
+  } catch {
+    // localStorage may be unavailable — silent fail (monolith parity)
+  }
 }
 
 // Seek-offset input @change handler — parse, NaN revert, persist cfg.
@@ -857,7 +967,15 @@ export function updateActiveLineFromTime(posMs: number) {
       best = i
     }
   }
+  // Tranche 4.7 latent-issue 2 — when playback is before the first timestamp
+  // (best === -1), clear the highlighter (playingLine) and re-render so the
+  // `.active` class is removed. Previously the function early-returned,
+  // leaving the previous `.active` class stuck on the last-played line.
   if (best === -1) {
+    if (playingLine.value !== -1) {
+      playingLine.value = -1
+      renderMainLines()
+    }
     return
   }
   if (best === playingLine.value) {
@@ -868,10 +986,16 @@ export function updateActiveLineFromTime(posMs: number) {
     return
   }
   playingLine.value = best
-  // Cursor follows highlighter DOWN only (avoid race when syncing a line
-  // above cursor — syncLine sets playingLine directly, bypassing this fn).
-  // Phase E Tranche 4.5 latent-issue fix per ROADMAP.md.
-  if (best > activeLine.value && !isAutoLineSuppressed()) {
+  // Tranche 4.7 latent-issue 3 — cursor follows highlighter:
+  //  - Natural playback: cursor follows DOWN only (avoid race when syncing a
+  //    line above cursor — syncLine sets playingLine directly, bypassing this fn).
+  //  - User seek bar click: cursor follows in BOTH directions. The
+  //    _userSeekActive flag is set by useAudio.markUserSeek() on seek bar
+  //    mouseup and consumed here (one-shot — cleared after use).
+  if (_userSeekActive) {
+    clearUserSeekFlag()
+    activeLine.value = best
+  } else if (best > activeLine.value && !isAutoLineSuppressed()) {
     activeLine.value = best
   }
   renderMainLines()

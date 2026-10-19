@@ -132,7 +132,7 @@ test("paste-secondary", async ({
   readMedia,
   workaroundPaste: _workaroundPaste,
 }) => {
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await page.getByRole("textbox", { name: "Secondary 1 lyrics" }).click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
@@ -233,6 +233,6 @@ test("import-10k-blocking", async ({ page, media }) => {
   });
   await page.locator("#file-picker").setInputFiles([media("10k_lines.lrc")]);
   await expect(page.locator("#main-textarea")).toHaveValue(
-    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n",
+    "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n",
   );
 });

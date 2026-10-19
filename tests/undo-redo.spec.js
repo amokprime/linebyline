@@ -5,7 +5,7 @@ const {
   waitForLyrics,
 } = require("@linebyline/test-helpers");
 const META =
-  "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n";
+  "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n";
 
 test("import-main", async ({ page, media }) => {
   await page
@@ -24,7 +24,7 @@ test("import-main", async ({ page, media }) => {
 });
 
 test("import-one-secondary", async ({ page, importSecondary }) => {
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_spanish.lrc");
   expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot(
     "import-one-after.txt",
@@ -38,9 +38,9 @@ test("import-one-secondary", async ({ page, importSecondary }) => {
 });
 
 test("import-two-secondary", async ({ page, importSecondary }) => {
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_spanish.lrc");
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(2, "plain_french.lrc");
   await page.keyboard.press("Control+z");
   await expect(
@@ -123,9 +123,9 @@ test("merge", async ({ page, media, importSecondary }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_french.lrc");
-  await page.keyboard.press("Control+6");
+  await page.keyboard.press("Control+5");
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "merge-after-textarea.txt",
   );

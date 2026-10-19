@@ -7,7 +7,7 @@ import type { AppConfig, HotkeyMap } from '../config'
 
 // Actions dimmed in Typing mode unless also listed as typing-available.
 export const HOTKEY_ONLY = new Set([
-  'play_pause', 'play_pause_alt', 'sync', 'end_line', 'prev_line', 'next_line', 'replay_only',
+  'play_pause', 'play_pause_alt', 'sync', 'end_line', 'delete_line', 'prev_line', 'next_line', 'replay_only',
   'ts_back_tiny', 'ts_fwd_tiny', 'ts_back_small', 'ts_fwd_small',
   'ts_back_medium', 'ts_fwd_medium', 'ts_back_large', 'ts_fwd_large',
   'sync_file',
@@ -51,6 +51,7 @@ export function hkPanelActions(cfg: AppConfig, offsetSeekMode: boolean): { key: 
     ['prev_line', 'Previous line'], ['play_pause', 'Play/pause'],
     ['next_line', 'Next line'], ['sync', 'Sync line'],
     ['replay_only', 'Replay only'], ['end_line', 'End line'],
+    ['delete_line', 'Delete'],
     ['ts_back_tiny', `\u2212${tn}ms ${tsLabel}`], ['ts_fwd_tiny', `+${tn}ms ${tsLabel}`],
     ['ts_back_small', `\u2212${sm}ms ${tsLabel}`], ['ts_fwd_small', `+${sm}ms ${tsLabel}`],
     ['ts_back_medium', `\u2212${med}ms ${tsLabel}`], ['ts_fwd_medium', `+${med}ms ${tsLabel}`],

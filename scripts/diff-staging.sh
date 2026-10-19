@@ -61,3 +61,5 @@ g status --porcelain > "$POST"
     diff "$OUT/changes.status" "$POST" || true
   fi
 } > "$OUT/changes.meta"
+
+notify-send "Staging diff updated."

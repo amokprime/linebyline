@@ -41,6 +41,7 @@ import { hkMatch, keyStr } from '@/hotkeys/keyUtils'
 import { META_RE } from '@/utils/lrcParser'
 import {
   adjustTs,
+  deleteActiveLine,
   doSyncFile,
   insertEndLine,
   markAsTranslation,
@@ -508,6 +509,7 @@ function handleHotkeyModeKeys(e: KeyboardEvent, ks: string, hk: Record<string, s
     [hk.play_pause ?? '']: () => togglePlay(),
     [hk.sync ?? '']: () => syncLine(),
     [hk.end_line ?? '']: () => insertEndLine(),
+    [hk.delete_line ?? '']: () => deleteActiveLine(),
     [hk.prev_line ?? '']: () => seekPrevLine(),
     [hk.next_line ?? '']: () => seekNextLine(),
     [hk.ts_back_tiny ?? '']: () => om ? tickSeekOffset(-cfg.value.tiny_ms) : adjustTs(-cfg.value.tiny_ms),

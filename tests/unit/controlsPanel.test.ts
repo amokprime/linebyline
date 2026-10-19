@@ -34,10 +34,10 @@ describe('ControlsPanel', () => {
     expect(modeCells[0].attributes('aria-label')).toBe('Toggle offset mode')
   })
 
-  it('renders all 14 action cells with monolith labels and key badges', async () => {
+  it('renders all 15 action cells with monolith labels and key badges', async () => {
     const wrapper = await mountPanel()
     const cells = wrapper.findAll('.hk-cell:not(.mode)')
-    expect(cells).toHaveLength(14)
+    expect(cells).toHaveLength(15)
     expect(cells[0].text()).toContain('Previous line')
     expect(cells[0].text()).toContain('Q')
     expect(cells[0].text()).toContain('↑')
@@ -45,8 +45,11 @@ describe('ControlsPanel', () => {
     expect(syncCell.text()).toContain('Sync line')
     expect(syncCell.text()).toContain('W')
     expect(syncCell.text()).toContain('Enter')
-    expect(cells[6].text()).toContain('−100ms time')
-    expect(cells[13].text()).toContain('+1000ms time')
+    // Tranche 4.7.1 — Delete active line cell at index 6 (between End line and the ts-adjust grid).
+    expect(cells[6].text()).toContain('Delete')
+    expect(cells[6].text()).toContain('G')
+    expect(cells[7].text()).toContain('−100ms time')
+    expect(cells[14].text()).toContain('+1000ms time')
   })
 
   it('uses HK_LABELS for aria-labels and titles', async () => {

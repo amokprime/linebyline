@@ -51,6 +51,18 @@ import { syncScrollFrom } from '../composables/useMerge'
 // visible position when hidden entries are contiguous at the end).
 const { mainText, secondaryPool, mainWarnText, mainWarnVisible } = useAppState()
 
+// Tranche 4.7 latent-issue 4 — `#main-paren-check` and `#main-split-check`
+// steal focus when clicked, which suppresses Space/Shift+Space hotkeys via the
+// isFocusedUIElement guard. Blur the checkbox after the mouseup so focus
+// returns to the body. The setTimeout(0) defers the blur until after the
+// click event has finished toggling the checkbox state. mouseup only fires on
+// mouse interaction (not keyboard Space), so keyboard users tabbing through
+// keep their focus.
+function onCheckMouseup(e: MouseEvent) {
+  const target = e.target as HTMLInputElement
+  setTimeout(() => target.blur(), 0)
+}
+
 // Template refs consumed by useModeSwitch.applyMode() + useSync.renderMainLines().
 // The refs are empty until mount; both composables read .value at call time
 // and no-op pre-mount.
@@ -119,6 +131,7 @@ onBeforeUnmount(() => {
               type="checkbox"
               checked
               style="width: 13px; height: 13px; cursor: pointer; accent-color: var(--primary)"
+              @mouseup="onCheckMouseup"
             > ( )</label>
             <label
               id="main-split-label"
@@ -128,6 +141,7 @@ onBeforeUnmount(() => {
               id="main-split-check"
               type="checkbox"
               style="width: 13px; height: 13px; cursor: pointer; accent-color: var(--primary)"
+              @mouseup="onCheckMouseup"
             > ↩</label>
           </div>
           <div

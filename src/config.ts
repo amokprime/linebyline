@@ -6,7 +6,7 @@
 // PORT DELTA: none — values and logic are verbatim.
 
 export const DEFAULT_META =
-  '[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n';
+  '[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n';
 
 export type HotkeyMap = Record<string, string>;
 
@@ -41,6 +41,7 @@ export const DEFAULT_CFG: AppConfig = {
   undo_debounce_ms: 150,
   hotkeys: {
     toggle_mode: '`', play_pause: 'Space', play_pause_alt: 'Shift+Space', sync: 'W', end_line: 'T',
+    delete_line: 'G',
     prev_line: 'Q', next_line: 'E',
     ts_back_tiny: 'Z', ts_fwd_tiny: 'V',
     ts_back_small: 'A', ts_fwd_small: 'F',
@@ -48,12 +49,12 @@ export const DEFAULT_CFG: AppConfig = {
     ts_back_large: 'X', ts_fwd_large: 'C',
     clear_sel: 'Escape',
     offset_mode_toggle: 'Shift+~', sync_file: 'Ctrl+I',
-    add_field: 'Ctrl+4', remove_field: 'Ctrl+5', merge_fields: 'Ctrl+6',
+    add_field: 'Ctrl+3', remove_field: 'Ctrl+4', merge_fields: 'Ctrl+5',
     replay_line: 'Enter', replay_only: 'R', replay_end: 'Shift+R',
     open: 'Ctrl+;', settings: 'Ctrl+,',
     undo: 'Ctrl+Z', redo: 'Ctrl+Y',
-    speed_down: 'Ctrl+1', speed_up: 'Ctrl+2', speed_reset: 'Ctrl+3',
-    seek_back: 'Ctrl+9', seek_fwd: 'Ctrl+0',
+    speed_down: 'Ctrl+ArrowDown', speed_up: 'Ctrl+ArrowUp', speed_reset: 'Ctrl+ArrowRight',
+    seek_back: 'Ctrl+1', seek_fwd: 'Ctrl+2',
     save: "Ctrl+'", help: 'Ctrl+/', theme_toggle: 'Ctrl+.',
     mark_translation: 'Ctrl+ArrowLeft',
     issues: 'Ctrl+[',
@@ -73,7 +74,7 @@ export interface HotkeySection {
 export const HK_SECTIONS: HotkeySection[] = [
   { label: 'Menu', keys: ['open', 'save', 'undo', 'redo', 'settings', 'theme_toggle', 'help', 'issues', 'panel_toggle', 'reset_defaults'] },
   { label: 'Playback', keys: ['play_pause', 'play_pause_alt', 'speed_down', 'speed_up', 'speed_reset', 'seek_back', 'seek_fwd'] },
-  { label: 'Sync', keys: ['offset_mode_toggle', 'sync_file', 'sync', 'end_line', 'prev_line', 'next_line', 'replay_only', 'replay_end'] },
+  { label: 'Sync', keys: ['offset_mode_toggle', 'sync_file', 'sync', 'end_line', 'delete_line', 'prev_line', 'next_line', 'replay_only', 'replay_end'] },
   { label: 'Adjustments', keys: ['ts_back_tiny', 'ts_fwd_tiny', 'ts_back_small', 'ts_fwd_small', 'ts_back_medium', 'ts_fwd_medium', 'ts_back_large', 'ts_fwd_large'] },
   { label: 'Text', keys: ['toggle_mode', 'add_field', 'remove_field', 'merge_fields', 'mark_translation'] },
 ];
@@ -81,6 +82,7 @@ export const HK_SECTIONS: HotkeySection[] = [
 export const HK_LABELS: Record<string, string> = {
   toggle_mode: 'Toggle mode', play_pause: 'Play/pause', play_pause_alt: 'Play/pause (alternate)',
   sync: 'Sync line start', end_line: 'Sync line end',
+  delete_line: 'Delete active line',
   prev_line: 'Previous line', next_line: 'Next line',
   replay_only: 'Replay only', replay_end: 'Replay end',
   ts_back_tiny: 'Back tiny amount',
@@ -105,20 +107,20 @@ export const HK_LABELS: Record<string, string> = {
 
 // Map old hotkey values to their new defaults (keyed by hotkey action)
 export const LEGACY_HOTKEY_MAP: Record<string, Record<string, string>> = {
-  seek_back: { 'Ctrl+A': 'Ctrl+9', 'Ctrl+S': 'Ctrl+9' },
-  seek_fwd: { 'Alt+W': 'Ctrl+0', 'Ctrl+D': 'Ctrl+0' },
+  seek_back: { 'Ctrl+A': 'Ctrl+1', 'Ctrl+S': 'Ctrl+1', 'Ctrl+9': 'Ctrl+1' },
+  seek_fwd: { 'Alt+W': 'Ctrl+2', 'Ctrl+D': 'Ctrl+2', 'Ctrl+0': 'Ctrl+2' },
   save: { 'Ctrl+S': "Ctrl+'", 'Ctrl+;': "Ctrl+'" },
   settings: { 'Alt+`': 'Ctrl+,' },
   help: { F2: 'Ctrl+/' },
   toggle_mode: { Tab: '`' },
   offset_mode_toggle: { '`': 'Shift+~' },
   sync_file: { 'Ctrl+`': 'Ctrl+I' },
-  speed_down: { 'Alt+1': 'Ctrl+1' },
-  speed_up: { 'Alt+2': 'Ctrl+2' },
-  speed_reset: { 'Alt+3': 'Ctrl+3' },
-  add_field: { 'Ctrl+1': 'Ctrl+4' },
-  remove_field: { 'Ctrl+2': 'Ctrl+5' },
-  merge_fields: { 'Ctrl+3': 'Ctrl+6' },
+  speed_down: { 'Alt+1': 'Ctrl+ArrowDown', 'Ctrl+1': 'Ctrl+ArrowDown' },
+  speed_up: { 'Alt+2': 'Ctrl+ArrowUp', 'Ctrl+2': 'Ctrl+ArrowUp' },
+  speed_reset: { 'Alt+3': 'Ctrl+ArrowRight', 'Ctrl+3': 'Ctrl+ArrowRight' },
+  add_field: { 'Ctrl+1': 'Ctrl+3', 'Ctrl+4': 'Ctrl+3' },
+  remove_field: { 'Ctrl+2': 'Ctrl+4', 'Ctrl+5': 'Ctrl+4' },
+  merge_fields: { 'Ctrl+3': 'Ctrl+5', 'Ctrl+6': 'Ctrl+5' },
   panel_toggle: { 'Ctrl+`': 'Ctrl+Shift+~' },
 };
 
@@ -140,6 +142,7 @@ export function ensureDefaultHotkeys(c: AppConfig): void {
   if (c.hotkeys.issues === "Ctrl+'") c.hotkeys.issues = 'Ctrl+[';
   c.hotkeys.panel_toggle ??= 'Ctrl+Shift+~';
   c.hotkeys.reset_defaults ??= 'Ctrl+\\';
+  c.hotkeys.delete_line ??= 'G';
   if (c.hotkeys.mute) delete c.hotkeys.mute;
 }
 
