@@ -7,18 +7,32 @@ const { test: base, expect } = require("@playwright/test");
 
 /**
  * Returns the URL path to the main app entry point.
- * Targets docs/index.html for CI and local testing.
- * After the Vite refactor (Roadmap item 3), this will
- * return "/" and the webServer command will change
- * to `npx vite preview`.
  *
- * @returns {string} URL path like /docs/index.html
+ * Two modes coexist during Phase E (pre-cutover):
+ *   - Default (monolith): targets /docs/index.html, served by `npx serve . -l 3004`.
+ *   - Vite-target (opt-in): targets /, served by `npx vite preview --port 5173`.
+ *
+ * Vite-target mode is activated by `LBL_VITE_TARGET=1` env var only.
+ * No auto-detect via `dist/index.html` existence — that was too aggressive
+ * in the SSH+Syncthing workflow (dist/ syncs to the server and persists,
+ * so every tst run would auto-detect Vite-target, making monolith tests
+ * impossible without rm -rf dist/ first).
+ *
+ * After Phase E Tranche 6 (monolith deletion), the env-var branch goes away
+ * and this always returns "/".
+ *
+ * @returns {string} URL path — "/" for Vite, "/docs/index.html" for monolith
  */
 function getAppUrl() {
-  const docsIndex = path.resolve(process.cwd(), "docs", "index.html");
+  if (process.env.LBL_VITE_TARGET === "1") {
+    return "/";
+  }
 
+  const docsIndex = path.resolve(process.cwd(), "docs", "index.html");
   if (!fs.existsSync(docsIndex)) {
-    throw new Error(`docs/index.html not found at ${docsIndex}`);
+    throw new Error(
+      `docs/index.html not found at ${docsIndex}. Set LBL_VITE_TARGET=1 to target the Vite build instead.`,
+    );
   }
 
   return "/docs/index.html";
@@ -61,8 +75,10 @@ const test =
                 .click(),
             ]);
             await fc.setFiles([media(filename)]);
+            // Use getByRole('textbox') — getByLabel('Secondary N lyrics')
+            // also matches the file input ('Secondary N lyrics file').
             await expect(
-              page.getByLabel(`Secondary ${nth} lyrics`),
+              page.getByRole("textbox", { name: `Secondary ${nth} lyrics` }),
             ).toHaveValue(/./);
           },
         );

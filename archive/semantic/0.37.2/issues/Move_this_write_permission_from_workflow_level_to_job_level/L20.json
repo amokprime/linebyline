@@ -1,0 +1,23 @@
+{
+  "rule": "githubactions:S8233",
+  "component": "amokprime_linebyline:.github/workflows/deploy.yml",
+  "line": 20,
+  "textRange": {
+    "startLine": 20,
+    "endLine": 20,
+    "startOffset": 9,
+    "endOffset": 14
+  },
+  "message": "Move this write permission from workflow level to job level.",
+  "severity": "MAJOR",
+  "type": "VULNERABILITY",
+  "cleanCodeAttribute": "TRUSTWORTHY",
+  "cleanCodeAttributeCategory": "RESPONSIBLE",
+  "impacts": [
+    {
+      "softwareQuality": "SECURITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}

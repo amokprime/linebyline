@@ -4,7 +4,7 @@ Icons ("undo", "redo", "list-checks" recolored for LineByLine logo, "play", "ski
 
 Built with AI assistance from [Claude Sonnet](https://www.anthropic.com/claude), [GLM](https://chat.z.ai/), [DeepSeek](https://chat.deepseek.com/), and various models through [Gratisfy](https://gratisfy.xyz/) and [Logfare](https://logfare.ai).
 
-[Skill-creator skill](https://github.com/anthropics/skills/tree/main/skills/skill-creator) by Anthropic used to create [skill-SKILL.md](https://github.com/amokprime/linebyline/tree/main/ai/chat.z.ai/skills/skill-SKILL.md)
+[Skill-creator skill](https://github.com/anthropics/skills/tree/main/skills/skill-creator) by Anthropic used to create [skill-SKILL.md](https://github.com/amokprime/linebyline/tree/main/skills/skill/SKILL.md)
 
 Lyrics page extraction code and mock test designed for compatibility with [Genius](https://genius.com/) page structure
 

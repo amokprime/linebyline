@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# agent-tst — run Playwright tests on the Server using the locked OMP
+# agent SSH key. This is the ONLY command the OMP agent should use to
+# run server-side tests; `ssh Server` directly fails (sandbox /etc
+# ssh_config.d is broken inside bwrap) and would use the wrong key.
+#
+# Lives at skills/playwright-testing/scripts/agent-tst (the OMP sandbox
+# helper, owned by the playwright-testing skill). Symlinked to
+# ~/.local/bin/agent-tst. The server-side gate (tst-locked) and the
+# podman runner (tst) live at scripts/server/ — see scripts/server/tst-locked
+# for the chain of trust.
+#
+# Usage: agent-tst [playwright args...]
+#   e.g. agent-tst -g title
+#        agent-tst tests/foo.spec.js
+#        agent-tst --list
+#
+# IMPORTANT — argument handling: the server's authorized_keys forces
+# the locked key to run `tst-locked <original-command>`, so Playwright args
+# must travel as the *remote command*. We use `--` to stop ssh from
+# consuming flags itself: `-g title` passed bare would make ssh read
+# `-g` as its own GatewayPorts option and send NO remote command
+# (→ full suite). With `--`, ssh forwards `-g title` verbatim and the
+# server runs `tst-locked -g title` → allowlist check → `tst -g title`
+# → `npx playwright test -g title`.
+#
+# Internally: ssh -F <profile-config> Server -- <args>
+set -euo pipefail
+
+profile_dir=${TST_AGENT_PROFILE:-$HOME/.agent-tools/limited-entry}
+
+exec ssh -F "$profile_dir/config" -o BatchMode=yes Server -- "$@"

@@ -1,7 +1,7 @@
 [ti: corrupted]
 [ar: Unknown]
 [al: microSong Entries]
-[re: LineByLine, https://amokprime.github.io/linebyline/]
+[re: LineByLine, amokprime.github.io/linebyline]
 
 [00:00.0000] I wish I could identify that smell
 

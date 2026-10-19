@@ -1,0 +1,23 @@
+{
+  "rule": "githubactions:S6505",
+  "component": "amokprime_linebyline:.github/workflows/deploy.yml",
+  "line": 40,
+  "textRange": {
+    "startLine": 40,
+    "endLine": 40,
+    "startOffset": 13,
+    "endOffset": 19
+  },
+  "message": "Omitting \"--ignore-scripts\" allows lifecycle scripts to run during package installation.",
+  "severity": "MAJOR",
+  "type": "VULNERABILITY",
+  "cleanCodeAttribute": "TRUSTWORTHY",
+  "cleanCodeAttributeCategory": "RESPONSIBLE",
+  "impacts": [
+    {
+      "softwareQuality": "SECURITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

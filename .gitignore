@@ -33,10 +33,12 @@ npm-debug.log*
 .trash
 .stfolder
 .stversions
+.stignore
 *genius*
 # Genius paste snapshot baselines must be tracked (un-ignored from *genius* above)
 !tests/*.spec.js-snapshots/*genius*.txt
-ROADMAP.md
+!src/utils/geniusExtractor.ts
+!tests/unit/geniusExtractor.test.ts
 why.md
 how.md
 scratch
@@ -50,3 +52,8 @@ node_modules/
 /playwright/.cache/
 /playwright/.auth/
 my-systemdcoredum.*
+
+# Vite (roadmap item 3)
+dist/
+*.local
+.lint-deps/

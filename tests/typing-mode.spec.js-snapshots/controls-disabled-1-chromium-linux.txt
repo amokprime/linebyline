@@ -1,7 +1,7 @@
 [ti: I Wish I Could Identify That Smell]
 [ar: The Jazz Kissingers]
 [al: microSong Entries]
-[re: LineByLine, https://amokprime.github.io/linebyline/]
+[re: LineByLine, amokprime.github.io/linebyline]
 
  wqrtzv[00:00.00] I wish I could identify that smell
 [00:03.06] That smell
