@@ -3,6 +3,12 @@ name: Sync staging with main
 # Merges a CI-verified main commit into staging. Triggered by workflow_run
 # (not push) so it can only run after CI finishes; the gate step refuses to
 # merge unless all three CI workflows succeeded for that exact commit SHA.
+#
+# One-way (main -> staging) only: this job NEVER writes to main. workflow_run
+# also fires for the weekly CodeQL schedule and for workflow_dispatch runs on
+# main, so the gate exits early unless the triggering run was a push to main,
+# and the CI verdict is scoped to push runs on main. That way PR/cron/dispatch
+# runs can never feed the gate or drag staging-only work toward main.
 
 on:
   workflow_run:
@@ -29,11 +35,22 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
       HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+      TRIGGER_EVENT: ${{ github.event.workflow_run.event }}
       REPO: ${{ github.repository }}
     steps:
       - name: Gate on all CI workflows passing
         id: gate
         run: |
+          # Only a push to main can add a commit that staging needs to catch up
+          # on. The other workflow_run triggers (weekly CodeQL schedule, manual
+          # SonarCloud dispatch) mean "CI ran", not "main moved" — bail out
+          # green instead of reporting them as unsettled.
+          if [ "$TRIGGER_EVENT" != push ]; then
+            echo "Triggering run was '$TRIGGER_EVENT', not a push — nothing to sync."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           on_main="$(gh api "repos/$REPO/compare/main...$HEAD_SHA" --jq '.status')"
           case "$on_main" in
             behind|identical) echo "$HEAD_SHA is on main" ;;
@@ -42,12 +59,18 @@ jobs:
               exit 1 ;;
           esac
 
-          runs="$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100")"
+          # Slim the payload server-side and feed jq via stdin: full run objects
+          # passed through argv hit the runner's ARG_MAX ("Argument list too long").
+          # event=push&branch=main keeps the verdict to main-branch push CI; the
+          # same SHA can also carry pull_request/schedule/workflow_dispatch runs
+          # (and Playwright staging-push runs) which must not decide the gate.
+          runs="$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&event=push&branch=main&per_page=100" \
+            --jq '[.workflow_runs[] | {name, run_number, status, conclusion}]')"
           pending=""
           for wf in "Playwright Tests" "CodeQL Advanced" "SonarCloud analysis"; do
-            conclusion="$(jq -rn --argjson runs "$runs" --arg wf "$wf" '
-              ($runs.workflow_runs | map(select(.name == $wf)) | sort_by(.run_number) | last)
-              | if . == null then "missing" else (.conclusion // .status) end')"
+            conclusion="$(jq -r --arg wf "$wf" '
+              (map(select(.name == $wf)) | sort_by(.run_number) | last)
+              | if . == null then "missing" else (.conclusion // .status) end' <<<"$runs")"
             case "$conclusion" in
               success|skipped)
                 echo "$wf: $conclusion" ;;
