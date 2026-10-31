@@ -33,7 +33,16 @@ SANDBOX_DIR="/home/z/my-project/sandbox"
 
 # Source the shared lint gate (Shellcheck + Ruff + ESLint).
 # lint_gate.sh lives at skills/code-quality/scripts/ — owned by the code-quality skill.
+# ensure-shellcheck.sh lives at skills/delivery/scripts/ — delivery owns the lint
+# dependency install; it resolves (or downloads, then checksum-verifies) the
+# ShellCheck binary the gate needs. The npm `shellcheck` package is deliberately
+# not a dependency (it pins a critically vulnerable decompress@4.2.1).
 LINT_GATE="/home/z/my-project/skills/code-quality/scripts/lint_gate.sh"
+ENSURE_SHELLCHECK="/home/z/my-project/skills/delivery/scripts/ensure-shellcheck.sh"
+if [[ -f "$ENSURE_SHELLCHECK" ]]; then
+  # shellcheck disable=SC1090,SC1091 # dynamic path -- can't follow source at lint time
+  . "$ENSURE_SHELLCHECK"
+fi
 if [[ -f "$LINT_GATE" ]]; then
   # shellcheck disable=SC1090,SC1091 # dynamic path -- can't follow source at lint time
   . "$LINT_GATE"

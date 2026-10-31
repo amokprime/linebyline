@@ -36,19 +36,18 @@
     "@vitejs/plugin-vue": "^6.0.8",
     "@vue/test-utils": "^2.5.0",
     "@vue/tsconfig": "^0.9.1",
-    "eslint": "^10.6.0",
+    "eslint": "^10.14.0",
     "eslint-plugin-sonarjs": "^4.1.0",
     "eslint-plugin-vue": "^10.11.0",
     "globals": "^17.7.0",
-    "happy-dom": "^20.14.0",
+    "happy-dom": "^21.0.4",
     "serve": "^14.2.6",
-    "shadcn-vue": "^2.8.2",
-    "shellcheck": "^4.1.0",
+    "shadcn-vue": "^2.9.0",
     "tailwindcss": "^4.1.17",
     "typescript": "~6.0.2",
-    "vite": "^8.2.2",
+    "vite": "^8.3.5",
     "vite-plugin-singlefile": "^2.3.3",
-    "vitest": "^5.0.0",
+    "vitest": "^5.0.5",
     "vue-eslint-parser": "^10.4.1",
     "vue-tsc": "^3.3.11"
   },
@@ -64,8 +63,14 @@
     "vue": "^3.5.41"
   },
   "overrides": {
-    "brace-expansion": "^5.0.9",
-    "fast-uri": "^3.1.6",
-    "compression": "^1.8.2"
+    "brace-expansion": "^5.0.12",
+    "fast-uri": "^3.1.9",
+    "compression": "^1.8.2",
+    "minimatch": "^11.0.3",
+    "glob": "^14.0.2",
+    "stylus": "^0.59.0",
+    "@modelcontextprotocol/sdk": {
+      "zod": "^4.6.6"
+    }
   }
 }

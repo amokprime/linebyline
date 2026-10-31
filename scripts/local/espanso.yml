@@ -3,11 +3,9 @@
 # skills/delivery/scripts/setup-sandbox.sh; snippets only list non-skill files.
 # Hardlink to scripts/local/espanso.yml to keep both copies in sync.
 matches:
-  - trigger: ":clm"
+  - trigger: ":lcm"
     replace: "Clone the main branch of my repo, https://github.com/amokprime/linebyline.\n"
-  - trigger: ":cls"
-    replace: "Clone the staging branch of my repo, https://github.com/amokprime/linebyline.\n"
-  - trigger: ":onb"
+  - trigger: ":lcs"
     replace: |
       Clone the staging branch of my repo, https://github.com/amokprime/linebyline. Then read and run `bash skills/delivery/scripts/setup-sandbox.sh` from the repo folder — this installs the project skills into the sandbox's available_skills so their descriptions auto-load (invoke via `Skill(command="name")` instead of Read). Then read these from the repo folder:
       ```
@@ -22,7 +20,7 @@ matches:
       ```
       Use Glob/Grep to locate files instead of LS on the repo root (the tree is large). Use subagents (Task tool, Explore type) to read heavy folders in parallel — see `linebyline-SKILL.md` → "Context loading strategy" for guidance.
 # This could be a build turn with test verification, or a test-writing turn grounded in app code. Either way, code changes happen. LIMITATIONS moved here since app code changes are the direct cause of limitation uplift or regression. AGENTS is silently re-read.
-  - trigger: ":code"
+  - trigger: ":lco"
     replace: |
       Read these from the `linebyline/` repo folder:
       ```
@@ -38,7 +36,7 @@ matches:
       tests/unit/ and tests/helpers/ (read only the files relevant to the current task — use Grep to find test files matching the patched code)
       ```
       Use subagents (Task tool, Explore type) to read src/ and tests/ in parallel when the task spans multiple files.
-  - trigger: ":skl"
+  - trigger: ":lsk"
     replace: |
       Read these from the `linebyline/` repo folder (Skills meta-session — work on agent scaffolding):
       ```

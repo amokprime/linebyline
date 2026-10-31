@@ -32,4 +32,4 @@ What would normally live here, and where it actually lives:
 2. Run `bash skills/delivery/scripts/setup-sandbox.sh` to install project skills into the sandbox's `available_skills`.
 3. Invoke `Skill(command="linebyline")` for onboarding, workflow, and project structure.
 4. Read `MEMORY.md` for development history.
-5. Use the Espanso snippets in `scripts/local/espanso.yml` (`:onb`, `:code`, `:skl` triggers) for step-specific context loading. See `ai/README.md` for the current trigger list.
+5. Use the Espanso snippets in `scripts/local/espanso.yml` (`:lcs` Onboard, `:lco` Code, `:lsk` Skills triggers; `:lcm`/`:lcs` clone main/staging) for step-specific context loading. See `ai/README.md` for the current trigger list.

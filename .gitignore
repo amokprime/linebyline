@@ -57,3 +57,6 @@ my-systemdcoredum.*
 dist/
 *.local
 .lint-deps/
+
+# Python
+.ruff_cache

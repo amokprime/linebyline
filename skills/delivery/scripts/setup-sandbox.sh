@@ -95,9 +95,10 @@ echo "Invoke via: Skill(command=\"<name>\") — e.g. Skill(command=\"linebyline\
 # preinstall Shellcheck or Ruff — install them here so prepare.sh's lint
 # gate actually runs (instead of skipping with "shellcheck not installed").
 #
-# Shellcheck: installed via the `shellcheck` npm devDependency (downloads
-#   the binary on first invocation). Falls back to a direct binary download
-#   if npm install fails or the npm package's binary download is rate-limited.
+# Shellcheck: NOT an npm dependency (the npm package bundles a stale binary
+#   behind a critically vulnerable decompress@4.2.1). Resolved by the shared
+#   ensure-shellcheck.sh: PATH, then a checksum-verified official release
+#   download. Set SHELLCHECK_BIN to point at a preinstalled binary.
 # Ruff: installed via pip from requirements-dev.txt (the `ruff` npm package
 #   is an unrelated coroutine library, NOT the Python linter).
 # ESLint: already available via npm devDependencies (no extra install needed).
@@ -114,9 +115,9 @@ if [[ ! -d "$repo_root" ]]; then
   repo_root="$(cd "$(dirname "$0")/../../.." && pwd)"
 fi
 
-# 1. npm install (gets shellcheck npm package + ESLint + all other devDeps).
+# 1. npm install (gets ESLint + all other devDeps).
 if [[ -f "$repo_root/package.json" ]]; then
-  echo "  Running npm install --ignore-scripts (gets shellcheck + ESLint)..."
+  echo "  Running npm install --ignore-scripts (gets ESLint + devDeps)..."
   (cd "$repo_root" && npm install --ignore-scripts 2>&1 | tail -3) || true
 else
   echo "  (skipped: package.json not found at $repo_root)"
@@ -133,39 +134,20 @@ else
   echo "  (skipped: requirements-dev.txt not found at $repo_root)"
 fi
 
-# 3. Shellcheck fallback: if the npm package's binary download failed (GitHub
-#    API rate limit), download the static binary directly.
-if ! command -v shellcheck >/dev/null 2>&1; then
-  sh_npm_bin="$repo_root/node_modules/.bin/shellcheck"
-  if [[ -f "$sh_npm_bin" ]] && "$sh_npm_bin" --version >/dev/null 2>&1; then
-    echo "  shellcheck available via node_modules/.bin/"
+# 3. Shellcheck: resolve (or download + checksum-verify) via the helper that
+#    lives beside this script, so the sandbox never runs an unverified binary
+#    and never needs the npm `shellcheck` package.
+sh_helper="$repo_root/skills/delivery/scripts/ensure-shellcheck.sh"
+if [[ -f "$sh_helper" ]]; then
+  # shellcheck disable=SC1090,SC1091 # resolved at runtime
+  . "$sh_helper"
+  if sh_path="$(TARGET_DIR="$repo_root" resolve_shellcheck)"; then
+    echo "  shellcheck: $sh_path ($("$sh_path" --version | tail -1))"
   else
-    echo "  shellcheck npm package binary not ready — downloading static binary..."
-    sc_url="https://github.com/koalaman/shellcheck/releases/download/v0.10.0/shellcheck-v0.10.0.linux.x86_64.tar.xz"
-    if command -v curl >/dev/null 2>&1; then
-      tmp_dir="$(mktemp -d)"
-      # --proto/--proto-redir "=https" pin both the initial request and any
-      # redirect to HTTPS (Sonar shell:S6506) — otherwise the GitHub release
-      # URL could be redirected down to plain HTTP and the binary tampered
-      # with in transit.
-      if curl --proto "=https" --proto-redir "=https" -sL "$sc_url" \
-        -o "$tmp_dir/sc.tar.xz" 2>/dev/null; then
-        tar -xJf "$tmp_dir/sc.tar.xz" -C "$tmp_dir/" 2>/dev/null
-        mkdir -p "$HOME/.local/bin"
-        cp "$tmp_dir/shellcheck-v0.10.0/shellcheck" "$HOME/.local/bin/shellcheck" 2>/dev/null
-        chmod +x "$HOME/.local/bin/shellcheck"
-        echo "  shellcheck installed to ~/.local/bin/shellcheck"
-        echo "  (add ~/.local/bin to PATH if not already there)"
-      else
-        echo "  (skipped: shellcheck download failed — GitHub rate limit?)"
-      fi
-      rm -rf -- "$tmp_dir"
-    else
-      echo "  (skipped: curl not available to download shellcheck)"
-    fi
+    echo "  (skipped: shellcheck unavailable -- set SHELLCHECK_BIN or install it)"
   fi
 else
-  echo "  shellcheck already in PATH"
+  echo "  (skipped: ensure-shellcheck.sh not found at $sh_helper)"
 fi
 
 echo ""

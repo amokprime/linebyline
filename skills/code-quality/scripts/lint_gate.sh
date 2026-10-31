@@ -52,17 +52,16 @@ run_lint_gate() {
   # ── Shellcheck ──────────────────────────────────────────────────────────────
   echo ""
   echo "--- Shellcheck (*.sh) ---"
-  # Resolve shellcheck binary: prefer PATH, fall back to node_modules/.bin/shellcheck
-  # (installed via the `shellcheck` npm devDependency in package.json).
+  # Resolve shellcheck via ensure-shellcheck.sh (skills/delivery/scripts/):
+  # PATH, then node_modules/.bin (legacy npm package), then a checksum-verified
+  # official release download. The npm `shellcheck` package is not a dependency
+  # -- it pins a critically vulnerable decompress@4.2.1. Callers must source
+  # ensure-shellcheck.sh before this file; if they didn't, the gate skips.
   local sh_bin=""
-  if command -v shellcheck >/dev/null 2>&1; then
-    sh_bin="shellcheck"
-  elif [[ -f "$target_dir/node_modules/.bin/shellcheck" ]]; then
-    sh_bin="$target_dir/node_modules/.bin/shellcheck"
-  fi
+  sh_bin="$(TARGET_DIR="$target_dir" resolve_shellcheck 2>/dev/null || true)"
   if [[ -z "$sh_bin" ]]; then
-    echo "  (skipped: shellcheck not installed and not in node_modules/.bin/)"
-    echo "  Install via: npm install (devDependency 'shellcheck@4.1.0')"
+    echo "  (skipped: ShellCheck unavailable -- PATH, node_modules, and verified download all failed)"
+    echo "  source skills/delivery/scripts/ensure-shellcheck.sh first, or set SHELLCHECK_BIN=<path>"
   else
     local sh_files=()
     if [[ ${#changed_files[@]} -gt 0 ]]; then

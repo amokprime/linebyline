@@ -35,8 +35,21 @@ mkdir -p "$(dirname "$LOG")"
 # this: the zip's copy is always the latest.)
 # lint_gate.sh lives at skills/code-quality/scripts/lint_gate.sh (moved out
 # of delivery/ because it enforces code-quality rules).
+# ensure-shellcheck.sh lives at skills/delivery/scripts/ (delivery owns lint
+# dependency installation, so it sits beside setup-sandbox.sh and setup-lint-deps.sh).
 LINT_GATE_SCRATCH="$SCRATCH/skills-code-quality-scripts-lint_gate.sh"
 LINT_GATE_REPO="$DEST/skills/code-quality/scripts/lint_gate.sh"
+ENSURE_SCRATCH="$SCRATCH/skills-delivery-scripts-ensure-shellcheck.sh"
+ENSURE_REPO="$DEST/skills/delivery/scripts/ensure-shellcheck.sh"
+# ensure-shellcheck.sh must come first: run_lint_gate calls resolve_shellcheck
+# to find (or fetch + checksum-verify) the ShellCheck binary.
+if [[ -f "$ENSURE_SCRATCH" ]]; then
+  # shellcheck disable=SC1090,SC1091
+  . "$ENSURE_SCRATCH"
+elif [[ -f "$ENSURE_REPO" ]]; then
+  # shellcheck disable=SC1090,SC1091
+  . "$ENSURE_REPO"
+fi
 if [[ -f "$LINT_GATE_SCRATCH" ]]; then
   # shellcheck disable=SC1090,SC1091
   . "$LINT_GATE_SCRATCH"

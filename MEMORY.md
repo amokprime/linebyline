@@ -317,7 +317,7 @@ Per-version Accept / Won't-Fix / False-Positive decisions. Read alongside `sonar
 - **S2083 path-traversal fix (split_bullets.py + lint_markdown.py, Sep 2026)** — SonarCloud's `python:S2083` rule flags CLI scripts that pass `sys.argv` to `open()`/`Path.read_text()`/`Path.write_text()` without visible path validation.
     - See `sonarqube-workflow-SKILL.md` (Review bundle) → "Taint analysis rules" for the canonical fix pattern: inline `os.path.realpath` derivation + guard + I/O in the same function body.
     - Taint analysis does not cross function boundaries or recognize module-level constants.
-- `deploy.sh` cleanup loop replaced `find . -maxdepth 1 -type f ! -name deploy.sh ! -name deliver.zip` with the zip's own file list via `unzip -Z1` (or a `.deliver-files.list` manifest written before extraction). Pre-existing `scratch/` files like `scratch.md` are NOT touched. General rule in `code-quality-SKILL.md` (Review bundle) → "Bash workflow scripts → Scoped cleanup".
+- `deploy.sh` cleanup loop replaced `find . -maxdepth 1 -type f ! -name deploy.sh ! -name deliver.zip` with the zip's own file list via `unzip -Z1` (or a `.deliver-files.list` manifest written before extraction). Pre-existing `scratch/` files like `README.md` are NOT touched. General rule in `code-quality-SKILL.md` (Review bundle) → "Bash workflow scripts → Scoped cleanup".
 - `unpack.sh` trap changed from `trap cleanup INT TERM` to `trap cleanup EXIT` (Sep 2026, Phase E Tranche 1 session).
     - Previous design left `deliver.zip` + `deploy.sh` behind on `set -e` failure ("for debugging"), but this caused stale-file collisions: the next `deliver.zip` download got autonamed `deliver(1).zip` by the KDE file picker, requiring manual rename before running `unpack.sh`.
     - The EXIT trap cleans up on ALL exits (success, failure, signal) — `deploy.sh` is regenerated each session and `deliver.zip` is re-downloaded from the chat, so there's no debugging value in leaving them behind.
@@ -445,3 +445,55 @@ cutover, not patch it).
 - **Syncthing sync**: a scan at either end triggers the sync; the server's
   `scripts/server/tst` does its own rescan + wait-for-idle. Client-side sync
   in `tst.sh` is complementary (starts push sooner), skipped for `-g` runs.
+
+## Dependency alert triage (Oct 31, 2026)
+
+- **Override floors, not advisory-suggested majors**: Dependabot suggests the
+  newest fixed major (e.g. `fast-uri@^4.2.3`), but `ajv@8` requires `^3.0.1` —
+  the correct floor is `fast-uri@^3.1.9` (same fix, backported hours apart).
+  Check the advisory's exact ranges and the consumer's range before bumping.
+- **`brace-expansion` nested copies**: the floor was `^5.0.9`, itself inside
+  three advisories (`<5.0.10/11/12`). Now `^5.0.12`. npm dedupes it into one
+  top-level copy even for nested `minimatch` consumers.
+- **`minimatch@^11.0.3` override**: fixes `GHSA-g3hv-75wg-m249` for every
+  nested `^10.x` consumer (eslint, editorconfig, typescript-estree, glob,
+  serve-handler) with one dedupe; `npx eslint src` still exits 0.
+- **zod: scope the override to a parent.** A bare `"zod": "^4.6.6"` breaks
+  `shadcn-vue` (`rawConfigSchema.deepPartial` — removed in zod 4). Also, an
+  object-form version-key selector (`{"^3.25 || ^4.0": "^4.6.6"}`) fails npm
+  with `Override without name`. Working form:
+  `"@modelcontextprotocol/sdk": { "zod": "^4.6.6" }` — shadcn-vue and
+  zod-to-json-schema keep their nested zod 3.25.76.
+- **Do NOT override `zod-to-json-schema`'s zod to 4**: it reads v3 internals
+  (`schema._def.typeName`); under zod 4 it silently returns only `$schema`
+  (no `properties`), which breaks shadcn-vue's MCP tool schemas.
+- **stylus chain**: `stylus@^0.59.0` fixes `GHSA-*` on stylus plus its
+  transitively pinned `css`/`source-map-resolve`/`decode-uri-component`; a bare
+  `glob@^14.0.2` override (glob `>=9 <14.0.2` is vulnerable) removes the
+  nested glob 7.2.3/11.1.0 copies.
+- **shellcheck / decompress (RESOLVED — npm package removed)**: the npm
+  `shellcheck@4.1.0` package pinned the unmaintained `decompress@4.2.1`
+  (critical `GHSA-mp2f-45pm-3cg9`; no patched release exists — the maintained
+  fork is `@xhmikosr/decompress` 11.1.3+). It is no longer a dependency.
+  Replacement: `skills/delivery/scripts/ensure-shellcheck.sh` resolves
+  `$SHELLCHECK_BIN` → PATH → `node_modules/.bin` → cached download in
+  `~/.cache/linebyline/shellcheck/<version>/` → verified (SHA256) official
+  release download. `lint_gate.sh`, `prepare.sh`, `deploy.sh`, and
+  `setup-sandbox.sh` all source it. It lives on the DELIVERY side (one real
+  file, no symlink): delivery already owns lint-dependency installation via
+  `setup-sandbox.sh` / `setup-lint-deps.sh`, and `lint_gate.sh` stays in
+  code-quality because it enforces code-quality rules. Do not re-introduce a
+  second copy — `lint_gate.sh` resolves the function at call time, so a stale
+  copy would silently shadow the real one. Checksums were computed from the
+  release assets and cross-checked against the GitHub Releases API per-asset
+  `digest` field — do the same on every version bump; unpinned platforms fail
+  closed.
+  `@xhmikosr/decompress` was briefly a devDependency and then REMOVED: the
+  advisory recommends it as the migration for `decompress@4.2.1`, but nothing
+  in the repo calls it (npm's `audit` only checks its own dep graph, so
+  installing it silenced nothing).
+  Verified: gate runs clean with no system shellcheck on PATH; a tampered
+  archive is rejected on checksum mismatch; a bad `SHELLCHECK_BIN` exits 1.
+- **Dependabot cannot fix `serve`'s compression**: `serve@14.2.6` pins
+  `compression` to exactly `1.8.1`, so the override is the only route (see
+  Dependabot #14 above). Its "update" runs fail by design.

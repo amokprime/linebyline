@@ -14,4 +14,4 @@ Therefore, you have your own context files, sandbox rules, and a subset of relev
 - `skills/`—The cloud agent's skill folder
 	- `skills/delivery/scripts/`—Scripts used to quickly "install" files the cloud agent generated and packaged into a `deliver.zip` for download
 - `tests/` — Playwright test suite and supporting docs (`SSH_SETUP.md`, `PLAYWRIGHT_SETUP.md`, `FAILURES.md`, `MANUAL.md`).
-- `scratch/` — gitignored scratch directory. The user drafts prompts at `scratch/scratch.md` — do not save files at that name (collision).
+- `scratch/` — gitignored scratch directory. The user drafts prompts at `scratch/README.md` — do not save files at that name (collision).
