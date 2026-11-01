@@ -1,0 +1,23 @@
+{
+  "rule": "typescript:S7721",
+  "component": "amokprime_linebyline:src/composables/usePanelCollapse.ts",
+  "line": 30,
+  "textRange": {
+    "startLine": 30,
+    "endLine": 30,
+    "startOffset": 2,
+    "endOffset": 23
+  },
+  "message": "Move function 'setExpandRef' to the outer scope.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "EFFICIENT",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

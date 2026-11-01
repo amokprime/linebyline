@@ -1,0 +1,42 @@
+{
+  "key": "AaCEjWnksgu35AS-jVFY",
+  "rule": "typescript:S4138",
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:src/composables/useAutosave.ts",
+  "project": "amokprime_linebyline",
+  "line": 88,
+  "hash": "6092c77918cdbe93eaaf7c9093e0cb9c",
+  "textRange": {
+    "startLine": 88,
+    "endLine": 90,
+    "startOffset": 2,
+    "endOffset": 3
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Expected a `for-of` loop instead of a `for` loop with this simple iteration.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "clumsy"
+  ],
+  "creationDate": "2026-09-09T05:03:03+0000",
+  "updateDate": "2026-09-09T05:03:34+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "a34da5bc-9e5b-4d71-b875-b5d185d363e2",
+  "lastChangeSource": "ANALYSIS"
+}

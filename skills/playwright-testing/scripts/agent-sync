@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# agent-sync — force the LOCAL Syncthing instance to push the LineByLine
+# folder to the Server, then wait until the Server is caught up.
+#
+# Why this exists: the OMP sandbox binds ~/.ssh to the restricted profile, so
+# an OMP agent cannot run the user-side `deploy.sh` force-sync (which needs the
+# full environment). The Syncthing GUI API on 127.0.0.1:8384 IS reachable from
+# inside the sandbox, so an agent can push before `agent-tst` to be sure the
+# Server runs the current files.
+#
+# Usage: agent-sync [--timeout SECONDS] [--quiet]
+#
+# Env overrides:
+#   LBL_SYNC_FOLDER_ID   Syncthing folder id   (default: auto-detect by path)
+#   LBL_SYNC_DEVICE_ID   peer device id        (default: matched to the SSH
+#                                              HostName in $HOME/.ssh/config)
+#   SYNCTHING_API_KEY    Syncthing GUI API key (default: local config.xml)
+#   SYNCTHING_CONFIG     config.xml path override
+set -euo pipefail
+
+api=http://127.0.0.1:8384
+timeout_s=90
+quiet=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --timeout) timeout_s="$2"; shift 2 ;;
+    --quiet)   quiet=1; shift ;;
+    *) echo "agent-sync: unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
+
+say() { [[ "$quiet" -eq 1 ]] || echo "agent-sync: $*"; }
+
+# ── API key ──────────────────────────────────────────────────────────────────
+key="${SYNCTHING_API_KEY:-}"
+if [[ -z "$key" ]]; then
+  for cfg in "${SYNCTHING_CONFIG:-}" \
+             "$HOME/.local/state/syncthing/config.xml" \
+             "$HOME/.config/syncthing/config.xml"; do
+    [[ -n "$cfg" && -f "$cfg" ]] || continue
+    key=$(grep -oP '<apikey>\K[^<]+' "$cfg" 2>/dev/null || true)
+    [[ -n "$key" ]] && break
+  done
+fi
+if [[ -z "$key" ]]; then
+  echo "agent-sync: no Syncthing API key (set SYNCTHING_API_KEY or SYNCTHING_CONFIG)" >&2
+  exit 1
+fi
+
+api_get()  { curl -sf -m 10 -H "X-API-Key: $key" "$api/rest/$1"; }
+api_post() { curl -sf -m 60 -X POST -H "X-API-Key: $key" "$api/rest/$1"; }
+
+if ! api_get system/status >/dev/null; then
+  echo "agent-sync: Syncthing API not reachable at $api" >&2
+  exit 1
+fi
+my_id=$(api_get system/status | jq -r .myID)
+
+# ── Folder id ────────────────────────────────────────────────────────────────
+folder="${LBL_SYNC_FOLDER_ID:-}"
+if [[ -z "$folder" ]]; then
+  folder=$(api_get config/folders \
+    | jq -r '.[] | select(.path | test("linebyline"; "i")) | .id' | head -1)
+fi
+if [[ -z "$folder" ]]; then
+  echo "agent-sync: could not auto-detect the LineByLine folder id" >&2
+  echo "agent-sync: set LBL_SYNC_FOLDER_ID" >&2
+  exit 1
+fi
+
+# ── Peer device (the Server) ─────────────────────────────────────────────────
+# Prefer an explicit env var, else match the SSH HostName against the
+# addresses Syncthing reports for its connections.
+peer="${LBL_SYNC_DEVICE_ID:-}"
+if [[ -z "$peer" ]]; then
+  host=""
+  for cfg in "$HOME/.ssh/config" "${TST_AGENT_PROFILE:-}/config"; do
+    [[ -f "$cfg" ]] || continue
+    host=$(ssh -G -F "$cfg" Server 2>/dev/null | awk '/^hostname /{print $2; exit}')
+    [[ -n "$host" ]] && break
+  done
+  if [[ -n "$host" ]]; then
+    peer=$(api_get system/connections \
+      | jq -r --arg h "$host" --arg me "$my_id" \
+          '.connections | to_entries[]
+           | select(.key != $me)
+           | select((.value.address // "") | startswith($h + ":"))
+           | .key' | head -1)
+  fi
+fi
+if [[ -z "$peer" ]]; then
+  echo "agent-sync: could not resolve the Server's Syncthing device id" >&2
+  echo "agent-sync: set LBL_SYNC_DEVICE_ID" >&2
+  exit 1
+fi
+
+# ── Push + wait ──────────────────────────────────────────────────────────────
+say "rescanning folder ${folder:0:8}…"
+api_post "db/scan?folder=$folder" >/dev/null || true
+
+say "waiting for the Server to catch up (timeout ${timeout_s}s)…"
+deadline=$((SECONDS + timeout_s))
+while :; do
+  c=$(api_get "db/completion?folder=$folder&device=$peer" 2>/dev/null || echo '{}')
+  pct=$(jq -r '.completion // 0' <<<"$c")
+  need=$(jq -r '.needBytes // -1' <<<"$c")
+  if [[ "$pct" == "100" && "$need" == "0" ]]; then
+    say "Server is up to date (completion 100%, needBytes 0)"
+    exit 0
+  fi
+  if (( SECONDS >= deadline )); then
+    echo "agent-sync: timed out at completion=${pct}% needBytes=${need}" >&2
+    echo "agent-sync: is the Server connected? (Syncthing → Remote Devices)" >&2
+    exit 1
+  fi
+  sleep 2
+done

@@ -1,0 +1,44 @@
+{
+  "key": "AaCIU_zLsmsHQ2vn3UJO",
+  "rule": "typescript:S7744",
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:src/composables/useAppState.ts",
+  "project": "amokprime_linebyline",
+  "line": 73,
+  "hash": "9e2bee4c31f83755f07f6464905d1688",
+  "textRange": {
+    "startLine": 73,
+    "endLine": 73,
+    "startOffset": 62,
+    "endOffset": 64
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "The empty object is useless.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "editable-source",
+    "spread-operator",
+    "unnecessary"
+  ],
+  "creationDate": "2026-09-09T22:38:52+0000",
+  "updateDate": "2026-09-09T22:39:20+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "CLEAR",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "09a1e15a-de20-4c7f-bbe8-59fc214c7f3e",
+  "lastChangeSource": "ANALYSIS"
+}

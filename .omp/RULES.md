@@ -1,24 +1,4 @@
-# RULES — LineByLine agent
-
-## Running LineByLine tests
-- Run server-side tests ONLY via `agent-tst` (e.g. `agent-tst -g pattern`,
-  `agent-tst --list`, `agent-tst tests/foo.spec.js`).
-- Never use raw `ssh`, `npx playwright`, or `podman` for tests — those need the
-  master key, which is human-only and will be rejected.
-- `agent-tst -g <pattern>` (scoped) is preferred; a full run takes ~7 min and will
-  exceed the synchronous tool timeout, so keep runs scoped unless a full pass is
-  genuinely required.
-- `agent-tst` accepts only: `-g <pattern>` / `--grep=<pattern>` (letters, digits,
-  `_ / . -`, space only — no shell metachars), `--list`, `tests/*.spec.js`,
-  `--project=chromium|firefox|webkit`. Anything else is rejected.
-
-## Never touch the keys
-- The **master** key (`~/.ssh/id_ed25519_server`) grants a full shell on the Server.
-  It is for the **human** only — do not use it, copy it, or read it.
-- The restricted key profile lives at `~/.agent-tools/limited-entry/`; do not modify
-  `authorized_keys`, the restricted key, or `~/.agent-tools/`.
-
-## If a test fails or something looks off
+If asked to run Playwright tests, use `agent-tst` ([[tests/SSH_SETUP|SSH_SETUP]] has full details). If a test fails or something looks off:
 - Reproduce with a scoped `agent-tst -g <pattern>` so output stays small.
 - You MAY edit source/test files and re-run `agent-tst` to iterate — that is the
   intended loop.
@@ -27,9 +7,18 @@
 - If `agent-tst` itself errors, report the exact output. Do not improvise a
   different SSH invocation.
 
-## Sandbox context
-- This agent runs in a `bwrap` sandbox. Its boundaries (read/write/blocked paths)
-  are enforced by the kernel; details in `~/.bash/safe-omp.md` and
-  `~/.bash/safe-omp.sh`.
-- See `tests/SSH_SETUP.md` for the two-key SSH model and why the restricted key can
-  only run the whitelisted test wrapper (`agent-tst` → `tst-locked` → `tst`).
+Syncthing and file sync:
+- `agent-tst -g <pattern>` skips the Server-side Syncthing sync check **by
+  design** (`scripts/tst` skips it for scoped runs). The "could not read
+  Syncthing API key" warning on a scoped run is cosmetic — the run is not
+  skipped.
+- Run `scripts/agent-sync` before `agent-tst` when the Server must see the
+  current working tree (optional convenience: symlink it as
+  `~/.local/bin/agent-sync` from outside the sandbox). It rescans the LineByLine
+  folder on the local Syncthing instance (127.0.0.1:8384) and waits for the
+  Server to report completion 100% / needBytes 0. The sandbox reaches that API
+  directly; it does not need the SSH master key.
+
+Blocked paths (read-only inside the sandbox):
+- `scripts/tst`, `.omp/`, `archive/`, `skills/delivery/unpack.sh`. Stage edits
+  under `scratch/` and hand the user a copy command.

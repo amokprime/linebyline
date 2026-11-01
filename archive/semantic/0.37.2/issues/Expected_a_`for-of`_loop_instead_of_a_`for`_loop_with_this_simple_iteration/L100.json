@@ -1,0 +1,42 @@
+{
+  "key": "AaCEjWnxsgu35AS-jVFb",
+  "rule": "typescript:S4138",
+  "severity": "MINOR",
+  "component": "amokprime_linebyline:src/composables/useModeSwitch.ts",
+  "project": "amokprime_linebyline",
+  "line": 100,
+  "hash": "b4a04a7ca1cb6554a6419ae9898ce18b",
+  "textRange": {
+    "startLine": 100,
+    "endLine": 107,
+    "startOffset": 4,
+    "endOffset": 5
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Expected a `for-of` loop instead of a `for` loop with this simple iteration.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "clumsy"
+  ],
+  "creationDate": "2026-09-09T05:03:03+0000",
+  "updateDate": "2026-09-09T05:03:34+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "LOW"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "a34da5bc-9e5b-4d71-b875-b5d185d363e2",
+  "lastChangeSource": "ANALYSIS"
+}

@@ -1,0 +1,23 @@
+{
+  "rule": "css:S4666",
+  "component": "amokprime_linebyline:src/style.css",
+  "line": 146,
+  "textRange": {
+    "startLine": 146,
+    "endLine": 146,
+    "startOffset": 0,
+    "endOffset": 5
+  },
+  "message": "Duplicate selector \":root\", first used at line 68",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "LOGICAL",
+  "cleanCodeAttributeCategory": "INTENTIONAL",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}
