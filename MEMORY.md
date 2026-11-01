@@ -455,9 +455,21 @@ cutover, not patch it).
 - **`brace-expansion` nested copies**: the floor was `^5.0.9`, itself inside
   three advisories (`<5.0.10/11/12`). Now `^5.0.12`. npm dedupes it into one
   top-level copy even for nested `minimatch` consumers.
-- **`minimatch@^11.0.3` override**: fixes `GHSA-g3hv-75wg-m249` for every
-  nested `^10.x` consumer (eslint, editorconfig, typescript-estree, glob,
-  serve-handler) with one dedupe; `npx eslint src` still exits 0.
+- **`minimatch@^11.0.3` override — scoped, and the exception is load-bearing.**
+  The bare override fixed `GHSA-g3hv-75wg-m249` for the nested `^10.x`
+  consumers (eslint, editorconfig, typescript-estree, glob) but broke
+  `serve-handler`, which does `require('minimatch')` then calls it as a
+  FUNCTION. v3 exported a callable; v10/v11 export an object
+  (`{minimatch, Minimatch, ...}`) → `TypeError: minimatch is not a function`
+  at runtime. Symptom: Playwright's `webServer` (`npx serve`) never boots,
+  60 s timeout, HTTP 500 on `/`. `npm audit` and `npx eslint` stay green, so
+  the break only shows when that server actually runs. Fixed with a nested
+  exception `"serve-handler": { "minimatch": "^3.1.5" }`. The advisory's ONLY
+  patched version is `11.0.1` (no patched 3.x/9.x/10.x), so the residual
+  moderate is irreducible; unreachable here because `sourceMatches` takes its
+  pattern from config (`rewrites`/`headers`/`excluded`), never from the
+  request. Staging escaped it only because its CI sets `LBL_VITE_TARGET=1`
+  (`vite preview`, not `serve`); `scripts/server/tst` hardcodes the same.
 - **zod: scope the override to a parent.** A bare `"zod": "^4.6.6"` breaks
   `shadcn-vue` (`rawConfigSchema.deepPartial` — removed in zod 4). Also, an
   object-form version-key selector (`{"^3.25 || ^4.0": "^4.6.6"}`) fails npm
