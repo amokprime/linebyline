@@ -326,11 +326,10 @@ log_filter
 if [[ ${#changed[@]} -gt 0 ]] && type run_lint_gate >/dev/null 2>&1; then
   if ! command -v ruff >/dev/null 2>&1 && \
      ! [[ -x "$HOME/.local/bin/ruff" ]] && \
-     ! [[ -x "$DEST/.lint-deps/bin/ruff" ]]; then
-    if [[ -f "$DEST/skills/delivery/scripts/setup-lint-deps.sh" ]]; then
-      echo "  No ruff found — auto-installing .lint-deps/..." | tee -a "$LOG"
-      bash "$DEST/skills/delivery/scripts/setup-lint-deps.sh" "$DEST" 2>&1 | tee -a "$LOG" || true
-    fi
+     ! [[ -x "$DEST/.lint-deps/bin/ruff" ]] && \
+     [[ -f "$DEST/skills/delivery/scripts/setup-lint-deps.sh" ]]; then
+    echo "  No ruff found — auto-installing .lint-deps/..." | tee -a "$LOG"
+    bash "$DEST/skills/delivery/scripts/setup-lint-deps.sh" "$DEST" 2>&1 | tee -a "$LOG" || true
   fi
 fi
 

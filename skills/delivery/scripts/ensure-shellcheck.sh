@@ -111,7 +111,12 @@ resolve_shellcheck() {
   trap "rm -rf '$tmp'" RETURN
 
   echo "ensure-shellcheck: downloading $url" >&2
-  if ! curl -fsSL --retry 2 --max-time 120 -o "$tmp/archive.tar.xz" "$url"; then
+  # --proto/--proto-redir "=https": pin both the initial request and any
+  # redirect hop to HTTPS. --proto alone still permits an https->http
+  # redirect, since --proto-redir defaults to http+https+ftp+ftps. The SHA256
+  # check below is the second line of defense; this stops the downgrade.
+  if ! curl -fsSL --proto "=https" --proto-redir "=https" \
+       --retry 2 --max-time 120 -o "$tmp/archive.tar.xz" "$url"; then
     echo "ensure-shellcheck: download failed (offline? set SHELLCHECK_BIN)" >&2
     return 1
   fi
