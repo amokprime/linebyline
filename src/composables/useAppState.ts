@@ -147,7 +147,7 @@ const mainWarnVisible = ref(false)
 // a stale isDirty can never suppress the warning), but isDirty is exposed for
 // other consumers (e.g. a future "unsaved changes" indicator in the UI).
 //
-// Port delta vs monolith (docs/index.html lines 2766-2770):
+// Port delta vs monolith (deleted in Tranche 6, lines 2766-2770):
 //   - getTA() → mainText.value (the Vue port's source of truth)
 //   - cfg.default_meta → cfg.value.default_meta (cfg is now a ref)
 //   - secondaryCols.some(c => c.linesEl.value.trim() !== '')

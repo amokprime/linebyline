@@ -19,8 +19,8 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
-  // Phase C verification bridge: unit specs pin the ported modules' behavior
-  // while the Playwright suite still runs against docs/index.html (until Phase E)
+  // Phase C verification bridge: unit specs pin the ported modules' behavior.
+  // Post-Phase E cutover, the Playwright suite runs against the Vite build (dist/).
   test: {
     include: ['tests/unit/**/*.test.ts'],
     environment: 'node',

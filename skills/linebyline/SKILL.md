@@ -19,10 +19,10 @@ The repo tree is large (src/ has many Vue components + composables, tests/ has m
 
 - Use Glob to list files matching a pattern (e.g. `src/composables/*.ts`) instead of LS on the repo root. LS on a large tree produces a massive listing that wastes context.
 - Use Grep to find files containing a keyword (e.g. `useAudio` across `src/`) before reading them.
-- For `docs/index.html` (~2600 lines), use the `linebyline-section-index` skill to locate sections by grepping for `// ──` markers, then read only those ranges.
+- For large `src/` files, use the `linebyline-section-index` skill's prompt-to-file map to identify which files a given change touches.
 - For `src/` and `tests/`, read only the files relevant to the current task. The Espanso `:lco` snippet says "read only the files relevant to the current task" — don't interpret "Everything in src/" as "read all of src/".
 
-When the task spans multiple files (e.g. a patch touching `src/composables/useAudio.ts` + `tests/unit/audio.test.ts` + `docs/index.html`), use subagents (Task tool, `Explore` type) to read files in parallel. Launch them in a single message with multiple tool calls. Each subagent reads its assigned files and returns a summary. This is faster than sequential reads and doesn't bloat the main context — the subagent's full output is not loaded, only its summary.
+When the task spans multiple files (e.g. a patch touching `src/composables/useAudio.ts` + `tests/unit/audio.test.ts` + `src/components/LeftPanel.vue`), use subagents (Task tool, `Explore` type) to read files in parallel. Launch them in a single message with multiple tool calls. Each subagent reads its assigned files and returns a summary. This is faster than sequential reads and doesn't bloat the main context — the subagent's full output is not loaded, only its summary.
 
 Caveat: subagents do NOT have access to the full conversation context or skill instructions. Only delegate file-reading/exploration tasks — not tasks requiring skill compliance, content depth standards, or document formatting rules. For those, read the files yourself.
 
@@ -55,7 +55,7 @@ Trigger: `:lcs`. Read `AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `R
 
 1. Read `AGENTS.md` (minimal pointer to this skill + project structure) and `MEMORY.md` for development history.
 2. Read this skill (the `linebyline` skill — you're reading it now) and the `delivery` skill.
-3. Note the current app version. The user may state it directly ("Current version: 0.37.1"). If they don't state it, derive it from the repo tree: grep for the highest semver folder name under `archive/semantic/` (pre-modular-rework sessions) or `archive/modular/` (post-rework sessions). The app always lives at `docs/index.html` (its `<title>` tag carries the version).
+3. Note the current app version. The user may state it directly ("Current version: 1.1.1"). If they don't state it, derive it from the repo tree: grep for the highest semver folder name under `archive/semantic/` (pre-modular-rework sessions) or `archive/modular/` (post-rework sessions), or read root `index.html`'s `<title>` tag (which carries the version).
 4. Do not begin coding — the app HTML and domain skills are read on-demand when the Code step begins. Onboard may be the only step in a session (e.g. a pure planning session), or it may be followed by Code or Skills.
 5. There is no companion file created at Onboard.
 
@@ -63,11 +63,11 @@ Trigger: `:lcs`. Read `AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `R
 
 Code (Build + Test + automatic Review)
 
-Trigger: `:lco`. Read `AGENTS.md`, `LIMITATIONS.md`, `docs/index.html`, `src/**`, config files, `tests/unit/**`, `tests/helpers/**`. The domain skills (`linebyline-section-index`, `single-file-html-app`, `browser-hotkey-system`) auto-load via `.setup-sandbox.sh` — invoke them via `Skill(command="name")` when needed.
+Trigger: `:lco`. Read `AGENTS.md`, `LIMITATIONS.md`, `src/**`, config files, `tests/unit/**`, `tests/helpers/**`. The domain skills (`linebyline-section-index`, `single-file-html-app`, `browser-hotkey-system`) auto-load via `.setup-sandbox.sh` — invoke them via `Skill(command="name")` when needed.
 
 1. Read `MEMORY.md` for development history if not already read at Onboard.
 2. Re-read this skill to refresh the workflow rules.
-3. Use the `linebyline-section-index` skill to read only the sections of `docs/index.html` you need, not the entire ~2600-line file.
+3. Use the `linebyline-section-index` skill's prompt-to-file map to read only the `src/` files a given change touches.
 4. Follow the user's requests that do not conflict with this skill. Before writing any code, follow the Pre-patch checklist. After every patch, follow Post-patch verification. After every turn (patch or not), follow Post-turn updates.
 5. If multiple features are requested, the user may bucket them into a single turn when they're minor or interdependent. If they're independent and substantial, address them sequentially.
 6. The highest existing version header in `Build.md` (if provided) inherently implies the next app version. No need for the user to keyword-hint the semver — derive it from the existing headers.
@@ -123,7 +123,7 @@ Pre-patch checklist
 Before writing any code change:
 
 1. Stop and request clarification when: a request is unclear or overly complex, relevant files are missing, a request is technically infeasible, or a request violates best practices from a skill.
-2. Read only the sections you need — use the `linebyline-section-index` skill to locate sections by grepping for `// ──` markers, then read just those ranges. This avoids loading the entire ~2600-line file (~50k tokens) when only a few sections are relevant.
+2. Read only the files you need — use the `linebyline-section-index` skill's prompt-to-file map to identify which `src/` files a given change touches, then read just those.
 3. Patch with minimal diff — change only what's needed and preserve surrounding code. Prefer targeted edits over full-section rewrites unless the section is being restructured. Don't generate your own icons; prioritize any the user uploads, then Lucide icons. Don't add code that links to external websites besides GitHub.
 4. Consult the `code-quality` skill before modifying functions.
 
@@ -156,7 +156,7 @@ Apply after every turn, regardless of whether a code patch was made. The user ma
 
 Versioning
 
-The user states the current version in their first chat message, either directly ("Current version: 0.37.1") or by referencing `docs/index.html`. If they don't state it, derive it from the repo tree: grep for the highest semver folder name under `archive/semantic/` (pre-modular-rework sessions) or `archive/modular/` (post-rework sessions). The app file is always `docs/index.html` — the version is encoded in `<title>`, not in the filename. When the user requests a version change, apply semver rules:
+The user states the current version in their first chat message, either directly ("Current version: 1.1.1") or by referencing the app. If they don't state it, derive it from the repo tree: grep for the highest semver folder name under `archive/semantic/` (pre-modular-rework sessions) or `archive/modular/` (post-rework sessions), or read root `index.html`'s `<title>` tag. The app entry is root `index.html` + `src/main.ts`; the version is encoded in `<title>`. When the user requests a version change, apply semver rules:
 
 - Same: 0.34.9 → 0.34.9
 - Patch: 0.34.9 → 0.34.10

@@ -1,4 +1,4 @@
-// Ported from docs/index.html "── Restricted hotkey rules ──" (roadmap item 3
+// Ported from the monolith (deleted in Tranche 6) "── Restricted hotkey rules ──" (roadmap item 3
 // Phase C, tranche 1). Verbatim; exported without leading underscores.
 
 // Keys blocked for ALL remappable hotkeys (browser-reserved or destructive)

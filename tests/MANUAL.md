@@ -19,8 +19,9 @@
     - [ ] Moves the seek bar steadily
     - [ ] Still plays when mute button is toggled on and off
     - [ ] Sounds quieter or louder depending on volume slider changes
-    - [ ] Slows down when pressing `Ctrl+1`
-    - [ ] Speeds up when pressing `Ctrl+2`
+    - [ ] Slows down when pressing `Ctrl+ArrowDown`
+    - [ ] Speeds up when pressing `Ctrl+ArrowUp`
+    - [ ] Resets speed when pressing `Ctrl+ArrowRight`
 - [ ] `Tab` several times and press `Esc` to escape tab selection, then press `ArrowUp` or `ArrowDown` to verify hotkeys work again
 
 #### Instant Replay

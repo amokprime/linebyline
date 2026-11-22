@@ -11,7 +11,7 @@ assignees: ''
 Mobile is not officially supported for now.
 
 **What version of the app is this for?**
-Only the deployed [version](https://github.com/amokprime/linebyline/blob/main/docs/index.html) is officially supported.
+Only the deployed [version](https://amokprime.github.io/linebyline/) is officially supported.
 
 **Is this a known [false positive](https://github.com/amokprime/linebyline/blob/main/SECURITY.md) or [limitation](https://github.com/amokprime/linebyline/blob/main/LIMITATIONS.md)?**
 Yes/No

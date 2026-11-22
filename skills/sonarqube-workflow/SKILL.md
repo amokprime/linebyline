@@ -33,7 +33,7 @@ Things that may surprise a fresh session:
 
 What the report does NOT include:
 
-- Source code snippets around each finding. For in-sandbox patching, the source must come from the Code context bundle (`src/**`, `docs/index.html`). SonarCloud's `api/sources/show` is auth-gated even for public projects, so the sandbox cannot fetch snippets either.
+- Source code snippets around each finding. For in-sandbox patching, the source must come from the Code context bundle (`src/**`). SonarCloud's `api/sources/show` is auth-gated even for public projects, so the sandbox cannot fetch snippets either.
 - Issue resolution state in real time. The report's `Status` column is a snapshot at generation time. If the user fixed an issue after running `sie` but before uploading, the report still shows `OPEN`. Cross-check via the API (Step 1) if status matters for the triage call.
 
 Triage directly from the report. Cross-check `Status` against the live API only when the report seems stale (e.g. the user mentions fixing an issue that still shows OPEN).
@@ -89,7 +89,7 @@ Step 2: Categorize by rule
 
 Group findings before acting. Common rules in this project:
 
-JavaScript / TypeScript rules (target `docs/index.html` or test files):
+JavaScript / TypeScript rules (target `src/**` or test files):
 
 | Rule | Name | Typical fix | False positive risk |
 |---|---|---|---|
@@ -135,7 +135,7 @@ Vue / web rules (target `src/components/*.vue`):
 | `Web:S7927` | Accessible name contains visible label | `aria-label` must be a superset of visible text; for icon-only buttons, the `aria-label` is the accessible name (can't contain an emoji glyph — False Positive) | Medium |
 | `Web:InputWithoutLabelCheck` | Input without label | Add `id` + `aria-label` (visible `<label for>` not needed on `display:none` inputs) | Low |
 
-CodeQL rules (target `sie.py`, `docs/index.html`, `src/**`):
+CodeQL rules (target `sie.py`, `src/**`):
 
 CodeQL rule keys use a `language/category` namespace, distinct from Sonar's `language:Snnnn`. Triage is the same as SonarCloud issues — assess each instance, fix or Accept per the rule's actual semantics. CodeQL alerts appear in the `## CodeQL Alerts` section of the `sie` report and only fire when `gh auth login` is set up locally.
 

@@ -13,7 +13,7 @@ Skill pointers below describe each skill's scope. Onboard-essential skills (`lin
 - `linebyline-SKILL.md` — project structure, context loading, workflow steps (Onboard / Code / Skills / Propose), pre/post-patch checklists, post-turn updates, versioning, deliver-zip pattern. The canonical onboarding + workflow skill.
 - `delivery-SKILL.md` — chat.z.ai web channel behavioral rules (download visibility, input handling, output format, comment density, context compaction) + the delivery workflow (prepare → zip → deploy) and the five packaged scripts.
 - `skill-SKILL.md` — when to create or update skills vs. MEMORY.md entries; skill anatomy and writing style.
-- `linebyline-section-index-SKILL.md` — section-name grep protocol + prompt-to-section map for `docs/index.html`.
+- `linebyline-section-index-SKILL.md` — prompt-to-file map for the modular `src/` tree.
 - `single-file-html-app-SKILL.md` — file structure, CSS architecture, snapshot undo/redo, file import/export, init sequence, common pitfalls.
 - `browser-hotkey-system-SKILL.md` — key normalization, restriction rules, capture-input behavior, conflict swap, modal focus trap, typing-mode overlays.
 - `aria-accessibility-SKILL.md` — Rules 1–9 covering semantic HTML, accessible names, dialog/modals, live regions, `inert` panels.
@@ -40,13 +40,13 @@ App-behavior contracts tied to specific versions. Useful for regression investig
 - Swap-button conflict resolution (0.37.0) — first version with the swap pattern (no blanks left over). General pattern in `browser-hotkey-system-SKILL.md` (Build bundle) → "Conflict resolution" + "Reset to default" subsections.
 - `hasLyricContent()` guard (0.35.11): prevents `syncLine`, `insertEndLine`, `maybeAppendTrailingTs` from inserting useless `[00:00.00]` lines when no line has text content.
 - All-assembly-site newline convention (0.35.11) — see `code-quality-SKILL.md` (Review bundle) → "Newline convention in LRC assembly" for the rule.
-- `beforeunload` dirty check + `isDirty` bridge (Phase E Tranche 1, pre-cutover): the monolith's `beforeunload` (docs/index.html lines 2766–2770) reads `getTA()` + `secondaryCols[].linesEl.value` directly.
+- `beforeunload` dirty check + `isDirty` bridge (Phase E Tranche 1, pre-cutover): the monolith's `beforeunload` (deleted in Tranche 6, lines 2766–2770) reads `getTA()` + `secondaryCols[].linesEl.value` directly.
     - The Vue port wires a `watch` in `useAppState` that mirrors the same check into the `isDirty` ref (`flush: 'sync'`, `deep: true`, `immediate: true`).
     - `App.vue`'s `onMounted` adds a `beforeunload` listener that re-reads `mainText.value` + `secondaryPool.value` directly (so a stale `isDirty` can never suppress the warning).
     - Port delta: `cfg.default_meta` → `cfg.value.default_meta`; the secondary check reads `secondaryPool` (all entries, including hidden) — not `secondaryCols` (visible-only computed) — so hidden entries with text from a previous session still trigger the warning.
     - 13 new Vitest specs in `tests/unit/appState.test.ts` (9 isDirty watch + 4 App.vue beforeunload integration via happy-dom); 473/473 specs green post-patch; `vue-tsc -b` clean. No Playwright snapshot regen (runtime behavior, not DOM structure).
 - Playwright Vite-target mode (Phase E Tranche 2, pre-cutover): `LBL_VITE_TARGET=1` env var branches three files:
-    - `tests/helpers/index.js` `getAppUrl()` returns `/` instead of `/docs/index.html`.
+    - `tests/helpers/index.js` `getAppUrl()` returns `/` (Vite build, post-Tranche 6).
     - `playwright.config.js` `webServer.command` runs `npx vite preview --port 5173 --strictPort` instead of `npx serve . -l 3004`, and `use.baseURL` switches to `http://localhost:5173`.
     - `tests/PLAYWRIGHT_SETUP.md` documents the SSH+Syncthing workflow.
     - The `tst` is a **server-side bash script** at `~/.local/bin/tst` (not a PC fish function) — the repo's section-4 bash script is the template.
@@ -63,7 +63,7 @@ App-behavior contracts tied to specific versions. Useful for regression investig
 
 ## Bug patterns
 
-General bug patterns (helper-extraction can delete callees, string assembly with conditional separator, dynamic config vs hardcoded constants, braceless-if ambiguity, state-variable disagreement, useless `|| {}` after spread) have been extracted to `code-quality-SKILL.md` (Review bundle). Read that skill before patching `src/**` or `docs/index.html` to avoid re-discovering them.
+General bug patterns (helper-extraction can delete callees, string assembly with conditional separator, dynamic config vs hardcoded constants, braceless-if ambiguity, state-variable disagreement, useless `|| {}` after spread) have been extracted to `code-quality-SKILL.md` (Review bundle). Read that skill before patching `src/**` to avoid re-discovering them.
 
 App-specific bugs not yet generalizable:
 
@@ -322,7 +322,7 @@ Per-version Accept / Won't-Fix / False-Positive decisions. Read alongside `sonar
     - Previous design left `deliver.zip` + `deploy.sh` behind on `set -e` failure ("for debugging"), but this caused stale-file collisions: the next `deliver.zip` download got autonamed `deliver(1).zip` by the KDE file picker, requiring manual rename before running `unpack.sh`.
     - The EXIT trap cleans up on ALL exits (success, failure, signal) — `deploy.sh` is regenerated each session and `deliver.zip` is re-downloaded from the chat, so there's no debugging value in leaving them behind.
     - The `echo "Done."` at the end of `unpack.sh` only prints on success (on failure, `set -e` exits before reaching it, but the EXIT trap still fires cleanup).
-- Syncthing `sleep 60` + Playwright `ssh Server tst` blocks in `unpack.sh` are commented out for `src/**` patches — Playwright targets `docs/index.html` until Phase E (per "Project invariants"), so running it on `src/**` patches is ~8.3 minutes wasted per deploy.
+- Syncthing `sleep 60` + Playwright `ssh Server tst` blocks in `unpack.sh` are commented out for `src/**` patches — Playwright targets the Vite build (dist/) post-Phase E, so running it on `src/**` patches is ~8.3 minutes wasted per deploy.
     - Re-enable both post-Phase E (replace `sleep 60` with Syncthing REST API polling: trigger rescan via `curl -X POST -H "X-API-Key: $KEY" "http://127.0.0.1:8384/rest/db/scan?folder=$LBL_ID"`, poll `/rest/db/completion?folder=$LBL_ID&device=$SERVER_ID` until `.completion == 100`).
 - The prior "unpack.sh hung" report was actually 8.3 minutes of Playwright tests, not a real hang — the user's Ctrl+C during the (then-commented-out) test line was actually during the `sleep 60` Syncthing wait. Trap kept as defensive.
 - A `known_dupes=()` cleanup section in each per-session `deploy.sh` auto-removes legacy misdeploy folders from the build-2 era.
@@ -397,8 +397,8 @@ The repo's bash scripts are organized by ownership: delivery scripts at `skills/
 
 ## Project invariants
 
-- All app code lives at `docs/index.html` until the item-3 modular cutover (Phase E); `src/` is scaffold-only until Phase C. No external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.
-- App version is encoded in `<title>` (not the filename) — see `linebyline-SKILL.md` → "Versioning" for the semver rules and where to apply the bump. The HTML file is always `docs/index.html` — overwrite it in place, don't create a versioned copy.
+- All app code lives in `src/` (modular Vite + Vue app) post-Phase E cutover. No external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.
+- App version is encoded in `<title>` (not the filename) — see `linebyline-SKILL.md` → "Versioning" for the semver rules and where to apply the bump. The app entry is root `index.html` + `src/main.ts`; the version is in `<title>` (root index.html).
 - The app is LRC-focused, but has Genius paste. Genius scraping is delegated to a browser extension (cross-origin blocks prevent in-app fetching); in-app extraction is structural parsing of pasted text.
 
 ## TypeScript / tooling config
@@ -412,8 +412,7 @@ The repo's bash scripts are organized by ownership: delivery scripts at `skills/
 
 Dogfooding concluded — user synced several songs with no major blockers.
 Latent issues + refinements addressed in `src/` + `tests/unit/`; the
-`docs/index.html` monolith is left as-is (user will drop it before Tranche 5
-cutover, not patch it).
+monolith was deleted in Phase E Tranche 6 as part of the cutover.
 
 - **Delete active line**: `delete_line` hotkey (default `G`, Hotkey Mode
   only). No confirmation prompt — Ctrl+Z undo is muscle memory.

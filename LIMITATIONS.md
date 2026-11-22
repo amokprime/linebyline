@@ -9,7 +9,7 @@
 browsers intentionally block programmatic `focus()` calls that aren't triggered by user interaction, as an anti-fingerprinting and anti-annoyance measure. This applies in both standard Firefox and ResistFingerprinting mode. The only reliable approaches would be an explicit click-to-activate overlay (intrusive) or making the whole app a PWA installed to the OS (out of scope).
 ```
 - Cursor is positioned one line too high in **Typing mode** on startup. The default metadata tags include a trailing newline for style, so there should be a blank line between `[re:]` and the first line of lyrics. Pasting in either mode now respects this (the paste handlers insert `\n\n`), but manually typing lyrics still starts the cursor right below `[re:]` without the blank line. Adding a `\n` in `applyMode()` would fix the cursor position but breaks undo (the modification isn't snapshot-pushed, so `Control+Z` restores the old value without the extra `\n`, causing assertion failures). Worked around by pasting lyrics in **Hotkey mode** first (which adds the expected newline), or changing ⚙️**Default metadata tags** to include a trailing blank line.
-- Many hotkey restrictions (copied from [/docs/index.html](https://github.com/amokprime/linebyline/blob/main/docs/index.html))
+- Many hotkey restrictions (copied from [src/hotkeys/restrictedKeys.ts](https://github.com/amokprime/linebyline/blob/main/src/hotkeys/restrictedKeys.ts))
 ```html
 // ── Restricted hotkey rules ──────────────────────────────────────────────────
 // Keys blocked for ALL remappable hotkeys (browser-reserved or destructive)

@@ -3,7 +3,7 @@ name: playwright-testing
 description: Write and maintain Playwright tests for the LineByLine single-file HTML app. Use this skill whenever writing or modifying test files (*.spec.js), when the user mentions Playwright, tests, snapshots, screenshots, axe-scan, test failures, or when making code changes that could affect existing tests. Use proactively — whenever you modify the app's HTML/JS, check if any test expectations need updating. This skill covers snapshot strategy, test helpers, common patterns, the impact of code changes on test validity, and the TypeScript/diagnostics setup that keeps Zed Project Diagnostics clean.
 ---
 
-This project uses Playwright with a custom test helper (`tests/helpers/index.js`) that provides fixtures for file import, media resolution, version auto-detection, and clipboard-paste workarounds. Tests run against `docs/index.html`.
+This project uses Playwright with a custom test helper (`tests/helpers/index.js`) that provides fixtures for file import, media resolution, version auto-detection, and clipboard-paste workarounds. Tests run against the Vite build (`dist/`, served by `npx vite preview --port 5173`).
 
 ---
 
@@ -344,7 +344,7 @@ Note: the old pattern captured `const orig = window.doSave` to restore later, bu
 
 ### Calling app functions inside `page.evaluate()`
 
-`logic.spec.js` is a unit-test suite for app functions (`tsToMs`, `msToTs`, `replaceTs`, etc.). These are top-level `function` declarations in `docs/index.html`, so they become `window.*` globals at runtime. Call them inside `page.evaluate()`:
+`logic.spec.js` (deleted in Phase E Tranche 4 — consolidated into the Vitest unit suite) was a unit-test suite for app functions (`tsToMs`, `msToTs`, `replaceTs`, etc.) called inside `page.evaluate()` against the monolith's `window.*` globals. The historical pattern:
 ```js
 test("tsToMs parses standard timestamp", async ({ page }) => {
   const result = await page.evaluate(() => tsToMs("[01:23.45]"));
@@ -379,7 +379,7 @@ Scoped to `tests/` (not project root) to avoid affecting `playwright.config.js` 
 Declares the app functions that tests call inside `page.evaluate()` callbacks. Without it, every `page.evaluate(() => tsToMs(...))` triggers TS2304. The file uses `declare function` for globals and `interface Window` augmentation for `window.*` properties:
 
 ```ts
-// App functions called inside page.evaluate() — defined in docs/index.html
+// App functions called inside page.evaluate() — historically defined in the monolith (docs/index.html, deleted Tranche 6); now in src/ modules
 declare function tsToMs(line: string): number | null;
 declare function msToTs(ms: number): string;
 // ... 18 more functions
@@ -391,7 +391,7 @@ interface Window {
 }
 ```
 
-Keep this file in sync with `docs/index.html`. If you add a new app function referenced in tests, add its signature here too.
+Keep this file in sync with `src/`. If you add a new app function referenced in tests, add its signature here too.
 
 ### Recurring TS diagnostic patterns and their fixes
 

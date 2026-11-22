@@ -1,11 +1,11 @@
 ---
 name: linebyline-section-index
-description: Efficient section-targeted reading of the LineByLine Vite app's src/ tree to avoid loading entire files unnecessarily. Use this skill at the start of every LineByLine coding session and before reading any part of the app source. Contains the prompt-to-file map (which src/ file owns which concern) and the protocol for reading only the files a given change touches. Also documents the historical docs/index.html monolith (still present until the Tranche 6 cutover deletes it) for parity checks.
+description: Efficient section-targeted reading of the LineByLine Vite app's src/ tree to avoid loading entire files unnecessarily. Use this skill at the start of every LineByLine coding session and before reading any part of the app source. Contains the prompt-to-file map (which src/ file owns which concern) and the protocol for reading only the files a given change touches.
 ---
 
 The Vite app source lives in `src/` — 36 files across `components/`, `composables/`, `hotkeys/`, `utils/`, and root. Loading every file for a single change wastes tokens. Most prompts touch 1–4 files. This skill tells you which files those are.
 
-The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) is still in the tree as a historical reference until Tranche 6 deletes it. **`src/` is the active code.** Consult `docs/index.html` only for parity checks (verifying a ported function matches the original). After the Tranche 6 cutover, `docs/index.html` is gone and this paragraph can be deleted.
+The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) was deleted in Phase E Tranche 6. **`src/` is the active code.** For historical parity checks against the original monolith, use `git show <pre-deletion-sha>:docs/index.html` (the file is gone from the working tree but preserved in git history).
 
 ---
 
@@ -145,15 +145,13 @@ utils/
 
 ---
 
-## Parity checks against the monolith (historical, until Tranche 6)
+## Parity checks against the monolith (historical)
 
-`docs/index.html` is the pre-modular-refactor monolith (~2800 lines). It's still in the tree so you can verify a ported function matches the original. **Do not patch `docs/index.html`** — it's frozen and will be deleted in Tranche 6. Patch the corresponding `src/` file instead.
-
-To find a function's original location in the monolith for a parity check:
+The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) was deleted in Phase E Tranche 6. It's preserved in git history — for a historical parity check (verifying a ported function matches the original), use:
 
 ```bash
-grep -n "^// ──" docs/index.html    # section markers (Config, Audio, Sync, etc.)
-grep -n "function <name>" docs/index.html    # specific function
+git show <pre-deletion-sha>:docs/index.html | grep -n "^// ──"   # section markers
+git show <pre-deletion-sha>:docs/index.html | grep -n "function <name>"   # specific function
 ```
 
-The monolith's section structure (as of the last sync) maps roughly to the `src/` files above — e.g. the monolith's `// ── Audio ──` section → `composables/useAudio.ts`; the monolith's `// ── Sync / timestamp ──` section → `composables/useSync.ts` + `utils/timestampSync.ts`. After Tranche 6 deletes `docs/index.html`, this section is obsolete and can be removed.
+The monolith's section structure mapped roughly to the `src/` files above — e.g. the monolith's `// ── Audio ──` section → `composables/useAudio.ts`; the monolith's `// ── Sync / timestamp ──` section → `composables/useSync.ts` + `utils/timestampSync.ts`.
