@@ -7,7 +7,7 @@ matches:
     replace: "Clone the main branch of my repo, https://github.com/amokprime/linebyline.\n"
   - trigger: ":lcs"
     replace: |
-      Clone the staging branch of my repo, https://github.com/amokprime/linebyline. Then read and run `bash skills/delivery/scripts/setup-sandbox.sh` from the repo folder — this installs the project skills into the sandbox's available_skills so their descriptions auto-load (invoke via `Skill(command="name")` instead of Read). Then read these from the repo folder:
+      Clone the staging branch of my repo, https://github.com/amokprime/linebyline. Then read and run `bash skills/delivery/scripts/setup-sandbox.sh` from the repo folder. This installs the project skills into the sandbox's available_skills so their descriptions auto-load (invoke via `Skill(command="name")` instead of Read). Then read these from the repo folder:
       ```
       package.json
       README.md

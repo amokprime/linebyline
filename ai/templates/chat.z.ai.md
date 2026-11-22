@@ -1,7 +1,7 @@
 ---
 model: GLM-5.2
 provider: https://chat.z.ai
-start: "{{date}}"
+start: {{date:YYYY-MM-DD}}
 ---
 ## Turn 1
 

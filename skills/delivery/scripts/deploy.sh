@@ -109,6 +109,16 @@ skipped_identical=()
 skipped_missing=()
 manual_deploys=()
 
+# Tranche 4.8 — S1192: the read-only-destination hint was duplicated 6× across
+# the deploy_file + deploy_hardlinked failure blocks. Hoisted to readonly
+# constants so a future wording change touches one place.
+# NOTE (Tranche 4.8 second-pass fix, Nov 22, 2026): the prior edit's replace_all
+# accidentally rewrote these declarations into self-references
+# (`readonly X="$X"`), which threw "unbound variable" under `set -u` and killed
+# the deploy at line 115 before any deploy_file ran. Restored to literal values.
+readonly READONLY_DEST_HINT="  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
+readonly DEPLOY_MANUAL_HINT="   use deploy_manual instead -- copy outside the sandbox after deploy)"
+
 deploy_file() {
   local src="$1"
   local rel="$2"
@@ -147,13 +157,13 @@ deploy_file() {
         {
           echo ""
           echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
-          echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
+          echo "$READONLY_DEST_HINT"
+          echo "$DEPLOY_MANUAL_HINT"
         } >&2
         {
           echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
-          echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
+          echo "$READONLY_DEST_HINT"
+          echo "$DEPLOY_MANUAL_HINT"
         } >> "$LOG"
         exit 1
       fi
@@ -165,13 +175,13 @@ deploy_file() {
         {
           echo ""
           echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
-          echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
+          echo "$READONLY_DEST_HINT"
+          echo "$DEPLOY_MANUAL_HINT"
         } >&2
         {
           echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-          echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
-          echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
+          echo "$READONLY_DEST_HINT"
+          echo "$DEPLOY_MANUAL_HINT"
         } >> "$LOG"
         exit 1
       fi
@@ -183,13 +193,13 @@ deploy_file() {
       {
         echo ""
         echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-        echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
-        echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
+        echo "$READONLY_DEST_HINT"
+        echo "$DEPLOY_MANUAL_HINT"
       } >&2
       {
         echo "ERROR: cannot deploy $rel -- destination is read-only or write failed."
-        echo "  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
-        echo "   use deploy_manual instead -- copy outside the sandbox after deploy)"
+        echo "$READONLY_DEST_HINT"
+        echo "$DEPLOY_MANUAL_HINT"
       } >> "$LOG"
       exit 1
     fi

@@ -835,8 +835,13 @@ function onConfirmNo() {
   display: inline-block;
 }
 /* Hidden rows (search filter) — same as the monolith's .s-hidden class. */
+/* Tranche 4.8 — S9423: removed !important. .s-hidden (0,1,0) is declared
+   after .hk-row { display: flex } (0,1,0) at L714, so equal-specificity
+   source order already lets .s-hidden win. No inline :style display
+   bindings exist on .s-hidden elements (verified: settings-conflict
+   <output> at L350 is a separate element). */
 .s-hidden {
-  display: none !important;
+  display: none;
 }
 #settings-footer {
   display: flex;

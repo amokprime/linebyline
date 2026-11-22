@@ -335,6 +335,15 @@ export function doSeekFwd() { doSeek(1) }
 // Continuous seeking causes staccato static bursts as the audio rapidly
 // plays segments at each intermediate position. Instead, pause on mousedown,
 // seek on mousemove, and resume on mouseup (only if was playing before drag).
+
+// Tranche 4.8 — S7721: hoisted to module scope. Doesn't capture any variables
+// from mountProgressDrag (reads audioEl + doSeek which are module-level).
+function _onProgressWheel(e: WheelEvent) {
+  e.preventDefault()
+  if (!audioEl.value?.duration) return
+  doSeek(e.deltaY < 0 ? 1 : -1)
+}
+
 export function mountProgressDrag(): () => void {
   const wrap = _refs?.progressWrap.value
   if (!wrap) return () => {}
@@ -406,20 +415,14 @@ export function mountProgressDrag(): () => void {
   wrap.style.cursor = 'pointer'
 
   // Wheel handler — scrolls seek forward/back by cfg.seek_increment_s.
-  // Hoisted to outer scope: doesn't capture any variables from mountProgressDrag
-  // (reads audioEl + doSeek which are module-level). Satisfies S7721.
-  function onWheel(e: WheelEvent) {
-    e.preventDefault()
-    if (!audioEl.value?.duration) return
-    doSeek(e.deltaY < 0 ? 1 : -1)
-  }
-  wrap.addEventListener('wheel', onWheel, { passive: false })
+  // Hoisted to module scope as _onProgressWheel (Tranche 4.8 — S7721).
+  wrap.addEventListener('wheel', _onProgressWheel, { passive: false })
 
   return () => {
     wrap.removeEventListener('mousedown', onDown)
     document.removeEventListener('mousemove', onMove)
     document.removeEventListener('mouseup', onUp)
-    wrap.removeEventListener('wheel', onWheel)
+    wrap.removeEventListener('wheel', _onProgressWheel)
   }
 }
 

@@ -747,10 +747,14 @@ function _markAsTranslationNormal(
 // unchanged if the first character isn't a lowercase ASCII letter.
 function _capitalizeFirstLetter(s: string): string {
   if (!s) return s
-  const ch = s.charCodeAt(0)
+  // Tranche 4.8 — S7758: codePointAt/fromCodePoint handle surrogate pairs
+  // correctly. For the ASCII a-z range this function targets, behavior is
+  // identical to charCodeAt/fromCharCode (a-z are BMP chars). The `!` is
+  // safe because `if (!s) return s` above guarantees s is non-empty.
+  const ch = s.codePointAt(0)!
   // a-z → A-Z
   if (ch >= 97 && ch <= 122) {
-    return String.fromCharCode(ch - 32) + s.slice(1)
+    return String.fromCodePoint(ch - 32) + s.slice(1)
   }
   return s
 }

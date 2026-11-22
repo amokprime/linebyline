@@ -362,7 +362,7 @@ For the workflow (when to run the suite, scope of coverage) see the `playwright-
 
 The `.omp/` directory is back at repo root, this time as the **local OMP harness** rather than chat.z.ai scaffolding. It has a Copilot-like purpose: lightweight local tasks, Server-side Playwright via `agent-tst`, Sonar triage when the cloud session is deep, and doc maintenance. `CONTRIBUTING.md` describes it that way; "claude.ai / OMP / ZCode dropped" is now only accurate for claude.ai and ZCode.
 
-- **Layout**: `.omp/AGENTS.md` (local project structure), `.omp/RULES.md` (test-running rules), `.omp/config.yml` (memory backend + autolearn), `.omp/skills/{playwright-testing,skill,sonarqube-workflow}` — **symlinks** into `skills/`, so both harnesses read one canonical copy. Never duplicate a skill into `.omp/skills/`.
+- **Layout**: `.omp/AGENTS.md` (local project structure), `.omp/RULES.md` (test-running rules), `.omp/skills/{playwright-testing,skill,sonarqube-workflow}` — **symlinks** into `skills/`, so both harnesses read one canonical copy. Never duplicate a skill into `.omp/skills/`.
 - **Sandbox**: `~/GitHub/omp-mods/safe-omp/safe-omp.sh` (`bwrap`). Binds `~/.local`, `~/.omp`, and the project read-write; `archive/`, `scripts/tst`, `.omp/`, `skills/delivery/unpack.sh` read-only. The restricted SSH profile (`~/.agent-tools/limited-entry/`) is bound read-only at `~/.ssh`, so `agent-tst` works from inside the sandbox and the master key is unreachable.
 - **Verification**: `agent-tst -g landing` → 6 passed (chromium/firefox/webkit), Oct 7, 2026 — `agent-tst` is live.
 - **Syncthing sync messaging (Oct 7, 2026)**: `scripts/tst` skips its sync block when `-g` is present (the scoped-run shortcut saves a full rescan + poll).

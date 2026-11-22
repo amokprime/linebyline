@@ -5,7 +5,7 @@ harness: chat.z.ai (originally authored under OMP; OMP dropped in Tranche 4.6, r
 ---
 # SSH Setup — human master key + restricted agent key
 
-> **Harness note (Tranche 4.6, Sep 29, 2026; updated Oct 7, 2026)**: two agent harnesses are in play. The **chat.z.ai** web-channel sandbox is the cloud harness and CANNOT SSH to the Server — it runs sample Playwright tests directly via the `playwright` package (see `AGENTS.md` → "Sample Playwright tests in sandbox"). The **local OMP** harness is active again (`~/GitHub/omp-mods/safe-omp/safe-omp.sh`, repo-side `.omp/`): its `bwrap` sandbox binds the restricted-key profile (`~/.agent-tools/limited-entry/`) read-only at `~/.ssh`, so the agent can run Server-side Playwright through `agent-tst` but never reaches the master key. The master key stays human-only; the human's interactive `tst` fish function uses it to run Playwright on the Server via Podman.
+> **Harness note (Tranche 4.6, Sep 29, 2026; updated Oct 7, 2026; launcher updated Nov 5, 2026)**: two agent harnesses are in play. The **chat.z.ai** web-channel sandbox is the cloud harness and CANNOT SSH to the Server — it runs sample Playwright tests directly via the `playwright` package (see `AGENTS.md` → "Sample Playwright tests in sandbox"). The **local OMP** harness `bwrap` sandbox binds the restricted-key profile (`~/.agent-tools/limited-entry/`) read-only, at that path and at `~/.ssh`, so the agent can run Server-side Playwright through `agent-tst` but never reaches the master key. The restricted key has no passphrase, so no ssh-agent and no `ssh-add` step are needed. The master key stays human-only; the human's interactive `tst` fish function uses it to run Playwright on the Server via Podman.
 
 Two SSH keys, deliberately separate:
 
@@ -53,7 +53,8 @@ Two SSH keys, deliberately separate:
 4. Test: `ssh remote 'hostname'` → prints the remote hostname.
 5. For complex troubleshooting on the server, install OMP on it for proper
    sandboxing. The launcher this project uses is
-   `~/GitHub/omp-mods/safe-omp/safe-omp.sh` (`bwrap` wrapper). A CLI harness
+   `~/GitHub/omp-mods/safe-omp/main.sh` (engine in `safe-omp/lib/bash.sh`,
+   entries in `main.sh` + `extend.sh`). A CLI harness
    re-uses this pattern; the chat.z.ai sandbox cannot SSH at all.
 
 ## 2. Restricted agent key (one-time)
@@ -159,16 +160,24 @@ ssh -F ~/.agent-tools/limited-entry/config remote -- <args>
 
 If the agent runs inside `bwrap`:
 
-- Mount the **identity folder read-only** at the standard `~/.ssh` location so
-  ssh finds `config` + key + `known_hosts`, but the agent cannot write/modify them:
+- Mount the **identity folder read-only at both paths**. The profile config names
+  absolute `IdentityFile` and `UserKnownHostsFile` paths, and `agent-tst` reads
+  `-F <profile>/config`. So the folder must appear at its own path, and also at
+  the default `~/.ssh` path for the default `known_hosts` and for a bare
+  `ssh remote`:
   ```
+  --ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.agent-tools/limited-entry"
   --ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.ssh"
   ```
+  The agent cannot write either copy.
 - **Remove any `--tmpfs "$HOME/.ssh"` line** — a tmpfs mounted on top shadows the
   `--ro-bind`, leaving `~/.ssh` empty.
-- Do **not** bind the master key or its `known_hosts`/`config` into the sandbox at
-  all. With only the restricted profile present, `ssh` offers only the restricted
-  key, so the master key is unreachable even if the agent is fully compromised.
+- Do **not** bind the real `~/.ssh` into the sandbox. It holds the master key and
+  the account keys. With only the restricted profile present, `ssh` offers only the
+  restricted key, so the master key is unreachable even if the agent is fully
+  compromised.
+- Do **not** bind the ssh-agent socket. The restricted key has an empty
+  passphrase, so no agent is needed and no `ssh-add` step exists.
 - The agent should always get the restricted profile via `ssh -F ...` in a wrapper,
   not by expecting a bare `ssh remote` to "just use the right key" — the wrapper
   pins the config and adds `BatchMode=yes`.
@@ -187,8 +196,10 @@ After setup, prove both properties before trusting it:
    `ssh -F <profile>/config remote '-g "title; whoami"'` → wrapper rejects the bad
    pattern; no shell metacharacters pass the allowlist.
 4. **Master key is not usable from the sandbox:** with only the restricted
-   `~/.ssh` present, `ssh remote ...` offers no master key and the interactive shell
-   path is closed.
+   profile bound (at its own path and at `~/.ssh`), `ssh remote ...` offers no
+   master key and the interactive shell path is closed.
+5. **No agent is required:** `ssh-add -l` inside the sandbox reports no usable
+   agent, and `agent-tst` still runs, because the restricted key has no passphrase.
 
 ## Troubleshooting
 
@@ -341,13 +352,20 @@ Run `tlkdf` to check if they've drifted; run `tlkcp` to update the copy.
   security bind: the whole home is already `--ro-bind` (read-only) in the bwrap, so
   the agent can read but never modify it.
 - `~/.agent-tools/limited-entry/` — the restricted SSH profile (config, key,
-  known_hosts). Mounted read-only at `~/.ssh` inside the sandbox via
-  `--ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.ssh"`.
+  known_hosts). Mounted read-only at two paths inside the sandbox: at its own path
+  for `-F` and the config's absolute paths, and at `~/.ssh` for the default
+  `known_hosts`. The real `~/.ssh` is never mounted.
+  ```
+  --ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.agent-tools/limited-entry"
+  --ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.ssh"
+  ```
+- The restricted key has an empty passphrase. No ssh-agent socket is bound and no
+  `ssh-add` step exists.
 - The human's interactive `tst` is a fish `abbr tst 'ssh Server tst'` using the
   **master key** (full shell, for debugging). The agent instead calls `agent-tst`
   (restricted key, `command=` only). The two are deliberately different commands so
   the master key is never offered by the agent.
-- Project [RULES.md](https://github.com/amokprime/linebyline/tree/main/.omp/RULES.md) (local OMP harness — re-added Oct 7, 2026; `~/GitHub/omp-mods/safe-omp/safe-omp.sh` is the matching `bwrap` launcher).
+- Project [RULES.md](https://github.com/amokprime/linebyline/tree/main/.omp/RULES.md) (local OMP harness — re-added Oct 7, 2026; `~/GitHub/omp-mods/safe-omp/main.sh` is the matching launcher).
 
 ### Restriction path (read top to bottom)
 
@@ -381,4 +399,5 @@ No single layer is sufficient; the defense is the *chain*.
 - `agent-tst -g title` → 3 passed (restricted key, scoped).
 - `agent-tst 'rm -rf /'` → `tst-locked: rejected: rm`, exit 1.
 - `agent-tst '-g "title; whoami"'` → `tst-locked: invalid -g pattern`, exit 1.
-- Master key unreachable from sandbox (only restricted profile present in `~/.ssh`).
+- Master key unreachable from sandbox (only the restricted profile is bound, at its
+  own path and at `~/.ssh`; no ssh-agent socket is bound).

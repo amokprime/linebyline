@@ -19,8 +19,10 @@
 #
 # Run once at session start (sandboxes expire after 2h, so re-run if the
 # session resets). Idempotent: re-running overwrites existing project skills
-# with their latest content. Built-in sandbox skills (charts, design, LLM,
-# etc.) are never touched — only project skill names are written.
+# with their latest content AND removes stale leftover skills (names deleted
+# from the repo but still present in the sandbox from a prior session — see
+# KNOWN_STALE_SKILLS below). Built-in sandbox skills (charts, design, LLM,
+# etc.) are never touched — only project skill names are written/cleaned.
 #
 # After running, the agent's available_skills list will include:
 #   linebyline, delivery, skill, linebyline-section-index,
@@ -83,8 +85,46 @@ for skill_dir in "$skills_src"/*/; do
   installed=$((installed + 1))
 done
 
+# ── Cleanup stale leftover skills ───────────────────────────────────────────
+# Skills deleted from the repo's skills/ tree sometimes persist in the sandbox
+# across sessions. The install loop above only refreshes skills that ARE in the
+# repo (it doesn't remove skills that WERE in the repo but have since been
+# deleted). This block removes known-deleted skill names if found as leftovers,
+# so the sandbox available_skills list stays clean.
+#
+# Maintain this list when a skill is deleted from the repo: add its name here
+# with the deletion tranche + reason. Safe — only removes explicitly-listed
+# names; never touches built-in platform skills (charts, docx, LLM, etc.) or
+# current repo skills.
+#
+# NOTE (Nov 22, 2026): `web-channel` was REMOVED from this list — it is a
+# built-in PLATFORM skill (chat.z.ai sandbox image seeds it every session;
+# confirmed: the sandbox copy's mtime refreshes on each session reset, its
+# description is platform-authored, and it even references the deleted
+# `project-workflow-SKILL.md` — a stale ref in the platform's own copy we can't
+# fix). Removing it every run just fought the platform (it re-seeded within
+# the same session). The repo's `delivery` skill bundles the same web-channel
+# behavioral rules (merged in Tranche 4.6), so the platform's standalone copy
+# is a harmless duplicate — leave it alone.
+KNOWN_STALE_SKILLS=(
+  "project-workflow"   # merged into skills/linebyline/ in Tranche 4.6 (Sep 29, 2026)
+  "task-review"        # never in this repo's skills/ — sandbox-seed leftover
+)
+cleaned=0
+for stale in "${KNOWN_STALE_SKILLS[@]}"; do
+  if [[ -d "$SANDBOX_SKILLS/$stale" ]]; then
+    rm -rf -- "${SANDBOX_SKILLS:?}/$stale"
+    echo "  cleaned stale leftover: $stale"
+    cleaned=$((cleaned + 1))
+  fi
+done
+
 echo ""
-echo "Done. Installed $installed skill(s), skipped $skipped."
+if [[ $cleaned -gt 0 ]]; then
+  echo "Done. Installed $installed skill(s), skipped $skipped, cleaned $cleaned stale leftover(s)."
+else
+  echo "Done. Installed $installed skill(s), skipped $skipped."
+fi
 echo ""
 echo "Project skill descriptions are now in available_skills."
 echo "Invoke via: Skill(command=\"<name>\") — e.g. Skill(command=\"linebyline\")."

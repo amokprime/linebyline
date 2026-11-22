@@ -1,183 +1,159 @@
 ---
 name: linebyline-section-index
-description: Efficient section-targeted reading of linebyline-*.html to avoid loading the entire file unnecessarily. Use this skill at the start of every LineByLine coding session, and before reading any part of the app HTML. Contains the protocol for locating relevant sections by name, reading only those sections, and patching the file with minimal token cost.
+description: Efficient section-targeted reading of the LineByLine Vite app's src/ tree to avoid loading entire files unnecessarily. Use this skill at the start of every LineByLine coding session and before reading any part of the app source. Contains the prompt-to-file map (which src/ file owns which concern) and the protocol for reading only the files a given change touches. Also documents the historical docs/index.html monolith (still present until the Tranche 6 cutover deletes it) for parity checks.
 ---
 
-The app HTML is about 2700 lines. Loading it whole costs about 50k tokens. Most prompts only touch 1–4 sections. This skill tells you how to read only what you need.
+The Vite app source lives in `src/` — 36 files across `components/`, `composables/`, `hotkeys/`, `utils/`, and root. Loading every file for a single change wastes tokens. Most prompts touch 1–4 files. This skill tells you which files those are.
 
----
-
-Step 1: Read the section markers — grep for `// ──`
-
-The app no longer embeds a SECTIONS index comment. Instead, grep for section markers:
-
-```bash
-rg -n "^// ──|^  // ──" /path/to/linebyline-*.html
-```
-
-This gives you every section name and its start line number. Use this output to find the sections you need.
+The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) is still in the tree as a historical reference until Tranche 6 deletes it. **`src/` is the active code.** Consult `docs/index.html` only for parity checks (verifying a ported function matches the original). After the Tranche 6 cutover, `docs/index.html` is gone and this paragraph can be deleted.
 
 ---
 
-Step 2: Read only the relevant section(s)
+## Step 1: Find the files you need — use the prompt-to-file map
 
-Once you have start lines from the grep, read the range from that line to just before the next section's start:
+Look up the change type in the table below. Read only the listed files. For cross-cutting changes, read all listed files before patching.
 
-```bash
-sed -n '826,922p' /path/to/linebyline-*.html
-```
-
-Read the minimum set of sections needed. Use the prompt-to-section map below as a guide.
-
----
-
-Prompt-to-section map
-
-| Type of change | Sections to read |
+| Type of change | `src/` files to read |
 |---|---|
-| New remappable hotkey action | Config + Hotkey rules + Controls + Keyboard → Global KD |
-| Fix hotkey restriction / conflict logic | Hotkey rules + Keyboard → Key norm |
-| Change Settings UI layout or search | Settings + Settings search |
-| Fix undo/redo behaviour | Undo/redo + Persistence |
-| Change autosave / session restore | Persistence + Init |
-| Fix Genius extraction | Helpers → Genius |
-| Fix paste / metadata cleaning | Helpers → Paste/meta |
-| Fix LRC timestamp parsing | Helpers → LRC parse |
-| Fix main field rendering or line selection | Helpers → Render/UI |
-| Fix audio playback / seek / volume | Audio |
-| Fix sync or timestamp offset | Sync/timestamp + Controls |
-| Fix mark-as-translation / batch split parens | Sync/timestamp + Helpers → Paste/meta |
-| Add / fix secondary field behaviour | Secondary fields + Line counts/merge |
-| Fix merge translations | Line counts/merge + Helpers → Paste/meta |
-| Fix title extraction from filename | Title |
-| Fix file open / save | Import |
-| Fix mode switching (hotkey/typing toggle) | Mode switching + Auto mode + Keyboard → Global KD |
-| Fix overlay (Settings) open/close | Settings + Keyboard → Overlay utils |
-| Fix bracket/autocomplete in typing mode | Keyboard → Main textarea KD |
-| Change theme or font | Theme + Font + Init |
-| Change init sequence or startup state | Init + Persistence + State |
-| Fix unload / dirty warning | Unload + State |
-| Fix button wiring | Button wiring |
-| Fix collapse/expand panel button | Button wiring (applyPanelCollapse lives here, not Init) |
-| Add/change confirmation dialog | Confirm dialog + Settings + Keyboard → Global KD |
-| Fix Settings focus trap / Tab navigation | Settings search + Keyboard → Global KD |
-
-For cross-cutting changes (e.g. new hotkey = Config + Hotkey rules + Controls + Global KD), read all listed sections before patching. Reading 4 sections of about 80 lines each (about 320 lines) is still about 6x cheaper than the full file.
+| New remappable hotkey action | `config.ts` (DEFAULT_CFG, HK_SECTIONS, HK_LABELS) + `composables/useGlobalHotkeys.ts` (dispatch) + `components/ControlsPanel.vue` (hotkey grid UI) + `hotkeys/restrictedKeys.ts` |
+| Fix hotkey restriction / conflict logic | `hotkeys/restrictedKeys.ts` (RESTRICTED_ALL, isRestrictedForKey) + `hotkeys/keyUtils.ts` (keyStr, hkMatch) |
+| Change Settings UI layout or search | `components/SettingsDialog.vue` + `composables/useSettings.ts` (row state, search query, conflict msg) |
+| Fix undo/redo behaviour | `composables/useUndoRedo.ts` (snapshot stack) + `composables/usePersistedState.ts` |
+| Change autosave / session restore | `composables/useAutosave.ts` + `composables/usePersistedState.ts` + `main.ts` (init sequence) |
+| Fix Genius extraction | `utils/geniusExtractor.ts` (cleanGenius, extractGeniusTitleAndArtist, extractGeniusAlbum) |
+| Fix paste / metadata cleaning | `utils/pasteHandlers.ts` (cleanPaste, ensureReTagDefault) |
+| Fix LRC timestamp parsing | `utils/lrcParser.ts` (META_RE, TI_RE, tsToMs, msToTs, normalizeLrcTimestamps) + `utils/timestampSync.ts` (syncLine, adjustTs, _assignInterpolatedTs) |
+| Fix main field rendering or line selection | `components/EditorArea.vue` (main textarea + line click handling) |
+| Fix audio playback / seek / volume | `composables/useAudio.ts` (playback, seek, volume, progress drag) + `components/LeftPanel.vue` (audio controls UI) |
+| Fix sync or timestamp offset | `composables/useSync.ts` (syncLine, insertEndLine, markAsTranslation, seek offset) + `components/ControlsPanel.vue` (sync buttons) |
+| Fix mark-as-translation / batch split parens | `composables/useSync.ts` (_capitalizeFirstLetter, markAsTranslation) + `utils/pasteHandlers.ts` |
+| Add / fix secondary field behaviour | `components/SecondaryField.vue` + `composables/useMerge.ts` (addSecondary, removeSecondary, onSecInput, onSecPaste, onSecKeydown) |
+| Fix merge translations | `composables/useMerge.ts` (mergeTranslations, _buildMergedResult, checkLineCounts) + `utils/pasteHandlers.ts` |
+| Fix title extraction from filename | `composables/useTitle.ts` (updateTitleFromText) |
+| Fix file open / save | `composables/useImport.ts` (doImport, doSave, onFilePickerChange, onMiddleClick) |
+| Fix mode switching (hotkey/typing toggle) | `composables/useModeSwitch.ts` (applyMode, toggleMode, toggleOffsetSeek) + `composables/useGlobalHotkeys.ts` |
+| Fix overlay (Settings) open/close | `components/SettingsDialog.vue` + `composables/useGlobalHotkeys.ts` (handleSettingsKeys, handleSettingsEscape) |
+| Fix bracket/autocomplete in typing mode | `composables/useTextareaKeys.ts` (onMainKeydown, handleEnterTrim, handleParenBracket, handleAsterisk) |
+| Change theme or font | `composables/useTheme.ts` (themeMode, cycleTheme) + `composables/useEditorFont.ts` + `main.ts` (init) |
+| Change init sequence or startup state | `main.ts` + `composables/usePersistedState.ts` + `App.vue` |
+| Fix unload / dirty warning | `App.vue` (beforeunload handler) |
+| Fix button wiring | `components/ControlsPanel.vue` + `components/LeftPanel.vue` + `components/MenuBar.vue` |
+| Fix collapse/expand panel button | `composables/usePanelCollapse.ts` + `components/ControlsPanel.vue` |
+| Add/change confirmation dialog | `components/SettingsDialog.vue` + `composables/useGlobalHotkeys.ts` (handleResetConfirmKeys) |
+| Fix Settings focus trap / Tab navigation | `composables/useSettings.ts` + `composables/useGlobalHotkeys.ts` (handleSettingsTabArrows) |
 
 ---
 
-Step 3: After patching — re-extract the index
-
-Any patch that inserts or deletes lines shifts all subsequent line numbers. After writing a patched file, re-run the section grep:
+## Step 2: Read only the relevant file(s)
 
 ```bash
-rg -n "^// ──|^  // ──" /path/to/linebyline-*.html
+# Read the whole file if it's small (<300 lines):
+sed -n '1,$p' src/composables/useTitle.ts
+
+# Or read a specific range (use after grepping for a function):
+grep -n "^export function markAsTranslation" src/composables/useSync.ts
+# → returns line number, then sed the range around it.
+```
+
+Read the minimum set of files needed. The map above tells you which. For a single-function fix, grep for the function name first to get the line range, then read just that range.
+
+---
+
+## Step 3: After patching — re-grep if you inserted/deleted lines
+
+If your patch changes line counts in a file, any line references you noted earlier shift. Re-grep for the function/section you touched if you need to verify the patch landed:
+
+```bash
+grep -n "^export function <name>" src/composables/useSync.ts
 ```
 
 ---
 
-Section list (reference)
+## `src/` file reference
 
-This is the current section structure as of v0.37.2. Actual line numbers must be found by grepping the file — this list documents the section structure and contents, not exact line numbers.
+Each file and what it owns. Use this to find a file when the prompt doesn't match a table row directly.
 
 ```
-Config               — DEFAULT_CFG, HK_SECTIONS, HK_LABELS, _LEGACY_HOTKEY_MAP (table-driven
-                       hotkey migration: old value → new default, keyed by action)
-Hotkey rules         — RESTRICTED_ALL (no arrow keys), ALPHA_NUM_SPACE_RE, isRestrictedForKey
-                       (arrow keys NOT restricted — handled for Settings navigation instead)
-Persistence          — loadCfg, saveCfg, _migrateHotkeys (delegates to _migrateLegacyHotkeys +
-                       _ensureDefaultHotkeys), _migrateLegacyHotkeys (iterates _LEGACY_HOTKEY_MAP),
-                       _ensureDefaultHotkeys (sets defaults for keys undefined in stored cfg),
-                       loadAutosave, doAutosave, _restoreSecondaryPool, takeSnapshot init
-Theme                — themeMode, cycleTheme, applyTheme
-Font settings        — editorFont/Size, saveEditorFont, applyEditorFont
-Dynamic tooltips     — updateDynamicTooltips
-State                — MAX_LINES (500), all let/const mutable state declarations
-                       (_syncAutoAdvanced tracks sync→T trailing-ts flow)
-Undo/redo            — pushSnapshot, doUndo, doRedo, applySnapshot
-                       (single-push model: only post-change push; applySnapshot clears
-                       extra secondaries beyond snapshot data)
-Mode switching       — applyMode, hotkeyMode toggle logic
-Auto mode            — secondary field focus → auto switch to typing mode
-Helpers
-  LRC parse          — TS_RE, META_RE, tsToMs, msToTs, isEndTs, replaceTs,
-                       normalizeLrcTimestamps, getSeekOffset, stripSecLine,
-                       maybeAppendTrailingTs,
-                       _findPrevTsMs/_findNextTsMs/_findRunEnd (extracted from
-                       _assignInterpolatedTs in 0.37.2 — reusable timestamp scans)
-  Paste/meta         — cleanPaste, ensureReTagDefault, mergeLrcMeta
-  Genius             — cleanGenius, markGeniusSource, extractGeniusMeta,
-                       _findGeniusLyricBounds (delegates to _findGeniusLyricStart +
-                       _findGeniusLyricEnd), _findGeniusLyricStart, _findGeniusLyricEnd,
-                       _filterYmal, _extractGeniusFields (delegates to
-                       _extractGeniusTitleAndArtist + _extractGeniusAlbum),
-                       _extractGeniusTitleAndArtist, _findArtistAfterTitle,
-                       _extractGeniusAlbum
-                       (markGeniusSource prepends "Genius" to [re:] value, then
-                       ensureReTagDefault appends the configured default)
-  Render/UI          — renderMainLines, scrollToActive, main-lines paste handler,
-                       _announce, _handleLineClick (delegates plain-click branch to
-                       _handleLineClickPlain), _handleLineClickPlain
-Audio                — audio element setup, playback controls, volume, seekbar
-                       (auto-play on seek: doSeek and seekbar mouseup start playback)
-Sync/timestamp       — syncLine, insertEndLine, seekPrev/NextLine, replayActiveLine,
-                       adjustTs, _peelLastParen, batchSplitParens, markAsTranslation,
-                       doSyncFile, tickSeekOffset, setOffsetMode,
-                       _assignInterpolatedTs (uses _findPrevTsMs/_findNextTsMs/_findRunEnd;
-                       while-loop cursor advanced past processed runs without S2310),
-                       _advanceAfterSplit (delegates to _findNextUnprocessedSplit +
-                       _findNextNonMetaFromIdx), _findNextUnprocessedSplit,
-                       _findNextNonMetaFromIdx
-                       (insertEndLine: T after W auto-advance sets prev line's trailing ts)
-Secondary fields     — addSecondary (max 10 fields), removeSecondary, secondary textarea keydown,
-                       secondary import (file picker, middle-click)
-Line counts/merge    — getSecLines, checkLineCounts, updateMergeBtn, mergeTranslations
-Title                — updateTitleFromText
-Import               — doImport, doSave, file-picker handler, multi-file handling
-Controls panel       — rebuildHkPanel, _renderHkCellContent, CTRL_ACTIONS, HOTKEY_ONLY, TYPING_AVAILABLE,
-                       changeSpeed
-                       (currentSpeed persisted to localStorage 'lbl_speed')
-                       (Typing-mode overlays: play_pause shows play_pause_alt,
-                       prev_line shows ↑ only, next_line shows ↓ only)
-Settings             — openSettings, closeSettings, saveSettingsNow, buildHkRows
-                       (Swap button swaps hotkeys; Reset gives holder its default back)
-Settings search      — setSearchHkMode, applySettingsFilter, initSettingsSearch,
-                       _handleSettingsSearchKeydown (delegates to _handleSearchHkMode or
-                       _handleSearchNormalMode based on _sSearchHkMode flag),
-                       _handleSearchHkMode, _handleSearchNormalMode
-                       (reset_defaults hotkey fires from search field)
-                       (arrow keys pass through to global handler for navigation)
-Confirm dialog       — _resetConfirmPending, showResetConfirm, hideResetConfirm,
-                       _doResetDefaults; inline Yes/No confirm UI in settings footer
-Keyboard
-  Key normalization  — keyStr, hkMatch
-  Main textarea KD   — Enter trim, bracket/paren autocomplete,
-                       _handleTextareaEnterTrim, _handleTextareaParenBracket (delegates to
-                       _wrapSelectionWith + _handleParenAtLineStart), _wrapSelectionWith,
-                       _handleParenAtLineStart
-  Overlay utilities  — arrowNavTimer declaration,
-                       _getSettingsFocusable, _handleSettingsTabArrows (Tab + ArrowUp/Down),
-                       _handleSettingsHotkeyDispatch (settings/help/issues/theme/panel/reset),
-                       _handleSettingsEscape, _handleSettingsKeys (dispatcher)
-                       (ArrowUp/ArrowDown navigate all Settings elements, not just captures)
-  Global KD          — document keydown handler (all hotkey dispatch),
-                       _isRepeatAllowed, _handleRepeatGuard: repeat key guard,
-                       _handleTypingModeArrowKeys: arrow keys for prev/next in Typing mode,
-                       _isFocusedUIElement, _isPrevNextReplay,
-                       _handleGlobalHotkeys (delegates to _handleGlobalHotkeyDispatch for
-                       table-driven action dispatch), _handleGlobalHotkeyDispatch,
-                       _handleHotkeyModeKeys (delegates to _handleHotkeyModeNav +
-                       _handleHotkeyModeReplay), _handleHotkeyModeNav (Home/End/PageUp/PageDown/
-                       ArrowUp/ArrowDown; delegates ArrowUp/Down to _handleHotkeyModeArrows),
-                       _handleHotkeyModeArrows (uses _findNextNonMetaLine + _isAtBoundary),
-                       _handleHotkeyModeReplay (replay_line/replay_only/replay_end/shift+Enter/
-                       shift+Space), _findNextNonMetaLine, _isAtBoundary
-                       (Esc blurs focused UI elements before isFocusedUI guard)
-                       (Typing mode: ↑/↓ for prev/next line when no textarea focused)
-Unload warning       — beforeunload dirty check (includes secondary fields)
-Button wiring        — all addEventListener calls for toolbar/panel buttons
-                       (Now Playing / Controls buttons don't steal focus via
-                       mousedown preventDefault on button clicks)
-Init                 — startup sequence: theme, font, autosave, render, tooltips,
-                       speed restore, panel collapse state
+Root
+  App.vue               — root component: mounts panels, beforeunload dirty check,
+                          wires composables via init callbacks
+  main.ts               — entry point: createApp, init sequence (theme, font,
+                          autosave, persistence, global hotkeys, audio callbacks)
+  config.ts             — DEFAULT_CFG, HK_SECTIONS, HK_LABELS, LEGACY_HOTKEY_MAP,
+                          migrateHotkeys/ensureDefaultHotkeys (table-driven migration)
+  style.css             — Tailwind entry + design tokens
+  globals.d.ts          — ambient type declarations
+
+components/
+  ControlsPanel.vue     — hotkey grid, sync buttons, speed/seek-offset controls,
+                          panel collapse button
+  EditorArea.vue        — main textarea, line click handling, render of lyric lines
+  FontSelector.vue      — font family/size selector UI
+  HotkeyCell.vue        — single hotkey capture cell (used in the Settings grid)
+  LeftPanel.vue         — audio controls (play/pause, volume, seek bar, speed),
+                          song title/artist display, progress slider
+  MenuBar.vue           — top bar: theme toggle, settings button, help/issues links
+  SecondaryField.vue    — secondary translation textarea + label
+  SettingsDialog.vue    — Settings overlay: hotkey remap grid, search filter,
+                          reset confirm dialog, default-meta editor
+  ThemeProvider.vue     — theme injection wrapper
+
+composables/
+  useAppState.ts        — central reactive state (cfg, mainText, activeLine,
+                          hotkeyMode, playing, refs to DOM elements)
+  useAudio.ts           — audio element setup, playback, volume, seek, speed,
+                          progress drag + wheel (mountProgressDrag, doSeek)
+  useAutosave.ts        — autosave timer + restore
+  useEditorFont.ts      — editor font family/size persistence
+  useGlobalHotkeys.ts   — global keydown dispatcher, settings keyboard nav,
+                          hotkey-mode arrows/replay, repeat guard, reset confirm
+  useImport.ts          — file open/save, file picker, middle-click import
+  useMerge.ts           — secondary fields, line counts, merge translations,
+                          secondary paste/keydown handlers
+  useModeSwitch.ts      — applyMode, hotkey/typing toggle, offset-seek toggle
+  usePanelCollapse.ts   — panel collapse state + button refs
+  usePersistedState.ts  — generic localStorage-backed ref factory
+                          (used by volume, muted, speed, panel-collapsed)
+  useSettings.ts        — settings row state, search query, conflict detection,
+                          reset-confirm visibility, display/stored conversion
+  useSync.ts            — syncLine, insertEndLine, markAsTranslation,
+                          seek prev/next, replay, adjustTs, _capitalizeFirstLetter,
+                          markGeniusSource, timestamp offset logic
+  useTextareaKeys.ts    — main textarea keydown: Enter trim, paren/bracket
+                          autocomplete, asterisk expansion
+  useTheme.ts           — themeMode ref, cycleTheme, applyTheme
+  useTitle.ts           — updateTitleFromText (parses [ti:]/[ar:] tags)
+  useUndoRedo.ts        — snapshot-based undo/redo stack
+
+hotkeys/
+  keyUtils.ts           — keyStr (normalizes KeyboardEvent → hotkey string),
+                          hkMatch (compares against stored hotkey)
+  restrictedKeys.ts     — RESTRICTED_ALL set, isRestrictedForKey, isRestrictedForAll
+
+utils/
+  geniusExtractor.ts    — cleanGenius, extractGeniusTitleAndArtist,
+                          extractGeniusAlbum, findArtistAfterTitle, _filterYmal
+  hotkeyDisplay.ts      — stored→display conversion for hotkey cells
+  lrcParser.ts          — META_RE, TI_RE, tsToMs, msToTs, isEndTs, replaceTs,
+                          normalizeLrcTimestamps, findLastMetaIdx, lrcHasTi
+  pasteHandlers.ts      — cleanPaste, ensureReTagDefault (RE_DEFAULT_RE,
+                          RE_TAG_LINE, RE_TAG_KEY, RE_TAG_REPLACE)
+  timestampSync.ts      — syncLine, adjustTs, _peelLastParen, batchSplitParens,
+                          _assignInterpolatedTs, _findPrevTsMs/_findNextTsMs
+  lib/utils.ts          — shadcn-vue cn() class merge helper
 ```
+
+---
+
+## Parity checks against the monolith (historical, until Tranche 6)
+
+`docs/index.html` is the pre-modular-refactor monolith (~2800 lines). It's still in the tree so you can verify a ported function matches the original. **Do not patch `docs/index.html`** — it's frozen and will be deleted in Tranche 6. Patch the corresponding `src/` file instead.
+
+To find a function's original location in the monolith for a parity check:
+
+```bash
+grep -n "^// ──" docs/index.html    # section markers (Config, Audio, Sync, etc.)
+grep -n "function <name>" docs/index.html    # specific function
+```
+
+The monolith's section structure (as of the last sync) maps roughly to the `src/` files above — e.g. the monolith's `// ── Audio ──` section → `composables/useAudio.ts`; the monolith's `// ── Sync / timestamp ──` section → `composables/useSync.ts` + `utils/timestampSync.ts`. After Tranche 6 deletes `docs/index.html`, this section is obsolete and can be removed.

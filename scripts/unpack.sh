@@ -120,25 +120,28 @@ if command -v bwrap >/dev/null 2>&1; then
   # the missing bind is visible in deploy.log (not silently skipped). The
   # deploy can still proceed — the path is just not protected this run.
   opt_ro() {
-    if [[ -e "$1" ]]; then
-      bwrap_args+=(--ro-bind "$1" "$1")
+    local path="$1"
+    if [[ -e "$path" ]]; then
+      bwrap_args+=(--ro-bind "$path" "$path")
     else
-      echo "unpack.sh: WARN: read-only bind skipped (path missing): $1" >&2
+      echo "unpack.sh: WARN: read-only bind skipped (path missing): $path" >&2
     fi
   }
   opt_tmpfs() {
-    if [[ -e "$1" ]]; then
-      bwrap_args+=(--tmpfs "$1")
+    local path="$1"
+    if [[ -e "$path" ]]; then
+      bwrap_args+=(--tmpfs "$path")
     else
-      echo "unpack.sh: WARN: tmpfs skipped (path missing): $1" >&2
+      echo "unpack.sh: WARN: tmpfs skipped (path missing): $path" >&2
     fi
   }
   # ── Also a helper for optional --bind (read-write) ──────────────────────
   opt_bind() {
-    if [[ -e "$1" ]]; then
-      bwrap_args+=(--bind "$1" "$1")
+    local path="$1"
+    if [[ -e "$path" ]]; then
+      bwrap_args+=(--bind "$path" "$path")
     else
-      echo "unpack.sh: WARN: bind skipped (path missing): $1" >&2
+      echo "unpack.sh: WARN: bind skipped (path missing): $path" >&2
     fi
   }
 

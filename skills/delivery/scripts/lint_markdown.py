@@ -79,7 +79,7 @@ SECTION_HEADER_RE = re.compile(r'(?<![=`])===([^=`\n]+?)===(?![=`])')
 #     Uses `.+?` (any non-newline char, lazy) instead of `[^=`\n]+?` so the
 #     content can include `=` chars (e.g. regex strings like `[^=`\n]+?`).
 #     The `` ` `` in the middle requires at least one backtick in the content.
-SECTION_HEADER_NESTED_RE = re.compile(r'(?<![=`])===(.+?`.+?)===(?![=`])')  # noqa: S8786 — bounded by === anchors, input is markdown (bounded by MAX_LINES)
+SECTION_HEADER_NESTED_RE = re.compile(r'(?<![=`])===(.+?`.+?)===(?![=`])')  # NOSONAR — bounded by === anchors, input is markdown (bounded by MAX_LINES); S8786 false positive (no nested quantifier ambiguity: `.+?` lazy + literal backtick boundary)
 
 # Base directory for path validation (the cwd when the script runs).
 # All file paths passed on the CLI must resolve within this directory.
@@ -265,30 +265,13 @@ def lint_line(line: str, in_code_block: bool) -> tuple[str, list[str], int, int]
     return fixed_line, messages, overlong, nested_headers
 
 
-def lint_file(path_str: str) -> tuple[bool, list[str], int, int]:
-    """Lint a markdown file. Returns (changed, messages, overlong_count, nested_header_count).
+def _lint_lines(lines: list[str], path_name: str) -> tuple[list[str], list[str], int, int]:
+    """Iterate lines, applying lint_line to each. Skips frontmatter + fenced code blocks.
 
-    Validates the path via safe_path() internally so the validation is visible
-    at the I/O site (S2083: taint analysis needs to see the check before the read/write).
+    Returns (new_lines, messages, overlong_total, nested_total). Extracted from
+    lint_file (Tranche 4.8) to reduce its cognitive complexity below the S3776
+    threshold of 15 — the frontmatter/fence branching lived inline before.
     """
-    # Path traversal defense (S2083): resolve to canonical path, then verify
-    # it's within the allowed base directory (cwd). Use the validated resolved
-    # path for ALL I/O — the original user input is never passed to open.
-    base_dir = os.path.realpath(os.getcwd())
-    resolved = os.path.realpath(path_str)
-    if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
-        print(f'ERROR: path {path_str!r} resolves outside the allowed directory', file=sys.stderr)
-        return False, [], 0, 0
-    path = Path(resolved)
-    if not path.exists():
-        print(f'WARN: {path} does not exist — skipping', file=sys.stderr)
-        return False, [], 0, 0
-    if path.suffix != '.md':
-        return False, [], 0, 0
-    with open(resolved, 'r', encoding='utf-8') as f:
-        original = f.read()
-    lines = original.splitlines(keepends=True)
-
     in_code_block = False
     in_frontmatter = False
     frontmatter_checked = False
@@ -321,26 +304,58 @@ def lint_file(path_str: str) -> tuple[bool, list[str], int, int]:
         fixed, msgs, overlong, nested = lint_line(line, in_code_block)
         new_lines.append(fixed)
         for msg in msgs:
-            messages.append(f'{path.name}:{i}: {msg}')
+            messages.append(f'{path_name}:{i}: {msg}')
         overlong_total += overlong
         nested_total += nested
 
-    # Post-processing: collapse doubled indentation.
-    # If the file has bullets at 8+ spaces but NO bullets at 4 spaces, the
-    # 8-space bullets are likely doubled level-2 (should be 4). Collapse.
-    has_4space = False
-    has_8space = False
-    for nl in new_lines:
-        if re.match(r'^    [-*] ', nl):
-            has_4space = True
-        elif re.match(r'^        [-*] ', nl):
-            has_8space = True
-    if has_8space and not has_4space:
-        for i, nl in enumerate(new_lines):
-            m = re.match(r'^(        )([-*] )', nl)
-            if m:
-                new_lines[i] = '    ' + nl[m.start(2):]
-        messages.append(f'{path.name}: collapsed doubled indent (8->4 spaces)')
+    return new_lines, messages, overlong_total, nested_total
+
+
+def _collapse_doubled_indent(new_lines: list[str], path_name: str) -> tuple[list[str], list[str]]:
+    """If the file has bullets at 8 spaces but none at 4, the 8-space bullets are
+    likely doubled level-2 (should be 4). Collapse them in place.
+
+    Returns (new_lines, messages). Extracted from lint_file (Tranche 4.8) to
+    keep its cognitive complexity under the S3776 threshold.
+    """
+    has_4space = any(re.match(r'^ {4}[-*] ', nl) for nl in new_lines)
+    has_8space = any(re.match(r'^ {8}[-*] ', nl) for nl in new_lines)
+    if not (has_8space and not has_4space):
+        return new_lines, []
+    for i, nl in enumerate(new_lines):
+        m = re.match(r'^( {8})([-*] )', nl)
+        if m:
+            new_lines[i] = '    ' + nl[m.start(2):]
+    return new_lines, [f'{path_name}: collapsed doubled indent (8->4 spaces)']
+
+
+def lint_file(path_str: str) -> tuple[bool, list[str], int, int]:
+    """Lint a markdown file. Returns (changed, messages, overlong_count, nested_header_count).
+
+    Validates the path via safe_path() internally so the validation is visible
+    at the I/O site (S2083: taint analysis needs to see the check before the read/write).
+    """
+    # Path traversal defense (S2083): resolve to canonical path, then verify
+    # it's within the allowed base directory (cwd). Use the validated resolved
+    # path for ALL I/O — the original user input is never passed to open.
+    base_dir = os.path.realpath(os.getcwd())
+    resolved = os.path.realpath(path_str)
+    if resolved != base_dir and not resolved.startswith(base_dir + os.sep):
+        print(f'ERROR: path {path_str!r} resolves outside the allowed directory', file=sys.stderr)
+        return False, [], 0, 0
+    path = Path(resolved)
+    if not path.exists():
+        print(f'WARN: {path} does not exist — skipping', file=sys.stderr)
+        return False, [], 0, 0
+    if path.suffix != '.md':
+        return False, [], 0, 0
+    with open(resolved, 'r', encoding='utf-8') as f:
+        original = f.read()
+    lines = original.splitlines(keepends=True)
+
+    new_lines, messages, overlong_total, nested_total = _lint_lines(lines, path.name)
+    new_lines, collapse_msgs = _collapse_doubled_indent(new_lines, path.name)
+    messages.extend(collapse_msgs)
 
     changed = ''.join(new_lines) != original
     if changed:
