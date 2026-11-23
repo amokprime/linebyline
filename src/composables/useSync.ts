@@ -1065,8 +1065,10 @@ export function setOnInputCallback(cb: () => void) {
 // Once-per-session flag so markGeniusSource only appends "Genius" to [re:] once.
 let _geniusDetectedThisSession = false
 
-// Hoisted regex — avoids re-creating on each call + satisfies S8786.
-const RE_GENIUS_SOURCE = /^\[re:\s*([^\]]*)\]/m
+// Hoisted regex — avoids re-creating on each call. No \s* before the capture
+// (S8786: \s* and [^\]] overlap on whitespace — super-linear backtracking);
+// the capture absorbs the leading whitespace and is trimmed below.
+const RE_GENIUS_SOURCE = /^\[re:([^\]]*)\]/m
 
 // Append "Genius" to the [re:] tag (once per session), then ensure the default
 // [re:] URL is also present. Mutates mainText via setMainText + re-renders.
@@ -1097,7 +1099,10 @@ function extractGeniusMeta(raw: string) {
   let text = getMainText()
   function replaceIfDefault(tag: string, val: string) {
     if (!val) return
-    text = text.replace(new RegExp(String.raw`^\[${tag}:\s*(.*)\]`, 'm'), (m, cur: string) => {
+    // Same shape as RE_GENIUS_SOURCE: [^\]]* capture, no \s* (S8786 —
+    // overlapping-quantifier ambiguity); cur.trim() handles the leading
+    // whitespace.
+    text = text.replace(new RegExp(String.raw`^\[${tag}:([^\]]*)\]`, 'm'), (m, cur: string) => {
       const c = cur.trim()
       return (c === '' || c.toLowerCase() === 'unknown') ? `[${tag}: ${val}]` : m
     })

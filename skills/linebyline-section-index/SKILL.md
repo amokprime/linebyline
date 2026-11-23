@@ -5,7 +5,7 @@ description: Efficient section-targeted reading of the LineByLine Vite app's src
 
 The Vite app source lives in `src/` — 36 files across `components/`, `composables/`, `hotkeys/`, `utils/`, and root. Loading every file for a single change wastes tokens. Most prompts touch 1–4 files. This skill tells you which files those are.
 
-The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) is restored in the working tree (Tranche 4.9) and stays until Phase E Tranche 6 deletes it post-cutover. **`src/` is the active code.** For parity checks against the monolith, read `docs/index.html` directly (or `git show <sha>:docs/index.html` for a specific historical version).
+The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) was deleted in Phase E Tranche 6 (Nov 23, 2026) — post-cutover, Vite is the only build target. **`src/` is the active code.** For parity checks against the monolith, read it from git history: `git show <sha>:docs/index.html` (the Tranche 6 deletion commit's parent has the last live copy).
 
 ---
 
@@ -147,12 +147,11 @@ utils/
 
 ## Parity checks against the monolith (historical)
 
-The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) is in the working tree (restored in Tranche 4.9 until Phase E Tranche 6 deletes it). For a parity check (verifying a ported function matches the original), grep it directly:
+The monolith (`docs/index.html`, ~2800 lines) lived in the working tree until Phase E Tranche 6 deleted it (Nov 23, 2026). For a parity check (verifying a ported function matches the original), read it from git history:
 
 ```bash
-grep -n "^// ──" docs/index.html   # section markers
-grep -n "function <name>" docs/index.html   # specific function
-git show <sha>:docs/index.html | grep -n "function <name>"   # a specific historical version
+git show <sha>:docs/index.html | grep -n "^// ──"   # section markers
+git show <sha>:docs/index.html | grep -n "function <name>"   # specific function
 ```
 
 The monolith's section structure mapped roughly to the `src/` files above — e.g. the monolith's `// ── Audio ──` section → `composables/useAudio.ts`; the monolith's `// ── Sync / timestamp ──` section → `composables/useSync.ts` + `utils/timestampSync.ts`.

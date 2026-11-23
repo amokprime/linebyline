@@ -111,7 +111,11 @@ export function extractGeniusTitleAndArtist(
   existingArtist: string,
 ): { title: string; artist: string } {
   for (let i = 0; i < head.length; i++) {
-    if (/\s+Lyrics$/.test(head[i]!)) {
+    // Linear (\s+ can't match the literal "Lyrics"; no nested or ambiguous
+    // quantifiers) — the super-linear flag is a false positive, suppressed
+    // for both linters (eslint + SonarCloud NOSONAR).
+    // eslint-disable-next-line sonarjs/super-linear-regex -- \s+ + literal + $ anchor is linear
+    if (/\s+Lyrics$/.test(head[i]!)) { // NOSONAR
       const title = head[i]!.replace(/\sLyrics$/, '').trim();
       const artist = existingArtist || findArtistAfterTitle(head, i + 1);
       return { title, artist };

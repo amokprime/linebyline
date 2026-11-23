@@ -1,6 +1,6 @@
 #!/bin/bash
 # deploy.sh -- deploys session files from cwd (where deliver.zip was extracted)
-# to the LineByLine repo, then runs npm install + lint gate + Vitest + Vite build +
+# to the LineByLine repo, then runs npm install + lint gate + Vite build + Vitest +
 # Playwright (via SSH + Syncthing).
 #
 # Called by unpack.sh after extraction. This file is committed at
@@ -414,18 +414,11 @@ for rel in "${changed[@]}" "${skipped_identical[@]}"; do
   fi
 done
 
-# ── Vitest unit suite (skip if no app/test code in repo) ────────────────────
-# Vitest failure is a test regression -- log it but don't abort (we still want
-# the build + Playwright log for the full picture).
-if [[ "$run_pw" -eq 1 ]]; then
-  log_section "Running Vitest unit suite"
-  run_and_log npm run test:unit
-else
-  log_section "Vitest unit suite"
-  echo "  No app/test code in repo -- skipping Vitest." | tee -a "$LOG"
-fi
-
 # ── Vite build (skip if no app/test code in repo) ────────────────────────────
+# Build BEFORE Vitest: it's the cheaper fail-fast signal (~2s incl. vue-tsc vs
+# ~13s of Vitest), and the rebuilt dist/ starts syncing to the Server during
+# the Vitest run instead of serializing after it — tst.sh's sync check then
+# finds dist/ already there or nearly there.
 # Build failure means dist/ is stale -- Playwright would run against the old
 # build. Log it but don't abort (the user can still see what went wrong).
 if [[ "$run_pw" -eq 1 ]]; then
@@ -437,13 +430,28 @@ else
   echo "  No app/test code in repo -- skipping Vite build." | tee -a "$LOG"
 fi
 
-# ── Server trash/ prune (always runs, even if Playwright is skipped) ────────
-# trace.zip files (one per trash snapshot folder) inflate Syncthing upload
-# size by 26MB+ per run. Prune them + stale (>1 day old) artifacts before
-# any Playwright run or manual tst invocation. This runs unconditionally
-# so leftover trash/ from a previous manual tst is cleaned up even when
-# this deploy skips Playwright (run_pw=0).
-log_section "Pruning server trash/ (trace.zip + stale >1 day)"
+# ── Vitest unit suite (skip if no app/test code in repo) ────────────────────
+# Vitest failure is a test regression -- log it but don't abort (we still want
+# the Playwright log for the full picture).
+if [[ "$run_pw" -eq 1 ]]; then
+  log_section "Running Vitest unit suite"
+  run_and_log npm run test:unit
+else
+  log_section "Vitest unit suite"
+  echo "  No app/test code in repo -- skipping Vitest." | tee -a "$LOG"
+fi
+
+# ── Server trash/ prune (PRE-run housekeeping, always runs) ─────────────────
+# PRE-run, NOT post-run cleanup: trace.zip files (one per trash snapshot
+# folder) inflate Syncthing upload size by 26MB+ per run, so they are pruned
+# BEFORE the sync + test window, alongside artifacts older than 1 day. This
+# run's fresh artifacts don't exist yet and are never touched here. Post-run
+# cleanup is owned by tst.sh's trace.zip prune plus the >1-day stale prune
+# after the suite below — both keep fresh failure artifacts for the
+# scratch/upload/ pull. This runs unconditionally so leftover trash/ from a
+# previous manual tst is cleaned up even when this deploy skips Playwright
+# (run_pw=0).
+log_section "Pruning server trash/ (PRE-run: all trace.zip + >1-day stale)"
 ssh -F "$HOME/.ssh/config" -o ControlMaster=no -o ControlPath=none Server "find ~/GitHub/linebyline/trash -type f -name 'trace.zip' -delete 2>/dev/null; find ~/GitHub/linebyline/trash ~/GitHub/linebyline/playwright-report -type f -mtime +1 -delete 2>/dev/null" || true
 echo "  Pruned trace.zip + stale artifacts on server." | tee -a "$LOG"
 

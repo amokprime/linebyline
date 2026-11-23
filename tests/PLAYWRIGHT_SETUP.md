@@ -34,7 +34,6 @@ podman pull mcr.microsoft.com/playwright:v1.61.0-noble
 # Env:
 #   TST_IMAGE     podman image (default: mcr.microsoft.com/playwright:v1.61.0-noble)
 #   TST_HOST_WS   server-side path to the working tree (default: /home/user/GitHub/linebyline)
-#   LBL_VITE_TARGET  set to 1 to target Vite preview instead of monolith serve
 set -euo pipefail
 image=${TST_IMAGE:-mcr.microsoft.com/playwright:v1.61.0-noble}
 host_workspace=${TST_HOST_WS:-/home/user/GitHub/linebyline}
@@ -44,9 +43,6 @@ if [ ! -f "$host_workspace/playwright.config.js" ]; then
 fi
 podman pull -q "$image" >/dev/null 2>&1 || true
 env_args=(-e PW_CONTAINER=1)
-if [ "${LBL_VITE_TARGET:-}" = "1" ]; then
-  env_args+=(-e LBL_VITE_TARGET=1)
-fi
 exec podman run --rm \
   --userns=keep-id --security-opt label=disable \
   -v "$host_workspace:/workspace" -w /workspace \
@@ -60,7 +56,7 @@ exec podman run --rm \
    filtered streaming output):
 ```fish
 function tst --description 'Run Playwright tests against the Vite build on the Server (filtered streaming output)'
-    ssh Server "LBL_VITE_TARGET=1 tst $argv" 2>&1 | \
+    ssh Server "tst $argv" 2>&1 | \
         grep -E "^\s+[0-9]+\) \[|Error:|Expected:|Received:|at /workspace/tests/|passed|failed|skipped"
     notify-send "Tests done."
 end
@@ -121,7 +117,7 @@ function tsta --description 'Playwright UI mode against the Vite build'
             sleep 0.25
         end
     end
-    env LBL_VITE_TARGET=1 npx playwright test --ui $argv
+    npx playwright test --ui $argv
     if test "$need_cleanup" = true
         fuser -k 5173/tcp 2>/dev/null; or true
     end
@@ -161,9 +157,9 @@ funcsave cgn
 ```
 
 `vite preview` serves at `/linebyline/` (the `base` config for GitHub Pages
-project URLs). Both `tsta` and `cgn` build `dist/` automatically if missing,
-and set `LBL_VITE_TARGET=1` (or rely on the config's `reuseExistingServer`) so
-`playwright.config.js` expects Vite preview on :5173.
+project URLs). Both `tsta` and `cgn` build `dist/` automatically if missing;
+`playwright.config.js` targets Vite preview on :5173 unconditionally (the
+Tranche 6 monolith target is gone).
 
 ### `srv` — manual testing server (MANUAL.md)
 
@@ -197,17 +193,16 @@ can test across multiple browser tabs / reloads / manual interactions.
 
 ---
 
-## Vite-target mode (Phase E Tranche 2)
+## Test target (post-Tranche 6)
 
-During Phase E (pre-cutover), the Playwright toolchain targets the Vite build
-(`dist/` via `npx vite preview --port 5173`). The `LBL_VITE_TARGET=1` env var
-selects this mode in both `tests/helpers/index.js` (`getAppUrl()`) and
-`playwright.config.js` (`webServer.command` + `use.baseURL`). The client `tst`
-function always sets this env var; `tsta` and `cgn` set it or rely on the
-config's `reuseExistingServer`.
-
-After Tranche 6 (monolith deletion), the env-var branch goes away and Vite
-preview is the only mode.
+The Playwright toolchain targets the Vite build (`dist/` via
+`npx vite preview --port 5173`) exclusively. Pre-cutover there was a second
+monolith target (`npx serve . -l 3004` → `docs/index.html`, selected by the
+`LBL_VITE_TARGET=1` env var in `tests/helpers/index.js` `getAppUrl()` and
+`playwright.config.js` `webServer.command` + `use.baseURL`) — removed in
+Phase E Tranche 6 when the monolith was deleted. Stale `LBL_VITE_TARGET=1`
+prefixes in older fish functions / server-side scripts are harmless no-ops;
+clean them at leisure.
 
 ### Notes
 

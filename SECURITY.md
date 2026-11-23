@@ -5,17 +5,10 @@
 | Version                                                                                                     | ESLint, CodeQL     | SonarCloud         |
 | ----------------------------------------------------------------------------------------------------------- | ------------------ | ------------------ |
 | [src/](https://github.com/amokprime/linebyline/tree/main/src) (modular Vue app, builds to `dist/`)          | :white_check_mark: | :white_check_mark: |
-| [docs/index.html](https://github.com/amokprime/linebyline/blob/main/docs/index.html) (pre-cutover monolith) | :white_check_mark: | :white_check_mark: |
 | [archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic)                      | :x:                | :x:                |
 | [archive/pre-semantic](https://github.com/amokprime/linebyline/tree/main/archive/pre-semantic)              | :x:                | :x:                |
 | [tests/](https://github.com/amokprime/linebyline/blob/main/tests/)                                          | :white_check_mark: | :x:                |
-**Architecture note (pre-cutover)**: `docs/index.html` is the live monolith on GitHub Pages. `src/` is the modular Vite + Vue app that will replace it after the Phase E cutover (see `ROADMAP.md`). Both are scanned by ESLint + CodeQL + SonarCloud. Post-cutover, `docs/index.html` will be deleted and `src/` → `dist/` (built by the `deploy.yml` GitHub Actions workflow, not committed) will be the live site.
-## Cutover rollback (Phase E Tranche 5)
-If the live site is broken after the Pages source flip (the cutover moment), roll back instantly:
-1. Repo **Settings → Pages → Build and deployment → Source**: switch from "GitHub Actions" back to **"Deploy from a branch"** (`main` / `/docs`). The legacy branch deploy resumes serving the frozen monolith at `docs/index.html` — no rebuild, no commit needed.
-2. Leave `docs/index.html` untouched (Tranche 5 forbids deleting it before Tranche 6). Push-triggered `deploy.yml` runs will fail while the source is legacy — they cannot affect the site, only go red.
-3. The `linebyline-<tag>.html` assets attached by `release.yml` remain available as an offline fallback.
-This rollback window closes at Phase E Tranche 6 (monolith deletion). After that, the fallback is the GitHub Release assets + git history.
+**Architecture note (post-cutover)**: `src/` is the modular Vite + Vue app; `dist/` — built by the `deploy.yml` GitHub Actions workflow, not committed — is the live site on GitHub Pages. The pre-cutover monolith `docs/index.html` was deleted in Phase E Tranche 6 (Nov 23, 2026) and remains reachable via git history. Both were scanned by ESLint + CodeQL + SonarCloud while it existed.
 ## Reporting a Vulnerability
 You can open a new [Issue](https://github.com/amokprime/linebyline/issues) or [report it privately](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/privately-reporting-a-security-vulnerability). There are many known [false positives](https://github.com/amokprime/linebyline/blob/main/SECURITY.md#false-positives) that boil down to these points:
 1. LineByLine is an offline app. Loading the GitHub Page is basically the same as downloading index.html and opening it in a browser.

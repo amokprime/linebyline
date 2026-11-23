@@ -70,8 +70,11 @@ export function findLastMetaIdx(lines: string[]): number {
   return idx;
 }
 
-// Check if an imported LRC raw text has a meaningful [ti:] tag
-const TI_RE = /^\[ti:\s*(.*)\]$/i;
+// Check if an imported LRC raw text has a meaningful [ti:] tag.
+// [^\]]* capture with no \s* before it (S8786: \s* and [^\]] overlap on
+// whitespace — super-linear backtracking); the capture absorbs the leading
+// whitespace and is trimmed below.
+const TI_RE = /^\[ti:([^\]]*)\]$/i;
 export function lrcHasTi(raw: string): boolean {
   return raw.split('\n').some((l) => {
     const m = TI_RE.exec(l);

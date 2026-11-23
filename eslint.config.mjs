@@ -4,7 +4,6 @@
 //   - Item 3 Phase A (2026-09-06) added the Vite + Vue blocks below
 //     (sections 5-6): eslint-plugin-vue for src/**/*.vue, with
 //     @typescript-eslint/parser for <script lang="ts"> and plain .ts.
-//     The docs/index.html monolith ignore stays until Phase E deletes it.
 //   - Item 4 will deepen this: full typescript-eslint ruleset and the
 //     test suite blocks move to .spec.ts (globals list below shrinks).
 
@@ -52,11 +51,6 @@ export default [
 
       // Historical archives — never lint
       "archive/**",
-
-      // The monolith — Roadmap item 3 replaces this with src/** via Vite.
-      // Linting a 2700-line HTML file is noise; the modular refactor will
-      // extract its JS into lintable modules.
-      "docs/index.html",
 
       // Built Vite output (roadmap item 3) — never lint
       "dist/**",
@@ -117,31 +111,6 @@ export default [
       globals: {
         ...globals.node,
         ...globals.browser,
-        // Functions defined in docs/index.html <script> — the spec
-        // files call them via page.evaluate(() => fn(...)) which
-        // runs in the browser, not Node. ESLint can't see them, so
-        // we declare them here. Roadmap item 3 (Vite refactor) will
-        // turn these into real imports — this block gets deleted then.
-        tsToMs: "readonly",
-        msToTs: "readonly",
-        replaceTs: "readonly",
-        isEndTs: "readonly",
-        normalizeLrcTimestamps: "readonly",
-        stripSecLine: "readonly",
-        _peelLastParen: "readonly",
-        batchSplitParens: "readonly",
-        _normKey: "readonly",
-        keyStr: "readonly",
-        isRestrictedForAll: "readonly",
-        isRestrictedForKey: "readonly",
-        mergeLrcMeta: "readonly",
-        ensureReTagDefault: "readonly",
-        cleanPaste: "readonly",
-        cleanGenius: "readonly",
-        collapseBlanks: "readonly",
-        _findNextTimestampMs: "readonly",
-        _assignInterpolatedTs: "readonly",
-        setSearchHkMode: "readonly",
       },
     },
     plugins: { sonarjs },
@@ -186,9 +155,6 @@ export default [
     rules: {
       ...sonarjs.configs.recommended.rules,
       "sonarjs/cognitive-complexity": "warn",
-      // Ported verbatim from the monolith — ReDoS findings are "Won't Fix" per
-      // Roadmap item 5 (client-side processing on user-supplied lyrics).
-      "sonarjs/super-linear-regex": "off",
       "sonarjs/empty-string-repetition": "off",
     },
   },
@@ -205,8 +171,9 @@ export default [
     rules: {
       ...sonarjs.configs.recommended.rules,
       "sonarjs/cognitive-complexity": "warn",
-      // Ported verbatim from the monolith — see the item 5 note above.
-      "sonarjs/super-linear-regex": "off",
+      // super-linear-regex is NOT overridden for src/** — the Tranche 4.8
+      // blanket "Won't Fix" (verbatim monolith port) ended with Tranche 6:
+      // every regex was re-triaged and fixed or NOSONAR'd individually.
       "sonarjs/empty-string-repetition": "off",
     },
   },

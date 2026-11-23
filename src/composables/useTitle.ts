@@ -27,11 +27,13 @@ const songArtist = ref('Unknown Artist')
 // from the text; updates songTitle/songArtist refs. "Unknown" or blank tags
 // fall back to "Unknown Title" / "Unknown Artist" (monolith parity).
 export function updateTitleFromText(text: string) {
-  // [^\]]+ (any non-] char) replaces `.+` to avoid super-linear backtracking
-  // (S8786); `.exec` replaces `.match` since the regex is non-global (S6594).
-  const tiMatch = /^\[ti:\s*([^\]]+)\]/m.exec(text)
+  // [^\]]+ capture with no \s* before it (S8786: \s* and [^\]]+ overlap on
+  // whitespace — super-linear backtracking; the capture absorbs the leading
+  // whitespace and .trim() below handles it). `.exec` replaces `.match`
+  // since the regex is non-global (S6594).
+  const tiMatch = /^\[ti:([^\]]+)\]/m.exec(text)
   const ti = tiMatch?.[1]
-  const arMatch = /^\[ar:\s*([^\]]+)\]/m.exec(text)
+  const arMatch = /^\[ar:([^\]]+)\]/m.exec(text)
   const ar = arMatch?.[1]
 
   // Optional chaining replaces `ti && ti.trim()` (S6582).

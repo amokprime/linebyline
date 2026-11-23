@@ -47,9 +47,10 @@ if ! curl -s -o /dev/null -w '' http://localhost:5173/linebyline/ 2>/dev/null; t
   done
 fi
 
-# LBL_VITE_TARGET=1 tells playwright.config.js to expect Vite preview on :5173.
+# playwright.config.js targets Vite preview on :5173 unconditionally
+# (Tranche 6 removed the monolith target + its LBL_VITE_TARGET branch).
 # The config's webServer has reuseExistingServer: true locally, so it reuses.
-LBL_VITE_TARGET=1 npx --ignore-scripts playwright test --ui "$@"
+npx --ignore-scripts playwright test --ui "$@"
 
 # Kill the server we started; leave pre-existing ones alone
 if [[ "$need_cleanup" == true ]]; then

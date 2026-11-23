@@ -8,11 +8,18 @@
 
 import { findLastMetaIdx, normalizeLrcTimestamps, isHeader } from './lrcParser';
 
-// Hoisted regexes — avoids re-creating on each call + satisfies S8786/S6594.
-const RE_DEFAULT_RE = /^\[re:\s*(.*)\]/m;
-const RE_TAG_LINE = /^\[([a-zA-Z]+):\s*(.*)\]$/;
+// Hoisted regexes — avoids re-creating on each call (S6594). [^\]] captures
+// with no \s* before them (S8786: \s* and [^\]] overlap on whitespace —
+// super-linear; the capture absorbs the leading whitespace and call sites
+// .trim() it) — same convention as useSync's RE_GENIUS_SOURCE / useTitle.
+// RE_TAG_REPLACE keeps its lazy .*: it intentionally spans inner ]s to
+// anchor at the line-final ] (lazy + literal anchors = linear) — the coarse
+// heuristic still flags it, so it carries a per-line suppression.
+const RE_DEFAULT_RE = /^\[re:([^\]]*)\]/m;
+const RE_TAG_LINE = /^\[([a-zA-Z]+):([^\]]*)\]$/;
 const RE_TAG_KEY = /^\[([a-zA-Z]+):/;
-const RE_TAG_REPLACE = /^(\[re:\s*)(.*?)(\]\s*)$/m;
+// eslint-disable-next-line sonarjs/super-linear-regex -- lazy .* between literal anchors is linear
+const RE_TAG_REPLACE = /^(\[re:\s*)(.*?)(\]\s*)$/m; // NOSONAR
 
 export function cleanPaste(text: string, context: string): string {
   text = normalizeLrcTimestamps(text);

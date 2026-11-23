@@ -6,8 +6,11 @@ name: Release single-file artifact
 # semantics (a failed release-attach must not gate Pages, and vice versa).
 # Pushing a v*.*.* tag builds dist/index.html with vite-plugin-singlefile
 # (SINGLEFILE=1 inlines all JS/CSS, base './') and attaches
-# linebyline-<tag>.html to the auto-generated GitHub Release — replacing the
-# old hand-attached linebyline-<version>.html assets.
+# linebyline-<tag>.html to the GitHub Release — idempotently: if the release
+# already exists (created manually in the UI after the tag push, as happened
+# for v1.1.1), the asset is uploaded with --clobber instead of the step
+# failing on "already exists"; otherwise the release is created with
+# --generate-notes.
 
 on:
   push:
@@ -38,6 +41,10 @@ jobs:
       - name: Attach artifact to GitHub Release
         run: |
           cp dist/index.html "linebyline-${REF_NAME}.html"
-          gh release create "$REF_NAME" --generate-notes "linebyline-${REF_NAME}.html"
+          if gh release view "$REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$REF_NAME" "linebyline-${REF_NAME}.html" --clobber
+          else
+            gh release create "$REF_NAME" --generate-notes "linebyline-${REF_NAME}.html"
+          fi
         env:
           REF_NAME: ${{ github.ref_name }}

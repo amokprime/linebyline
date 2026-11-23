@@ -20,33 +20,14 @@ import { defineConfig, devices } from "@playwright/test";
  const enableWebkit = !!process.env.PW_CONTAINER || inCI;
 
 /**
- * Phase E Tranche 2 — Vite-target mode.
- *
- * Two modes coexist during Phase E (pre-cutover):
- *   - Default (monolith): `npx serve . -l 3004` serving docs/index.html.
- *   - Vite-target (opt-in): `npx vite preview --port 5173` serving dist/.
- *
- * Vite-target mode is activated by `LBL_VITE_TARGET=1` env var only.
- * No auto-detect via `dist/index.html` existence — that was too aggressive
- * in the SSH+Syncthing workflow (dist/ syncs to the server and persists,
- * so every tst run would auto-detect Vite-target, making monolith tests
- * impossible without rm -rf dist/ first).
- *
- * Env var propagation through SSH + Podman:
- *   - The PC's `tst` fish function runs `ssh Server "LBL_VITE_TARGET=1 tst"`,
- *     passing the env var as part of the remote command string (SSH doesn't
- *     forward env vars by default). See tests/PLAYWRIGHT_SETUP.md.
- *   - The server's `tst` bash script propagates `LBL_VITE_TARGET` into
- *     Podman via `-e LBL_VITE_TARGET=1` (see PLAYWRIGHT_SETUP.md).
- *
- * After Tranche 6 (monolith deletion), the env-var branch goes away and
- * this always uses Vite preview.
+ * Single target since Phase E Tranche 6: the Vite build (`dist/` via
+ * `npx vite preview --port 5173`). The pre-cutover monolith mode
+ * (`npx serve . -l 3004` serving docs/index.html) and its
+ * `LBL_VITE_TARGET` env-var branch are gone with the monolith. See
+ * tests/PLAYWRIGHT_SETUP.md for the SSH + Syncthing + Podman workflow
+ * that runs this config on the Server.
  */
-const viteTarget = process.env.LBL_VITE_TARGET === "1";
-
-const baseURL = viteTarget
-  ? "http://localhost:5173"
-  : "http://localhost:3004";
+const baseURL = "http://localhost:5173";
 
 /**
  * Artifact retention — failure traces + screenshots only.
@@ -108,9 +89,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: viteTarget
-      ? "npx vite preview --port 5173 --strictPort"
-      : "npx serve . -l 3004",
+    command: "npx vite preview --port 5173 --strictPort",
     url: baseURL,
     // Reuse existing server when running locally (host OR container).
     // CI never reuses — each run boots its own.
