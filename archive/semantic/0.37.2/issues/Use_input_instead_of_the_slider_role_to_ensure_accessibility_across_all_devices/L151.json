@@ -1,0 +1,42 @@
+{
+  "key": "AaB5FcWM50elM9qDQH86",
+  "rule": "Web:S6819",
+  "severity": "MAJOR",
+  "component": "amokprime_linebyline:src/components/LeftPanel.vue",
+  "project": "amokprime_linebyline",
+  "line": 151,
+  "hash": "d90c26198ff23a5c54f81269ceed5c01",
+  "textRange": {
+    "startLine": 151,
+    "endLine": 160,
+    "startOffset": 6,
+    "endOffset": 7
+  },
+  "flows": [],
+  "status": "OPEN",
+  "message": "Use <input> instead of the slider role to ensure accessibility across all devices.",
+  "effort": "5min",
+  "debt": "5min",
+  "assignee": "amokprime-OmKhI@github",
+  "tags": [
+    "accessibility"
+  ],
+  "creationDate": "2026-09-06T23:36:54+0000",
+  "updateDate": "2026-09-06T23:37:17+0000",
+  "type": "CODE_SMELL",
+  "organization": "amokprime",
+  "pullRequest": "11",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "issueStatus": "OPEN",
+  "projectName": "linebyline",
+  "internalTags": [],
+  "lastChangeAnalysisUuid": "09a1e15a-de20-4c7f-bbe8-59fc214c7f3e",
+  "lastChangeSource": "ANALYSIS"
+}

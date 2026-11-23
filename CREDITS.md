@@ -4,7 +4,7 @@ Icons ("undo", "redo", "list-checks" recolored for LineByLine logo, "play", "ski
 
 Built with AI assistance from [Claude Sonnet](https://www.anthropic.com/claude), [GLM](https://chat.z.ai/), [DeepSeek](https://chat.deepseek.com/), and various models through [Gratisfy](https://gratisfy.xyz/) and [Logfare](https://logfare.ai).
 
-[Skill-creator skill](https://github.com/anthropics/skills/tree/main/skills/skill-creator) by Anthropic used to create [skill-SKILL.md](https://github.com/amokprime/linebyline/tree/main/ai/chat.z.ai/skills/skill-SKILL.md)
+[Skill-creator skill](https://github.com/anthropics/skills/tree/main/skills/skill-creator) by Anthropic used to create [skill-SKILL.md](https://github.com/amokprime/linebyline/tree/main/skills/skill/SKILL.md)
 
 Lyrics page extraction code and mock test designed for compatibility with [Genius](https://genius.com/) page structure
 
@@ -17,3 +17,7 @@ French and Spanish translations for "I Wish I Could Identify That Smell" generat
 Markdown files written with [Obsidian](https://obsidian.md/)
 
 Naughty strings tests by minimaxir: https://github.com/minimaxir/big-list-of-naughty-strings
+
+SonarCloud rule IDs quoted in `skills/sonarqube-workflow/` are facts of the SonarQube [Web API](https://docs.sonarsource.com/sonarqube-cloud/); no Sonar rule description text is redistributed here
+
+`skills/code-quality/` was first written in this repo as `ai/z-ai-glm/skills/code-quality-SKILL.md` (2026-05-18), then carried through `ai/chat.z.ai/skills/` before the `skills/` tree existed. [omp-mods](https://github.com/amokprime/omp-mods) copied and revised it from 2026-08-26, and [sonar-issue-exporter](https://github.com/amokprime/sonar-issue-exporter) received it later still (2026-09-10). All three have been revised from each other since, so the later two are siblings rather than descendants of one chain

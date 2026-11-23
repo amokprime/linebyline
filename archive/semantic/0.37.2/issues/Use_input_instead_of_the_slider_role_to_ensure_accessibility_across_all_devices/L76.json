@@ -1,0 +1,23 @@
+{
+  "rule": "Web:S6819",
+  "component": "amokprime_linebyline:src/components/LeftPanel.vue",
+  "line": 76,
+  "textRange": {
+    "startLine": 76,
+    "endLine": 84,
+    "startOffset": 6,
+    "endOffset": 7
+  },
+  "message": "Use <input> instead of the slider role to ensure accessibility across all devices.",
+  "severity": "MAJOR",
+  "type": "CODE_SMELL",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "MAINTAINABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

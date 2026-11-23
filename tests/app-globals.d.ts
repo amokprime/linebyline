@@ -1,3 +1,4 @@
+
 /**
  * Ambient declarations for app globals defined in docs/index.html.
  *
@@ -73,4 +74,6 @@ interface Window {
   __saveCapture: { text: string; filename: string } | null;
   /** App global; reassigned by the test's Firefox branch to a capture stub. */
   doSave: () => void;
+  /** Set by smoke.spec.js doSave-dispatch test to verify the hotkey dispatches through window.doSave. */
+  __doSaveCalled: boolean;
 }

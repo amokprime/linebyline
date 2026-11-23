@@ -1,23 +1,21 @@
-### ZCode
+---
+summary: This folder holds human-facing reference docs for the chat.z.ai web-channel workflow. Agent-facing context files live at repo root (AGENTS.md, MEMORY.md, skills/, scripts/) — not in ai/.
+links:
+  - "[[ai/Vibecoding workflow|Vibecoding workflow]]"
+  - "[[ai/Diagrammo flowcharts|Diagrammo flowcharts]]"
+---
+#### Working with [chat.z.ai](https://chat.z.ai/) (GLM)
+- I have noticed as many as 2k ads being blocked by uBlock Origin (you can install this on Helium and Microsoft Edge if not on Firefox)! It keeps ramping up over time, possibly causing unresponsiveness even in Chromium browsers. It may help to close the browser window and reopen the page (just reloading or closing the browser tab isn't always enough).
+- A captcha slider may gate login and the start of every turn after the first one.
+- The sandbox may reset within a few hours, clearing any files you uploaded (whether local or "Cloud"). This does not clear files the AI generated. Scope sessions to fit in a short block.
+- The "Projects" feature allows saving instructions (i.e. you can paste in contents of your `AGENTS.md`) — capped at 5000 characters, which is why `AGENTS.md` is a compact session bootstrap (clone URLs, always-read list, reads per session type) rather than the full workflow. The instructions can't be edited for now, but you can create a new project with updated instructions and move chats into it one by one; re-paste from `AGENTS.md` whenever it changes. The `linebyline` skill's always-on `available_skills` description is the backstop that reminds the agent to load the workflow in chats where the Project instructions weren't injected.
+- The GitHub plugin allows the agent to read and make changes to one or more repos in the connected GitHub account. This bypasses local `git` and commits directly through GitHub API (you should get a chat.z.ai approval popup). It can also open issues and PRs and read GitHub workflows (like Copilot). Plugins only load for a single turn at a time, so use `git clone` to ensure the agent has a session-persistent copy for multi-turn changes.
+- Uploads may fail to update if certain filenames like file.md and Memory.md are re-uploaded without renaming them or zipping them in a uniquely named folder. If uploads generally fail, upload a file or zip to https://tmpfiles.org and share the link. The agent can download it into its sandbox with `curl`.
+- Downgrade to a lower model, chats failing to submit or load or timing out, during peak hours. Use the 'previous flagship model' during off-peak hours to mitigate these issues.
+- The "All files in task" download widget can go stale or disappear after multiple sandbox-side file operations. The agent will touch `download/` to force a refresh. Contingency only: if the widget is still broken, the agent re-runs `prepare.sh --fallback-url` (uploads `deliver.zip` to tmpfiles.org and prints a direct link) — this is not a per-turn step.
 
-See [[ai/zcode/README|README]]. The generic root-level AGENTS.md and README.md may be adopted for other environments in the future.
+The website auto-loads project skill descriptions (from `/home/z/my-project/skills/<name>/SKILL.md`) into the agent's `available_skills` list — but does NOT auto-load root `AGENTS.md` or `MEMORY.md`. `AGENTS.md` is the compact session bootstrap (paste it into Project instructions); the `linebyline` skill carries the full onboarding + workflow and self-loads via its description. With the bootstrap injected, sessions open with a short prompt — e.g. `Work on [[ROADMAP#3. Modular Stack Refactor (Vite + Vue + Tailwind + shadcn-vue)]] Tranche 4.9. Screenshots were uploaded for context.` — instead of the Espanso clone+read snippets that `scripts/local/espanso.yml` used to provide (retired Nov 22, 2026; the snippets' content is now `AGENTS.md` → "Reads per session type"). In plain chats, the opening prompt should still ask the agent to clone + read (`AGENTS.md`, `MEMORY.md`, `ROADMAP.md`).
 
-### OMP
+chat.z.ai also had a bug where the same named zip file can persist across sandboxes. This prevented the agent from reading future uploaded zips of the same name. So I use [scripts](https://github.com/amokprime/linebyline/tree/main/scripts/README.md) to generate the zip files with a unique name.
 
-See [[ai/omp/OMP_SETUP|OMP_SETUP]] and [[ai/omp/README|README]]. Skills and other context files are already included in the repo. The config I committed enables the `local` memory subsystem, which starts from zero and consolidates lessons from your sessions into a project-specific folder like `~/.omp/agent/memories/--path-to-linebyline--`. Copy [[ai/omp/learned|learned.md]] into that folder to seed the project memory with historical lessons.
-
-### Web chats
-
-LineByLine was originally built with Claude Sonnet 4.6 in [claude.ai](https://claude.ai/) Projects. Any comparable model that can accept zip/code file uploads and generate code files for download should also work. Use a Chromium-based browser (e.g. Helium) with uBlock Origin or Adguard Adblocker. The web chat rendering for claude.ai and chat.z.ai relies on backends that Firefox lacks, resulting in CPU and memory usage spikes that slow things down to a crawl.
-
-The guidelines below are designed for a free account AI web chat without access to your filesystem. You may be able to install Claude Desktop on Windows, but I haven't had a good experience with the Filesystem or GitHub MCP connectors. If using Claude Code, OpenCode, etc., you might find it more efficient to just ask it to make all the changes directly.
-
-Put the associated chat transcript for new version of LineByLine into its own semantically numbered folder in [archive/semantic](https://github.com/amokprime/linebyline/tree/main/archive/semantic). Overwrite [docs/index.html](https://github.com/amokprime/linebyline/tree/main/docs/index.html) with the actual `.html` file. You can tell the AI a keyword for the next version to get it to automatically rename the folder, or fill out [ai/chat.z.ai/Build.md](https://github.com/amokprime/linebyline/tree/main/ai/chat.z.ai/Build) to help it [infer](https://github.com/amokprime/linebyline/tree/main/ai/chat.z.ai/skills/project-workflow-SKILL.md) the appropriate version.
-
-| Scope of your changes                                                         | Version | Resulting number change |
-| ----------------------------------------------------------------------------- | ------- | ----------------------- |
-| Quick hotfix of a patch or minor feature                                      | Same    | 0.34.9 → 0.34.9         |
-| Bug fixes and refining existing features                                      | Patch   | 0.34.9 → 0.34.10        |
-| New features that fit into existing ones and invisible code quality refactors | Minor   | 0.34.9→ 0.35.0          |
-| Refactoring that visibly breaks existing features                             | Major   | 0.34.9 → 1.0.0          |
-Rename the folder manually with the same number. If the AI forgets to update the version or does it wrong, edit the app's filename (i.e. linebyline-0.34.7.html) and the HTML `<title>` element (i.e. `<title>LineByLine 0.34.7</title>`).
+Steering messages can be queued while the agent is working or "Send now" with a button. "Send now" ends their current turn. If they had several open Plan items, you might need to remind them to finish the ones from last turn (before the steering message).

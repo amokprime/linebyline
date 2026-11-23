@@ -19,7 +19,6 @@
     - strong: "?"
   - link "Issues (Ctrl+[)":
     - /url: https://github.com/amokprime/linebyline/issues
-    - img
 - main:
   - heading "LineByLine" [level=1]
   - text: Now playing
@@ -54,6 +53,7 @@
       - button "Sync line start": Sync line W Enter
       - button "Replay only"
       - button "Sync line end": End line T
+      - button "Delete active line": Delete G
       - button "Back tiny amount": /−\d+[hmsp]+ time Z/
       - button "Forward tiny amount": /\+\d+[hmsp]+ time V/
       - button "Back small amount": /−\d+[hmsp]+ time A/

@@ -1,0 +1,23 @@
+{
+  "rule": "Web:InputWithoutLabelCheck",
+  "component": "amokprime_linebyline:src/components/SecondaryField.vue",
+  "line": 43,
+  "textRange": {
+    "startLine": 43,
+    "endLine": 47,
+    "startOffset": 4,
+    "endOffset": 5
+  },
+  "message": "Add an \"id\" attribute to this input field and associate it with a label.",
+  "severity": "MAJOR",
+  "type": "BUG",
+  "cleanCodeAttribute": "CONVENTIONAL",
+  "cleanCodeAttributeCategory": "CONSISTENT",
+  "impacts": [
+    {
+      "softwareQuality": "RELIABILITY",
+      "severity": "MEDIUM"
+    }
+  ],
+  "flows": []
+}

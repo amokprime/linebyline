@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# tst-locked — server-side gate for the OMP agent's locked SSH key.
+# This is the `command=` target in authorized_keys. It sits in front of
+# `tst` and runs ONLY whitelisted Playwright invocations, rejecting
+# anything else. Scoped tests still work; arbitrary commands are
+# impossible.
+#
+# Lives at scripts/server/tst-locked in the repo. Deployed to the Server's
+# ~/.local/bin/tst-locked as a HARDLINK to ~/GitHub/linebyline/scripts/server/tst-locked
+# (NOT a symlink, NOT a copy). The hardlink pins the inode — even if a
+# malicious agent replaces the repo file via Syncthing (which does temp+rename,
+# creating a new inode), ~/.local/bin/tst-locked still points to the original
+# trusted code. This is the defense-in-depth: the repo file can be tampered
+# with, but the authorized_keys target can't be silently swapped.
+#
+# Trade-off: when tst-locked legitimately changes, Syncthing syncs the new
+# content to scripts/server/tst-locked on the Server (new inode), but
+# ~/.local/bin/tst-locked still points to the OLD inode. Re-link manually:
+#   ln -f ~/GitHub/linebyline/scripts/server/tst-locked ~/.local/bin/tst-locked
+# The `ln -f` overwrites the existing hardlink with a new one to the updated file.
+#
+# The Server's authorized_keys pins the absolute path
+# /home/user/.local/bin/tst-locked; tst-locked's own `exec` line pins
+# /home/user/.local/bin/tst (which is a symlink to
+# ~/GitHub/linebyline/scripts/server/tst).
+#
+# Allowed forms (from SSH_ORIGINAL_COMMAND):
+#   --list
+#   -g <grep-pattern>  |  -g<patt>  |  --grep=<patt>   (strict pattern)
+#   tests/<name>.spec.js / tests/<sub>/<name>.spec.js  (one or more)
+#   --project=chromium|firefox|webkit                   (zero or more)
+set -euo pipefail
+
+raw=${SSH_ORIGINAL_COMMAND:-}
+
+# Split into args (bash word-splitting; we validate every token after).
+# We rely on the raw command being single-line and quoting handled by
+# sshd; tokens are re-checked, never executed directly.
+# shellcheck disable=SC2206
+args=($raw)
+
+declare -a clean=()
+skip=0
+for i in "${!args[@]}"; do
+  [ "$skip" -gt 0 ] && { skip=$((skip-1)); continue; }
+  a=${args[$i]}
+  case "$a" in
+    -h|--help|--list)
+      clean+=("$a")
+      ;;
+    --project=chromium|--project=firefox|--project=webkit)
+      clean+=("$a")
+      ;;
+    -g)
+      # pattern is the NEXT token; validate it
+      val=${args[$((i+1))]:-}
+      if [ -z "$val" ] || ! printf '%s' "$val" | grep -Eq '^[A-Za-z0-9_/ .-]*$'; then
+        echo "tst-locked: invalid -g pattern" >&2; exit 1
+      fi
+      clean+=("$a" "$val")
+      skip=1
+      ;;
+    -g?*)
+      val=${a#-g}
+      if ! printf '%s' "$val" | grep -Eq '^[A-Za-z0-9_/ .-]*$'; then
+        echo "tst-locked: invalid -g pattern" >&2; exit 1
+      fi
+      clean+=("-g" "$val")
+      ;;
+    --grep=*)
+      val=${a#--grep=}
+      if ! printf '%s' "$val" | grep -Eq '^[A-Za-z0-9_/ .-]*$'; then
+        echo "tst-locked: invalid --grep pattern" >&2; exit 1
+      fi
+      clean+=("--grep=$val")
+      ;;
+    tests/*.spec.js)
+      clean+=("$a")
+      ;;
+    *)
+      echo "tst-locked: rejected: $a" >&2
+      exit 1
+      ;;
+  esac
+done
+
+exec /home/user/.local/bin/tst "${clean[@]:-}"

@@ -5,7 +5,7 @@ const {
   waitForLyrics,
 } = require("@linebyline/test-helpers");
 const META =
-  "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: https://amokprime.github.io/linebyline/]\n";
+  "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n";
 
 test("import-main", async ({ page, media }) => {
   await page
@@ -24,7 +24,7 @@ test("import-main", async ({ page, media }) => {
 });
 
 test("import-one-secondary", async ({ page, importSecondary }) => {
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_spanish.lrc");
   expect(await page.getByRole("textbox").inputValue()).toMatchSnapshot(
     "import-one-after.txt",
@@ -38,9 +38,9 @@ test("import-one-secondary", async ({ page, importSecondary }) => {
 });
 
 test("import-two-secondary", async ({ page, importSecondary }) => {
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_spanish.lrc");
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(2, "plain_french.lrc");
   await page.keyboard.press("Control+z");
   await expect(
@@ -107,13 +107,42 @@ test("sync-repeat", async ({ page, media }) => {
   await expect(page.locator("#main-lines")).not.toContainText(/\d{2}:\d{2}/);
 });
 
+// "Fast burst" emulation: fill() fires exactly one `input` event — the
+// deterministic cross-engine stand-in for typing faster than the debounce
+// window. Two firefox failure modes shaped this:
+//   1. pressSequentially("abc") straddling the 150ms undo_debounce_ms
+//      window (server podman dispatch overhead) — legal mid-burst snapshots
+//      became extra undo points, breaking the single-undo expectation.
+//      fill() removes the inter-key gaps entirely (fixed Nov 22, 2026).
+//   2. undo pressed before the debounced commit lands (slow input handler /
+//      late timer under load) — doUndo no-ops on the seed-only stack, the
+//      value never reaches META, and toHaveValue polls in vain because no
+//      further press comes (flaked once more on firefox after fix 1).
+//      undoPastDebounce below retries the press once.
+// The per-keystroke paths stay covered by the slow-inline / slow-newlines
+// tests below. fast-newlines keeps pressSequentially because it needs real
+// Enter keydowns for handleEnterTrim.
+async function undoPastDebounce(page, expected) {
+  await page.keyboard.press("Control+z");
+  try {
+    await expect(page.locator("#main-textarea")).toHaveValue(expected, {
+      timeout: 1500,
+    });
+  } catch {
+    // First press was a no-op (undo ran before the commit). Retry once —
+    // safe: doUndo no-ops on the seed-only stack, so a retry can never
+    // overshoot past the seed.
+    await page.keyboard.press("Control+z");
+    await expect(page.locator("#main-textarea")).toHaveValue(expected);
+  }
+}
+
 test("typing-debounce", async ({ page }) => {
   await page.keyboard.press("Backquote");
-  await page.locator("#main-textarea").pressSequentially("abc");
+  await page.locator("#main-textarea").fill(META + "abc");
   await expect(page.locator("#main-textarea")).toHaveValue(META + "abc");
   await page.waitForTimeout(250);
-  await page.keyboard.press("Control+z");
-  await expect(page.locator("#main-textarea")).toHaveValue(META);
+  await undoPastDebounce(page, META);
   await page.keyboard.press("Control+y");
   await expect(page.locator("#main-textarea")).toHaveValue(META + "abc");
 });
@@ -123,9 +152,9 @@ test("merge", async ({ page, media, importSecondary }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_french.lrc");
-  await page.keyboard.press("Control+6");
+  await page.keyboard.press("Control+5");
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "merge-after-textarea.txt",
   );
@@ -137,4 +166,64 @@ test("merge", async ({ page, media, importSecondary }) => {
   expect(await page.locator("#main-textarea").inputValue()).toMatchSnapshot(
     "merge-after-textarea.txt",
   );
+});
+// Tranche 4.5 — undo debounce timing. Covers 4 MANUAL.md cases.
+// fill() + undoPastDebounce — same rationale as typing-debounce above.
+test("typing-debounce-fast-inline", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").fill(META + "abc");
+  await page.waitForTimeout(250);
+  await undoPastDebounce(page, META);
+});
+
+test("typing-debounce-slow-inline", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  for (const ch of ["a", "b", "c"]) {
+    await page.keyboard.type(ch);
+    await page.waitForTimeout(200);
+  }
+  await page.waitForTimeout(250);
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META + "ab");
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META + "a");
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});
+
+test("typing-debounce-fast-newlines", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  // Use pressSequentially for the whole sequence — separate keyboard.type/
+  // keyboard.press API calls are slow on webkit in Podman (each call takes
+  // >100ms to dispatch), and the gap between calls exceeds the 150ms debounce
+  // timer, causing a snapshot to fire mid-sequence. pressSequentially
+  // dispatches all characters in one API call with minimal inter-character
+  // delay, keeping the gap well under 150ms. \n is dispatched as Enter
+  // (e.key === "Enter"), so handleEnterTrim fires normally.
+  // Same root cause as intervals.spec.js:typing-debounce-1 (MEMORY.md → Sep 2026).
+  await page.locator("#main-textarea").pressSequentially("a\nb\nc");
+  await page.waitForTimeout(250);
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
+});
+
+test("typing-debounce-slow-newlines", async ({ page }) => {
+  await page.keyboard.press("Backquote");
+  await page.locator("#main-textarea").click();
+  await page.keyboard.type("a");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(200);
+  await page.keyboard.type("b");
+  await page.waitForTimeout(200);
+  await page.keyboard.press("Enter");
+  await page.waitForTimeout(200);
+  await page.keyboard.type("c");
+  await page.waitForTimeout(250);
+  for (let i = 0; i < 4; i++) await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META + "a");
+  await page.keyboard.press("Control+z");
+  await expect(page.locator("#main-textarea")).toHaveValue(META);
 });

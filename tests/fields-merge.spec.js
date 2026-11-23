@@ -9,10 +9,10 @@ function wrapParensCheckbox(page) {
 }
 
 test("hide-secondary", async ({ page, importSecondary }) => {
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_spanish.lrc");
-  await page.keyboard.press("Control+5");
   await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await expect(page.getByText("Main").first()).toBeVisible();
   await expect(wrapParensCheckbox(page)).toBeChecked();
   const list = page.getByLabel("Lyric lines");
@@ -23,16 +23,16 @@ test("hide-secondary", async ({ page, importSecondary }) => {
     page.getByRole("button", { name: "Import secondary lyrics file" }).first(),
   ).toBeVisible();
   await expect(page.getByText(/Line count mismatch \(5 vs 0\)/)).toBeVisible();
-  await expect(page.getByLabel("Secondary 1 lyrics")).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).toHaveValue(
     /Ojalá pudiera identificar ese olor/,
   );
-  await expect(page.getByLabel("Secondary 1 lyrics")).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).toHaveValue(
     /Oh, ojalá pudiera identificar ese olor/,
   );
 });
 
 test("replace-secondary", async ({ page, importSecondary }) => {
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_spanish.lrc");
   await importSecondary(1, "plain_french.lrc");
   await expect(page.getByText("Main").first()).toBeVisible();
@@ -43,13 +43,13 @@ test("replace-secondary", async ({ page, importSecondary }) => {
   await expect(page.getByLabel("Lyric lines").locator("listitem")).toHaveCount(
     0,
   );
-  await expect(page.getByLabel("Secondary 1 lyrics")).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).toHaveValue(
     /J'aimerais pouvoir identifier cette odeur/,
   );
-  await expect(page.getByLabel("Secondary 1 lyrics")).toHaveValue(
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).toHaveValue(
     /Oh, j'aimerais pouvoir identifier cette odeur/,
   );
-  await expect(page.getByLabel("Secondary 1 lyrics")).not.toHaveValue(/Ojalá/);
+  await expect(page.getByRole("textbox", { name: "Secondary 1 lyrics" })).not.toHaveValue(/Ojalá/);
   await expect(page.getByText(/Line count mismatch \(5 vs 0\)/)).toBeVisible();
 });
 
@@ -58,8 +58,8 @@ test("paste-secondary-genius", async ({
   readMedia,
   workaroundPaste: _workaroundPaste,
 }) => {
-  await page.keyboard.press("Control+4");
-  await page.getByLabel("Secondary 1 lyrics").click();
+  await page.keyboard.press("Control+3");
+  await page.getByRole("textbox", { name: "Secondary 1 lyrics" }).click();
   await page.evaluate((text) => {
     navigator.clipboard.writeText(text);
   }, readMedia("mock.txt"));
@@ -75,7 +75,7 @@ test("font", async ({ page, media, importSecondary }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_spanish.lrc");
   const fontSelect = page.getByRole("combobox", { name: "Editor font" });
   await fontSelect.selectOption("serif");
@@ -92,9 +92,9 @@ test("merge-one", async ({ page, media, importSecondary }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_french.lrc");
-  await page.keyboard.press("Control+6");
+  await page.keyboard.press("Control+5");
   expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
     "merge-one.txt",
   );
@@ -105,11 +105,11 @@ test("merge-two", async ({ page, media, importSecondary }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_french.lrc");
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(2, "plain_spanish.lrc");
-  await page.keyboard.press("Control+6");
+  await page.keyboard.press("Control+5");
   expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
     "merge-two.txt",
   );
@@ -120,9 +120,9 @@ test("merge-no-timestamps", async ({ page, media, importSecondary }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("plain_english.lrc")]);
   await waitForImport(page);
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_spanish.lrc");
-  await page.keyboard.press("Control+6");
+  await page.keyboard.press("Control+5");
   expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
     "merge-no-timestamps.txt",
   );
@@ -134,12 +134,12 @@ test("merge-no-trailing", async ({ page, media, importSecondary }) => {
     .setInputFiles([media("audio.mp3"), media("no_trailing.lrc")]);
   await waitForImport(page);
   await expect(page.getByText(/⚠.*Missing trailing timestamp/)).toBeVisible();
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_french.lrc");
   await expect(
     page.getByText(/Missing trailing timestamp in Main/),
   ).toBeVisible();
-  await page.keyboard.press("Control+6");
+  await page.keyboard.press("Control+5");
   expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
     "merge-no-trailing.txt",
   );
@@ -150,10 +150,10 @@ test("merge-line-mismatch", async ({ page, media, importSecondary }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_spanish_mismatch.lrc");
   await expect(page.getByText("⚠ Line count mismatch (4 vs 5)")).toBeVisible();
-  await page.keyboard.press("Control+6");
+  await page.keyboard.press("Control+5");
   expect(await page.locator("#main-lines").innerText()).toMatchSnapshot(
     "merge-timestamps.txt",
   );
@@ -164,7 +164,7 @@ test("merge-block-reload", async ({ page, media, importSecondary }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_french.lrc");
   await page.keyboard.press("F5");
   await expect(
@@ -180,7 +180,7 @@ test("reload-merge-disabled", async ({ page, media, importSecondary }) => {
     .locator("#file-picker")
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
-  await page.keyboard.press("Control+4");
+  await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_french.lrc");
   await expect(
     page.getByRole("button", { name: "Merge fields" }),

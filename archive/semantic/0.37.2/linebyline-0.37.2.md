@@ -875,7 +875,7 @@ test("tab-settings", async ({ page }) => {
 
 Three changes:
 1. `await expect(page.locator("#settings-overlay")).toHaveClass(/open/)` after `Control+,` — asserts the overlay's CSS class landed before Tab starts. Auto-retries for 5s, so under load it just waits longer instead of racing.
-2. `await expect(page.locator("#s-replay-prev")).toBeFocused()` after `tabUntilFocused` — belt-and-braces: if Tab didn't actually reach the target, this fails with a clear "focus didn't reach #s-replay-prev" message instead of the misleading "checkbox not checked".
+2. `await expect(page.locator("#s-replay-prev")).toBeFocused()` after `tabUntilFocused` — belt-and-braces: if Tab didn't actually reach the target, this fails with a clear "focus didn't reach `#s-replay-prev`" message instead of the misleading "checkbox not checked".
 3. Removed `waitForTimeout(50)` — `toBeChecked()` already auto-retries, the sleep is dead weight.
 
 This converts the silent "Space went to the wrong element" failure into a loud "overlay didn't open" or "focus didn't reach target" failure with a useful diagnostic. It does not change the test's semantic intent (still tests keyboard navigation, not `.check()`).

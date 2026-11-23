@@ -1,9 +1,11 @@
 ---
 model: DeepSeek V4 Flash 0731
 provider: Logfare
-harness: OMP
+harness: chat.z.ai (originally authored under OMP; OMP dropped in Tranche 4.6, re-added Oct 7, 2026)
 ---
 # SSH Setup — human master key + restricted agent key
+
+> **Harness note (Tranche 4.6, Sep 29, 2026; updated Oct 7, 2026; launcher updated Nov 5, 2026)**: two agent harnesses are in play. The **chat.z.ai** web-channel sandbox is the cloud harness and CANNOT SSH to the Server — it runs sample Playwright tests directly via the `playwright` package (see `AGENTS.md` → "Sample Playwright tests in sandbox"). The **local OMP** harness `bwrap` sandbox binds the restricted-key profile (`~/.agent-tools/limited-entry/`) read-only, at that path and at `~/.ssh`, so the agent can run Server-side Playwright through `agent-tst` but never reaches the master key. The restricted key has no passphrase, so no ssh-agent and no `ssh-add` step are needed. The master key stays human-only; the human's interactive `tst` fish function uses it to run Playwright on the Server via Podman.
 
 Two SSH keys, deliberately separate:
 
@@ -50,9 +52,10 @@ Two SSH keys, deliberately separate:
    ```
 4. Test: `ssh remote 'hostname'` → prints the remote hostname.
 5. For complex troubleshooting on the server, install OMP on it for proper
-   [sandboxing](https://github.com/amokprime/linebyline/tree/main/ai/omp/OMP_SETUP.md#Sandbox),
-   and talk to the server OMP agent over SSH (i.e. `ssh remote` to initiate a
-   persistent terminal → `cd ~/projectpath` → `omp`).
+   sandboxing. The launcher this project uses is
+   `~/GitHub/omp-mods/safe-omp/main.sh` (engine in `safe-omp/lib/bash.sh`,
+   entries in `main.sh` + `extend.sh`). A CLI harness
+   re-uses this pattern; the chat.z.ai sandbox cannot SSH at all.
 
 ## 2. Restricted agent key (one-time)
 
@@ -157,16 +160,24 @@ ssh -F ~/.agent-tools/limited-entry/config remote -- <args>
 
 If the agent runs inside `bwrap`:
 
-- Mount the **identity folder read-only** at the standard `~/.ssh` location so
-  ssh finds `config` + key + `known_hosts`, but the agent cannot write/modify them:
+- Mount the **identity folder read-only at both paths**. The profile config names
+  absolute `IdentityFile` and `UserKnownHostsFile` paths, and `agent-tst` reads
+  `-F <profile>/config`. So the folder must appear at its own path, and also at
+  the default `~/.ssh` path for the default `known_hosts` and for a bare
+  `ssh remote`:
   ```
+  --ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.agent-tools/limited-entry"
   --ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.ssh"
   ```
+  The agent cannot write either copy.
 - **Remove any `--tmpfs "$HOME/.ssh"` line** — a tmpfs mounted on top shadows the
   `--ro-bind`, leaving `~/.ssh` empty.
-- Do **not** bind the master key or its `known_hosts`/`config` into the sandbox at
-  all. With only the restricted profile present, `ssh` offers only the restricted
-  key, so the master key is unreachable even if the agent is fully compromised.
+- Do **not** bind the real `~/.ssh` into the sandbox. It holds the master key and
+  the account keys. With only the restricted profile present, `ssh` offers only the
+  restricted key, so the master key is unreachable even if the agent is fully
+  compromised.
+- Do **not** bind the ssh-agent socket. The restricted key has an empty
+  passphrase, so no agent is needed and no `ssh-add` step exists.
 - The agent should always get the restricted profile via `ssh -F ...` in a wrapper,
   not by expecting a bare `ssh remote` to "just use the right key" — the wrapper
   pins the config and adds `BatchMode=yes`.
@@ -185,8 +196,10 @@ After setup, prove both properties before trusting it:
    `ssh -F <profile>/config remote '-g "title; whoami"'` → wrapper rejects the bad
    pattern; no shell metacharacters pass the allowlist.
 4. **Master key is not usable from the sandbox:** with only the restricted
-   `~/.ssh` present, `ssh remote ...` offers no master key and the interactive shell
-   path is closed.
+   profile bound (at its own path and at `~/.ssh`), `ssh remote ...` offers no
+   master key and the interactive shell path is closed.
+5. **No agent is required:** `ssh-add -l` inside the sandbox reports no usable
+   agent, and `agent-tst` still runs, because the restricted key has no passphrase.
 
 ## Troubleshooting
 
@@ -204,6 +217,86 @@ After setup, prove both properties before trusting it:
 - **`command=` line split across lines** in `authorized_keys` — the options end up
   on a bare line and the key on another; the restriction silently vanishes. Keep it
   on one line.
+
+---
+
+## 5. Syncthing + Playwright artifacts (Sep 2026)
+
+The Server syncs the LineByLine repo via Syncthing. Playwright writes test
+artifacts (traces, screenshots, videos) into `trash/` and bundles them as
+zips inside `playwright-report/data/`. Both folders are gitignored but
+sync to the Server, where stale zips accumulate across `tst` runs.
+
+### What was broken
+
+A `*.zip` entry on the Server's `.stignore` was intended to skip the
+deliver.zip scratch file. It also matched every zip Playwright wrote
+into `playwright-report/data/` and `trash/`. When the PC deleted those
+subfolders (Playwright cleanup, or a manual `rm`), Syncthing's sync
+failed with:
+
+```
+playwright-report/data     syncing: delete dir: directory has been deleted
+                           on a remote device but is not empty; the contents
+                           are probably ignored on that remote device, but
+                           not locally
+trash/accessibility-axe-scan-landing-chromium
+                           (same)
+```
+
+**Quick fix (applied)**: removed the `*.zip` entry from the Server's
+`.stignore`. Zips now sync normally — cleanup on one device propagates
+to the other.
+
+### What NOT to ignore on the server
+
+- **Do NOT use `*.zip` as a top-level `.stignore` pattern.** It's too
+  broad — it matches legitimate artifacts (Playwright trace zips,
+  snapshot attachment zips) inside gitignored folders, not just the
+  scratch `deliver.zip`. When one device deletes those subfolders and
+  the other has the contents locally-ignored, Syncthing's directory
+  delete can't complete and the folder lingers in a "syncing: delete
+  dir" state.
+- **Do NOT ignore `trash/` or `playwright-report/` either.** Both
+  folders ARE gitignored, but they should still sync so cleanup on
+  one device propagates to the other. Ignoring them on the server
+  means the server keeps stale artifacts forever — exactly the disk
+  bloat this section is meant to prevent.
+- **DO ignore build artifacts the server doesn't need**: `node_modules`
+  and `dist` rebuild natively on each host (the server's `tst` runs
+  `vite build` inside Podman). Putting these in `.stignore` skips
+  pointless multi-GB sync churn without breaking Playwright cleanup.
+
+### Final disposition (Sep 2026, Tranche 4.7)
+
+Three layers cooperate to keep `trash/` and `playwright-report/`
+small:
+
+1. **`playwright.config.js`** — `trace: "retain-on-failure"` +
+   `screenshot: "only-on-failure"`. Passing tests' artifacts are
+   discarded after the run; only failures persist. `video` is left
+   at the default (`"off"`) — recording video for every test (the
+   `retain-on-failure` setting) was tried and caused 30s timeouts on
+   firefox/webkit from the real-time WebM encoding overhead. Traces +
+   screenshots give sufficient debugging context without the per-test
+   cost. Caps per-run growth at the failure count (~5-15) instead of
+   the full suite (~540).
+2. **`deploy.sh`** — after every Playwright run, prunes files older
+   than 1 day from `trash/` and `playwright-report/` on the **Server**
+   (via SSH), not on the PC. Pruning on the PC was useless (artifacts
+   hadn't synced yet from the server) and could race with Syncthing's
+   sync, leaving the PC's `trash/` empty when the user checked it.
+   Pruning on the server (where artifacts are written) avoids the
+   race — Syncthing syncs the deletion to the PC naturally. The
+   1-day window preserves the most recent run's artifacts for review.
+3. **`.stignore`** — `*.zip` entry removed; `node_modules` and `dist`
+   stay ignored (build artifacts that rebuild natively per host).
+   `trash/` and `playwright-report/` are NOT ignored — they sync so
+   cleanup on one device propagates to the other.
+
+If a longer retention is needed for debugging, raise the `-mtime`
+value in `deploy.sh`'s SSH prune call or comment out the prune block
+temporarily.
 
 ---
 
@@ -239,19 +332,19 @@ on Fedora.
 
 ### Server-side files
 
-- `~/.local/bin/tst` — the podman runner (real file, no symlink).
-- `~/.local/bin/tst-locked` — the enforcement wrapper (real file, no symlink).
-  **This path is baked into `authorized_keys` and `tst-locked`'s own
-  `exec /home/user/.local/bin/tst`; renaming either file breaks the lock.**
+- `~/.local/bin/tst` — symlink to `~/GitHub/linebyline/scripts/server/tst` (the podman runner). Symlinked so the repo copy stays the source of truth; updates flow via Syncthing + the user manually re-creating the symlink after a fresh checkout. `tst` is not security-sensitive — `tst-locked` sits in front of it.
+- `~/.local/bin/tst-locked` — the enforcement wrapper. COPY of `~/GitHub/linebyline/scripts/server/tst-locked` (NOT a symlink, NOT a hardlink). A plain copy keeps the two files independent: tampering the repo file via Syncthing can't affect the deployed gate. **This path is baked into `authorized_keys` and `tst-locked`'s own `exec /home/user/.local/bin/tst`; renaming either file breaks the lock.**
 - `~/.local/bin/tst-locked` last line: `exec /home/user/.local/bin/tst "${clean[@]:-}"`.
 
-**Deliberately NOT in a synced folder.** These live on the Server's own filesystem,
-not in `~/GitHub/linebyline/tests/`. Reasons:
-1. The human (master key) is the only one who edits them.
-2. A future agent editing the *synced repo* cannot silently alter what the restricted
-   key runs — the server files are outside any share the agent can write.
-3. `authorized_keys` pins absolute paths; a synced copy that could drift is a
-   footgun.
+**Why copy (not symlink or hardlink) for `tst-locked`?** A symlink would follow the repo file — if a malicious agent on the client side replaces `scripts/server/tst-locked` and Syncthing syncs the replacement, the server's `~/.local/bin/tst-locked` would silently run the tampered code. A hardlink would pin the inode (Syncthing's temp+rename creates a new inode, leaving the hardlink on the old one), but this provides no benefit over a copy: both approaches require manual re-linking/re-copying after a legitimate change, and the copy is simpler to reason about (two independent files, no inode tracking). When `tst-locked` legitimately changes, update the Server's copy manually:
+```sh
+# Fish abbreviations (defined in the user's fish config):
+#   tlkdf  — ssh Server diff ~/GitHub/linebyline/scripts/server/tst-locked ~/.local/bin/tst-locked
+#   tlkcp  — ssh Server cp ~/GitHub/linebyline/scripts/server/tst-locked ~/.local/bin/tst-locked
+```
+Run `tlkdf` to check if they've drifted; run `tlkcp` to update the copy.
+
+**Why `tst` IS a symlink but `tst-locked` is NOT.** `tst` is the podman runner — not security-sensitive (the `tst-locked` gate sits in front of it, filtering all args). If a malicious agent replaces `scripts/server/tst` via Syncthing, the worst they can do is run a different Playwright invocation (still arg-allowlisted by `tst-locked`). `tst-locked` is the gate itself — if it's replaced, the agent controls what the restricted key can run. The copy ensures the gate can't be silently swapped.
 
 ### Client-side files
 
@@ -259,13 +352,20 @@ not in `~/GitHub/linebyline/tests/`. Reasons:
   security bind: the whole home is already `--ro-bind` (read-only) in the bwrap, so
   the agent can read but never modify it.
 - `~/.agent-tools/limited-entry/` — the restricted SSH profile (config, key,
-  known_hosts). Mounted read-only at `~/.ssh` inside the sandbox via
-  `--ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.ssh"`.
+  known_hosts). Mounted read-only at two paths inside the sandbox: at its own path
+  for `-F` and the config's absolute paths, and at `~/.ssh` for the default
+  `known_hosts`. The real `~/.ssh` is never mounted.
+  ```
+  --ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.agent-tools/limited-entry"
+  --ro-bind "$HOME/.agent-tools/limited-entry" "$HOME/.ssh"
+  ```
+- The restricted key has an empty passphrase. No ssh-agent socket is bound and no
+  `ssh-add` step exists.
 - The human's interactive `tst` is a fish `abbr tst 'ssh Server tst'` using the
   **master key** (full shell, for debugging). The agent instead calls `agent-tst`
   (restricted key, `command=` only). The two are deliberately different commands so
   the master key is never offered by the agent.
-- Project [RULES.md](https://github.com/amokprime/linebyline/tree/main/.omp/RULES.md) (replace `~/.bash/safe-omp.md` with your actual `bwrap` script path)
+- Project [RULES.md](https://github.com/amokprime/linebyline/tree/main/.omp/RULES.md) (local OMP harness — re-added Oct 7, 2026; `~/GitHub/omp-mods/safe-omp/main.sh` is the matching launcher).
 
 ### Restriction path (read top to bottom)
 
@@ -299,4 +399,5 @@ No single layer is sufficient; the defense is the *chain*.
 - `agent-tst -g title` → 3 passed (restricted key, scoped).
 - `agent-tst 'rm -rf /'` → `tst-locked: rejected: rm`, exit 1.
 - `agent-tst '-g "title; whoami"'` → `tst-locked: invalid -g pattern`, exit 1.
-- Master key unreachable from sandbox (only restricted profile present in `~/.ssh`).
+- Master key unreachable from sandbox (only the restricted profile is bound, at its
+  own path and at `~/.ssh`; no ssh-agent socket is bound).

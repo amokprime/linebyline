@@ -1,0 +1,302 @@
+
+/* Tailwind v4 entry. Theme tokens below are mapped 1:1 from the LineByLine
+   monolith's GitHub Light/Dark palette (docs/index.html \3c style> block) —
+   roadmap item 3 Phase B. The monolith toggles [data-theme="dark"] on <html>;
+   the shadcn convention is the .dark class, so theme toggling (Phase C) sets
+   class="dark" instead.
+   NOTE: no external font imports — LineByLine is system-fonts only, and the
+   single-file release build cannot inline remote assets. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn-vue/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-sans: system-ui, sans-serif;
+    --font-heading: var(--font-sans);
+    --font-mono: ui-monospace, monospace;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-active-bg: var(--active-bg);
+    --color-active-text: var(--active-text);
+    --color-active-ts: var(--active-ts);
+    --color-warn-bg: var(--warn-bg);
+    --color-warn-border: var(--warn-border);
+    --color-warn-text: var(--warn-text);
+    --color-hk-key-bg: var(--hk-key-bg);
+    --color-accent-border: var(--accent-border);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* ── shadcn tokens — GitHub Light (monolith :root values, mapped) ──
+   Naming collision to know: shadcn --accent is a tint BACKGROUND and maps to
+   the monolith's --accent-bg; the monolith's --accent (blue) maps to
+   --primary. Ported CSS using var(--accent) for the blue must become
+   var(--primary) during Phase C extraction. */
+:root {
+    --background: #f6f8fa;
+    --foreground: #24292f;
+    --card: #ffffff;
+    --card-foreground: #24292f;
+    --popover: #ffffff;
+    --popover-foreground: #24292f;
+    --primary: #0969da;
+    --primary-foreground: #ffffff;
+    --secondary: #dde1e6;
+    --secondary-foreground: #24292f;
+    --muted: #f6f8fa;
+    --muted-foreground: #656d76;
+    --accent: #ddf4ff;
+    --accent-foreground: #0969da;
+    --destructive: #c0392b;
+    --border: #d0d7de;
+    --input: #b8bec6;
+    --ring: #0969da;
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --radius: 6px;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #24292f;
+    --sidebar-primary: #0969da;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #ddf4ff;
+    --sidebar-accent-foreground: #0969da;
+    --sidebar-border: #d0d7de;
+    --sidebar-ring: #0969da;
+}
+
+/* ── shadcn tokens — GitHub Dark (monolith [data-theme="dark"] values) ── */
+.dark {
+    --background: #161b22;
+    --foreground: #e6edf3;
+    --card: #0d1117;
+    --card-foreground: #e6edf3;
+    --popover: #0d1117;
+    --popover-foreground: #e6edf3;
+    --primary: #58a6ff;
+    /* app precedent: the monolith's line-flash uses #fff on accent in both
+       themes, so keep white rather than switching to a dark tone */
+    --primary-foreground: #ffffff;
+    --secondary: #484f58;
+    --secondary-foreground: #e6edf3;
+    --muted: #161b22;
+    --muted-foreground: #848d97;
+    --accent: #121d2f;
+    --accent-foreground: #58a6ff;
+    --destructive: #f85149;
+    --border: #30363d;
+    --input: #484f58;
+    --ring: #58a6ff;
+    --chart-1: oklch(0.87 0 0);
+    --chart-2: oklch(0.556 0 0);
+    --chart-3: oklch(0.439 0 0);
+    --chart-4: oklch(0.371 0 0);
+    --chart-5: oklch(0.269 0 0);
+    --sidebar: #0d1117;
+    --sidebar-foreground: #e6edf3;
+    --sidebar-primary: #58a6ff;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #121d2f;
+    --sidebar-accent-foreground: #58a6ff;
+    --sidebar-border: #30363d;
+    --sidebar-ring: #58a6ff;
+}
+
+/* ── LineByLine app tokens (not managed by shadcn tooling) — no shadcn
+   equivalent exists. Values verbatim from the monolith. --editor-* are
+   runtime-controlled: applyEditorFont() sets them inline on <html>.
+   Dropped: --text-faint (defined in the monolith but used zero times).
+   destructive dark note: the monolith never styled destructive in dark —
+   #f85149 is GitHub's dark danger red, matching the palette the app follows. */
+:root {
+    --active-bg: #ddf4ff;
+    --active-text: #0550ae;
+    --active-ts: #0969da;
+    --warn-bg: #fff8c5;
+    --warn-border: #d4a72c;
+    --warn-text: #7d4e00;
+    --hk-key-bg: #dde1e6;
+    --accent-border: #54aeff;
+    --editor-font: system-ui, sans-serif;
+    --editor-size: 13.2px;
+}
+
+.dark {
+    --active-bg: #121d2f;
+    --active-text: #58a6ff;
+    --active-ts: #79c0ff;
+    --warn-bg: #2d2207;
+    --warn-border: #9e6a03;
+    --warn-text: #e3b341;
+    --hk-key-bg: #484f58;
+    --accent-border: #1f6feb;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    }
+  body {
+    @apply bg-background text-foreground;
+    @apply font-sans;
+    }
+}
+
+/* ── Shared panel widgets (monolith menu-bar slice) ──
+   .fs-spinner/.fs-tick are used by the font, playback-speed, and seek-offset
+   spinners across components, so they live unscoped here. Values verbatim;
+   tokens per the Phase B table (--border-mid→--input, --text→--foreground,
+   --border→--border); the focus ring is the monolith's blue accent (--primary). */
+.fs-spinner {
+  display: flex;
+  flex-direction: column;
+  width: 16px;
+  height: 28.6px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: transparent;
+  flex-shrink: 0;
+}
+.fs-tick {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  cursor: pointer;
+  color: var(--foreground);
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  outline: none;
+}
+.fs-tick:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--primary);
+}
+.fs-tick:first-child {
+  border-bottom: 1px solid var(--input);
+}
+.fs-tick:hover {
+  background: var(--border);
+}
+.fs-tick:active {
+  filter: brightness(0.88);
+}
+
+/* ── Shared hotkey key badge (monolith .hk-key) ──
+   Used by the controls-panel cells, the sync-file badge, and the Settings
+   rows; values verbatim, tokens per the Phase B table (--text→--foreground). */
+.hk-key {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  background: var(--hk-key-bg);
+  border-radius: 3px;
+  padding: 1px 4px;
+  color: var(--foreground);
+}
+
+/* ── Shared field column (monolith editor-area slice) ──
+   EditorArea (main column) and SecondaryField (secondary columns) both render
+   this structure, so the rules live unscoped here (same rationale as
+   .fs-spinner/.hk-key). Values verbatim; tokens per the Phase B table
+   (--surface→--card, --border-mid→--input, --text→--foreground). */
+.field-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 286px;
+  border-right: 1px solid var(--border);
+}
+.field-col:last-child {
+  border-right: none;
+}
+.field-header {
+  display: flex;
+  align-items: center;
+  height: 37.4px;
+  padding: 0 8.8px;
+  gap: 4.4px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  justify-content: space-between;
+}
+.field-header-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--foreground);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.fh-btn {
+  height: 28.6px;
+  padding: 0 8.8px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13.2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.fh-btn:hover {
+  background: var(--background);
+}
+.fh-btn:active {
+  filter: brightness(0.88);
+  transform: translateY(1px);
+}
+.warn-bar {
+  font-size: 12px;
+  padding: 3.3px 8.8px;
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--warn-border);
+  color: var(--warn-text);
+  display: none;
+  flex-shrink: 0;
+}
+.warn-bar.visible {
+  display: block;
+}

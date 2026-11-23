@@ -1,7 +1,8 @@
 [ti: Mock Song]
 [ar: Alpha & Beta]
 [al: Mock Album]
-[re: Genius, https://amokprime.github.io/linebyline/]
+[re: Genius, amokprime.github.io/linebyline]
+
 Filler line intro one
 
 Filler line verse one A

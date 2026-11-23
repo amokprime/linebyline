@@ -13,23 +13,23 @@
 - text: Adjusting timestamp
 - checkbox "Adjusting seek offset"
 - text: Adjusting seek offset Intervals Tiny
-- spinbutton "Tiny"
+- spinbutton "Tiny": /\d+/
 - text: ms Small
-- spinbutton "Small"
+- spinbutton "Small": /\d+/
 - text: ms Medium
-- spinbutton "Medium"
+- spinbutton "Medium": /\d+/
 - text: ms Large
-- spinbutton "Large"
+- spinbutton "Large": /\d+/
 - text: ms Seek increment
-- spinbutton "Seek increment"
+- spinbutton "Seek increment": "5"
 - text: s Speed ratio
-- spinbutton "Speed ratio"
+- spinbutton "Speed ratio": /\d+\.\d+/
 - text: × Volume increment
-- spinbutton "Volume increment"
+- spinbutton "Volume increment": /\d+/
 - text: "% Undo window"
-- spinbutton "Undo window"
+- spinbutton "Undo window": /\d+/
 - text: ms Default metadata tags
-- textbox "Default metadata tags": "[ti: Unknown] [ar: Unknown] [al: Unknown] [re: https://amokprime.github.io/linebyline/]"
+- textbox "Default metadata tags": "[ti: Unknown] [ar: Unknown] [al: Unknown] [re: amokprime.github.io/linebyline]"
 - text: Hotkeys Menu Open
 - textbox "Open": Ctrl+;
 - text: Save
@@ -39,70 +39,72 @@
 - text: Redo
 - textbox "Redo": Ctrl+Y
 - text: Settings
-- textbox "Settings"
+- textbox "Settings": Ctrl+,
 - text: Toggle theme
-- textbox "Toggle theme"
+- textbox "Toggle theme": Ctrl+.
 - text: Help
 - textbox "Help": Ctrl+/
 - text: Issues
 - textbox "Issues": Ctrl+[
 - text: Toggle panel
-- textbox "Toggle panel"
+- textbox "Toggle panel": Ctrl+Shift+~
 - text: Reset defaults
-- textbox "Reset defaults"
+- textbox "Reset defaults": Ctrl+\
 - text: Playback Play/pause
-- textbox "Play/pause"
+- textbox "Play/pause": Space
 - text: Play/pause (alternate)
-- textbox "Play/pause (alternate)"
+- textbox "Play/pause (alternate)": Shift+Space
 - text: Reduce speed
-- textbox "Reduce speed"
+- textbox "Reduce speed": Ctrl+ArrowDown
 - text: Increase speed
-- textbox "Increase speed"
+- textbox "Increase speed": Ctrl+ArrowUp
 - text: Reset speed
-- textbox "Reset speed"
+- textbox "Reset speed": Ctrl+ArrowRight
 - text: Seek back
-- textbox "Seek back"
+- textbox "Seek back": Ctrl+1
 - text: Seek forward
-- textbox "Seek forward"
+- textbox "Seek forward": Ctrl+2
 - text: Sync Toggle offset mode
-- textbox "Toggle offset mode"
+- textbox "Toggle offset mode": Shift+~
 - text: Sync file
-- textbox "Sync file"
+- textbox "Sync file": Ctrl+I
 - text: Sync line start
-- textbox "Sync line start"
+- textbox "Sync line start": W
 - text: Sync line end
-- textbox "Sync line end"
+- textbox "Sync line end": T
+- text: Delete active line
+- textbox "Delete active line": G
 - text: Previous line
-- textbox "Previous line"
+- textbox "Previous line": Q
 - text: Next line
-- textbox "Next line"
+- textbox "Next line": E
 - text: Replay only
 - textbox "Replay only"
 - text: Replay end
-- textbox "Replay end"
+- textbox "Replay end": Shift+R
 - text: Adjustments Back tiny amount
-- textbox "Back tiny amount"
+- textbox "Back tiny amount": Z
 - text: Forward tiny amount
-- textbox "Forward tiny amount"
+- textbox "Forward tiny amount": V
 - text: Back small amount
-- textbox "Back small amount"
+- textbox "Back small amount": A
 - text: Forward small amount
 - textbox "Forward small amount"
 - text: Back medium amount
-- textbox "Back medium amount"
+- textbox "Back medium amount": S
 - text: Forward medium amount
-- textbox "Forward medium amount"
+- textbox "Forward medium amount": D
 - text: Back large amount
-- textbox "Back large amount"
+- textbox "Back large amount": X
 - text: Forward large amount
-- textbox "Forward large amount"
+- textbox "Forward large amount": C
 - text: Text Toggle mode
-- textbox "Toggle mode"
+- textbox "Toggle mode": "`"
 - text: Add field
-- textbox "Add field"
+- textbox "Add field": Ctrl+3
 - text: Hide field
-- textbox "Hide field"
+- textbox "Hide field": Ctrl+4
 - text: Merge fields
-- textbox "Merge fields"
+- textbox "Merge fields": Ctrl+5
 - text: Mark line as translation
-- textbox "Mark line as translation"
+- textbox "Mark line as translation": Ctrl+ArrowLeft

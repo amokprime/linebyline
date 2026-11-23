@@ -1,0 +1,23 @@
+{
+  "rule": "githubactions:S8264",
+  "component": "amokprime_linebyline:.github/workflows/deploy.yml",
+  "line": 19,
+  "textRange": {
+    "startLine": 19,
+    "endLine": 19,
+    "startOffset": 2,
+    "endOffset": 10
+  },
+  "message": "Move this read permission from workflow level to job level.",
+  "severity": "MAJOR",
+  "type": "VULNERABILITY",
+  "cleanCodeAttribute": "TRUSTWORTHY",
+  "cleanCodeAttributeCategory": "RESPONSIBLE",
+  "impacts": [
+    {
+      "softwareQuality": "SECURITY",
+      "severity": "LOW"
+    }
+  ],
+  "flows": []
+}
