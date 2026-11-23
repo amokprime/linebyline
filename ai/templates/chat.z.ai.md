@@ -9,6 +9,10 @@ start: {{date:YYYY-MM-DD}}
 
 
 
+Session setup (confirm each in your first reply, one line per step):
+1. Clone `https://github.com/amokprime/linebyline.git` → `/home/z/my-project/repo` (branch: main/staging) with plain `git clone` — don't rely on the GitHub plugin.
+2. `bash /home/z/my-project/repo/skills/delivery/scripts/setup-sandbox.sh`
+3. Read `MEMORY.md` + `ROADMAP.md` from the clone, then answer.
 ---
 ### Agent:
 

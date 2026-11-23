@@ -2,7 +2,9 @@ name: Sync staging with main
 
 # Merges a CI-verified main commit into staging. Triggered by workflow_run
 # (not push) so it can only run after CI finishes; the gate step refuses to
-# merge unless all three CI workflows succeeded for that exact commit SHA.
+# merge unless all four gated workflows succeeded for that exact commit SHA
+# (the three CI workflows + "Deploy to GitHub Pages" — added in Phase E
+# Tranche 5 step 6 so a Pages deploy failure blocks staging sync too).
 #
 # One-way (main -> staging) only: this job NEVER writes to main. workflow_run
 # also fires for the weekly CodeQL schedule and for workflow_dispatch runs on
@@ -16,6 +18,7 @@ on:
       - Playwright Tests
       - CodeQL Advanced
       - SonarCloud analysis
+      - Deploy to GitHub Pages
     types:
       - completed
     branches:
@@ -67,7 +70,7 @@ jobs:
           runs="$(gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&event=push&branch=main&per_page=100" \
             --jq '[.workflow_runs[] | {name, run_number, status, conclusion}]')"
           pending=""
-          for wf in "Playwright Tests" "CodeQL Advanced" "SonarCloud analysis"; do
+          for wf in "Playwright Tests" "CodeQL Advanced" "SonarCloud analysis" "Deploy to GitHub Pages"; do
             conclusion="$(jq -r --arg wf "$wf" '
               (map(select(.name == $wf)) | sort_by(.run_number) | last)
               | if . == null then "missing" else (.conclusion // .status) end' <<<"$runs")"

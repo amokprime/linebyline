@@ -108,6 +108,12 @@ changed=()
 skipped_identical=()
 skipped_missing=()
 manual_deploys=()
+# zip_only_files: flat filenames shipped in deliver.zip WITHOUT a deploy
+# mapping. unpack.sh extracts them to scratch/<name> and the cleanup below
+# KEEPS them (scratch-only deliverables: release notes, scratch/README.md,
+# anything the user wants to persist between sessions). prepare.sh parses this
+# array to decide what goes into the zip -- keep it on ONE line.
+zip_only_files=()
 
 # Tranche 4.8 — S1192: the read-only-destination hint was duplicated 6× across
 # the deploy_file + deploy_hardlinked failure blocks. Hoisted to readonly
@@ -137,9 +143,11 @@ deploy_file() {
   else
     mkdir -p "$(dirname "$dst")"
     # Use cp instead of mv when the destination is hardlinked to another file
-    # (e.g. scripts/local/*.fish ↔ ~/.config/fish/functions/*.fish). cp overwrites the
-    # file contents in place, preserving the inode and its hardlinks. mv would
-    # replace the file (new inode), breaking the hardlink.
+    # (last real case: the retired scripts/local/espanso.yml ↔
+    # ~/.config/espanso/match/linebyline.yml hardlink; no file in the current
+    # tree is hardlinked). cp overwrites the file contents in place,
+    # preserving the inode and its hardlinks. mv would replace the file (new
+    # inode), breaking the hardlink.
     # Detect hardlinks by checking if the destination has a link count > 1.
     local use_cp=0
     if [[ -f "$dst" ]]; then
@@ -229,8 +237,8 @@ deploy_manual() {
 }
 
 # deploy_hardlinked: same as deploy_file but always uses cp (for files known to
-# be hardlinked). Use this for scripts/local/*.fish
-# so the user's hardlinks to ~/.config/ are preserved across deploys.
+# be hardlinked). Last used for the retired scripts/local/espanso.yml; keep it
+# for any future hardlinked file so the user's links survive deploys.
 deploy_hardlinked() {
   local src="$1"
   local rel="$2"
@@ -270,6 +278,14 @@ deploy_hardlinked() {
 # Format: deploy_file <flat_filename> <repo_relative_path>
 # Files not present in the zip are silently skipped ("skip (missing)") --
 # expected when a turn ships a subset.
+#
+# Related verbs: deploy_manual <flat> <repo_path> (bwrap-protected paths --
+# the file STAYS in scratch/ for the user to copy), deploy_hardlinked
+# <flat> <repo_path> (always cp -- for fish-function hardlinks).
+#
+# zip_only_files=( "name.md" ... ) -- one line, NO deploy mapping. These
+# extract to scratch/<name> and survive cleanup. Release notes belong here
+# (they are not repo files), never as a deploy_file line.
 #
 # IMPORTANT: prepare.sh reads these deploy_file lines to verify every expected
 # file exists in download/ BEFORE zipping. If you add a deploy_file line but
@@ -536,6 +552,20 @@ else
     if [[ "$is_manual" -eq 1 ]]; then
       echo "  keep (manual deploy): $f"
       echo "  keep (manual deploy): $f" >> "$LOG"
+      continue
+    fi
+    # Skip zip-only deliverables (no deploy mapping) -- they persist in
+    # scratch/ between sessions (release notes, scratch/README.md, ...).
+    is_zip_only=0
+    for z in "${zip_only_files[@]}"; do
+      if [[ "$f" == "$z" ]]; then
+        is_zip_only=1
+        break
+      fi
+    done
+    if [[ "$is_zip_only" -eq 1 ]]; then
+      echo "  keep (scratch-only): $f"
+      echo "  keep (scratch-only): $f" >> "$LOG"
       continue
     fi
     full="$SCRATCH/$f"

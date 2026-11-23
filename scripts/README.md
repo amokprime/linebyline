@@ -1,5 +1,5 @@
 ---
-summary: Utility scripts for the LineByLine repo — sandbox setup, ad-hoc zip, fish functions, Espanso snippets, diff-staging capture, and the user-side deployment wrapper.
+summary: Utility scripts for the LineByLine repo — sandbox setup, ad-hoc zip, fish functions, Espanso snippets, working-tree diff capture, and the user-side deployment wrapper.
 links:
   - "[[ai/Vibecoding workflow|Vibecoding workflow]]"
 ---
@@ -20,15 +20,15 @@ scripts/zip.sh
 - Can be double-clicked after setup. Aborts with an error if the upload folder is empty.
 ### Sharing uncommitted state
 ```
-scripts/diff-staging.sh
+scripts/diff.sh
 ```
-- Captures the local working tree state (uncommitted + untracked + unpushed commits) as a portable patch + metadata so the chat.z.ai sandbox can reproduce your local state by cloning the staging branch and applying the patch. Use this when you made a lot of changes "offline" and don't want the agent to clobber them on the next deploy
+- Captures the local working tree state (uncommitted + untracked + unpushed commits) as a portable patch + metadata so the chat.z.ai sandbox can reproduce your local state by cloning the patched branch and applying the patch. Adaptive base: `origin/<current-branch>` when that branch exists on origin, falling back to `origin/main` — one script serves whichever checkout is active (replaces `diff-staging.sh`, which hardcoded `origin/staging`). Use this when you made a lot of changes "offline" and don't want the agent to clobber them on the next deploy
 - Output goes to `~/GitHub/linebyline/scratch/upload/`:
     - `changes.patch` — `git diff --binary $BASE_SHA` covering tracked + untracked files (uses `git add -N .` to mark untracked files as intent-to-add, then `git reset` to undo)
     - `changes.status` — `git status --porcelain` (the authoritative pre-mutation state)
     - `changes.meta` — `base_ref`, `base_sha`, `head_sha`, `branch`, `status_file` pointer
 - See [archive/scripts/3.md](https://github.com/amokprime/linebyline/tree/main/archive/scripts/3.md) for the design rationale (DeepSeek session that worked through `origin/staging` vs local `staging`, intent-to-add + reset pattern, no status duplication in meta).
-- Manual deployment only — must be copied to the user's `scripts/` folder outside the deliver.zip workflow.
+- Deploys via the standard deliver.zip pipeline — `scripts/` has no bwrap protection except `scripts/server/` (tmpfs) and `unpack.sh` itself (ro-bind).
 ### Session bootstrap
 - The step-specific context-loading prompts used to live in an Espanso match file (`scripts/local/espanso.yml` — retired Nov 22, 2026). They now live as plain text in `AGENTS.md` → "Reads per session type", sized to paste into chat.z.ai Project instructions; sessions open with a short prompt (branch + ROADMAP section) instead of an Espanso trigger. See `ai/README.md` for the workflow.
 ### Bash scripts for testing

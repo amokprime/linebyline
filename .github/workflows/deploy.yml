@@ -1,18 +1,27 @@
 name: Deploy to GitHub Pages
 
-# Roadmap item 3 (ROADMAP.md), Phase A: this pipeline
-# is scaffolded but disarmed — workflow_dispatch is the ONLY trigger.
+# Roadmap item 3 (ROADMAP.md), Phase E Tranche 5: cutover pipeline, armed.
+# Triggers: push to main (step 2) + workflow_dispatch for smoke-testing from
+# staging. Release artifacts live in release.yml (tag-push, contents: write).
 #
-# DO NOT dispatch this before the Phase E cutover. A deploy-pages run repoints
-# the repo's Pages source from "Deploy from a branch" (main:/docs, the live
-# monolith) to "GitHub Actions" and immediately replaces the public site with
-# whatever dist/ contains. That flip is the intended single-moment cutover of
-# Phase E step 5 — on main, after the full Playwright suite is green against
-# the Vite build. When wiring the cutover, add the `push: branches: [main]`
-# trigger here and decide whether this workflow joins sync-staging.yml's gate
-# list.
+# The Pages SOURCE flip ("Deploy from a branch" -> "GitHub Actions" in repo
+# settings) is the actual cutover moment (step 4). Until it is flipped, push
+# runs go green in `build` but `deploy` fails — deploy-pages requires the
+# Actions source, and configure-pages deliberately does not flip it (keeping
+# the flip a manual, single-moment decision). Flip the source right after
+# pushing, then dispatch this workflow once to land the first Actions deploy.
+# A push SHA whose deploy run failed before the flip keeps staging's sync
+# deferred until the next push (sync-staging.yml's gate only reads push runs).
+#
+# Rollback after the flip: switch the Pages source back to main:/docs in repo
+# settings — the monolith stays in docs/ until Tranche 6 deletes it. Procedure
+# documented in SECURITY.md. This workflow joins sync-staging.yml's gate list
+# (step 6), so a Pages failure also blocks staging sync.
 
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
 
 concurrency:

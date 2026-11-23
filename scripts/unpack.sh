@@ -1,9 +1,8 @@
 #!/bin/bash
-# unpack.sh -- user-side deployment script. Run via the `dpl` fish abbreviation
-# (abbr --add dpl '~/GitHub/linebyline/scripts/unpack.sh') OR double-clicked
-# in a file manager — the script re-launches itself in a popup terminal window
-# (ghostty -e) when it detects a non-TTY stdout, so ssh + npm output is visible
-# either way.
+# unpack.sh -- user-side deployment script. Double-clicked in a file manager
+# OR run from a terminal — the script re-launches itself in a popup terminal
+# window (ghostty -e) when it detects a non-TTY stdout, so ssh + npm output is
+# visible either way.
 #
 # Thin wrapper: extracts deliver.zip to scratch/, snapshots the zip contents
 # so deploy.sh can do scoped cleanup, runs deploy.sh inside a bwrap sandbox
@@ -21,8 +20,9 @@
 #   If bwrap isn't installed, deploy.sh runs directly with a warning.
 #
 # Tradeoff: unpack.sh is read-only inside the sandbox. Future edits to
-# unpack.sh must be deployed manually (copy the file, don't use dpl) -- a
-# malicious deliver.zip can't modify the bwrap filter for future runs.
+# unpack.sh must be deployed manually (deploy_manual leaves the file in
+# scratch/ for you to copy) -- a malicious deliver.zip can't modify the bwrap
+# filter for future runs.
 #
 # Code quality per code-quality-SKILL.md → "Bash workflow scripts":
 #   - set -euo pipefail
@@ -37,7 +37,7 @@ set -euo pipefail
 # ── Popup terminal on double-click ──────────────────────────────────────────
 # When double-clicked in a file manager, stdout is NOT a TTY. Re-launch
 # ourselves in a popup ghostty window so ssh + npm output is visible.
-# Fish abbreviation invocations already have a TTY and skip this branch.
+# Terminal invocations already have a TTY and skip this branch.
 # The `exec` replaces the current process so we don't leave a stray shell.
 # LBL_POPUP=1 is passed through so the re-launched script knows to pause at
 # the end (otherwise ghostty closes immediately after the script finishes).
@@ -52,7 +52,7 @@ if [[ ! -t 1 ]]; then
   # output goes to wherever the file manager routed it (usually nowhere
   # visible). The user sees the deploy only via the notify-send at the end.
   echo "WARNING: stdout is not a TTY and ghostty is not installed." >&2
-  echo "WARNING: install ghostty, or run via the \`dpl\` fish abbreviation from a terminal." >&2
+  echo "WARNING: install ghostty, or run this script from a terminal." >&2
 fi
 
 DEST="${LINEBYLINE_ROOT:-$HOME/GitHub/linebyline}"
@@ -250,8 +250,8 @@ echo "Done."
 # ── Pause if running in popup mode ──────────────────────────────────────────
 # When double-clicked, the script re-launches itself in ghostty with
 # LBL_POPUP=1. Without this pause, ghostty closes immediately after the
-# script finishes, and the user can't read the output. The `dpl` fish
-# abbreviation doesn't set LBL_POPUP, so terminal invocations exit immediately.
+# script finishes, and the user can't read the output. Terminal invocations
+# don't set LBL_POPUP, so they exit immediately.
 if [[ "${LBL_POPUP:-0}" == "1" ]]; then
   echo ""
   read -rp "Press Enter to close this window..."

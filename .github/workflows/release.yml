@@ -1,0 +1,43 @@
+name: Release single-file artifact
+
+# Roadmap item 3 (ROADMAP.md), Phase E Tranche 5 step 3: the offline artifact
+# pipeline. Deliberately separate from deploy.yml — different trigger
+# (tag push vs branch push), permissions (contents vs pages), and failure
+# semantics (a failed release-attach must not gate Pages, and vice versa).
+# Pushing a v*.*.* tag builds dist/index.html with vite-plugin-singlefile
+# (SINGLEFILE=1 inlines all JS/CSS, base './') and attaches
+# linebyline-<tag>.html to the auto-generated GitHub Release — replacing the
+# old hand-attached linebyline-<version>.html assets.
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 #v4
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 #v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build single-file HTML
+        run: npm run build:single
+
+      - name: Attach artifact to GitHub Release
+        run: |
+          cp dist/index.html "linebyline-${REF_NAME}.html"
+          gh release create "$REF_NAME" --generate-notes "linebyline-${REF_NAME}.html"
+        env:
+          REF_NAME: ${{ github.ref_name }}

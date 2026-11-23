@@ -1,6 +1,6 @@
 #!/bin/bash
-# prepare.sh -- sandbox-side script that zips all deliverables in download/
-# into a single deliver.zip, then removes the loose files.
+# prepare.sh -- sandbox-side script that zips the session's deliverables in
+# download/ into a single deliver.zip, then removes the zipped loose files.
 #
 # Usage: bash /home/z/my-project/scripts/prepare.sh [--fallback-url]
 #
@@ -10,8 +10,12 @@
 #                   reliable, so the upload is opt-in, not per-turn).
 #
 # Output: /home/z/my-project/download/deliver.zip
-#   (contains every loose file in download/ -- flat, hyphenated names,
-#    no subdirectories -- PLUS deploy.sh which is one of those loose files)
+#   (contains deploy.sh + every file deploy.sh references via deploy_file /
+#    deploy_hardlinked / deploy_manual mappings + the one-line
+#    zip_only_files array -- flat, hyphenated names, no subdirectories.
+#    Unmapped loose files are NOT zipped; they stay in download/ with a
+#    warning. This scope prevents stray sandbox files like README.md from
+#    riding along and colliding with permanent files in the user's scratch/.)
 #
 # This script does four things:
 #   1. Lint all *.md files in download/ (auto-fix bare #id/[id]/[[id]],
@@ -92,11 +96,24 @@ fi
 
 # ── Step 2: Verify expected files from deploy.sh ────────────────────────────
 echo ""
-echo "=== Verifying expected files (from deploy.sh deploy_file calls) ==="
+echo "=== Verifying expected files (from deploy.sh mappings) ==="
+# The zip scope = deploy.sh itself + every file deploy.sh's mappings
+# reference: deploy_file / deploy_hardlinked / deploy_manual (flat name = $2)
+# + the one-line zip_only_files array (scratch-only deliverables with NO
+# mapping). Unmapped loose files are NOT zipped -- a stray download/README.md
+# placeholder once rode along, overwrote the user's scratch/README.md on
+# extraction, and was then deleted by deploy.sh's scoped cleanup (Nov 23,
+# 2026 wipe). Zip scope + warning prevent that class of collision.
 expected_files=()
 while IFS= read -r f; do
   [[ -n "$f" ]] && expected_files+=("$f")
-done < <(awk '$1 == "deploy_file" {print $2}' "$DOWNLOAD_DIR/deploy.sh" | tr -d "\"'")
+done < <(
+  awk '$1 == "deploy_file" || $1 == "deploy_hardlinked" || $1 == "deploy_manual" {print $2}' "$DOWNLOAD_DIR/deploy.sh" | tr -d "\"'"
+  awk '/^zip_only_files=\(/ {
+    line = $0
+    while (match(line, /"[^"]+"/)) { print substr(line, RSTART+1, RLENGTH-2); line = substr(line, RSTART+RLENGTH) }
+  }' "$DOWNLOAD_DIR/deploy.sh"
+)
 
 missing_files=()
 for f in "${expected_files[@]}"; do
@@ -133,9 +150,15 @@ if type run_lint_gate >/dev/null 2>&1; then
     exit 1
   fi
 else
-  echo "  (skipped: lint_gate.sh not sourced -- run_lint_gate unavailable)"
-  echo "  This means lint_gate.sh is missing from skills/code-quality/scripts/."
-  echo "  Shellcheck + Ruff checks on deliverables were NOT run."
+  gate_targets=$(find "$DOWNLOAD_DIR" -maxdepth 1 \( -name '*.sh' -o -name '*.py' \) -type f | wc -l)
+  if [[ "$gate_targets" -gt 0 ]]; then
+    echo "ERROR: lint_gate.sh not sourced (missing at $LINT_GATE) but" >&2
+    echo "  $gate_targets *.sh/*.py deliverable(s) await zipping -- Shellcheck/Ruff" >&2
+    echo "  would not run on them. Run skills/delivery/scripts/setup-sandbox.sh" >&2
+    echo "  (installs the gate + lint deps), then re-run prepare.sh." >&2
+    exit 1
+  fi
+  echo "  (skipped: run_lint_gate unavailable -- no *.sh/*.py deliverables to lint)"
 fi
 
 # ── Step 4: Run lint gate + vue-tsc + Vitest in sandbox (if project tree exists) ─
@@ -208,16 +231,36 @@ echo "=== Creating deliver.zip ==="
 # Remove any previous zip
 rm -f -- "$ZIP"
 
-# Collect all loose files (exclude deliver.zip itself and any subdirs).
+# Zip scope: deploy.sh + the mapped/zip_only files verified in step 2.
+# Unmapped loose files stay in download/ (with a warning) so a forgotten
+# deliverable is never silently dropped and sandbox strays never ride along.
 cd "$DOWNLOAD_DIR"
-mapfile -t files < <(find . -maxdepth 1 -type f ! -name 'deliver.zip' | sort)
+mapfile -t files < <(printf '%s\n' deploy.sh "${expected_files[@]}" | sort -u)
 
-if [[ ${#files[@]} -eq 0 ]]; then
-  echo "ERROR: no files to zip in $DOWNLOAD_DIR" >&2
-  exit 1
+loose=()
+while IFS= read -r f; do
+  is_zipped=0
+  for e in "${files[@]}"; do
+    if [[ "$f" == "$e" ]]; then
+      is_zipped=1
+      break
+    fi
+  done
+  if [[ "$is_zipped" -eq 0 ]]; then
+    loose+=("$f")
+  fi
+done < <(find . -maxdepth 1 -type f ! -name 'deliver.zip' -printf '%P\n' | sort)
+
+if [[ ${#loose[@]} -gt 0 ]]; then
+  echo "WARNING: unmapped loose files in download/ (NOT zipped):" >&2
+  for f in "${loose[@]}"; do
+    echo "  $f" >&2
+  done
+  echo "  Zip scope = deploy.sh + deploy_file/deploy_hardlinked/deploy_manual" >&2
+  echo "  mappings + zip_only_files. Delete genuine strays, or add a mapping." >&2
 fi
 
-# Zip everything (flat, no subdirectories). -j = junk paths, -q = quiet.
+# Zip (flat, no subdirectories). -j = junk paths, -q = quiet.
 zip -jq "$ZIP" "${files[@]}"
 
 echo "Created $ZIP"
@@ -276,10 +319,12 @@ else
 fi
 
 # ── Clean up loose files ────────────────────────────────────────────────────
+# Removes only the files that went into the zip. Unmapped loose files stay in
+# download/ (the step-5 warning lists them) so nothing is silently dropped.
 echo ""
 echo "Cleaning up loose files..."
 for f in "${files[@]}"; do
-  rm -f -- "${DOWNLOAD_DIR:?}/${f#./}"
+  rm -f -- "${DOWNLOAD_DIR:?}/$f"
 done
 
 echo ""
