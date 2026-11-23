@@ -1,6 +1,6 @@
 // Global type augmentations for app-level window properties.
 //
-// The monolith (deleted in Tranche 6) exposed doSave implicitly as a top-level
+// The monolith (docs/index.html) exposed doSave implicitly as a top-level
 // function declaration (which becomes a window property). The Vue port imports
 // doSave from useImport, but App.vue also registers it on window so the
 // global hotkey handler can dispatch through the runtime-resolved reference

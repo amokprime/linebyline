@@ -1,5 +1,5 @@
 
-// Ported from the monolith (deleted in Tranche 6) "── Paste and metadata cleaning ──" (roadmap
+// Ported from docs/index.html "── Paste and metadata cleaning ──" (roadmap
 // item 3 Phase C, tranche 1). PORT DELTA: the monolith versions read
 // cfg.default_meta (live global); these take the default-meta text as a
 // parameter — the Phase D config composable binds the live value at call sites.

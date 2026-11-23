@@ -5,7 +5,7 @@ description: Efficient section-targeted reading of the LineByLine Vite app's src
 
 The Vite app source lives in `src/` — 36 files across `components/`, `composables/`, `hotkeys/`, `utils/`, and root. Loading every file for a single change wastes tokens. Most prompts touch 1–4 files. This skill tells you which files those are.
 
-The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) was deleted in Phase E Tranche 6. **`src/` is the active code.** For historical parity checks against the original monolith, use `git show <pre-deletion-sha>:docs/index.html` (the file is gone from the working tree but preserved in git history).
+The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) is restored in the working tree (Tranche 4.9) and stays until Phase E Tranche 6 deletes it post-cutover. **`src/` is the active code.** For parity checks against the monolith, read `docs/index.html` directly (or `git show <sha>:docs/index.html` for a specific historical version).
 
 ---
 
@@ -147,11 +147,12 @@ utils/
 
 ## Parity checks against the monolith (historical)
 
-The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) was deleted in Phase E Tranche 6. It's preserved in git history — for a historical parity check (verifying a ported function matches the original), use:
+The pre-modular-refactor monolith (`docs/index.html`, ~2800 lines) is in the working tree (restored in Tranche 4.9 until Phase E Tranche 6 deletes it). For a parity check (verifying a ported function matches the original), grep it directly:
 
 ```bash
-git show <pre-deletion-sha>:docs/index.html | grep -n "^// ──"   # section markers
-git show <pre-deletion-sha>:docs/index.html | grep -n "function <name>"   # specific function
+grep -n "^// ──" docs/index.html   # section markers
+grep -n "function <name>" docs/index.html   # specific function
+git show <sha>:docs/index.html | grep -n "function <name>"   # a specific historical version
 ```
 
 The monolith's section structure mapped roughly to the `src/` files above — e.g. the monolith's `// ── Audio ──` section → `composables/useAudio.ts`; the monolith's `// ── Sync / timestamp ──` section → `composables/useSync.ts` + `utils/timestampSync.ts`.

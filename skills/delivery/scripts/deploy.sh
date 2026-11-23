@@ -137,8 +137,7 @@ deploy_file() {
   else
     mkdir -p "$(dirname "$dst")"
     # Use cp instead of mv when the destination is hardlinked to another file
-    # (e.g. scripts/local/espanso.yml ↔ ~/.config/espanso/match/linebyline.yml,
-    # or scripts/local/*.fish ↔ ~/.config/fish/functions/*.fish). cp overwrites the
+    # (e.g. scripts/local/*.fish ↔ ~/.config/fish/functions/*.fish). cp overwrites the
     # file contents in place, preserving the inode and its hardlinks. mv would
     # replace the file (new inode), breaking the hardlink.
     # Detect hardlinks by checking if the destination has a link count > 1.
@@ -230,7 +229,7 @@ deploy_manual() {
 }
 
 # deploy_hardlinked: same as deploy_file but always uses cp (for files known to
-# be hardlinked). Use this for scripts/local/espanso.yml and scripts/local/*.fish
+# be hardlinked). Use this for scripts/local/*.fish
 # so the user's hardlinks to ~/.config/ are preserved across deploys.
 deploy_hardlinked() {
   local src="$1"

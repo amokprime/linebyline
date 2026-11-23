@@ -1,5 +1,5 @@
 
-// Ported from the monolith (deleted in Tranche 6) "── Genius extraction ──" (roadmap item 3
+// Ported from docs/index.html "── Genius extraction ──" (roadmap item 3
 // Phase C, tranche 1). Only the pure helpers moved: markGeniusSource and
 // extractGeniusMeta read/write the main textarea and re-render, so they stay
 // in the monolith until the Phase D app-state composable. Verbatim bodies;

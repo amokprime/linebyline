@@ -79,14 +79,14 @@ Workflow (high-level)
 2. Place all deliverables in `/home/z/my-project/download/` with flat hyphenated names (e.g. `src-composables-useAudio.ts`, not `src/composables/useAudio.ts`).
 3. Place the filled-in `deploy.sh` in `download/` too (it gets included in the zip).
 4. Run `bash /home/z/my-project/scripts/prepare.sh` (or wherever the sandbox-side copy lives). The script lints, verifies, runs Shellcheck + ESLint/Vitest if available, zips everything into `deliver.zip`, touches `download/` to refresh the widget, and removes the loose files.
-5. The user downloads `deliver.zip` (via the "All files in task" widget, or from https://tmpfiles.org if the widget is broken), double-clicks `scripts/unpack.sh` (or runs it from a terminal), which extracts, runs `deploy.sh`, and cleans up.
+5. The user downloads `deliver.zip` via the "All files in task" widget, double-clicks `scripts/unpack.sh` (or runs it from a terminal), which extracts, runs `deploy.sh`, and cleans up. **Contingency only**: if the widget is broken, re-run `prepare.sh --fallback-url` — it uploads `deliver.zip` to https://tmpfiles.org and prints a direct download link. Don't run the fallback upload by default; the widget has been reliable.
 
 ---
 
 Cautions and gotchas
 
 - **`download/` cleanliness**: the same file should not exist both inside and outside the zip. After running `prepare.sh`, only `deliver.zip` should remain.
-- **Widget staleness**: if the "All files in task" widget doesn't show `deliver.zip` after `prepare.sh` runs, `prepare.sh` now touches `download/` to force a refresh. If the widget is still broken, upload `deliver.zip` to https://tmpfiles.org and paste the direct download link in chat.
+- **Widget staleness**: if the "All files in task" widget doesn't show `deliver.zip` after `prepare.sh` runs, `prepare.sh` now touches `download/` to force a refresh. If it's still broken, re-run `prepare.sh --fallback-url` (the tmpfiles.org upload is opt-in contingency, not a per-turn step) and paste the direct download link in chat.
 - **`deploy.sh` is a template**: the committed copy at `skills/delivery/scripts/deploy.sh` is the reusable template. Each session, the agent fills in the `deploy_file` mappings and includes the filled-in copy inside `deliver.zip`.
 - **Scoped cleanup**: `unpack.sh` snapshots the zip's contents to `.deliver-files.list` before extraction. `deploy.sh`'s cleanup loop reads this manifest and only removes files that came from the zip — pre-existing `scratch/` files like `scratch.md` are NOT touched. Never use `find . -maxdepth 1 -type f` for cleanup; it sweeps pre-existing files.
 - **Playwright SSH block**: `deploy.sh` includes a `ssh Server "LBL_VITE_TARGET=1 tst"` block that runs the full Playwright suite via SSH. This is user-side only — the sandbox cannot SSH. For sandbox-side sample Playwright tests, see the `playwright-testing` skill → "Sandbox-side sample tests".

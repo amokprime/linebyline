@@ -21,7 +21,6 @@ export default [
   // ────────────────────────────────────────────────────────────
   {
     ignores: [
-      "**/*.d.ts", // TypeScript ambient declarations — handled by tsserver
       // ── NEW: Obsidian vault metadata (third-party plugin bundles,
       //    workspace state, etc.). You add the repo as a vault per your
       //    workflow; ESLint should never touch this tree.
@@ -220,6 +219,27 @@ export default [
     rules: {
       "vue/multi-word-component-names": "off",
       "vue/require-default-prop": "off",
+    },
+  },
+
+  {
+    // Ambient declaration files (.d.ts) — type-only, no runtime code, so
+    // tsserver still owns the type checking. They were globally ignored
+    // before, which made editor integrations (Zed's ESLint LSP lints open
+    // buffers explicitly) emit "File ignored because of a matching ignore
+    // pattern" on every open. Claiming them here keeps the file linted
+    // silently instead.
+    files: ["**/*.d.ts"],
+    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals.browser },
+    },
+    plugins: { sonarjs },
+    rules: {
+      ...sonarjs.configs.recommended.rules,
+      "sonarjs/cognitive-complexity": "warn",
     },
   },
 

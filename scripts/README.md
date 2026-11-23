@@ -29,15 +29,8 @@ scripts/diff-staging.sh
     - `changes.meta` — `base_ref`, `base_sha`, `head_sha`, `branch`, `status_file` pointer
 - See [archive/scripts/3.md](https://github.com/amokprime/linebyline/tree/main/archive/scripts/3.md) for the design rationale (DeepSeek session that worked through `origin/staging` vs local `staging`, intent-to-add + reset pattern, no status duplication in meta).
 - Manual deployment only — must be copied to the user's `scripts/` folder outside the deliver.zip workflow.
-### Copy paste onboarding prompts
-```
-scripts/local/espanso.yml
-```
-- Espanso match file with triggers for the standard vibecoding-step context-loading instructions. See `ai/README.md` for the current trigger list and descriptions.
-- Install (hardlink so both copies stay in sync):
-```sh
-ln ~/.config/espanso/match/linebyline.yml scripts/local/espanso.yml
-```
+### Session bootstrap
+- The step-specific context-loading prompts used to live in an Espanso match file (`scripts/local/espanso.yml` — retired Nov 22, 2026). They now live as plain text in `AGENTS.md` → "Reads per session type", sized to paste into chat.z.ai Project instructions; sessions open with a short prompt (branch + ROADMAP section) instead of an Espanso trigger. See `ai/README.md` for the workflow.
 ### Bash scripts for testing
 ```
 scripts/local/tst.sh

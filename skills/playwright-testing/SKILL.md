@@ -3,7 +3,7 @@ name: playwright-testing
 description: Write and maintain Playwright tests for the LineByLine single-file HTML app. Use this skill whenever writing or modifying test files (*.spec.js), when the user mentions Playwright, tests, snapshots, screenshots, axe-scan, test failures, or when making code changes that could affect existing tests. Use proactively — whenever you modify the app's HTML/JS, check if any test expectations need updating. This skill covers snapshot strategy, test helpers, common patterns, the impact of code changes on test validity, and the TypeScript/diagnostics setup that keeps Zed Project Diagnostics clean.
 ---
 
-This project uses Playwright with a custom test helper (`tests/helpers/index.js`) that provides fixtures for file import, media resolution, version auto-detection, and clipboard-paste workarounds. Tests run against the Vite build (`dist/`, served by `npx vite preview --port 5173`).
+This project uses Playwright with a custom test helper (`tests/helpers/index.js`) that provides fixtures for file import, media resolution, version auto-detection, and clipboard-paste workarounds. Two targets coexist during Phase E (pre-cutover): the Vite build (`dist/`, served by `npx vite preview --port 5173`, activated by `LBL_VITE_TARGET=1` — what `tst`/CI use) and the monolith (`docs/index.html`, served by `npx serve . -l 3004`, the default for parity runs).
 
 ---
 
@@ -379,7 +379,7 @@ Scoped to `tests/` (not project root) to avoid affecting `playwright.config.js` 
 Declares the app functions that tests call inside `page.evaluate()` callbacks. Without it, every `page.evaluate(() => tsToMs(...))` triggers TS2304. The file uses `declare function` for globals and `interface Window` augmentation for `window.*` properties:
 
 ```ts
-// App functions called inside page.evaluate() — historically defined in the monolith (docs/index.html, deleted Tranche 6); now in src/ modules
+// App functions called inside page.evaluate() — historically defined in the monolith (docs/index.html); now in src/ modules
 declare function tsToMs(line: string): number | null;
 declare function msToTs(ms: number): string;
 // ... 18 more functions

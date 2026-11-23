@@ -8,14 +8,34 @@ const { test: base, expect } = require("@playwright/test");
 /**
  * Returns the URL path to the main app entry point.
  *
- * Post-Phase E cutover (Tranche 6): the monolith (docs/index.html) is deleted,
- * the env-var branch is gone, and this always returns "/" (served by
- * `npx vite preview --port 5173` against the built dist/).
+ * Two modes coexist during Phase E (pre-cutover):
+ *   - Default (monolith): targets /docs/index.html, served by `npx serve . -l 3004`.
+ *   - Vite-target (opt-in): targets /, served by `npx vite preview --port 5173`.
  *
- * @returns {string} URL path — "/"
+ * Vite-target mode is activated by `LBL_VITE_TARGET=1` env var only.
+ * No auto-detect via `dist/index.html` existence — that was too aggressive
+ * in the SSH+Syncthing workflow (dist/ syncs to the server and persists,
+ * so every tst run would auto-detect Vite-target, making monolith tests
+ * impossible without rm -rf dist/ first).
+ *
+ * After Phase E Tranche 6 (monolith deletion), the env-var branch goes away
+ * and this always returns "/".
+ *
+ * @returns {string} URL path — "/" for Vite, "/docs/index.html" for monolith
  */
 function getAppUrl() {
-  return "/";
+  if (process.env.LBL_VITE_TARGET === "1") {
+    return "/";
+  }
+
+  const docsIndex = path.resolve(process.cwd(), "docs", "index.html");
+  if (!fs.existsSync(docsIndex)) {
+    throw new Error(
+      `docs/index.html not found at ${docsIndex}. Set LBL_VITE_TARGET=1 to target the Vite build instead.`,
+    );
+  }
+
+  return "/docs/index.html";
 }
 
 const MEDIA_DIR = path.join(__dirname, "..", "media");

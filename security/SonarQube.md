@@ -18,14 +18,14 @@ const ti=(text.match(/^\[ti:\s*(.+)\]/m)||[])[1],ar=(text.match(/^\[ar:\s*(.+)\]
 #archive/pre-semantic/0_html/linebyline.html #line 486
   const text=getTA(),ti=text.match(/^\[ti:\s*(.+)\]/m),raw=ti?ti[1].trim():'';
   
-#docs/index.html line 801 (monolith, deleted in Tranche 6)
+#docs/index.html line 801
 const defReMatch=cfg.default_meta.match(/^\[re:\s*(.*)\]/m);
 ```
 "Make sure the regex used here, which is vulnerable to super-linear runtime due to backtracking, cannot lead to denial of service." - referring to all `text.match()`, affects pretty much every version of LineByLine has this
 
 #### Review priority: Low
 ```
-#docs/index.html line 2430 (monolith, deleted in Tranche 6)
+#docs/index.html line 2430
   if(hk.issues&&hkMatch(ks,hk.issues)){e.preventDefault();window.open('https://github.com/amokprime/linebyline/issues','_blank');return;}
 ```
 "Make sure not using "noopener" is safe here." - referring to window.**open**, affects newer versions around 0.34.XX up to present

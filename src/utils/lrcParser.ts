@@ -1,5 +1,5 @@
 
-// Ported from the monolith (deleted in Tranche 6) "── LRC parsing utilities ──" (roadmap item 3
+// Ported from docs/index.html "── LRC parsing utilities ──" (roadmap item 3
 // Phase C, tranche 1). Only the pure functions moved here; getSeekOffset,
 // suppressAuto and advanceActiveLine read DOM/state globals and stay in the
 // monolith until the Phase D composables. Verbatim bodies.

@@ -107,13 +107,42 @@ test("sync-repeat", async ({ page, media }) => {
   await expect(page.locator("#main-lines")).not.toContainText(/\d{2}:\d{2}/);
 });
 
+// "Fast burst" emulation: fill() fires exactly one `input` event — the
+// deterministic cross-engine stand-in for typing faster than the debounce
+// window. Two firefox failure modes shaped this:
+//   1. pressSequentially("abc") straddling the 150ms undo_debounce_ms
+//      window (server podman dispatch overhead) — legal mid-burst snapshots
+//      became extra undo points, breaking the single-undo expectation.
+//      fill() removes the inter-key gaps entirely (fixed Nov 22, 2026).
+//   2. undo pressed before the debounced commit lands (slow input handler /
+//      late timer under load) — doUndo no-ops on the seed-only stack, the
+//      value never reaches META, and toHaveValue polls in vain because no
+//      further press comes (flaked once more on firefox after fix 1).
+//      undoPastDebounce below retries the press once.
+// The per-keystroke paths stay covered by the slow-inline / slow-newlines
+// tests below. fast-newlines keeps pressSequentially because it needs real
+// Enter keydowns for handleEnterTrim.
+async function undoPastDebounce(page, expected) {
+  await page.keyboard.press("Control+z");
+  try {
+    await expect(page.locator("#main-textarea")).toHaveValue(expected, {
+      timeout: 1500,
+    });
+  } catch {
+    // First press was a no-op (undo ran before the commit). Retry once —
+    // safe: doUndo no-ops on the seed-only stack, so a retry can never
+    // overshoot past the seed.
+    await page.keyboard.press("Control+z");
+    await expect(page.locator("#main-textarea")).toHaveValue(expected);
+  }
+}
+
 test("typing-debounce", async ({ page }) => {
   await page.keyboard.press("Backquote");
-  await page.locator("#main-textarea").pressSequentially("abc");
+  await page.locator("#main-textarea").fill(META + "abc");
   await expect(page.locator("#main-textarea")).toHaveValue(META + "abc");
   await page.waitForTimeout(250);
-  await page.keyboard.press("Control+z");
-  await expect(page.locator("#main-textarea")).toHaveValue(META);
+  await undoPastDebounce(page, META);
   await page.keyboard.press("Control+y");
   await expect(page.locator("#main-textarea")).toHaveValue(META + "abc");
 });
@@ -139,12 +168,12 @@ test("merge", async ({ page, media, importSecondary }) => {
   );
 });
 // Tranche 4.5 — undo debounce timing. Covers 4 MANUAL.md cases.
+// fill() + undoPastDebounce — same rationale as typing-debounce above.
 test("typing-debounce-fast-inline", async ({ page }) => {
   await page.keyboard.press("Backquote");
-  await page.locator("#main-textarea").pressSequentially("abc");
+  await page.locator("#main-textarea").fill(META + "abc");
   await page.waitForTimeout(250);
-  await page.keyboard.press("Control+z");
-  await expect(page.locator("#main-textarea")).toHaveValue(META);
+  await undoPastDebounce(page, META);
 });
 
 test("typing-debounce-slow-inline", async ({ page }) => {

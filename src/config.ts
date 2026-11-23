@@ -1,5 +1,5 @@
 
-// Ported from the monolith (deleted in Tranche 6) "── Config ──" (roadmap item 3 Phase C, tranche 1).
+// Ported from docs/index.html "── Config ──" (roadmap item 3 Phase C, tranche 1).
 // Pure data + hotkey migration helpers only: loadCfg/saveCfg stay in the
 // monolith until the persistence composable lands (Phase D). Functions renamed
 // without the leading underscore now that they are module exports.

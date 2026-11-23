@@ -2,7 +2,12 @@
 # prepare.sh -- sandbox-side script that zips all deliverables in download/
 # into a single deliver.zip, then removes the loose files.
 #
-# Usage: bash /home/z/my-project/scripts/prepare.sh
+# Usage: bash /home/z/my-project/scripts/prepare.sh [--fallback-url]
+#
+#   --fallback-url  Contingency: also upload deliver.zip to tmpfiles.org and
+#                   print a direct download URL. Only needed if the chat's
+#                   "All files in task" widget is broken (it has been
+#                   reliable, so the upload is opt-in, not per-turn).
 #
 # Output: /home/z/my-project/download/deliver.zip
 #   (contains every loose file in download/ -- flat, hyphenated names,
@@ -30,6 +35,18 @@ DOWNLOAD_DIR="/home/z/my-project/download"
 ZIP="$DOWNLOAD_DIR/deliver.zip"
 LINTER="/home/z/my-project/skills/delivery/scripts/lint_markdown.py"
 SANDBOX_DIR="/home/z/my-project/sandbox"
+
+# ── Flags ───────────────────────────────────────────────────────────────────
+# The tmpfiles.org upload is a CONTINGENCY (broken download widget), not a
+# per-turn step — pass --fallback-url only when the widget didn't surface
+# deliver.zip.
+FALLBACK_URL=0
+for arg in "$@"; do
+  case "$arg" in
+    --fallback-url) FALLBACK_URL=1 ;;
+    *) echo "prepare.sh: unknown flag: $arg (supported: --fallback-url)" >&2; exit 2 ;;
+  esac
+done
 
 # Source the shared lint gate (Shellcheck + Ruff + ESLint).
 # lint_gate.sh lives at skills/code-quality/scripts/ — owned by the code-quality skill.
@@ -212,19 +229,20 @@ unzip -l "$ZIP" | tail -n +4 | head -n -2
 # The web UI's download widget can go stale after multiple prepare.sh runs or
 # after sandbox-side file operations. Touching the directory's mtime forces
 # the widget to re-scan and surface the new deliver.zip. If the widget is
-# still broken, the tmpfiles.org upload (next step) provides a fallback URL.
+# still broken, re-run with --fallback-url to get a tmpfiles.org URL.
 touch -- "$DOWNLOAD_DIR"
 
-# ── Step 6: Upload to tmpfiles.org as widget-fallback ──────────────────────
-# The chat.z.ai "All files in task" widget has been flaky in some sessions --
-# after prepare.sh runs, the widget doesn't surface the new deliver.zip and
-# the user has no way to retrieve it. Uploading to tmpfiles.org gives the
-# user a direct download URL printed in the chat that they can use as a
-# fallback if the widget is broken.
+# ── Step 6: Upload to tmpfiles.org as widget-fallback (CONTINGENCY ONLY) ───
+# Opt-in via --fallback-url. The widget has been reliable, so this does NOT
+# run by default; it exists for sessions where the "All files in task"
+# widget doesn't surface deliver.zip after prepare.sh and the user has no
+# way to retrieve it. Uploading gives the user a direct download URL
+# printed in the chat.
 #
 # Only runs if all prior checks passed (lint + verify + lint gate + sandbox
 # vue-tsc + Vitest). Skipped silently if curl is unavailable or the upload
 # fails -- the deliver.zip is still in $DOWNLOAD_DIR either way.
+if [[ "$FALLBACK_URL" == 1 ]]; then
 if command -v curl >/dev/null 2>&1 && [[ -f "$ZIP" ]]; then
   echo ""
   echo "=== Uploading deliver.zip to tmpfiles.org (widget fallback) ==="
@@ -251,6 +269,10 @@ if command -v curl >/dev/null 2>&1 && [[ -f "$ZIP" ]]; then
     echo "  (upload failed -- curl output: $upload_response)"
     echo "  deliver.zip is still in $DOWNLOAD_DIR -- use the chat widget."
   fi
+fi
+else
+  echo "  (tmpfiles fallback not requested -- pass --fallback-url if the"
+  echo "  download widget doesn't show deliver.zip)"
 fi
 
 # ── Clean up loose files ────────────────────────────────────────────────────

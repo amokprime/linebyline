@@ -1,4 +1,4 @@
-// Ported from the monolith (deleted in Tranche 6) "── Keyboard → Key normalization ──" plus
+// Ported from docs/index.html "── Keyboard → Key normalization ──" plus
 // _normKey from the Settings search section (roadmap item 3 Phase C, tranche 1).
 // Verbatim; _normKey exported as normKey. Note the pinned quirk: normKey maps
 // Escape to "Esc", so hkMatch's stored==='Escape' branch is unreachable via

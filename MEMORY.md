@@ -4,13 +4,13 @@ Harness-agnostic, git-tracked memory for AI coding agents. When a turn produces 
 
 ## Context loading
 
-Context files are loaded via the Espanso snippets in `scripts/local/espanso.yml`. Each trigger expands to a clone + read instruction. If `skills/delivery/scripts/setup-sandbox.sh` has been run, project skills auto-load into `available_skills` — the agent invokes them via `Skill(command="name")` instead of reading the SKILL.md explicitly. The snippets list only the non-skill context files (`AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `README.md`, source/test code). See `ai/README.md` for the current trigger list.
+Context files are loaded via the `AGENTS.md` bootstrap: clone URLs, an always-read list (`MEMORY.md`, `ROADMAP.md` incl. `[[ROADMAP#…]]` section references), and reads per session type. It is sized to paste into chat.z.ai Project instructions (5000-char cap — see `ai/README.md`); Espanso snippets are retired (`scripts/local/espanso.yml` deleted Nov 22, 2026) and sessions open with a short prompt instead (e.g. `Work on [[ROADMAP#…]] Tranche 4.9`). If `skills/delivery/scripts/setup-sandbox.sh` has been run, project skills auto-load into `available_skills` — the agent invokes them via `Skill(command="name")` instead of reading the SKILL.md explicitly; the `linebyline` skill carries the full onboarding + workflow and self-loads via its description. In plain chats, the opening prompt should still ask for clone + read (`AGENTS.md`, `MEMORY.md`, `ROADMAP.md`).
 
 ## Knowledge map
 
 Skill pointers below describe each skill's scope. Onboard-essential skills (`linebyline`, `skill`, `delivery`) should be re-read at the start of each step; the others are invoked on-demand via `Skill(command="name")` when their `description` matches the current task.
 
-- `linebyline-SKILL.md` — project structure, context loading, workflow steps (Onboard / Code / Skills / Propose), pre/post-patch checklists, post-turn updates, versioning, deliver-zip pattern. The canonical onboarding + workflow skill.
+- `linebyline-SKILL.md` — the canonical onboarding + workflow reference (context loading, workflow steps, pre/post-patch checklists, post-turn updates, MEMORY discipline, versioning, deliver-zip). `AGENTS.md` is the compact session bootstrap (clone URLs, always-read + per-session read lists) sized to paste into chat.z.ai Project instructions (5000-char cap).
 - `delivery-SKILL.md` — chat.z.ai web channel behavioral rules (download visibility, input handling, output format, comment density, context compaction) + the delivery workflow (prepare → zip → deploy) and the five packaged scripts.
 - `skill-SKILL.md` — when to create or update skills vs. MEMORY.md entries; skill anatomy and writing style.
 - `linebyline-section-index-SKILL.md` — prompt-to-file map for the modular `src/` tree.
@@ -40,13 +40,13 @@ App-behavior contracts tied to specific versions. Useful for regression investig
 - Swap-button conflict resolution (0.37.0) — first version with the swap pattern (no blanks left over). General pattern in `browser-hotkey-system-SKILL.md` (Build bundle) → "Conflict resolution" + "Reset to default" subsections.
 - `hasLyricContent()` guard (0.35.11): prevents `syncLine`, `insertEndLine`, `maybeAppendTrailingTs` from inserting useless `[00:00.00]` lines when no line has text content.
 - All-assembly-site newline convention (0.35.11) — see `code-quality-SKILL.md` (Review bundle) → "Newline convention in LRC assembly" for the rule.
-- `beforeunload` dirty check + `isDirty` bridge (Phase E Tranche 1, pre-cutover): the monolith's `beforeunload` (deleted in Tranche 6, lines 2766–2770) reads `getTA()` + `secondaryCols[].linesEl.value` directly.
+- `beforeunload` dirty check + `isDirty` bridge (Phase E Tranche 1, pre-cutover): the monolith's `beforeunload` (docs/index.html lines 2766–2770) reads `getTA()` + `secondaryCols[].linesEl.value` directly.
     - The Vue port wires a `watch` in `useAppState` that mirrors the same check into the `isDirty` ref (`flush: 'sync'`, `deep: true`, `immediate: true`).
     - `App.vue`'s `onMounted` adds a `beforeunload` listener that re-reads `mainText.value` + `secondaryPool.value` directly (so a stale `isDirty` can never suppress the warning).
     - Port delta: `cfg.default_meta` → `cfg.value.default_meta`; the secondary check reads `secondaryPool` (all entries, including hidden) — not `secondaryCols` (visible-only computed) — so hidden entries with text from a previous session still trigger the warning.
     - 13 new Vitest specs in `tests/unit/appState.test.ts` (9 isDirty watch + 4 App.vue beforeunload integration via happy-dom); 473/473 specs green post-patch; `vue-tsc -b` clean. No Playwright snapshot regen (runtime behavior, not DOM structure).
 - Playwright Vite-target mode (Phase E Tranche 2, pre-cutover): `LBL_VITE_TARGET=1` env var branches three files:
-    - `tests/helpers/index.js` `getAppUrl()` returns `/` (Vite build, post-Tranche 6).
+    - `tests/helpers/index.js` `getAppUrl()` returns `/` instead of `/docs/index.html`.
     - `playwright.config.js` `webServer.command` runs `npx vite preview --port 5173 --strictPort` instead of `npx serve . -l 3004`, and `use.baseURL` switches to `http://localhost:5173`.
     - `tests/PLAYWRIGHT_SETUP.md` documents the SSH+Syncthing workflow.
     - The `tst` is a **server-side bash script** at `~/.local/bin/tst` (not a PC fish function) — the repo's section-4 bash script is the template.
@@ -63,7 +63,7 @@ App-behavior contracts tied to specific versions. Useful for regression investig
 
 ## Bug patterns
 
-General bug patterns (helper-extraction can delete callees, string assembly with conditional separator, dynamic config vs hardcoded constants, braceless-if ambiguity, state-variable disagreement, useless `|| {}` after spread) have been extracted to `code-quality-SKILL.md` (Review bundle). Read that skill before patching `src/**` to avoid re-discovering them.
+General bug patterns (helper-extraction can delete callees, string assembly with conditional separator, dynamic config vs hardcoded constants, braceless-if ambiguity, state-variable disagreement, useless `|| {}` after spread) have been extracted to `code-quality-SKILL.md` (Review bundle). Read that skill before patching `src/**` or `docs/index.html` to avoid re-discovering them.
 
 App-specific bugs not yet generalizable:
 
@@ -397,7 +397,7 @@ The repo's bash scripts are organized by ownership: delivery scripts at `skills/
 
 ## Project invariants
 
-- All app code lives in `src/` (modular Vite + Vue app) post-Phase E cutover. No external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.
+- All app code lives in `src/` (modular Vite + Vue app); `docs/index.html` is the frozen pre-refactor monolith, restored in Tranche 4.9 as the GitHub Pages rollback fallback until Phase E Tranche 6 deletes it. No external font dependencies, no Python/PyQt port. The Python port was abandoned in 0.34.5; web is the only forward path.
 - App version is encoded in `<title>` (not the filename) — see `linebyline-SKILL.md` → "Versioning" for the semver rules and where to apply the bump. The app entry is root `index.html` + `src/main.ts`; the version is in `<title>` (root index.html).
 - The app is LRC-focused, but has Genius paste. Genius scraping is delegated to a browser extension (cross-origin blocks prevent in-app fetching); in-app extraction is structural parsing of pasted text.
 
@@ -412,7 +412,8 @@ The repo's bash scripts are organized by ownership: delivery scripts at `skills/
 
 Dogfooding concluded — user synced several songs with no major blockers.
 Latent issues + refinements addressed in `src/` + `tests/unit/`; the
-monolith was deleted in Phase E Tranche 6 as part of the cutover.
+`docs/index.html` monolith is left as-is (restored in Tranche 4.9;
+stays until Phase E Tranche 6 deletes it post-cutover).
 
 - **Delete active line**: `delete_line` hotkey (default `G`, Hotkey Mode
   only). No confirmation prompt — Ctrl+Z undo is muscle memory.
@@ -508,3 +509,58 @@ monolith was deleted in Phase E Tranche 6 as part of the cutover.
 - **Dependabot cannot fix `serve`'s compression**: `serve@14.2.6` pins
   `compression` to exactly `1.8.1`, so the override is the only route (see
   Dependabot #14 above). Its "update" runs fail by design.
+
+## Tranche 4.9 — `docs/` restoration + scaffolding fold-in (Nov 22, 2026)
+
+Full implementation notes live in `ROADMAP.md` → Tranche 4.9. Session-specific
+findings below (the unexpected-only entries):
+
+- **The Tranche 4.9 spec's claim that `linebyline-section-index/SKILL.md` was
+  "correct as-is" was wrong** — its parity section said the monolith "was
+  deleted in Phase E Tranche 6" and pointed at `git show <sha>:docs/index.html`
+  because "the file is gone from the working tree". The Tranche 4.8 rewrite
+  itself assumed the deletion. Fixed both spots; lesson: verify spec
+  assumptions against the actual files during audit work, don't trust the
+  spec's own claims about file state.
+
+- **The `docs/` deletion commit corrupted `SECURITY.md`'s table**: removing the
+  `docs/index.html` row glued the `src/` row and the `archive/semantic` row
+  together with `||` (malformed Markdown). Restoring the pre-deletion table
+  fixed it — check tables for structural damage when auditing deletion commits,
+  not just wording.
+- **Two-mode Playwright bridge restored** (`LBL_VITE_TARGET` in
+  `playwright.config.js` + `tests/helpers/index.js`): the branch removal in
+  `46dd74e5` was collateral of the out-of-order deletion, not a deliberate
+  Tranche 6 step. Restored so monolith parity runs (Tranche 4.7b) are possible
+  again. Verified no runner is affected: CI (`playwright.yml` sets
+  `LBL_VITE_TARGET: "1"`), `tst`/`tsta`/`cgn`, `tst.sh`, and server `tst` all
+  opt into Vite — only a bare `npx playwright test` flips to the monolith,
+  which is the pre-deletion default. Tranche 6 removes the branch deliberately.
+- **Expect Sonar/CodeQL issue counts to RISE on the next push**: with
+  `docs/index.html` back in the tree, both scanners re-scan it and re-report
+  the monolith's historical findings (the ones the `src/` verbatim-port
+  Accepts were derived from). This is expected — the monolith is the frozen
+  rollback fallback until Tranche 6 — do not triage the re-appeared
+  `docs/index.html` findings as new regressions.
+- **Restored-vs-kept audit rule of thumb** (generalizable): restore hunks whose
+  new text is factually wrong after the restoration (deletion claims, missing
+  scan targets, broken tables); keep hunks that are independent fixes (the
+  MANUAL.md speed-hotkey remap) or that fix text that was already stale before
+  the deletion commit (version location → root `index.html`, Playwright
+  Vite-target references). Compose accurate current-state wording (rather than
+  blind pre-deletion restore) where NEITHER old nor new text is true (MEMORY
+  project-invariants bullet, Tranche 4.7 dogfooding line).
+
+## Agent scaffolding architecture (Nov 22, 2026)
+
+- **Final architecture**: `skills/linebyline/SKILL.md` is the canonical onboarding + workflow reference (the hollowing was reverted); `AGENTS.md` is the compact session **bootstrap** (2983 chars — clone URLs, always-read list, reads per session type, versioning one-liner) sized to paste into chat.z.ai Project instructions, which cap at **5000 characters** (`5000-char-limit.png`). The same-day hybrid (full AGENTS.md + hollow skill) died on that cap. The bootstrap was converted from the retired `scripts/local/espanso.yml`; Espanso is gone entirely and sessions open with a short prompt (branch + `[[ROADMAP#…]]` section). The skill's always-on `available_skills` description is the backstop for plain chats. Decision log: ROADMAP → "Agent Scaffolding Recommendations" (Decision updates 1–2).
+- **Retire manually-synced context lists, don't just retarget them**: the espanso trigger list had already drifted (`ai/README.md` documented "`:lcs` Onboard" when `:lon` was the real Onboard trigger) — exactly the failure mode that made converting the list into plain agent-readable text (single home in `AGENTS.md`) better than keeping a trigger file in sync.
+- **Cross-skill pointers follow the content's home**: when the sections moved skill→AGENTS.md (hybrid), the pointers in `skill`/`delivery` SKILL.md + MEMORY moved to AGENTS.md; when the content moved back, the pointers moved back to the `linebyline` skill. When moving content between scaffolding files, grep for pointers to the OLD location, not just the content's new home.
+- **ESLint `.d.ts` fix needs BOTH halves**: removing the `**/*.d.ts` global ignore from `eslint.config.mjs` stops the "File ignored because of a matching ignore pattern" warning in editors (Zed's ESLint LSP lints open buffers explicitly — the lint gate's `--no-warn-ignored` doesn't apply there), but a `.d.ts` file outside every config block's `files` matchers then produces the mirror-image warning "File ignored because no matching configuration was supplied" (that hit `tests/app-globals.d.ts`). Added a `files: ["**/*.d.ts"]` claim block (TS parser + sonarjs) so both declaration files lint silently. tsserver still owns type checking for them.
+- **When relocating a plan item, write the full spec at the destination** — the mutation-testing item's relocation note ("moves to Tranche 6+ or `MAYBE.md`") outlived its original spec text (deleted in a restructure, only in git history), leaving a vague pointer to nowhere. Now written out self-contained as ROADMAP Phase E → "Tranche 9 — Mutation testing / mechanism-pinning assertions" (Tier 1: stronger mechanism-pinning assertions, incremental, no new deps; Tier 2: Stryker only if Tier 1 proves insufficient; the sandbox mutation workflow stays the write-time standard for new tests), and the relocation note retargets to it specifically.
+
+## Playwright test environment (Nov 22, 2026)
+
+- **firefox "fast burst" undo tests need both a gap-free input AND a commit-aware undo** — two nondeterministic failure modes hit `typing-debounce`/`typing-debounce-fast-inline` on the server's firefox. (1) `pressSequentially("abc")` straddling the 150ms `undo_debounce_ms` window (podman dispatch overhead) — legal mid-burst snapshots became extra undo points (undo landed on `META+"a"`/`META+"ab"`); fixed by `fill(META + "abc")` — one `input` event, same `useSync.onMainInput` → `scheduleInputSnapshot` path, no inter-key gaps, engine-uniform. (2) undo pressed before the debounced commit lands (slow handler / late timer under load) — `doUndo` no-ops on the seed-only stack, the value never reaches `META`, and `toHaveValue` polls in vain (flaked once more on firefox after fix 1; reproduced in-sandbox on chromium by mutating the commit delay to 1500ms — blind-press control FAIL, retry flow PASS — and it flakes ~50% on the normal 150ms build too). Fixed by `undoPastDebounce(page, expected)` in `tests/undo-redo.spec.js`: press, poll 1.5s, retry the press once on timeout — safe because `doUndo` no-ops on a seed-only stack, so a retry can never overshoot past the seed. The slow-inline/newlines tests keep per-keystroke typing + blind presses (not yet flaked; migrate them to `undoPastDebounce` if they do). `typing-debounce-fast-newlines` keeps `pressSequentially` because it needs real Enter keydowns for `handleEnterTrim` — if IT flakes on firefox, the fix is not `fill()` (it would bypass `handleEnterTrim`) but a rethink of how the burst is dispatched. Gotcha for mutation-testing the debounce: `App.vue`'s `undo_debounce_ms || 150` fallback is dead code — `useSettings.ts` normalizes the config value (`Math.max(1, v.undo_debounce_ms || 150)`) before App.vue reads it, so mutate the `scheduleInputSnapshot(...)` argument, not the fallback.
+- **webkit full-suite load flakes**: `keyboard-nav.spec.js:tab-settings` and `settings.spec.js:assign-conflict-tab` hit the 30s test timeout only in the 3-browser full-suite run (11.3m); both passed scoped re-runs immediately after (`tst -g`), and the failure snapshots show a normally-rendered page (assign-conflict-tab's click hung on "waiting for element to be … stable"). No code change — treat as server-load flake. If they recur every full run, look at per-browser timeout or serializing webkit, not at the app.
+- **tmpfiles fallback is contingency, not a per-turn step** (demoted Nov 22, 2026): the download widget has been reliable for a long time, so `prepare.sh` uploads `deliver.zip` to tmpfiles.org only when run with `--fallback-url`, and the `delivery` skill / `ai/README.md` phrase it as "re-run with the flag if the widget is broken". Don't paste fallback links in reports by default.

@@ -142,7 +142,7 @@ Skills prevent re-discovery. Without `browser-hotkey-system-SKILL.md`, each new 
 
 General patterns emerge from specific incidents. The `single-file-html-app-SKILL.md` "single source of truth" section was extracted from three separate MEMORY.md entries: the masterVolume/masterMuted double-flag bug, the `_volWheeling` race condition, and the undo/redo double-push pattern. No single entry justified its own section, but together they pointed to a general principle: when two variables represent the same underlying state, they will eventually disagree.
 
-Procedural rules about MEMORY.md writing discipline, companion file updates, and cross-skill consistency are now in linebyline-SKILL.md (see "MEMORY.md discipline" and "Wrap Up" sections) — they're action rules the agent follows every session, not meta-knowledge about skill creation.
+Procedural rules about MEMORY.md writing discipline, companion file updates, and cross-skill consistency are in linebyline-SKILL.md (see the "MEMORY.md discipline" and "Post-turn updates" sections) — they're action rules the agent follows every session, not meta-knowledge about skill creation.
 
 ---
 

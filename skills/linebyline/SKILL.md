@@ -3,15 +3,15 @@ name: linebyline
 description: Project onboarding, session workflow, and patch delivery for the LineByLine app. Use this skill at the start of every session (after `.setup-sandbox.sh`), whenever you need to locate project files, follow the build/patch workflow, version the app, or decide whether MEMORY.md or another skill needs updating after a change. Also use when the user mentions a vibecoding step (Onboard, Code, Skills, Propose), or asks about project structure. This skill is the single onboarding + workflow reference — read it once at session start, re-read at step boundaries if context compacts.
 ---
 
-This is the canonical project onboarding + workflow skill. It covers context loading, the vibecoding workflow steps, pre/post-patch checklists, post-turn documentation hygiene, versioning, and the deliver-zip pattern. Project structure lives in `AGENTS.md` (read once at Onboard, not every turn). Behavioral rules for the chat.z.ai web channel live in the `delivery` skill; specialized domain knowledge lives in the domain skills (`code-quality`, `aria-accessibility`, `sonarqube-workflow`, `playwright-testing`, etc.) — invoke those via `Skill(command="name")` when their description matches the current task.
+This is the canonical project onboarding + workflow skill. It covers context loading, the vibecoding workflow steps, pre/post-patch checklists, post-turn documentation hygiene, versioning, and the deliver-zip pattern. The compact session bootstrap (clone URLs, what to always read, reads per session type) lives in `AGENTS.md`, which is sized to be pasted into chat.z.ai Project instructions (5000-char limit — see `ai/README.md`); when the Project instructions carry that bootstrap, the read lists below are already satisfied and this skill supplies the details. Behavioral rules for the chat.z.ai web channel live in the `delivery` skill; specialized domain knowledge lives in the domain skills (`code-quality`, `aria-accessibility`, `sonarqube-workflow`, `playwright-testing`, etc.) — invoke those via `Skill(command="name")` when their description matches the current task.
 
 ---
 
 Context loading
 
-The chat.z.ai web channel does not auto-inject context files — the agent must Read them explicitly. To streamline this, `skills/delivery/scripts/setup-sandbox.sh` copies the project skills into `/home/z/my-project/skills/` so their `description` frontmatter auto-loads into the sandbox's `available_skills` list (invokable via `Skill(command="name")`). Run it once at Onboard after cloning the repo; it's idempotent. Root-level `AGENTS.md` and `MEMORY.md` do NOT auto-load — they must be Read explicitly (the Espanso snippets in `scripts/local/espanso.yml` insert the clone + read instructions).
+The chat.z.ai web channel does not auto-inject repo files — the agent must Read them explicitly, unless the chat runs in a chat.z.ai Project whose instructions carry the `AGENTS.md` bootstrap (then the always-read list and the per-session read lists are already in context). To streamline explicit loading, `skills/delivery/scripts/setup-sandbox.sh` copies the project skills into `/home/z/my-project/skills/` so their `description` frontmatter auto-loads into the sandbox's `available_skills` list (invokable via `Skill(command="name")`). Run it once at Onboard after cloning the repo; it's idempotent. Root-level `AGENTS.md` and `MEMORY.md` do NOT auto-load — read them explicitly when no Project instructions are present.
 
-The Espanso snippets define which files to read per step. See `ai/README.md` for the current trigger list (`:lcs` Onboard, `:lco` Code, `:lsk` Skills).
+`AGENTS.md` → "Reads per session type" defines which files to read per step. See `ai/README.md` for the Projects-instructions workflow and the simple opening-prompt pattern.
 
 Context loading strategy
 
@@ -20,7 +20,7 @@ The repo tree is large (src/ has many Vue components + composables, tests/ has m
 - Use Glob to list files matching a pattern (e.g. `src/composables/*.ts`) instead of LS on the repo root. LS on a large tree produces a massive listing that wastes context.
 - Use Grep to find files containing a keyword (e.g. `useAudio` across `src/`) before reading them.
 - For large `src/` files, use the `linebyline-section-index` skill's prompt-to-file map to identify which files a given change touches.
-- For `src/` and `tests/`, read only the files relevant to the current task. The Espanso `:lco` snippet says "read only the files relevant to the current task" — don't interpret "Everything in src/" as "read all of src/".
+- For `src/` and `tests/`, read only the files relevant to the current task. The bootstrap says "Read only the files relevant to the current task" — don't interpret "src/" as "read all of src/".
 
 When the task spans multiple files (e.g. a patch touching `src/composables/useAudio.ts` + `tests/unit/audio.test.ts` + `src/components/LeftPanel.vue`), use subagents (Task tool, `Explore` type) to read files in parallel. Launch them in a single message with multiple tool calls. Each subagent reads its assigned files and returns a summary. This is faster than sequential reads and doesn't bloat the main context — the subagent's full output is not loaded, only its summary.
 
@@ -45,15 +45,15 @@ Workflows and steps
 
 There are many possible vibecoding workflows — see `ai/Vibecoding workflow.md` for the known ones with flowchart diagrams. The agent handles the blue square nodes (Build, Review, Test, Skills, Investigate, Plan, Attempt); the user handles the green/red/yellow nodes (Onboard, decisions, push, wrap up). After building or patching, the agent loops Review ↔ Test until both code-quality checks and tests pass — the user does not need to announce "Review step" or "Test step" separately.
 
-The user may pick and choose steps in any order, stitch multiple workflows together, or follow a custom workflow. The user tells you which step they're on; each step can span multiple turns. The user may end a session at any point without a formal wrap-up. The agent's defense against this unpredictability is to keep documentation artifacts (MEMORY.md, skills) current after every turn, so that a push at any moment captures a complete audit trail. See Post-turn updates.
+The user may pick and choose steps in any order, stitch multiple workflows together, or follow a custom workflow. The user tells you which step they're on — often via a short opening prompt that references the ROADMAP section (e.g. `Work on [[ROADMAP#3. Modular Stack Refactor (Vite + Vue + Tailwind + shadcn-vue)]] Tranche 4.9`) — and each step can span multiple turns. The user may end a session at any point without a formal wrap-up. The agent's defense against this unpredictability is to keep documentation artifacts (MEMORY.md, skills) current after every turn, so that a push at any moment captures a complete audit trail. See Post-turn updates.
 
 ---
 
 Onboard
 
-Trigger: `:lcs`. Read `AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `README.md`, `skills/delivery/scripts/{prepare,deploy}.sh`, and `scripts/unpack.sh`. Run `bash skills/delivery/scripts/setup-sandbox.sh` to install project skills into the sandbox.
+Read `AGENTS.md` (the compact bootstrap — skip if the Project instructions carry it), `MEMORY.md`, `ROADMAP.md`, `package.json`, `README.md`, `skills/delivery/scripts/{prepare,deploy}.sh`, and `scripts/unpack.sh`. Run `bash skills/delivery/scripts/setup-sandbox.sh` to install project skills into the sandbox.
 
-1. Read `AGENTS.md` (minimal pointer to this skill + project structure) and `MEMORY.md` for development history.
+1. Read `AGENTS.md` (bootstrap) and `MEMORY.md` for development history.
 2. Read this skill (the `linebyline` skill — you're reading it now) and the `delivery` skill.
 3. Note the current app version. The user may state it directly ("Current version: 1.1.1"). If they don't state it, derive it from the repo tree: grep for the highest semver folder name under `archive/semantic/` (pre-modular-rework sessions) or `archive/modular/` (post-rework sessions), or read root `index.html`'s `<title>` tag (which carries the version).
 4. Do not begin coding — the app HTML and domain skills are read on-demand when the Code step begins. Onboard may be the only step in a session (e.g. a pure planning session), or it may be followed by Code or Skills.
@@ -63,7 +63,7 @@ Trigger: `:lcs`. Read `AGENTS.md`, `MEMORY.md`, `ROADMAP.md`, `package.json`, `R
 
 Code (Build + Test + automatic Review)
 
-Trigger: `:lco`. Read `AGENTS.md`, `LIMITATIONS.md`, `src/**`, config files, `tests/unit/**`, `tests/helpers/**`. The domain skills (`linebyline-section-index`, `single-file-html-app`, `browser-hotkey-system`) auto-load via `.setup-sandbox.sh` — invoke them via `Skill(command="name")` when needed.
+Read `AGENTS.md` (bootstrap — skip if injected), `LIMITATIONS.md`, `src/**` (via the `linebyline-section-index` skill's prompt-to-file map — read only the files the change touches), config files (`eslint.config.mjs`, `vite.config.mts`, `tsconfig*.json`), `tests/unit/**`, `tests/helpers/**`. The domain skills (`linebyline-section-index`, `single-file-html-app`, `browser-hotkey-system`) auto-load via `setup-sandbox.sh` — invoke them via `Skill(command="name")` when needed.
 
 1. Read `MEMORY.md` for development history if not already read at Onboard.
 2. Re-read this skill to refresh the workflow rules.
@@ -80,17 +80,17 @@ For test-running details (sandbox Vitest, sample Playwright, the `tst`/`tsta`/CI
 
 Skills (meta-session)
 
-Trigger: `:lsk`. Read `CONTRIBUTING.md`, `AGENTS.md`, `MEMORY.md`, `skills/**` (except this skill + `delivery` + `skill`), `scripts/**`, `ai/**` (except `ai/templates/`).
+Read `CONTRIBUTING.md`, `AGENTS.md`, `MEMORY.md`, `skills/**` (except this skill + `delivery` + `skill`), `scripts/**`, `ai/**` (except `ai/templates/`).
 
 1. Re-read this skill and the `skill` skill.
-2. Work on agent scaffolding — updating skills, pruning MEMORY.md, creating new skills, etc.
+2. Work on agent scaffolding — updating skills, pruning MEMORY.md, creating new skills, restructuring AGENTS.md, etc.
 3. Historical skill-creation transcripts are at `archive/skills/`; script-creation at `archive/scripts/`; test-creation at `archive/tests/` — read those if directly relevant to the meta-work being done.
 
 ---
 
 Propose / Investigate / Plan
 
-No dedicated trigger — uses `:lcs` (Onboard) context. Used for high-level research and planning that may not produce code.
+No dedicated bootstrap list — uses the Onboard context. Used for high-level research and planning that may not produce code.
 
 1. Re-read this skill.
 2. Read any relevant skills and project files for the investigation.
@@ -133,9 +133,9 @@ Post-patch verification
 
 After every patch, before delivering:
 
-1. Syntax check — confirm the patched file passes `new Function` (or equivalent) without errors. A syntax error in a single-file app means the entire app is broken.
-2. Section index accuracy — re-run the grep for `// ──` markers and compare to the previous index. Line numbers shift with every insertion or deletion; the section-index skill must reflect the new reality.
-3. Spot-check referenced functions — if the patch touched any function referenced by the section index, verify the function still exists at its declared line.
+1. Typecheck + lint — run `vue-tsc -b` and the eslint lint gate on the touched files. A syntax or type error in any module breaks the whole build.
+2. Section map accuracy — if the patch created, renamed, or moved `src/` files (or changed which file owns a concern), update the `linebyline-section-index` skill's prompt-to-file map. Pure line-number shifts don't affect the map.
+3. Spot-check referenced functions — if the patch touched a function referenced by tests or other modules, verify its callers still resolve (`vue-tsc` catches most of this; check test fixtures and `tests/app-globals.d.ts` for `page.evaluate`-called app functions).
 4. Trace one representative user action — if the patch changed any logic (not just formatting), trace one user action through the changed code path to confirm it still reaches the expected outcome.
 5. Run `npm run test:unit` in-sandbox if the patch touches `src/` modules with unit tests. For Playwright-level verification, the user runs `tst` locally. See the `playwright-testing` skill for sandbox-side sample test guidance.
 
@@ -149,7 +149,7 @@ Apply after every turn, regardless of whether a code patch was made. The user ma
 - You finished a new, distinctive set of code changes — future sessions need to know what changed and why.
 - A code change failed in a way that would surprise a fresh model in a new chat if it wasn't documented — failures are the most valuable MEMORY.md entries because they prevent re-discovery.
  Apply the update inline — produce the updated MEMORY.md in `download/` for the user to apply. Do not propose it as a draft for the user to approve. If the turn produces no distinctive changes worth remembering, skip this.
-2. Re-index the section index if a code patch shifted line numbers — update `linebyline-section-index-SKILL.md`. The section structure (names and contents) is the durable part; line numbers are point-in-time references.
+2. Update the `linebyline-section-index` skill's prompt-to-file map if a code patch created, renamed, or moved files, or changed which file owns a concern. The file-to-concern mapping is the durable part; line numbers don't matter to the map.
 3. Update a skill when a patch changes the architecture the skill documents. Don't update a skill for a pure bug fix that doesn't change the documented architecture. Apply the update inline (deliver the updated skill file in `download/`). Check cross-skill consistency: when updating one skill, check whether existing skills already cover the pattern — if they do, update them rather than just adding to MEMORY.md.
 
 ---
@@ -179,7 +179,7 @@ Cross-references
 
 - `delivery` — behavioral rules for the chat.z.ai web channel (applies every turn) + the delivery workflow (prepare → zip → deploy) + sandbox vs. user-side environment table
 - `skill` — when to create or update skills vs MEMORY.md entries; consolidation direction protocol
-- `linebyline-section-index` — how to read only the sections you need instead of the entire file
+- `linebyline-section-index` — the prompt-to-file map for reading only the `src/` files a change touches instead of the whole tree
 - `code-quality` — patterns to follow and pitfalls to avoid when writing JavaScript
 - `single-file-html-app` — architectural patterns for the single-file constraint
 - `browser-hotkey-system` — key normalization, restriction rules, capture-input behavior
@@ -188,5 +188,5 @@ Cross-references
 - `aria-accessibility` — Rules 1–9 covering semantic HTML, accessible names, dialog/modals
 - `ai/Vibecoding workflow.md` — the human-directed session flow with step diagrams + division of labor
 - `ai/Diagrammo flowcharts.md` — syntax reference for reading `dgmo` codeblocks
-- `ai/README.md` — the current Espanso trigger list
+- `ai/README.md` — chat.z.ai caveats + the Projects-instructions workflow (the `AGENTS.md` bootstrap)
 - `ROADMAP.md` — the modular refactor plan + tranche implementation notes

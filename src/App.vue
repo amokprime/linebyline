@@ -295,7 +295,7 @@ function expandPanel() {
 }
 
 // ── Phase E Tranche 1 — beforeunload dirty check ────────────────────────────
-// Parity with the monolith's beforeunload (deleted in Tranche 6, lines 2766-2770).
+// Parity with the monolith's beforeunload (docs/index.html lines 2766-2770).
 // Reads mainText + secondaryPool directly so a stale isDirty (e.g. the watch
 // in useAppState hasn't fired yet) can never suppress the warning. The
 // returnValue string matches the monolith verbatim.
