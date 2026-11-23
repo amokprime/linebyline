@@ -46,7 +46,7 @@ The markdown icons in this page are mostly real app icons. Checkmarks = checked 
         - Navigating with `Q`/`E` in **Hotkey mode** or `↑`/`↓` in any mode
         - The line is synced with (`W`, `Enter`)
 - Adjust timestamps of selected line(s) in **Offset time** mode
-    - Four ⚙️**Intervals**: large `X`/`C`, medium `S`/`D`, small `A`/`F`, and tiny `Z`/`V
+    - Four ⚙️**Intervals**: large `X`/`C`, medium `S`/`D`, small `A`/`F`, and tiny `Z`/`V`
     - Select <u>multiple lines</u> with `Shift+Click` or `Shift+↑/↓`
 - Review timestamps with `R`/`Shift+R` and **Seek offset**
     - In **Offset seek** toggle mode (``Shift+` ``), Controls adjust **Seek offset** instead of timestamps

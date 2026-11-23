@@ -122,7 +122,7 @@ zip_only_files=()
 # accidentally rewrote these declarations into self-references
 # (`readonly X="$X"`), which threw "unbound variable" under `set -u` and killed
 # the deploy at line 115 before any deploy_file ran. Restored to literal values.
-readonly READONLY_DEST_HINT="  (if this is a bwrap --ro-bind path like archive/, .git/, unpack.sh, or scripts/server/ (tst + tst-locked),"
+readonly READONLY_DEST_HINT="  (if this is a bwrap --ro-bind path like .git/, scratch/README.md, scripts/unpack.sh, scripts/zip.sh, scripts/diff.sh, or scripts/server/ (tst + tst-locked),"
 readonly DEPLOY_MANUAL_HINT="   use deploy_manual instead -- copy outside the sandbox after deploy)"
 
 deploy_file() {
@@ -215,8 +215,9 @@ deploy_file() {
   fi
 }
 
-# deploy_manual: for files in read-only bwrap paths (archive/, .git/,
-# unpack.sh itself, scripts/server/ — tst + tst-locked). The bwrap sandbox
+# deploy_manual: for files in read-only bwrap paths (.git/, scratch/README.md
+# when present, unpack.sh itself, scripts/zip.sh + scripts/diff.sh — user-executed,
+# scripts/server/ — tst + tst-locked). The bwrap sandbox
 # protects these paths from modification by a malicious deliver.zip. The file
 # is LEFT in scratch/ for the user to copy manually after the deploy completes.
 # Tracks in manual_deploys[] for the deploy summary + collision cleanup skip.
@@ -282,6 +283,18 @@ deploy_hardlinked() {
 # Related verbs: deploy_manual <flat> <repo_path> (bwrap-protected paths --
 # the file STAYS in scratch/ for the user to copy), deploy_hardlinked
 # <flat> <repo_path> (always cp -- for fish-function hardlinks).
+#
+# FLAT-NAME RULE (third scratch-README wipe, Nov 23, 2026): never name a flat
+# deliverable "README.md" -- scratch/README.md is the user's persistent file,
+# and unzip -oqq overwrites it BEFORE deploy.sh runs. Ship repo-root
+# README.md as repo-README.md (prepare.sh hard-fails on a README.md flat).
+# BWRAP-PROTECTED DESTINATIONS: .git/, scripts/unpack.sh (ro-bind), the
+# user-executed scripts/zip.sh + scripts/diff.sh (ro-bind — the user runs them
+# outside any sandbox, so a deliver.zip must not rewrite them),
+# scratch/README.md (ro-bind when present) and scripts/server/ (tmpfs) reject
+# deploy_file writes and ABORT the deploy -- map them with deploy_manual
+# instead (file stays in scratch/). archive/ is WRITABLE since Nov 23, 2026
+# (git-tracked: diffs visible in git diff, recoverable) -- deploy_file is fine.
 #
 # zip_only_files=( "name.md" ... ) -- one line, NO deploy mapping. These
 # extract to scratch/<name> and survive cleanup. Release notes belong here
@@ -396,8 +409,8 @@ fi
 # are in the repo. Files can be in `changed[]` (deployed this run) OR
 # `skipped_identical[]` (already in the repo from a previous deploy). Both
 # cases mean the source code is present -- the dist/ should be rebuilt because
-# a previous deploy might have aborted before the build step (e.g. the
-# archive/ mv failure in the bwrap sandbox).
+# a previous deploy might have aborted before the build step (e.g. a
+# deploy_file abort on a ro-bind path).
 run_pw=0
 for rel in "${changed[@]}" "${skipped_identical[@]}"; do
   # src/ — all files are code, always trigger
@@ -549,7 +562,7 @@ else
     [[ -z "$f" ]] && continue
     [[ "$f" == "deploy.sh" || "$f" == "deliver.zip" || "$f" == ".deliver-files.list" ]] && continue
     # Skip files flagged for manual deploy -- they stay in scratch/ for the
-    # user to copy manually (bwrap-protected paths like archive/, .git/).
+    # user to copy manually (bwrap-protected paths like .git/).
     is_manual=0
     for m in "${manual_deploys[@]}"; do
       if [[ "$f" == "$m" ]]; then

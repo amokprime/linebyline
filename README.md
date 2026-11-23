@@ -3,7 +3,7 @@
 ### AI Disclosure
 I am not a developer. This is my first major vibecoded project and first GitHub repo.
 Features are designed by me and reviewed with AI. AHK scripts, some markup edits, and documentation like this README are written by me.
-App prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive), test prompt history in [/tests/chat](https://github.com/amokprime/linebyline/tree/main/tests/chat), AI scaffolding (skills, scripts, workflow docs) in [/skills](https://github.com/amokprime/linebyline/tree/main/skills), [/scripts](https://github.com/amokprime/linebyline/tree/main/scripts), and [/ai](https://github.com/amokprime/linebyline/tree/main/ai).
+App prompt history and older versions are shared in [/archive](https://github.com/amokprime/linebyline/tree/main/archive), test prompt history in [/archive/tests](https://github.com/amokprime/linebyline/tree/main/archive/tests), AI scaffolding (skills, scripts, workflow docs) in [/skills](https://github.com/amokprime/linebyline/tree/main/skills), [/scripts](https://github.com/amokprime/linebyline/tree/main/scripts), and [/ai](https://github.com/amokprime/linebyline/tree/main/ai).
 ### Purpose
 **LineByLine is an opinionated web app for manual line-by-line lyrics syncing.** It was created to improve my workflow for publishing lyrics to [LRCLIB](https://lrclib.net/):
 1. Find original lyrics from [Genius](https://genius.com/) or LRCLIB, or DuckDuckGo if really obscure
@@ -106,6 +106,15 @@ After↓
 [00:06.35]
 ```
 ### Getting started
-Visit the app's [GitHub Page](https://amokprime.github.io/linebyline/) or download the source from the [Releases](https://github.com/amokprime/linebyline/releases) page. Also see the [HELP](https://github.com/amokprime/linebyline/blob/main/HELP.md) file (linked to with the "?" button in the app).
+Visit the app's [GitHub Page](https://amokprime.github.io/linebyline/) to use it directly, or download `linebyline-<version>.html` from the [Releases](https://github.com/amokprime/linebyline/releases) page — a fully self-contained offline build (all JS/CSS inlined) that runs by double-clicking, no install needed. Also see the [HELP](https://github.com/amokprime/linebyline/blob/main/HELP.md) file (linked to with the "?" button in the app).
+### Development
+The app is a Vite + Vue + shadcn-vue project; all app code lives in [`src/`](https://github.com/amokprime/linebyline/tree/main/src) and builds to `dist/` (which is gitignored — GitHub Pages deploys it via the `deploy.yml` workflow). Clone the repo, then:
+- `npm install`
+- `npm run dev` — Vite dev server with live reload
+- `npm run build` + `npm run preview` — production build, served locally
+- `npm run test:unit` — Vitest unit suite
+- Playwright suite — see [PLAYWRIGHT_SETUP.md](https://github.com/amokprime/linebyline/tree/main/tests/PLAYWRIGHT_SETUP.md)
+
+Releases additionally ship a single-file offline build (`npm run build:single` inlines everything via vite-plugin-singlefile).
 ### Contributing
 See [CONTRIBUTING.md](https://github.com/amokprime/linebyline/tree/main/CONTRIBUTING.md) and [MAYBE.md](https://github.com/amokprime/linebyline/tree/main/MAYBE.md).

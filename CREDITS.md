@@ -1,5 +1,7 @@
 Icons ("undo", "redo", "list-checks" recolored for LineByLine logo, "play", "skip-backward", "skip-forward", "bug", "panel-left") from [Lucide Icons](https://lucide.dev/) — MIT license
 
+Modular app built with [Vite](https://vite.dev/), [Vue 3](https://vuejs.org/), [Tailwind CSS v4](https://tailwindcss.com/), and [shadcn-vue](https://www.shadcn-vue.com/) (reka-ui primitives). Single-file offline Release builds are inlined by [vite-plugin-singlefile](https://github.com/richardtallent/vite-plugin-singlefile).
+
 "list-checks" recolored with an online SVG editor
 
 Built with AI assistance from [Claude Sonnet](https://www.anthropic.com/claude), [GLM](https://chat.z.ai/), [DeepSeek](https://chat.deepseek.com/), and various models through [Gratisfy](https://gratisfy.xyz/) and [Logfare](https://logfare.ai).

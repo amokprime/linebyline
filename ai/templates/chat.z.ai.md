@@ -1,8 +1,7 @@
 ---
 model: GLM-5.3-Flash
 provider: https://chat.z.ai
-start:
-  "{ date:YYYY-MM-DD }":
+start: "{{ date:YYYY-MM-DD }}"
 ---
 ## Turn 1
 
@@ -12,8 +11,11 @@ start:
 
 Session setup (confirm each in your first reply, one line per step):
 1. Clone `https://github.com/amokprime/linebyline.git` → `/home/z/my-project/repo` (branch: main/staging) with plain `git clone` — don't rely on the GitHub plugin.
-2. `bash /home/z/my-project/repo/skills/delivery/scripts/setup-sandbox.sh`
+2. `LINEBYLINE_ROOT=/home/z/my-project/repo bash /home/z/my-project/repo/skills/delivery/scripts/setup-sandbox.sh`
 3. Read `MEMORY.md` + `ROADMAP.md` from the clone, then answer.
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -24,6 +26,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---
@@ -38,6 +43,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 
 
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -48,6 +56,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---
@@ -62,6 +73,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 
 
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -72,6 +86,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---
@@ -86,6 +103,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 
 
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -96,6 +116,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---
@@ -110,6 +133,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 
 
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -120,6 +146,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---
@@ -134,6 +163,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 
 
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -144,6 +176,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---
@@ -158,6 +193,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 
 
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -168,6 +206,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---
@@ -182,6 +223,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 
 
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -192,6 +236,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---
@@ -206,6 +253,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 
 
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -216,6 +266,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---
@@ -230,6 +283,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 
 
+**Attachments:**
+
+
 ---
 ### Agent:
 
@@ -240,6 +296,9 @@ Session setup (confirm each in your first reply, one line per step):
 
 ### User:
 
+
+
+**Attachments:**
 
 
 ---

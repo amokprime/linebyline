@@ -1,14 +1,22 @@
 #!/bin/bash
-# zip.sh — ad-hoc zip utility for the LineByLine repo's scratch/upload/ folder.
+# zip.sh — upload-packaging utility for the LineByLine repo's scratch/upload/
+# folder.
 #
-# Zips whatever is in $LINEBYLINE_ROOT/scratch/upload/ into a uniquely-named
-# zip in scratch/, then copies the path to clipboard via wl-copy. Aborts with
-# an error if the upload folder is empty. Used for ad-hoc uploads of non-
-# deliverable files (e.g. a single screenshot or test fixture).
+# Runs scripts/diff.sh first (Nov 23, 2026) so every upload carries a fresh
+# diff package — changes.patch (working tree + untracked + unpushed commits
+# vs origin), changes.status, changes.meta — plus deploy.sh's deploy.log from
+# scratch/upload/. Zips the folder into a uniquely-named zip in scratch/ and
+# copies the path to clipboard via wl-copy. Aborts only if the upload folder
+# is STILL empty (diff.sh failed and nothing ad-hoc was added). This is the
+# user's only per-turn manual step: upload the zip, and the agent reconstructs
+# repo + deploy state from it (AGENTS.md → "Upload sync"). Ad-hoc non-diff
+# uploads (a screenshot, a fixture) also work — a diff.sh failure warns but
+# does not abort.
 #
-# Can be double-clicked after setup. Manual deployment only — must be copied
-# to the user's scripts/ folder outside the deliver.zip workflow (a malicious
-# deliver.zip can't modify this script because it's read-only inside bwrap).
+# Can be double-clicked after setup. Manual deployment only (deploy_manual) —
+# unpack.sh ro-binds this script + scripts/diff.sh inside bwrap since
+# Nov 23, 2026, so a malicious deliver.zip can't rewrite scripts the user
+# executes directly outside any sandbox.
 #
 # Code quality per code-quality-SKILL.md → "Bash workflow scripts":
 #   - set -euo pipefail
@@ -24,6 +32,14 @@ upload="$scratch/upload"
 unique="$(date +%s%N).zip"
 
 export PATH="$HOME/.npm-global/bin:$PATH"
+
+# Always carry a fresh repo diff: run diff.sh first so every upload zip
+# contains changes.patch/changes.status/changes.meta (+ deploy.log written by
+# deploy.sh into scratch/upload/). A diff.sh failure is a warning, not an
+# abort — ad-hoc uploads (screenshots, fixtures) must still work without one.
+if ! bash "$root/scripts/diff.sh"; then
+  echo "WARNING: diff.sh failed -- this zip will NOT carry a fresh changes.patch." >&2
+fi
 
 # Abort if upload folder is empty (would otherwise produce an empty zip).
 if [[ ! -d "$upload" ]]; then

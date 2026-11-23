@@ -16,8 +16,8 @@ bash skills/delivery/scripts/setup-sandbox.sh
 ```
 scripts/zip.sh
 ```
-- Zips whatever is in `~/GitHub/linebyline/scratch/upload/` into a uniquely-named zip in `scratch/`, then copies the path to clipboard via `wl-copy`. Used for ad-hoc uploads of non-deliverable files (e.g. a single screenshot or test fixture).
-- Can be double-clicked after setup. Aborts with an error if the upload folder is empty.
+- Runs `scripts/diff.sh` first (Nov 23, 2026), so every upload zip carries a fresh diff package (`changes.patch`/`changes.status`/`changes.meta`) plus `deploy.log` (deploy.sh writes it into `scratch/upload/`). Then zips whatever is in `~/GitHub/linebyline/scratch/upload/` into a uniquely-named zip in `scratch/`, and copies the path to clipboard via `wl-copy`. This is the per-turn upload step: the agent applies the patch and reconciles deploy state from it (`AGENTS.md` → "Upload sync") — no deploy-status reporting needed. Ad-hoc non-diff uploads (e.g. a single screenshot or test fixture) still work: a diff.sh failure warns but doesn't abort.
+- Can be double-clicked after setup. Aborts with an error only if the upload folder is still empty afterwards.
 ### Sharing uncommitted state
 ```
 scripts/diff.sh

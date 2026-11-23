@@ -115,6 +115,20 @@ done < <(
   }' "$DOWNLOAD_DIR/deploy.sh"
 )
 
+# Flat-name collision guard (third scratch-README wipe, Nov 23, 2026): a
+# mapped flat named README.md overwrites the user's persistent
+# scratch/README.md at extraction — unzip -oqq runs BEFORE deploy.sh can
+# object. Repo-root README.md deliverables must ship under a renamed flat.
+for f in "${expected_files[@]}"; do
+  if [[ "$f" == "README.md" ]]; then
+    echo "ERROR: a deliverable flat is named 'README.md' -- unzip -oqq overwrites" >&2
+    echo "  the user's persistent scratch/README.md at extraction, before deploy.sh" >&2
+    echo "  runs. Rename the flat (e.g. repo-README.md) and map it to the repo path:" >&2
+    echo "    deploy_file repo-README.md README.md" >&2
+    exit 1
+  fi
+done
+
 missing_files=()
 for f in "${expected_files[@]}"; do
   if [[ ! -f "$DOWNLOAD_DIR/$f" ]]; then

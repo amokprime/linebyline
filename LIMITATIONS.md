@@ -1,4 +1,4 @@
-**These apply to the Vite + Vue + shadcn-vue app (Phase E pre-cutover)**
+**These apply to the Vite + Vue + shadcn-vue app (post-cutover)**
 - No direct filesystem access due to browser security restrictions
     - Can't read audio file metadata tags
     - Audio file doesn't persist if page is reloaded
@@ -9,9 +9,9 @@
 browsers intentionally block programmatic `focus()` calls that aren't triggered by user interaction, as an anti-fingerprinting and anti-annoyance measure. This applies in both standard Firefox and ResistFingerprinting mode. The only reliable approaches would be an explicit click-to-activate overlay (intrusive) or making the whole app a PWA installed to the OS (out of scope).
 ```
 - Cursor is positioned one line too high in **Typing mode** on startup. The default metadata tags include a trailing newline for style, so there should be a blank line between `[re:]` and the first line of lyrics. Pasting in either mode now respects this (the paste handlers insert `\n\n`), but manually typing lyrics still starts the cursor right below `[re:]` without the blank line. Adding a `\n` in `applyMode()` would fix the cursor position but breaks undo (the modification isn't snapshot-pushed, so `Control+Z` restores the old value without the extra `\n`, causing assertion failures). Worked around by pasting lyrics in **Hotkey mode** first (which adds the expected newline), or changing ⚙️**Default metadata tags** to include a trailing blank line.
-- Many hotkey restrictions (copied from [/docs/index.html](https://github.com/amokprime/linebyline/blob/main/docs/index.html))
-```html
-// ── Restricted hotkey rules ──────────────────────────────────────────────────
+- Many hotkey restrictions (maintained in [src/hotkeys/restrictedKeys.ts](https://github.com/amokprime/linebyline/blob/main/src/hotkeys/restrictedKeys.ts), ported verbatim from the `docs/index.html` monolith deleted in Phase E Tranche 6)
+```js
+// src/hotkeys/restrictedKeys.ts — RESTRICTED_ALL
 // Keys blocked for ALL remappable hotkeys (browser-reserved or destructive)
 const RESTRICTED_ALL=new Set([
   'MouseLeft','MouseRight',
@@ -45,12 +45,12 @@ const RESTRICTED_ALL=new Set([
 ]);
 ```
 - The unsaved work popup jumps to default "Leave page" button on Firefox but [not](https://github.com/amokprime/linebyline/blob/main/archive/semantic/0.36.1/linebyline-0.36.1.md) other browsers
-- LibreWolf browser cannot connect to `http://localhost:5173/` (Vite preview). Plain Firefox (upstream architecture) works. This may affect the GitHub Pages post-cutover URL as well — needs verification.
+- LibreWolf browser cannot connect to `http://localhost:5173/` (Vite preview). Plain Firefox (upstream architecture) works. Whether LibreWolf has the same problem with the post-cutover GitHub Pages URL (`https://amokprime.github.io/linebyline/`) is still unverified.
 
-**These apply to Playwright tests as of version 0.37.2**
-- Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md) as of version 0.37.2
+**These apply to the Playwright suite as of version 1.1.1**
+- Certain tests are still [manual](https://github.com/amokprime/linebyline/blob/main/tests/MANUAL.md)
 - The official Microsoft Playwright image pins an outdated version of npm that's hopefully compatible with the GitHub CI ubuntu-runner
-- Webkit tests crash after completion on Linux, which also triggers a coredump in the repo root and false positive SELinux AVC [warning](https://github.com/amokprime/linebyline/blob/main/tests/chat/0.37.1/2.md#3. SELinux AVC — NOT related to the cache folder mount). The SELinux alerts can be silenced with the below policy. I never got around to silencing the Webkit crash alerts and just added `my-systemdcored.*` to .gitignore.
+- Webkit tests crash after completion on Linux, which also triggers a coredump in the repo root and false positive SELinux AVC [warning](https://github.com/amokprime/linebyline/blob/main/archive/tests/0.37.1/2.md#3. SELinux AVC — NOT related to the cache folder mount). The SELinux alerts can be silenced with the below policy. I never got around to silencing the Webkit crash alerts and just added `my-systemdcored.*` to .gitignore.
 ```sh
 sudo ausearch -c 'systemd-coredum' --raw | audit2allow -M my-systemdcoredum
 sudo semodule -X 300 -i my-systemdcoredum.pp
@@ -85,7 +85,7 @@ await page.getByRole("textbox", { name: "Main lyric text" }).click();
     "Webkit always generates empty snapshot from Contrl+V paste",
   );
 ```
-- I run UI tests with Playwright npm natively in Fedora, which has different OS font rendering than Ubuntu. This causes font-based screenshot [incompatibilities](https://github.com/amokprime/linebyline/blob/main/tests/chat/0.37.1/9.md) that must be worked around by skipping relevant tests or rewriting them to expect consistent elements or shared fonts
+- I run UI tests with Playwright npm natively in Fedora, which has different OS font rendering than Ubuntu. This causes font-based screenshot [incompatibilities](https://github.com/amokprime/linebyline/blob/main/archive/tests/0.37.1/9.md) that must be worked around by skipping relevant tests or rewriting them to expect consistent elements or shared fonts
 - Tests that pass may not pin the specific implementation mechanism — a test can verify the user-facing behavior without catching a regression that removes the code responsible.
     - Example (Sep 25, 2026, Tranche 4.5): the `reload-clears-lyrics-audio` test passes whether or not `sessionStorage.removeItem('lbl_autosave')` is present in `App.vue`. The test verifies the clean-state-after-reload behavior, but the autosave isn't written during the fast test import cycle, so the `removeItem` line's presence or absence doesn't change the outcome. The test catches a regression where reload gives a dirty state, but misses a regression where `removeItem` is deleted.
-    - Mutation testing (break the app, verify the test fails, restore) catches this class of gap; the cheaper alternative is adding stronger assertions that pin the mechanism (e.g. `expect(page.evaluate(() => sessionStorage.getItem('lbl_autosave'))).toBeNull()` after reload). See Tranche 4.7 in `ROADMAP.md` for the project's decision on whether to adopt mutation testing permanently.
+    - Mutation testing (break the app, verify the test fails, restore) catches this class of gap; the cheaper alternative is adding stronger assertions that pin the mechanism (e.g. `expect(page.evaluate(() => sessionStorage.getItem('lbl_autosave'))).toBeNull()` after reload). See Phase E Tranche 9 in `ROADMAP.md` (mutation testing / mechanism-pinning assertions) for the project's decision on whether to adopt mutation testing permanently.

@@ -33,11 +33,19 @@ set -euo pipefail
 
 SANDBOX_SKILLS="/home/z/my-project/skills"
 
-# Locate the project skills source directory.
+# Locate the project skills source directory. Priority: $1 > LINEBYLINE_ROOT
+# > the skills/ dir this script itself lives in > ./skills (cwd).
+# The script-location fallback (Nov 23, 2026) fixes the turn-1 snag: the
+# sandbox clones to /home/z/my-project/repo, so the old defaults
+# ($HOME/GitHub/linebyline, then ./skills relative to cwd) only worked when
+# run from the repo root -- from anywhere else setup failed or installed a
+# stale skills copy.
 skills_src="${1:-${LINEBYLINE_ROOT:-$HOME/GitHub/linebyline}/skills}"
 if [[ ! -d "$skills_src" ]]; then
-  # Fall back to ./skills (relative to cwd)
-  if [[ -d "./skills" ]]; then
+  script_skills="$(cd "$(dirname "$0")/../.." 2>/dev/null && pwd)" || script_skills=""
+  if [[ -d "$script_skills/delivery" ]]; then
+    skills_src="$script_skills"
+  elif [[ -d "./skills" ]]; then
     skills_src="./skills"
   elif [[ -d "/home/z/my-project/skills-src" ]]; then
     skills_src="/home/z/my-project/skills-src"

@@ -14,7 +14,9 @@
 #
 # bwrap sandbox (if available):
 #   --clearenv: clears all env vars, then re-adds only what deploy.sh needs
-#   Read-only overlays: .git/, archive/, unpack.sh itself (the bwrap filter)
+#   Read-only overlays: .git/, scratch/README.md (when present), unpack.sh
+#   itself (the filter), scripts/zip.sh + scripts/diff.sh (user-executed).
+#   archive/ is writable (git-tracked, recoverable).
 #   Blocked (tmpfs): trash/, playwright-report/, test-results/, blob-report/,
 #     .obsidian/, .stfolder/, .stversions/, scripts/server/ (tst + tst-locked)
 #   If bwrap isn't installed, deploy.sh runs directly with a warning.
@@ -100,7 +102,8 @@ chmod +x "$DEPLOY_SH"
 #   - Read-write: /tmp, /dev, /proc, repo root ($DEST)
 #   - Read-only SSH keys (~/.ssh) and Python tools (~/.local; binding the
 #     whole tree so ~/.local/bin symlinks into ~/.local/share resolve)
-#   - Read-only overlays on .git/, archive/, unpack.sh (the filter itself)
+#   - Read-only overlays on .git/, scratch/README.md (when present), and
+#     unpack.sh (the filter itself)
 #   - Blocked (tmpfs): trash/, playwright-report/, test-results/,
 #     blob-report/, .obsidian/, .stfolder/, .stversions/, scripts/server/
 #
@@ -213,11 +216,24 @@ if command -v bwrap >/dev/null 2>&1; then
   # ── Read-only overlays (must come AFTER --bind above to take effect) ────
   # .git/ -- git history shouldn't be modified by deploy
   opt_ro "$DEST/.git"
-  # archive/ -- historical artifacts, read-only
-  opt_ro "$DEST/archive"
+  # scratch/README.md -- the user's persistent scratch notes (gitignored, NOT
+  # recoverable via git; wiped 3x on Nov 22-23, 2026). ro-bound when present,
+  # silently skipped when absent (the file is optional). Covers deploy.sh-phase
+  # writes only -- zip extraction runs OUTSIDE bwrap, so prepare.sh's README.md
+  # flat-name guard remains the extraction-vector fix. archive/ is writable
+  # since Nov 23, 2026 (user decision: git-tracked -- diffs visible, easy
+  # recovery), so deploy_file works for archive/ paths.
+  if [[ -f "$DEST/scratch/README.md" ]]; then
+    bwrap_args+=(--ro-bind "$DEST/scratch/README.md" "$DEST/scratch/README.md")
+  fi
   # unpack.sh itself -- the bwrap filter; must be deployed manually.
   # Lives at scripts/unpack.sh (this file).
   opt_ro "$DEST/scripts/unpack.sh"
+  # zip.sh + diff.sh -- user-side scripts the user executes directly (outside
+  # any sandbox), so a malicious deliver.zip must not be able to rewrite them
+  # via deploy.sh. Deployed manually (deploy_manual) from now on. Nov 23, 2026.
+  opt_ro "$DEST/scripts/zip.sh"
+  opt_ro "$DEST/scripts/diff.sh"
 
   # ── Blocked paths (tmpfs -- empty, writes discarded on exit) ─────────────
   # These paths are NOT needed locally by deploy.sh:

@@ -11,7 +11,7 @@
 **Architecture note (post-cutover)**: `src/` is the modular Vite + Vue app; `dist/` — built by the `deploy.yml` GitHub Actions workflow, not committed — is the live site on GitHub Pages. The pre-cutover monolith `docs/index.html` was deleted in Phase E Tranche 6 (Nov 23, 2026) and remains reachable via git history. Both were scanned by ESLint + CodeQL + SonarCloud while it existed.
 ## Reporting a Vulnerability
 You can open a new [Issue](https://github.com/amokprime/linebyline/issues) or [report it privately](https://docs.github.com/en/code-security/how-tos/report-and-fix-vulnerabilities/privately-reporting-a-security-vulnerability). There are many known [false positives](https://github.com/amokprime/linebyline/blob/main/SECURITY.md#false-positives) that boil down to these points:
-1. LineByLine is an offline app. Loading the GitHub Page is basically the same as downloading index.html and opening it in a browser.
+1. LineByLine is an offline app. Loading the GitHub Page is basically the same as downloading the app and opening it in a browser (the Releases page ships a single-file offline build that runs the same way).
 2. Scanners treat it like a website that stores and processes data server-side. SonarQube Cloud is especially spammy here. I'm using it more to check code quality (i.e. C.R.A.P.) as CodeQL already covers security.
 
 I am not a cybersecurity professional or security researcher. What I can do about any [true positives](https://github.com/amokprime/linebyline/blob/main/SECURITY.md#true-positives):
@@ -37,16 +37,16 @@ I am not a cybersecurity professional or security researcher. What I can do abou
     - "Make sure not using resource integrity feature is safe here."
         - 3 cases that look like `<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">`
         - All three files are in `archive/pre-semantic/29/` which predated the GitHub Page and will not be deployed. 
-            - The GitHub Page only ever deploys a copy of the latest `archive/semantic/` version that was QA tested and passed CodeQL
+            - The live GitHub Page deploys the `dist/` build produced by the `deploy.yml` workflow from `src/` on every push to `main`; `archive/` never deploys and is excluded from Sonar scanning (`sonar.exclusions=archive/**`)
     - "Make sure not using "noopener" is safe here."
         - 58 cases that look like one of these:
             - `function openHelp({window.open('https://github.com/amokprime/linebyline/blob/main/HELP.md','_blank');}`
             - `if(hk.issues&&hkMatch(ks,hk.issues)){e.preventDefault();window.open('https://github.com/amokprime/linebyline/issues','_blank');return;}`
         - Those are pages for this repo.
-    - `S8786` super-linear regex (×11 in `src/`): same DoS family as the 548-case `text.match` above, but in the modular `src/` port. Bounded by `MAX_LINES=500` — input size is capped, so super-linear backtracking can't run away.
-    - `S6594` `.match` → `.exec` (×8 in `src/`): verbatim port from the monolith. Safe for non-global regexes (`.match` and `.exec` are equivalent when `g` flag is absent). Modernization belongs to the post-Phase-E cutover pass.
-    - `S6606` `??=` nullish coalescing (×7 in `src/config.ts` `ensureDefaultHotkeys`): NOT equivalent — `??=` coalesces `null` too, but the code checks `=== undefined` explicitly (deliberately cleared hotkeys are `''`, not `null`/`undefined`). Converting would reset intentionally-cleared hotkeys on config load.
-    - `S7755` `.at()` (×3 in `src/`): verbatim port. Safe, but diverges from the monolith's `arr[arr.length - 1]` style. Accept for now; modernize post-cutover.
+    - `S8786` super-linear regex (in `src/`): same DoS family as the 548-case `text.match` above. Bounded by `MAX_LINES=500` — input size is capped, so super-linear backtracking can't run away. **Resolved in Phase E Tranche 6 (Nov 23, 2026)**: six sites fixed (dropping a redundant `\s*` before the capture — downstream `.trim()`s make it behavior-identical), two genuinely-safe sites suppressed per-site with dual `eslint-disable-next-line` + `// NOSONAR` markers; the blanket `sonarjs/super-linear-regex` ESLint override was removed. Zero S8786 findings remain open in `src/` (verified against the SonarCloud API, Nov 23, 2026).
+    - `S6594` `.match` → `.exec`: verbatim ports from the monolith. Safe for non-global regexes (`.match` and `.exec` are equivalent when the `g` flag is absent).
+    - `S6606` `??=` nullish coalescing (in `src/config.ts` `ensureDefaultHotkeys`): NOT equivalent — `??=` coalesces `null` too, but the code checks `=== undefined` explicitly (deliberately cleared hotkeys are `''`, not `null`/`undefined`). Converting would reset intentionally-cleared hotkeys on config load.
+    - `S7755` `.at()`: verbatim port. Safe, but diverges from the monolith's `arr[arr.length - 1]` style.
     - `S4138` `for` with index (×1 in `src/utils/geniusExtractor.ts`): index used for lookahead (`head[i+1]`). `for-of` can't replace this pattern.
     - `S6819` custom slider role (×1 in `src/components/LeftPanel.vue` `#progress-wrap`): custom mousedown+drag+wheel interaction model that a native `<input type="range">` can't cover. Won't Fix — see `aria-accessibility-SKILL.md` Rule 1 documented exception.
     - `S7927` icon-only button (×1 in `src/components/MenuBar.vue` theme toggle): has `aria-label`. False Positive — the rule doesn't detect the label.

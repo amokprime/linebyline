@@ -1,7 +1,7 @@
 ---
 model: DeepSeek
 provider: https://chat.deepseek.com/
-start: {{date:YYYY-MM-DD}}
+start: "{{date:YYYY-MM-DD}}"
 ---
 ## Turn 1
 
