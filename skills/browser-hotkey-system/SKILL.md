@@ -1,9 +1,29 @@
 ---
 name: browser-hotkey-system
-description: Build a remappable hotkey system for browser-based apps. Use this skill whenever a web app needs keyboard shortcuts, especially when those shortcuts should be user-configurable, need conflict detection, must avoid browser-reserved keys, or involve modifier combos (Ctrl, Shift, Alt). Covers key normalization, restriction rules, capture inputs, conflict detection, and a Settings UI for remapping. Pairs with single-file-html-app for tool/utility apps.
+description: Build a remappable hotkey system for browser-based apps. Use this skill whenever a web app needs keyboard shortcuts, especially when those shortcuts should be user-configurable, need conflict detection, must avoid browser-reserved keys, or involve modifier combos (Ctrl, Shift, Alt). Covers key normalization, restriction rules, capture inputs, conflict detection, and a Settings UI for remapping. In LineByLine, use it when touching src/config.ts, src/hotkeys/, useGlobalHotkeys.ts, useTextareaKeys.ts, useSettings.ts, SettingsDialog.vue, or HotkeyCell.vue. Pairs with modular-app (the src/ file map) and code-quality (bug-pattern rules).
 ---
 
-A complete, remappable hotkey system for single-file HTML apps. Covers key normalization through a Settings UI with conflict detection.
+A complete, remappable hotkey system for browser-based tool apps. Covers key normalization through a Settings UI with conflict detection.
+
+---
+
+Module map in LineByLine's src/
+
+The architecture below is unchanged, but the implementation is split across modules (post-modular-refactor). The pattern sections that follow describe the behavior each module implements:
+
+| Concern | Where |
+|---|---|
+| DEFAULT_CFG.hotkeys, HK_SECTIONS, HK_LABELS, LEGACY_HOTKEY_MAP + table-driven migration | `src/config.ts` |
+| keyStr / hkMatch | `src/hotkeys/keyUtils.ts` |
+| RESTRICTED_ALL / isRestrictedForKey / isRestrictedForAll | `src/hotkeys/restrictedKeys.ts` |
+| Stored→display conversion for hotkey cells | `src/utils/hotkeyDisplay.ts` |
+| Global keydown dispatcher (dispatch table), settings keyboard nav, hotkey-mode arrows/replay, repeat guard, reset-confirm keys, updateDynamicTooltips | `src/composables/useGlobalHotkeys.ts` |
+| Typing-mode textarea keys (Enter trim, paren/bracket autocomplete, asterisk) | `src/composables/useTextareaKeys.ts` |
+| Capture-input interactions, search modes, conflict state, save-on-close | `src/composables/useSettings.ts` |
+| Settings dialog UI + capture cells | `src/components/SettingsDialog.vue` + `src/components/HotkeyCell.vue` |
+| Mode toggle + offset-seek buttons | `src/components/ControlsPanel.vue` + `src/composables/useModeSwitch.ts` |
+
+For a new remappable action, read `src/config.ts` first — the `modular-app-SKILL.md` map row "New remappable hotkey action" lists the full touch set.
 
 ---
 

@@ -18,15 +18,15 @@
 #                   /home/z/my-project/skills-src).
 #
 # Run once at session start (sandboxes expire after 2h, so re-run if the
-# session resets). Idempotent: re-running overwrites existing project skills
-# with their latest content AND removes stale leftover skills (names deleted
-# from the repo but still present in the sandbox from a prior session — see
-# KNOWN_STALE_SKILLS below). Built-in sandbox skills (charts, design, LLM,
-# etc.) are never touched — only project skill names are written/cleaned.
+# session resets). Idempotent: it first strips every LineByLine skill (repo
+# names + KNOWN_STALE_SKILLS deleted names) from the sandbox skills folder
+# and the platform user-skill pool — via cleanup.sh, which also runs
+# standalone at session end — then installs the repo's current skills fresh.
+# Built-in sandbox skills (charts, design, LLM, etc.) are never touched.
 #
 # After running, the agent's available_skills list will include:
-#   linebyline, delivery, skill, linebyline-section-index,
-#   single-file-html-app, browser-hotkey-system, aria-accessibility,
+#   linebyline, delivery, skill, modular-app,
+#   browser-hotkey-system, aria-accessibility,
 #   code-quality, sonarqube-workflow, playwright-testing
 
 set -euo pipefail
@@ -63,6 +63,28 @@ if [[ ! -d "$SANDBOX_SKILLS" ]]; then
   exit 1
 fi
 
+# The platform's sandbox restore resets the clone's .git/config each boot
+# (core.fileMode back to true) and flips every tracked file to 0755, so git
+# then reports hundreds of fake "old mode/new mode" diffs on top of real
+# content changes. Silence mode noise for this session; content diffs and
+# patches are unaffected.
+repo_root="$(cd "$skills_src/.." 2>/dev/null && pwd)" || repo_root=""
+if [[ -n "$repo_root" && -d "$repo_root/.git" ]]; then
+  git -C "$repo_root" config core.fileMode false
+fi
+
+# Strip every LineByLine skill (repo names + KNOWN_STALE_SKILLS deleted
+# names) from the sandbox skills folder and the platform user-skill pool;
+# the install loop below reinstates the repo's current set. Non-fatal: a
+# cleanup failure must not block installation.
+cleanup_sh="$(dirname "$0")/cleanup.sh"
+if [[ -f "$cleanup_sh" ]]; then
+  bash "$cleanup_sh" --all || echo "WARNING: cleanup.sh failed — stale skills may remain." >&2
+else
+  echo "WARNING: cleanup.sh not found beside setup-sandbox.sh — skipping cleanup." >&2
+fi
+echo ""
+
 echo "=== Installing LineByLine project skills ==="
 echo "Source:  $skills_src"
 echo "Target:  $SANDBOX_SKILLS"
@@ -84,55 +106,17 @@ for skill_dir in "$skills_src"/*/; do
   fi
 
   # Copy (clobber any existing project skill of the same name).
-  # We do NOT touch built-in sandbox skills — project skill names
-  # (project-workflow, web-channel, etc.) don't collide with built-in
-  # skill names (charts, design, LLM, etc.).
+  # We do NOT touch built-in sandbox skills — built-in skill names
+  # (charts, design, LLM, etc.) are plugin-provided and never overlap
+  # the repo's skills/ tree.
   rm -rf -- "${SANDBOX_SKILLS:?}/$skill_name"
   cp -r -- "$skill_dir" "$SANDBOX_SKILLS/$skill_name"
   echo "  installed: $skill_name"
   installed=$((installed + 1))
 done
 
-# ── Cleanup stale leftover skills ───────────────────────────────────────────
-# Skills deleted from the repo's skills/ tree sometimes persist in the sandbox
-# across sessions. The install loop above only refreshes skills that ARE in the
-# repo (it doesn't remove skills that WERE in the repo but have since been
-# deleted). This block removes known-deleted skill names if found as leftovers,
-# so the sandbox available_skills list stays clean.
-#
-# Maintain this list when a skill is deleted from the repo: add its name here
-# with the deletion tranche + reason. Safe — only removes explicitly-listed
-# names; never touches built-in platform skills (charts, docx, LLM, etc.) or
-# current repo skills.
-#
-# NOTE (Nov 22, 2026): `web-channel` was REMOVED from this list — it is a
-# built-in PLATFORM skill (chat.z.ai sandbox image seeds it every session;
-# confirmed: the sandbox copy's mtime refreshes on each session reset, its
-# description is platform-authored, and it even references the deleted
-# `project-workflow-SKILL.md` — a stale ref in the platform's own copy we can't
-# fix). Removing it every run just fought the platform (it re-seeded within
-# the same session). The repo's `delivery` skill bundles the same web-channel
-# behavioral rules (merged in Tranche 4.6), so the platform's standalone copy
-# is a harmless duplicate — leave it alone.
-KNOWN_STALE_SKILLS=(
-  "project-workflow"   # merged into skills/linebyline/ in Tranche 4.6 (Sep 29, 2026)
-  "task-review"        # never in this repo's skills/ — sandbox-seed leftover
-)
-cleaned=0
-for stale in "${KNOWN_STALE_SKILLS[@]}"; do
-  if [[ -d "$SANDBOX_SKILLS/$stale" ]]; then
-    rm -rf -- "${SANDBOX_SKILLS:?}/$stale"
-    echo "  cleaned stale leftover: $stale"
-    cleaned=$((cleaned + 1))
-  fi
-done
-
 echo ""
-if [[ $cleaned -gt 0 ]]; then
-  echo "Done. Installed $installed skill(s), skipped $skipped, cleaned $cleaned stale leftover(s)."
-else
-  echo "Done. Installed $installed skill(s), skipped $skipped."
-fi
+echo "Done. Installed $installed skill(s), skipped $skipped."
 echo ""
 echo "Project skill descriptions are now in available_skills."
 echo "Invoke via: Skill(command=\"<name>\") — e.g. Skill(command=\"linebyline\")."

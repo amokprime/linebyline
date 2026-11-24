@@ -19,7 +19,7 @@ The repo tree is large (src/ has many Vue components + composables, tests/ has m
 
 - Use Glob to list files matching a pattern (e.g. `src/composables/*.ts`) instead of LS on the repo root. LS on a large tree produces a massive listing that wastes context.
 - Use Grep to find files containing a keyword (e.g. `useAudio` across `src/`) before reading them.
-- For large `src/` files, use the `linebyline-section-index` skill's prompt-to-file map to identify which files a given change touches.
+- For large `src/` files, use the `modular-app` skill's prompt-to-file map to identify which files a given change touches.
 - For `src/` and `tests/`, read only the files relevant to the current task. The bootstrap says "Read only the files relevant to the current task" — don't interpret "src/" as "read all of src/".
 
 When the task spans multiple files (e.g. a patch touching `src/composables/useAudio.ts` + `tests/unit/audio.test.ts` + `src/components/LeftPanel.vue`), use subagents (Task tool, `Explore` type) to read files in parallel. Launch them in a single message with multiple tool calls. Each subagent reads its assigned files and returns a summary. This is faster than sequential reads and doesn't bloat the main context — the subagent's full output is not loaded, only its summary.
@@ -63,11 +63,11 @@ Read `AGENTS.md` (the compact bootstrap — skip if the Project instructions car
 
 Code (Build + Test + automatic Review)
 
-Read `AGENTS.md` (bootstrap — skip if injected), `LIMITATIONS.md`, `src/**` (via the `linebyline-section-index` skill's prompt-to-file map — read only the files the change touches), config files (`eslint.config.mjs`, `vite.config.mts`, `tsconfig*.json`), `tests/unit/**`, `tests/helpers/**`. The domain skills (`linebyline-section-index`, `single-file-html-app`, `browser-hotkey-system`) auto-load via `setup-sandbox.sh` — invoke them via `Skill(command="name")` when needed.
+Read `AGENTS.md` (bootstrap — skip if injected), `LIMITATIONS.md`, `src/**` (via the `modular-app` skill's prompt-to-file map — read only the files the change touches), config files (`eslint.config.mjs`, `vite.config.mts`, `tsconfig*.json`), `tests/unit/**`, `tests/helpers/**`. The domain skills (`modular-app`, `browser-hotkey-system`) auto-load via `setup-sandbox.sh` — invoke them via `Skill(command="name")` when needed.
 
 1. Read `MEMORY.md` for development history if not already read at Onboard.
 2. Re-read this skill to refresh the workflow rules.
-3. Use the `linebyline-section-index` skill's prompt-to-file map to read only the `src/` files a given change touches.
+3. Use the `modular-app` skill's prompt-to-file map to read only the `src/` files a given change touches.
 4. Follow the user's requests that do not conflict with this skill. Before writing any code, follow the Pre-patch checklist. After every patch, follow Post-patch verification. After every turn (patch or not), follow Post-turn updates.
 5. If multiple features are requested, the user may bucket them into a single turn when they're minor or interdependent. If they're independent and substantial, address them sequentially.
 6. The highest existing version header in `Build.md` (if provided) inherently implies the next app version. No need for the user to keyword-hint the semver — derive it from the existing headers.
@@ -123,7 +123,7 @@ Pre-patch checklist
 Before writing any code change:
 
 1. Stop and request clarification when: a request is unclear or overly complex, relevant files are missing, a request is technically infeasible, or a request violates best practices from a skill.
-2. Read only the files you need — use the `linebyline-section-index` skill's prompt-to-file map to identify which `src/` files a given change touches, then read just those.
+2. Read only the files you need — use the `modular-app` skill's prompt-to-file map to identify which `src/` files a given change touches, then read just those.
 3. Patch with minimal diff — change only what's needed and preserve surrounding code. Prefer targeted edits over full-section rewrites unless the section is being restructured. Don't generate your own icons; prioritize any the user uploads, then Lucide icons. Don't add code that links to external websites besides GitHub.
 4. Consult the `code-quality` skill before modifying functions.
 
@@ -134,7 +134,7 @@ Post-patch verification
 After every patch, before delivering:
 
 1. Typecheck + lint — run `vue-tsc -b` and the eslint lint gate on the touched files. A syntax or type error in any module breaks the whole build.
-2. Section map accuracy — if the patch created, renamed, or moved `src/` files (or changed which file owns a concern), update the `linebyline-section-index` skill's prompt-to-file map. Pure line-number shifts don't affect the map.
+2. Section map accuracy — if the patch created, renamed, or moved `src/` files (or changed which file owns a concern), update the `modular-app` skill's prompt-to-file map. Pure line-number shifts don't affect the map.
 3. Spot-check referenced functions — if the patch touched a function referenced by tests or other modules, verify its callers still resolve (`vue-tsc` catches most of this; check test fixtures and `tests/app-globals.d.ts` for `page.evaluate`-called app functions).
 4. Trace one representative user action — if the patch changed any logic (not just formatting), trace one user action through the changed code path to confirm it still reaches the expected outcome.
 5. Run `npm run test:unit` in-sandbox if the patch touches `src/` modules with unit tests. For Playwright-level verification, the user runs `tst` locally. See the `playwright-testing` skill for sandbox-side sample test guidance.
@@ -149,7 +149,7 @@ Apply after every turn, regardless of whether a code patch was made. The user ma
 - You finished a new, distinctive set of code changes — future sessions need to know what changed and why.
 - A code change failed in a way that would surprise a fresh model in a new chat if it wasn't documented — failures are the most valuable MEMORY.md entries because they prevent re-discovery.
  Apply the update inline — produce the updated MEMORY.md in `download/` for the user to apply. Do not propose it as a draft for the user to approve. If the turn produces no distinctive changes worth remembering, skip this.
-2. Update the `linebyline-section-index` skill's prompt-to-file map if a code patch created, renamed, or moved files, or changed which file owns a concern. The file-to-concern mapping is the durable part; line numbers don't matter to the map.
+2. Update the `modular-app` skill's prompt-to-file map if a code patch created, renamed, or moved files, or changed which file owns a concern. The file-to-concern mapping is the durable part; line numbers don't matter to the map.
 3. Update a skill when a patch changes the architecture the skill documents. Don't update a skill for a pure bug fix that doesn't change the documented architecture. Apply the update inline (deliver the updated skill file in `download/`). Check cross-skill consistency: when updating one skill, check whether existing skills already cover the pattern — if they do, update them rather than just adding to MEMORY.md.
 
 ---
@@ -179,9 +179,8 @@ Cross-references
 
 - `delivery` — behavioral rules for the chat.z.ai web channel (applies every turn) + the delivery workflow (prepare → zip → deploy) + sandbox vs. user-side environment table
 - `skill` — when to create or update skills vs MEMORY.md entries; consolidation direction protocol
-- `linebyline-section-index` — the prompt-to-file map for reading only the `src/` files a change touches instead of the whole tree
+- `modular-app` — the prompt-to-file map for reading only the `src/` files a change touches, plus the modular Vue app's architecture patterns (storage layers, init sequence, build constraints)
 - `code-quality` — patterns to follow and pitfalls to avoid when writing JavaScript
-- `single-file-html-app` — architectural patterns for the single-file constraint
 - `browser-hotkey-system` — key normalization, restriction rules, capture-input behavior
 - `playwright-testing` — test environments, sandbox-side sample tests, snapshot strategy, font-fragile screenshots
 - `sonarqube-workflow` — `sie` Markdown report triage + sandbox API fallback + SonarCloud/CodeQL environment details

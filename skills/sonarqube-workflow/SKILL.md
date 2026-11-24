@@ -33,7 +33,7 @@ Things that may surprise a fresh session:
 
 What the report does NOT include:
 
-- Source code snippets around each finding. For in-sandbox patching, the source must come from the Code context bundle (`src/**`, `docs/index.html`). SonarCloud's `api/sources/show` is auth-gated even for public projects, so the sandbox cannot fetch snippets either.
+- Source code snippets around each finding. For in-sandbox patching, the source must come from the Code context bundle (`src/**`). SonarCloud's `api/sources/show` is auth-gated even for public projects, so the sandbox cannot fetch snippets either. (The monolith `docs/index.html` was deleted in Phase E Tranche 6 — historical snippets come from `git show <sha>:docs/index.html`.)
 - Issue resolution state in real time. The report's `Status` column is a snapshot at generation time. If the user fixed an issue after running `sie` but before uploading, the report still shows `OPEN`. Cross-check via the API (Step 1) if status matters for the triage call.
 
 Triage directly from the report. Cross-check `Status` against the live API only when the report seems stale (e.g. the user mentions fixing an issue that still shows OPEN).
@@ -89,7 +89,7 @@ Step 2: Categorize by rule
 
 Group findings before acting. Common rules in this project:
 
-JavaScript / TypeScript rules (target `src/**`, plus `docs/index.html` until Tranche 6):
+JavaScript / TypeScript rules (target `src/**` — the monolith `docs/index.html` target ended with its Tranche 6 deletion):
 
 | Rule | Name | Typical fix | False positive risk |
 |---|---|---|---|
@@ -135,7 +135,7 @@ Vue / web rules (target `src/components/*.vue`):
 | `Web:S7927` | Accessible name contains visible label | `aria-label` must be a superset of visible text; for icon-only buttons, the `aria-label` is the accessible name (can't contain an emoji glyph — False Positive) | Medium |
 | `Web:InputWithoutLabelCheck` | Input without label | Add `id` + `aria-label` (visible `<label for>` not needed on `display:none` inputs) | Low |
 
-CodeQL rules (target `sie.py`, `docs/index.html`, `src/**`):
+CodeQL rules (target `src/**`; the analyzed paths follow the tree — the monolith `docs/index.html` target ended with its Tranche 6 deletion):
 
 CodeQL rule keys use a `language/category` namespace, distinct from Sonar's `language:Snnnn`. Triage is the same as SonarCloud issues — assess each instance, fix or Accept per the rule's actual semantics. CodeQL alerts appear in the `## CodeQL Alerts` section of the `sie` report and only fire when `gh auth login` is set up locally.
 
@@ -192,7 +192,7 @@ Web:InputWithoutLabelCheck — add `id` + `aria-label`. `aria-label` satisfies t
 
 Step 4: Plan the remediation pass
 
-Group accepted fixes by section (use the linebyline-section-index skill to find sections, or grep `src/` for the component path). Plan one category of change per turn to reduce regression risk. Typical order:
+Group accepted fixes by file/concern (use the `modular-app` skill's file map, or grep `src/` for the component path). Plan one category of change per turn to reduce regression risk. Typical order:
 
 1. Simple substitutions first (`.dataset`, `Number.isNaN`, `Object.hasOwn`, `replaceAll`, `|| {}` after spread)
 2. for-of conversions (selective)

@@ -1,6 +1,6 @@
 ---
 name: aria-accessibility
-description: Proactively avoid ARIA and accessibility issues in the LineByLine single-file HTML app. Use this skill whenever writing or modifying HTML structure, adding interactive elements, creating overlays/modals, adding labels or announcements, or changing any element that screen readers or assistive technology interact with. Also use when the user mentions accessibility, a11y, ARIA, axe-scan, WCAG, SonarQube rules S6819/S7927/S6825, or when building new UI components that need to be accessible. This skill prevents issues before they reach SonarQube or axe scans.
+description: Proactively avoid ARIA and accessibility issues in the LineByLine app (modular Vite + Vue + shadcn-vue). Use this skill whenever writing or modifying Vue templates, adding interactive elements, creating dialogs/modals, adding labels or announcements, or changing any element that screen readers or assistive technology interact with. Also use when the user mentions accessibility, a11y, ARIA, axe-scan, WCAG, SonarQube rules S6819/S7927/S6825, or when building new UI components that need to be accessible. This skill prevents issues before they reach SonarQube or axe scans.
 ---
 
 Codifies the accessibility issues that SonarQube Cloud (S6819, S7927, S6825) and axe-core scans have flagged in this project, so you can avoid them proactively rather than fixing them reactively.
@@ -85,9 +85,9 @@ Timestamp text (`.ts`, `.end-ts`) must use at least `--text-muted` (#656d76) whi
 
 Rule 6: Dialog/modal accessibility
 
-Use `role="dialog" aria-modal="true" aria-labelledby="heading-id"` on modal windows. Provide a visible heading inside the modal that the `aria-labelledby` points to. Implement a keyboard focus trap (Tab/Shift+Tab stay inside the modal). Esc key closes the modal. On close, return focus to the element that opened the modal.
+Prefer the shadcn-vue `Dialog` components (`src/components/ui/dialog/`) for any new modal — reka-ui implements the focus trap, `aria-modal`, Esc-to-close, and focus return automatically, so those concerns are not hand-rolled. The ported Settings dialog and its confirm sub-dialog follow this pattern. For hand-built modal markup (rare), use `role="dialog" aria-modal="true" aria-labelledby="heading-id"`, provide a visible heading, implement the Tab/Shift+Tab focus trap, close on Escape, and return focus to the opener on close.
 
-Exclude transient buttons (`.hk-clear`, `.hk-reset`, `.hk-replace`) from the Tab order — they appear/disappear contextually and shouldn't be persistent Tab stops.
+Exclude transient buttons (`.hk-clear`, `.hk-reset`, `.hk-replace` in `SettingsDialog.vue`) from the Tab order — they appear/disappear contextually and shouldn't be persistent Tab stops.
 
 ---
 
@@ -105,7 +105,7 @@ Every `<button>`, `<input>`, `<select>`, `<textarea>` needs an accessible name (
 
 Rule 9: Collapsed panels and inert
 
-Use `panel.inert = true` when collapsing a panel — this removes all children from Tab order and screen reader navigation in one operation. Use `panel.inert = false` when expanding. Don't try to manually set `tabindex="-1"` on every child — `inert` handles it comprehensively.
+Use `inert` when collapsing a panel — this removes all children from Tab order and screen reader navigation in one operation. In the Vue port this is a reactive binding (`:inert="panelCollapsed"` on `LeftPanel.vue`'s root). Don't try to manually set `tabindex="-1"` on every child — `inert` handles it comprehensively.
 
 ---
 

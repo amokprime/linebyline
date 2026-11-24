@@ -541,15 +541,14 @@ Each tranche ships its verification + cutover step + Vitest/Playwright specs. Tr
     - **Sonar state check for the SECURITY.md rewrite** (public API, Nov 23, 2026): 4 OPEN issues — `Web:S6819` + `Web:S7927` (known dispositions) plus 2 NEW MINORs introduced by the Tranche 6 changes, untriaged: `typescript:S1874` at `App.vue:316` (`returnValue` is deprecated — the beforeunload handler) and `typescript:S6582` at `App.vue:205` (prefer optional chain). The Tranche 4.8 families (S8786 ×8, S6594, S6606, S7755, S4138) are all resolved.
   **No new specs** — this is documentation only. The agent delivers updated docs in `download/`; the user reviews and commits.
 
-- **Tranche 8 — Skills update for modular architecture** (post-cutover, sandbox-safe) — the "Skills That Need Updating After This Refactor" list below is the checklist. Each skill gets its own commit:
-    - `single-file-html-app-SKILL.md` — heavily revise or retire. The app is no longer single-file; the skill's CSS architecture, JS architecture, and common pitfalls sections describe patterns that no longer apply. Either reframe it as "modular Vue app patterns" or retire it and let `code-quality-SKILL.md` + `browser-hotkey-system-SKILL.md` absorb the still-relevant content.
-    - `linebyline-section-index-SKILL.md` — retire. The section-marker grep protocol targets the monolith's `// ──` markers; the modular app uses file boundaries instead. The prompt-to-section map is obsolete. Replace with a `src/-module-index-SKILL.md` that maps user intents to `src/composables/*.ts` + `src/components/*.vue` files (or fold into `linebyline-SKILL.md`).
-    - `linebyline-SKILL.md` — update the Build step description (no more "patch the monolith"; the Build context now bundles `src/**` + `tests/unit/**` + `docs/index.html` until Tranche 6 deletes the latter). The companion-file pattern still applies.
-    - `browser-hotkey-system-SKILL.md` — architecture stays the same, but implementation is across `src/composables/useGlobalHotkeys.ts` + `useTextareaKeys.ts` + `useSettings.ts` instead of one monolith section. Add a "module map" subsection pointing to the composables.
-    - `playwright-testing-SKILL.md` — `findLatestVersion` changes (Tranche 6); test file structure may shift (`.spec.js` → `.spec.ts` per roadmap item 4); the `LBL_VITE_TARGET` env var from Tranche 2 becomes the default after Tranche 6.
-    - `code-quality-SKILL.md` — minor: the "Bash workflow scripts" section's deploy.sh reference may need updating if Tranche 5 changes the deploy pattern. Audit.
-    - `sonarqube-workflow-SKILL.md` — minor: the `sonar.coverage.exclusions` line from Tranche 6 step 4 may shift the coverage gate behavior. Audit.
-    - `aria-accessibility-SKILL.md` — minor: shadcn-vue `Dialog` + Radix Vue primitives handle most accessibility automatically; the skill's "Dialog/modal accessibility" section may be simplified. Audit.
+- **Tranche 8 — Skills update for modular architecture** (post-cutover, sandbox-safe) — **Status: Done (Nov 24, 2026).** The "Skills That Need Updating After This Refactor" list below is the checklist. Each skill gets its own commit. The audit ran against the actual post-Tranche-6 tree per the Tranche 7 lesson, and two of this spec's own premises had rotted. Implementation notes:
+    - **Consolidation** (user-directed: merge if either half would be reduced to a stub): `linebyline-section-index` + `single-file-html-app` are retired and merged into ONE new skill, `skills/modular-app/SKILL.md` — the prompt-to-file map + `src/` file reference (updated to the 51-file tree, incl. the vendored `components/ui/` shadcn primitives note) + the surviving architecture patterns: storage layers (three tiers incl. the `lbl_autosave` removeItem parity behavior), init sequence ordering, reactive-DOM-sync rule, scoped-CSS-vs-innerHTML gotcha, singleton composables (no provide/inject), vite-plugin-singlefile constraints, shadcn Dialog ownership of modal mechanics, file import/export + the `window.doSave` exposure, fs-spinner number inputs, CSS quick pitfalls — plus a condensed historical parity-check section. `code-quality` already owned the behavior-rule patterns (undo/redo, config migration, single source of truth, beforeunload), so the merged skill points at them instead of duplicating.
+    - **Spec premise 1 rotted**: "linebyline-section-index — retire; the section-marker grep protocol targets the monolith" — the Tranche 4.8 rewrite had already retargeted the whole skill to the modular `src/` tree (its 7 monolith mentions were only the historical parity section). Retiring it outright would have deleted a current 157-line file map, so its content was merged rather than dropped.
+    - **Spec premise 2 rotted**: playwright-testing's "`.spec.js` → `.spec.ts`" (never happened — specs are still `.spec.js`/`.test.ts`) and "`LBL_VITE_TARGET` becomes the default" (the bridge was restored in Tranche 4.9, then deliberately removed in Tranche 6 — the env var no longer exists). Updated: the two-target intro (Vite `dist/` is the only target), the `tests/` tree listing (`app-globals.d.ts` + `logic.spec.js` + `chat/` removed; `unit/`, `reset.spec.js`, the three docs, `helpers/package.json` added; `chat/` → `archive/tests/` note), the page.evaluate section (app functions are module-scoped now; `window.doSave` is the only exposed global), the TS diagnostics section (`app-globals.d.ts` deleted with the monolith; `jsconfig.json` remains; the TS2304 row is moot post-cutover), and the flaky-list settings-save anchor (`#settings-overlay` `.open` class → `page.getByRole("dialog")` visibility, the current intervals.spec.js pattern).
+    - `browser-hotkey-system` — description re-paired (single-file-html-app → modular-app); new "Module map in LineByLine's src/" table pointing at `config.ts`, `hotkeys/`, `hotkeyDisplay.ts`, `useGlobalHotkeys`, `useTextareaKeys`, `useSettings`, `SettingsDialog.vue`, `HotkeyCell.vue`, `ControlsPanel.vue` + `useModeSwitch`.
+    - Light audits: `code-quality` (description de-monolithed; ESLint gate scope → `src/ tests/`; dispatch-table pointer → modular-app), `sonarqube-workflow` (scan targets → `src/**` only + git-show note for historical monolith snippets; section-index pointer → modular-app), `aria-accessibility` (Rule 6 → shadcn-vue Dialog owns trap/Esc/focus-return, hand-rolled markup only as fallback; Rule 9 → `:inert` Vue binding form), `linebyline` (all section-index/single-file pointers → modular-app; domain-skills auto-load list updated).
+    - `setup-sandbox.sh`: header skill list updated; `linebyline-section-index` + `single-file-html-app` added to `KNOWN_STALE_SKILLS` (per the Tranche 4.9 note — maintain the list when a repo skill is deleted). `web-channel` deliberately NOT re-added — see the script's Nov 22 NOTE (platform-owned, re-seeded every session, harmless duplicate).
+    - Cross-reference sweep: `AGENTS.md` (reads-per-session-type), `MEMORY.md` knowledge map + the scoped-CSS gotcha line, `skills/skill/SKILL.md` lessons (2 entries retargeted; one false claim that the skill "now uses a grep protocol" fixed). `archive/` transcripts untouched (historical records).
   **No new specs** — this is skill maintenance. The agent delivers updated skills in `download/`; the user reviews and commits.
 
 - **Tranche 9 — Mutation testing / mechanism-pinning assertions** (post-cutover, sandbox-safe) — **Status: Planned.** Relocated here from the original Tranche 4.9 scope (pre-cutover sessions went to Sonar remediation + `docs/` restoration instead; see the Tranche 4.9 relocation note). Two tiers, in order of preference:
@@ -591,11 +590,16 @@ Each tranche ships its verification + cutover step + Vitest/Playwright specs. Tr
 
 ### Skills That Need Updating After This Refactor
 
-- `single-file-html-app-SKILL.md` — retire or heavily revise (the app is no longer single-file)
-- `linebyline-section-index-SKILL.md` — section markers become file boundaries; the grep protocol changes to navigating between module files
-- `linebyline-SKILL.md` — phased workflow changes (no more "patch the monolith"), but companion .md still applies
-- `browser-hotkey-system-SKILL.md` — architecture stays the same, but implementation is across files
-- `playwright-testing-SKILL.md` — `findLatestVersion` changes, test file structure may change
+Completed in Phase E Tranche 8 (Nov 24, 2026):
+
+- `single-file-html-app-SKILL.md` — retired; surviving patterns merged into `skills/modular-app/SKILL.md`
+- `linebyline-section-index-SKILL.md` — retired; the prompt-to-file map lives on in `skills/modular-app/SKILL.md`
+- `linebyline-SKILL.md` — updated (Build step reads via the modular-app map; no monolith references remain)
+- `browser-hotkey-system-SKILL.md` — module-map subsection added
+- `playwright-testing-SKILL.md` — updated to the post-cutover single-target reality
+- `code-quality-SKILL.md` — audited (description, gate scope, cross-refs)
+- `sonarqube-workflow-SKILL.md` — audited (scan targets, cross-refs)
+- `aria-accessibility-SKILL.md` — audited (Dialog/inert sections reflect shadcn-vue)
 
 ---
 
