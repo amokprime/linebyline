@@ -22,6 +22,15 @@ jobs:
       - name: Install dependencies
         run: npm ci --ignore-scripts
 
+      # Cache the browser binaries (~600MB for chromium+firefox+webkit), keyed
+      # on the lockfile. Without this, every push re-downloads all three
+      # browsers in the step below; on a cache hit it only runs the apt part.
+      - name: Cache Playwright browsers
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 #v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
       - name: Install Playwright Browsers
         run: ./node_modules/.bin/playwright install --with-deps
 
