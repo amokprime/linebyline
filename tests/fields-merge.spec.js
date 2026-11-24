@@ -1,4 +1,9 @@
-const { test, expect, waitForImport } = require("@linebyline/test-helpers");
+const {
+  test,
+  expect,
+  waitForImport,
+  beforeUnloadPrevented,
+} = require("@linebyline/test-helpers");
 
 function wrapParensCheckbox(page) {
   return page
@@ -166,6 +171,11 @@ test("merge-block-reload", async ({ page, media, importSecondary }) => {
   await waitForImport(page);
   await page.keyboard.press("Control+3");
   await importSecondary(1, "plain_french.lrc");
+  // A synthetic F5 keydown never reloads the page (the browser UI owns F5),
+  // so the unchanged-state assertions below pass trivially. Pin the actual
+  // protective mechanism: merged content leaves the page dirty, so the
+  // beforeunload warning would fire before a real reload loses it.
+  expect(await beforeUnloadPrevented(page)).toBe(true);
   await page.keyboard.press("F5");
   await expect(
     page.getByRole("button", { name: "Merge fields" }),
@@ -189,4 +199,9 @@ test("reload-merge-disabled", async ({ page, media, importSecondary }) => {
   await expect(
     page.getByRole("button", { name: "Merge fields" }),
   ).toBeDisabled();
+  // The disabled merge state follows from the cleared pool only because
+  // App.vue's removeItem wiped lbl_autosave on init — pin the storage null.
+  await expect(
+    await page.evaluate(() => sessionStorage.getItem("lbl_autosave")),
+  ).toBeNull();
 });

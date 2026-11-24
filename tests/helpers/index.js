@@ -126,6 +126,29 @@ async function waitForImport(page) {
   await waitForAudio(page);
 }
 
+/**
+ * Dispatch a synthetic cancelable beforeunload event and report whether the
+ * app's own handler called preventDefault (observed via `defaultPrevented`
+ * after the synchronous dispatch). Headless chromium suppresses the real
+ * dialog, so this is the mechanism-level pin for the dirty-warning behavior.
+ *
+ * The observer must NOT call preventDefault itself and must not register a
+ * listener: a self-preventing handler would flip defaultPrevented and the
+ * assertion would observe its own side effect instead of the app's listener
+ * (the Tranche 9 mutation test caught exactly that in the pre-helper inline
+ * pattern — deleting App.vue's listener registration let the old test pass).
+ *
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<boolean>}
+ */
+async function beforeUnloadPrevented(page) {
+  return page.evaluate(() => {
+    const ev = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(ev);
+    return ev.defaultPrevented;
+  });
+}
+
 module.exports = {
   getAppUrl,
   test,
@@ -134,4 +157,5 @@ module.exports = {
   waitForLyrics,
   waitForAudio,
   waitForImport,
+  beforeUnloadPrevented,
 };

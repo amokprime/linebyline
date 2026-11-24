@@ -193,10 +193,12 @@ describe('useAutosave — loadAutosave', () => {
     expect(updateTitleFromText).toHaveBeenCalled()
   })
 
-  it('does not clear sessionStorage before loading (port delta from monolith)', async () => {
+  it('does not clear sessionStorage before loading (the clear lives in App.vue)', async () => {
     // The monolith's Init has `sessionStorage.removeItem('lbl_autosave')` before
-    // loadAutosave — meaning autosave never restores. The Vue port does NOT
-    // clear. This test verifies the data persists across a loadAutosave call.
+    // loadAutosave — meaning autosave never restores. App.vue's onMounted
+    // replicates that removeItem (monolith parity, Phase E Tranche 4.5), but
+    // loadAutosave() itself never clears — this test calls it in isolation and
+    // verifies the data persists across the loadAutosave call.
     const { mod, mainText } = await initAutosaveWithCallbacks()
     sessionStorage.setItem('lbl_autosave', JSON.stringify({
       main: '[ti: Persisted]\nPersisted lyric\n',

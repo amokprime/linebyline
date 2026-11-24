@@ -24,15 +24,14 @@
 //  - `takeSnapshot` + `seedUndo` are callbacks wired by App.vue to useUndoRedo
 //    (Tranche 1). The monolith does `undoStack = [takeSnapshot()]; redoStack = [];`
 //    — `seedUndo(snap)` does the same (replaces the stack with a single seed).
-//  - **The monolith's Init clears sessionStorage before loadAutosave**:
+//  - **Monolith Init clears sessionStorage before loadAutosave**:
 //    `sessionStorage.removeItem('lbl_autosave')` runs before `loadAutosave()`,
-//    which means autosave NEVER restores in the monolith — it's always cleared
-//    on page load. This appears to be intentional (the user starts fresh each
-//    time they open the app) or a leftover from debugging. The Vue port does
-//    NOT clear — the single-file-html-app skill says "reload on init to survive
-//    accidental refresh". If the user wants the clear behavior, they can add
-//    `sessionStorage.removeItem('lbl_autosave')` before `loadAutosave()` in
-//    App.vue. Documented as a port delta.
+//    which means autosave NEVER restores in the monolith — the user starts
+//    fresh each time they open the app. App.vue's onMounted replicates this
+//    (the removeItem lives there, not in loadAutosave, since Phase E Tranche
+//    4.5 restored monolith parity — "survive accidental refresh" was
+//    rejected as a behavior divergence from the monolith + HELP.md contract).
+//    loadAutosave() itself never clears; unit tests call it in isolation.
 //  - `mainText` lives in useAppState (new this tranche). The monolith's
 //    `getTA()`/`_setTA()` are replaced by `mainText.value` reads/writes.
 //    EditorArea binds the textarea `:value="mainText"` (one-way — Tranche 5

@@ -128,7 +128,11 @@ Every new Playwright or Vitest test that verifies a BEHAVIORAL change (not just 
 
 If a mutation test shows the test PASSES even with the fix reverted, the test is not pinning the intended behavior -- rewrite it with a stronger assertion.
 
-**False negatives**: if the `sed` command breaks the source syntax, `vite build` fails and the old `dist/` is used -- the test passes against unmutated code, giving a false negative. Always check the build succeeded before running the test.
+**False negatives**: if the `sed` command breaks the source syntax, `vite build` fails and the old `dist/` is used -- the test passes against unmutated code, giving a false negative. Always check the build succeeded before running the test. Two more verdict traps (both produced false verdicts in the Tranche 9 session): grep `dist/assets/*.js` for the mutated construct to confirm the mutant actually reached the bundle (a non-matching `sed` mutates nothing and the run is vacuously green), and parenthesize alternations in kill-check greps (`✘ .*(A|B)`, not `✘ .*A|B` -- the bare form matches the ✓ line of the second alternative).
+
+**Observing event-side mechanisms (beforeunload)**: to pin "the app registers a beforeunload listener that calls preventDefault", dispatch a synthetic cancelable event and read `event.defaultPrevented` afterward -- do NOT register a test-side handler that calls `preventDefault()` itself (it observes its own side effect: the Tranche 9 M3 mutant -- deleting App.vue's listener registration -- passed the original self-observing pattern). Helper: `beforeUnloadPrevented(page)` in `tests/helpers/index.js`. Related: a synthetic `F5` keydown never reloads the page (the browser UI owns F5), so "state unchanged after F5" assertions are vacuous -- reload flows must use `page.reload()`, and no-op-keystroke tests should pin the mechanism they meant to exercise instead.
+
+**`browser.newPage()` opens a fresh browser context** (fresh localStorage too), so a "new tab starts clean" test built on it passes even if the app leaks per-tab state into localStorage, which real tabs share. When the scenario is a new tab of the same browser, use `page.context().newPage()` (localStorage shared, sessionStorage per-tab) and pair the clean-state outcome with a negative storage pin (e.g. no lyric content in localStorage) plus a shared-context sanity check. See `tests/reset.spec.js` → `new-tab-starts-fresh` (Tranche 9).
 
 For the canonical workflow see the `linebyline` skill -> "Code" step and "Post-patch verification".
 

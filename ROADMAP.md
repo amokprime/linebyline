@@ -551,22 +551,21 @@ Each tranche ships its verification + cutover step + Vitest/Playwright specs. Tr
     - Cross-reference sweep: `AGENTS.md` (reads-per-session-type), `MEMORY.md` knowledge map + the scoped-CSS gotcha line, `skills/skill/SKILL.md` lessons (2 entries retargeted; one false claim that the skill "now uses a grep protocol" fixed). `archive/` transcripts untouched (historical records).
   **No new specs** — this is skill maintenance. The agent delivers updated skills in `download/`; the user reviews and commits.
 
-- **Tranche 9 — Mutation testing / mechanism-pinning assertions** (post-cutover, sandbox-safe) — **Status: Planned.** Relocated here from the original Tranche 4.9 scope (pre-cutover sessions went to Sonar remediation + `docs/` restoration instead; see the Tranche 4.9 relocation note). Two tiers, in order of preference:
+- **Tranche 9 — Mutation testing / mechanism-pinning assertions** (post-cutover, sandbox-safe) — **Status: Done (Nov 24, 2026).** Relocated here from the original Tranche 4.9 scope (pre-cutover sessions went to Sonar remediation + `docs/` restoration instead; see the Tranche 4.9 relocation note). Two tiers, in order of preference:
     - **Tier 1 (default, incremental — no new dependencies)**: audit the Playwright suite for behavior-only assertions that pass whether or not the mechanism they appear to verify is present, and pin each with a stronger assertion. Known worked example (the Sep 24, 2026 mutation-testing finding, also in `LIMITATIONS.md` → "Testing" and the item-3 notes): `reload-clears-lyrics-audio` passes whether or not `sessionStorage.removeItem('lbl_autosave')` is present in `App.vue` — it verifies the user-facing behavior (reload gives clean state) but does NOT pin the mechanism (`removeItem`). Pin it with `expect(page.evaluate(() => sessionStorage.getItem('lbl_autosave'))).toBeNull()` after the reload. Method for finding more: for each test that asserts an outcome, ask "would this still pass if the specific line of app code it should exercise were deleted?" — if yes, add an assertion that observes the mechanism's direct effect (runtime state via `page.evaluate`, storage keys, `window.*` exposure, network calls). Applied incrementally from now on: every new behavioral test gets this scrutiny at write time.
     - **Tier 2 (optional stretch — only if Tier 1 proves insufficient)**: a mutation framework (Stryker) over `src/` or targeted per-module runs. Adopt only if a regression escapes the suite that per-test mutations would have caught, or if the ad-hoc audit keeps finding gaps the cheaper pass misses — the framework's runtime cost on the full tree is significant, and the Playwright + Vitest suites remain the primary gate.
     - **Process standard (already in force)**: `playwright-testing-SKILL.md` → "Mutation testing standard for new tests" — every new behavioral test is mutation-tested before delivery: temporarily revert the source fix, rebuild `dist/`, run the test, verify it FAILS, restore. If it passes with the fix reverted, the test is not pinning the intended behavior — rewrite with a stronger assertion (Tier 1 applied to that test). Post-cutover the mutation target is unambiguous: the Vite `dist/` build only (Tranche 6 removed the two-mode `LBL_VITE_TARGET` bridge).
     - **Pre-conditions**: Tranche 6 done (Vite is the only build target). **Post-conditions**: the known mechanism-pinning gaps audited and closed (at minimum the reload-autosave one); the audit list documented here or in `tests/FAILURES.md`; no framework adoption unless Tier 2's criteria were met.
-
-#### Phase E cleanup reminders
-
-- **Consolidate unit tests from logic tests.** DONE (Tranche 4, Sep 22, 2026). `tests/logic.spec.js` is deleted; all 84 unique test cases live in the Vitest unit suite. The 4 unique functions (`peelLastParen`, `batchSplitParens`, `findNextTimestampMs`, `assignInterpolatedTs`) were ported to `src/utils/timestampSync.ts` in Phase D Tranche 5, and the 10 shadowed functions were already covered by existing Vitest specs. 26 missing edge cases were ported before deletion; full suite 501/501 green.
-- **Check stale references in human-facing root-level docs.** Per the AGENTS project-structure section, evaluate these docs for stale references after the cutover:
-    - `CONTRIBUTING.md` — vibecoding workflow changed (modular, not single-file)
-    - `HELP.md` — app UX may change if shadcn-vue components alter the interface
-    - `README.md` — core app features, "Getting started" section (Vite dev server, not `docs/index.html`)
-    - `LIMITATIONS.md` — web architecture changed (Vite + Vue, not single-file HTML)
-    - `SECURITY.md` — app code split into `src/` (no longer single-file)
-    - `CREDITS.md` — new dependencies (Vue, shadcn-vue, Radix Vue, Lucide, Tailwind)
+    - **Implementation notes (Nov 24, 2026 session)** — audit covered all 121 Playwright tests in 15 spec files; classification rule: interaction tests asserting non-default outcomes flip when the mechanism is deleted (no gap), so the risky class is tests whose asserted state is reachable without the mechanism (post-reload defaults, no-op keystrokes, self-observing handlers). Four gaps found and closed, each with an in-sandbox mutation test against a rebuilt `dist/` (chromium):
+        1. `reload-clears-lyrics-audio` — the known worked example. Pinned BOTH storage directions: pre-reload `lbl_autosave` `not.toBeNull()` (the `doAutosave` write side) + post-reload `toBeNull()` (App.vue's `removeItem` side). Mutant M1 (delete the `removeItem`) kills the test.
+        2. `new-tab-starts-fresh` — `browser.newPage()` opens a FRESH CONTEXT (fresh localStorage too), so the empty-editor outcome passed even if the app leaked lyrics into localStorage, which real tabs share. Switched to `page.context().newPage()` (same context: localStorage shared, sessionStorage per-tab) + shared-context sanity (localStorage entries identical across both tabs — non-trivially true: `lbl_panel_collapsed`/`lbl_speed` persist there) + leak pin (no localStorage entry contains `[00:` — LRC timestamps never appear in config keys). Mutant M2 (`doAutosave` writes to localStorage instead of sessionStorage) SURVIVED the old version and is killed by the new one.
+        3. `reload-merge-disabled` — the disabled-merge outcome follows from the cleared pool only because `removeItem` wiped `lbl_autosave` on init; pinned the post-reload storage null (killed by M1).
+        4. `merge-block-reload` — a synthetic `F5` keydown never reloads the page (the browser UI owns F5), so its unchanged-state assertions were passing on a no-op. Pinned the actual protective mechanism via `beforeUnloadPrevented(page)` after the merge (dirty state → beforeunload would warn before a real reload loses it); the unchanged-state assertions stay as regression checks.
+    - **Major finding — the pre-existing `beforeunload-on-close-dirty` pin was vacuous**: its observer handler called `e.preventDefault()` itself and recorded its own side effect, so the test passed whether or not App.vue registered the listener — mutation M3 (delete `window.addEventListener('beforeunload', onBeforeUnload)`) left it green. Fixed by observing `event.defaultPrevented` after a synchronous dispatch of a synthetic cancelable event (no test-side listener, no test-side preventDefault). The pattern lives in `tests/helpers/index.js` → `beforeUnloadPrevented(page)` (used by reset.spec.js + fields-merge.spec.js); the self-observation trap is documented in the helper's JSDoc + `playwright-testing-SKILL.md` (mutation-testing section). Only after the rewrite does M3 kill both beforeunload tests.
+    - **Sep 24, 2026 mutation note corrected**: "the autosave isn't written during the fast test import cycle" no longer holds — `doAutosave` fires on import (`useImport.ts`) and audio setup (`useAudio.ts`), and under M1 even the OUTCOME assertions fail now (the reload would restore the imported lyrics). The storage pins stay: they observe the mechanism directly instead of through the restore side effect. The stale claim also lived in two comments (`useAutosave.ts` header port-delta bullet + `autosave.test.ts` title/comment — "The Vue port does NOT clear"): both fixed; the clear lives in App.vue's onMounted (monolith parity, Tranche 4.5), `loadAutosave()` itself never clears.
+    - **Mutation-driver gotchas** (both produced false verdicts this session before being caught): (1) verify the mutant actually reached the bundle — grep `dist/assets/*.js` for the mutated construct before reading a green run as a pass (a non-matching `sed` or stale build is a false negative); (2) parenthesize alternations in kill-check greps — `✘ .*(A|B)`, not `✘ .*A|B` (the bare form matches the ✓ line of the second alternative).
+    - **Tier 2 not adopted**: Tier 1 closed the known gaps; no regression has escaped the suite that per-test mutations would catch. Stryker stays parked unless that changes.
+    - No snapshot regen needed — the patch adds assertions + a helper only, no DOM/ARIA/visual output change. Delivery gates: Vitest 533/533, `vue-tsc -b` clean (via `npm run build`), `eslint src/ tests/` clean, sample Playwright 14/14 (reset + fields-merge specs, chromium, in-sandbox `vite preview`).
 
 ### Critical Things a Fresh Chat Must Know
 
@@ -578,28 +577,6 @@ Each tranche ships its verification + cutover step + Vitest/Playwright specs. Tr
 - **shadcn-vue `Dialog` replaces the custom Settings overlay entirely** — no more manual focus trap code, no more `_topmostOverlay` / `_bringToFront` management. Significant simplification. (Phase C Tranche 5 done.)
 - **`isDirty` + `beforeunload` is a Phase E gap.** The `isDirty` ref exists in `useAppState` (Tranche 1) but is never set to `true` and `App.vue` has no `beforeunload` listener. Phase E Tranche 1 closes this gap. The monolith's `beforeunload` (lines 2766–2770) is the parity reference.
 - **`tests/logic.spec.js` parity bridge — DONE.** Deleted in Tranche 4 (Sep 22, 2026). The Vitest unit suite is the sole source of truth for LRC parsing / hotkey / paste-handler logic coverage.
-
-### Phase A implementation notes (2026-09-06)
-
-- Versions landed: Vite 8.2, Vue 3.5, TS ~6.0, Tailwind v4.1 (`@tailwindcss/vite`), shadcn-vue 2.8 (`reka-nova` style, neutral base color), vite-plugin-singlefile 2.3, eslint-plugin-vue 10
-- `shadcn-vue init` prepends a **Google Fonts import (Geist)** and points `--font-sans` at it — this was removed (system-fonts invariant; single-file builds cannot inline remote assets). If a future `shadcn-vue add` re-adds the import, delete it again
-- `shadcn-vue` CLI is a **devDependency**; it brings 7 moderate npm-audit findings via `vue-metamorph → stylus → decode-uri-component` (build-tool-only exposure). If Dependabot flags it, dismiss as dev dependency
-- package.json stays `"type": "commonjs"`, so the Vite config is **`vite.config.mts`** (ESM per-file) — keeps vue-tsc and Vite 8's native config loader happy without flipping the package to ESM
-- TypeScript 6 deprecates `baseUrl` — the `@/*` paths alias works without it in both tsconfig.app.json and the root tsconfig (paths resolve relative to the tsconfig)
-- deploy.yml was created with **workflow_dispatch as the only trigger** (see its header comment); the `push: main` trigger gets added at the Phase E cutover
-
-### Skills That Need Updating After This Refactor
-
-Completed in Phase E Tranche 8 (Nov 24, 2026):
-
-- `single-file-html-app-SKILL.md` — retired; surviving patterns merged into `skills/modular-app/SKILL.md`
-- `linebyline-section-index-SKILL.md` — retired; the prompt-to-file map lives on in `skills/modular-app/SKILL.md`
-- `linebyline-SKILL.md` — updated (Build step reads via the modular-app map; no monolith references remain)
-- `browser-hotkey-system-SKILL.md` — module-map subsection added
-- `playwright-testing-SKILL.md` — updated to the post-cutover single-target reality
-- `code-quality-SKILL.md` — audited (description, gate scope, cross-refs)
-- `sonarqube-workflow-SKILL.md` — audited (scan targets, cross-refs)
-- `aria-accessibility-SKILL.md` — audited (Dialog/inert sections reflect shadcn-vue)
 
 ---
 
