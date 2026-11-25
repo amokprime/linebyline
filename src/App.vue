@@ -202,7 +202,7 @@ setSyncCallbacks({
   },
   getAudioDurationMs: () => {
     const el = audioEl.value
-    return el && el.duration ? Math.floor(el.duration * 1000) : null
+    return el?.duration ? Math.floor(el.duration * 1000) : null
   },
   isAudioReady: () => audioEl.value !== null,
 })

@@ -1,5 +1,8 @@
 ---
-model: GLM-5.2
+models:
+  - GLM-5.2
+  - GLM-5.3-Flash
+  - GLM-5.3
 provider: https://chat.z.ai
 ---
 Prioritized plan for future refactors, ordered to minimize long-term effort. Each item includes a high-level implementation plan covering the most critical steps a fresh chat session must know.
@@ -595,13 +598,13 @@ The original approach text (leaf modules first, convert composables, define core
 - `src/` is already 100% TypeScript (29 `.ts` + 21 `.vue`, zero `.js`), strict mode via `@vue/tsconfig` (`tsconfig.app.json`), gated by `vue-tsc -b` in `npm run build`. The core interfaces the old plan called for exist (`src/types.ts`, `src/config.ts`).
 - The Vitest suite (`tests/unit/**/*.test.ts`) is TypeScript in its own strict project (`tsconfig.vitest.json`, referenced from root).
 - What remains is the **Playwright layer**, still JavaScript + CommonJS:
-  - 15 × `tests/*.spec.js` (~2,260 LOC): 14 load via `require("@linebyline/test-helpers")`, one (accessibility) already uses ESM `import`.
-  - `tests/helpers/index.js` — `// @ts-check` + JSDoc typedefs + a double `/** @type */` cast for `base.extend`; the types live in comments.
-  - `playwright.config.js` — `// @ts-check`'d ESM in a `"type": "commonjs"` package (the mismatch `tsconfig.node.json`'s comment points at).
-  - `tests/jsconfig.json` — a `checkJs`/`allowJs`, `strict: false` diagnostics shim for Zed; exists only because the specs are `.js`.
-  - Root `package.json` `"type": "commonjs"` — kept "for the CJS Playwright tests until roadmap item 4" (per the tsconfig.node.json comment).
-  - `scripts/server/tst-locked` allowlists `tests/*.spec.js` literally — a renamed spec would be REJECTED by the SSH gate until the allowlist gains the `.spec.ts` form.
-  - 11 tracked snapshot dirs named `<name>.spec.js-snapshots` (144 baseline files, ~3 MB) — Playwright derives the dir name from the test file name, so a bare rename orphans every baseline.
+    - 15 × `tests/*.spec.js` (~2,260 LOC): 14 load via `require("@linebyline/test-helpers")`, one (accessibility) already uses ESM `import`.
+    - `tests/helpers/index.js` — `// @ts-check` + JSDoc typedefs + a double `/** @type */` cast for `base.extend`; the types live in comments.
+    - `playwright.config.js` — `// @ts-check`'d ESM in a `"type": "commonjs"` package (the mismatch `tsconfig.node.json`'s comment points at).
+    - `tests/jsconfig.json` — a `checkJs`/`allowJs`, `strict: false` diagnostics shim for Zed; exists only because the specs are `.js`.
+    - Root `package.json` `"type": "commonjs"` — kept "for the CJS Playwright tests until roadmap item 4" (per the tsconfig.node.json comment).
+    - `scripts/server/tst-locked` allowlists `tests/*.spec.js` literally — a renamed spec would be REJECTED by the SSH gate until the allowlist gains the `.spec.ts` form.
+    - 11 tracked snapshot dirs named `<name>.spec.js-snapshots` (144 baseline files, ~3 MB) — Playwright derives the dir name from the test file name, so a bare rename orphans every baseline.
 
 ### Tranche 1 — Convert the Playwright layer
 
@@ -636,7 +639,7 @@ One mechanical session; zero behavior change (specs stay equivalent modulo modul
 
 ## 5. Security / Maintainability / CC Remediation
 
-### Status: Spec renovated Nov 25, 2026 (post-audit) — Tranche 1 pending; sized at one small session
+### Status: Tranche 1 delivered (Nov 25, 2026, evening session) — post-push `sie` report + UI markings pending
 
 ### Why Fifth
 
@@ -646,12 +649,12 @@ Many "won't fix" and "deferred" decisions were made because fixing them in a mon
 
 The "Re-Evaluate After Architecture Change" era is over: Phase D/E delivered the consolidation the old text hoped for, and the SonarCloud queue is down to **4 OPEN issues** (verified via the public API this session):
 
-| Rule | Site | Disposition (per `sonarqube-workflow` skill) |
-|---|---|---|
-| `typescript:S6582` (MINOR) | `src/App.vue:205` — `el && el.duration ? … : null` | **Fix** — `el?.duration ? … : null` (same pattern already fixed in `useTitle.ts:39`) |
-| `typescript:S1874` (MINOR) | `src/App.vue:316` — `e.returnValue = …` in `onBeforeUnload` | **Accept** — `returnValue` is deprecated but setting it alongside `preventDefault()` is the cross-browser belt-and-suspenders the monolith shipped verbatim; removing it changes Tranche-1 parity behavior for legacy browsers. Revisit only if a browser drops `preventDefault` support |
-| `Web:S6819` (MAJOR) | `src/components/LeftPanel.vue:160` — `#progress-wrap` `role="slider"` | **Accept (documented exception)** — custom mousedown+drag+wheel interaction model can't be a native `<input type="range">`; see the skill's S6819 row + aria-accessibility Rule 1 |
-| `Web:S7927` (MAJOR) | `src/components/MenuBar.vue:154` — theme toggle | **False Positive** — icon-only button; `aria-label` is the accessible name and can't contain the emoji glyph (skill's S7927 row) |
+| Rule                       | Site                                                                  | Disposition (per `sonarqube-workflow` skill)                                                                                                                                                                                                                                             |
+| -------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `typescript:S6582` (MINOR) | `src/App.vue:205` — `el && el.duration ? … : null`                    | **Fix** — `el?.duration ? … : null` (same pattern already fixed in `useTitle.ts:39`)                                                                                                                                                                                                     |
+| `typescript:S1874` (MINOR) | `src/App.vue:316` — `e.returnValue = …` in `onBeforeUnload`           | **Accept** — `returnValue` is deprecated but setting it alongside `preventDefault()` is the cross-browser belt-and-suspenders the monolith shipped verbatim; removing it changes Tranche-1 parity behavior for legacy browsers. Revisit only if a browser drops `preventDefault` support |
+| `Web:S6819` (MAJOR)        | `src/components/LeftPanel.vue:160` — `#progress-wrap` `role="slider"` | **Accept (documented exception)** — custom mousedown+drag+wheel interaction model can't be a native `<input type="range">`; see the skill's S6819 row + aria-accessibility Rule 1                                                                                                        |
+| `Web:S7927` (MAJOR)        | `src/components/MenuBar.vue:154` — theme toggle                       | **False Positive** — icon-only button; `aria-label` is the accessible name and can't contain the emoji glyph (skill's S7927 row)                                                                                                                                                         |
 
 The old "Quick Wins" resolved themselves: `window.open` calls already carry `'noopener'` (`App.vue:275,278`, the S5148 fix from Sep 2026) — `noreferrer` adds nothing on top: browsers default to `strict-origin-when-cross-origin` referrer policy and the targets are static public GitHub pages, so there is no referrer data worth stripping. `Math.random()` / the `[by: contributor####]` feature no longer exist in `src/`, and the "548 regex DOS instances" ended with Phase D — the tree now has ~10 `.exec()` calls, all on bounded, pre-compiled `_RE` constants in `lrcParser.ts` / `pasteHandlers.ts` / `geniusExtractor.ts` / `useTitle.ts` (each carrying its S8786/S6594 remediation comment inline). CC (`sonarjs/cognitive-complexity`, warn threshold) reports **zero** warnings on `src/` + `tests/`.
 
@@ -659,9 +662,9 @@ CodeQL + SonarCloud + Playwright CI all run on every push (`codeql.yml`, `sonarc
 
 ### Tranche 1 — Close the queue (one small session)
 
-1. **The one code fix**: `App.vue:205` → optional chaining. Everything else in the queue is a UI disposition already documented in the skill — record the 3 Accept/FP markings in the SonarCloud UI (Accept for S1874, S6819; False Positive for S7927) so the quality gate reflects them.
+1. **The one code fix**: `App.vue:205` → optional chaining (`el?.duration ? Math.floor(el.duration * 1000) : null` — delivered Nov 25, 2026). Everything else in the queue is a UI disposition already documented in the skill — record the 3 Accept/FP markings in the SonarCloud UI (Accept for S1874, S6819; False Positive for S7927) so the quality gate reflects them.
 2. **Fresh `sie` report after the push**: user runs `sie` (with `SONAR_API_KEY` + `gh auth`) and commits the clean version (`sie -c`) in `archive/`. The 4-issue baseline in this table is the comparison point.
-3. **`window.open` `noreferrer` decision**: resolve as `noopener`-only with the rationale above recorded in the skill's false-positive summary (no referrer data worth stripping; S5148 satisfied) — flip to `noopener,noreferrer` only if a future `sie` report re-flags it and the rationale doesn't hold.
+3. **`window.open` `noreferrer` decision**: resolved as `noopener`-only — rationale recorded in the skill's false-positive summary (no referrer data worth stripping; S5148 satisfied) — flip to `noopener,noreferrer` only if a future `sie` report re-flags it and the rationale doesn't hold.
 4. **axe-core**: already wired (`tests/accessibility.spec.ts` runs AxeBuilder on landing/lyrics/settings and passes) — no fresh scan needed beyond the existing suite.
 
 ### Tranche 2 (conditional) — Only if the post-push report surprises

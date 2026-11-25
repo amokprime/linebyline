@@ -14,7 +14,3 @@ The full onboarding + workflow details (steps, checklists, versioning, deliver-z
 - **Roadmap / docs work**: the `[[ROADMAP#…]]` section the user references, plus `LIMITATIONS.md` if the topic touches app constraints.
 #### Versioning
 The app version is encoded in root `index.html`'s `<title>`; the highest semver folder under `archive/` gives history. The user states the current version in their opening message — don't change versions without an explicit request.
-#### Pointers
-- `ai/README.md` — chat.z.ai caveats + this file's Projects-instructions workflow.
-- `ai/Vibecoding workflow.md` — step flowcharts + the agent/user division of labor.
-- Full workflow details — invoke `Skill(command="linebyline")`.
