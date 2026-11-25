@@ -1,5 +1,4 @@
 
-// @ts-check
 import { defineConfig, devices } from "@playwright/test";
 
 /**
@@ -42,13 +41,6 @@ const baseURL = "http://localhost:5173";
  * artifacts are discarded after the run. This caps per-run growth at the
  * number of failures (~5-15 typically) rather than the full suite (~540).
  *
- * Values are inlined in the `use` block (not extracted to a const) because
- * .js files with `// @ts-check` don't support `as const` (TypeScript syntax).
- * Inlining lets TypeScript's contextual typing infer the literal union types
- * ("retain-on-failure", "only-on-failure") from the `use` property's type
- * definition — extracting to a `const` variable widens them to `string`,
- * which fails the type check.
- *
  *   - trace: "retain-on-failure" — record a trace for every test, then
  *     delete the trace for passing tests after the run ends.
  *   - screenshot: "only-on-failure" — only capture screenshots for
@@ -65,10 +57,10 @@ const baseURL = "http://localhost:5173";
  */
 export default defineConfig({
   testDir: "./tests",
-  // Playwright specs are *.spec.js; *.test.ts under tests/unit/ belongs to the
+  // Playwright specs are *.spec.ts; *.test.ts under tests/unit/ belongs to the
   // vitest unit bridge (npm run test:unit) and must not be collected here —
   // the default testMatch would pick *.test.ts up and fail on the vitest import.
-  testMatch: "**/*.spec.js",
+  testMatch: "**/*.spec.ts",
   fullyParallel: true,
   forbidOnly: inCI,
   retries: inCI ? 2 : 0,

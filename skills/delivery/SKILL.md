@@ -23,7 +23,7 @@ File visibility — the user can only see files inside `/home/z/my-project/downl
 Input handling
 
 - Stop immediately to request any missing uploads. Don't infer their contents — if the user refers to a file you haven't seen, ask for it.
-- Read docs and manifests (i.e. `*.md`, `package.json`, `pyproject.toml`) before code (i.e. `*.html`, `*.js`, `*.py`). Documentation describes intent; code is the implementation.
+- Read docs and manifests (i.e. `*.md`, `package.json`, `pyproject.toml`) before code (i.e. `*.html`, `*.ts`, `*.py`). Documentation describes intent; code is the implementation.
 - Follow obsidian-style links like `![[filename.png]]` (embed) or `[[filename]]` (non-embed) in the same-level 'attachments' subfolder.
 
 Output format
@@ -35,7 +35,7 @@ Comment density
 
 Large comment blocks in code files are hard to maintain (comments rot faster than code). The rule differs by file type:
 
-- **Component and test files** (e.g. `src/*.vue`, `src/*.ts`, `tests/*.spec.js`): minimal comments. Reserve 1-2 line comments for non-obvious decisions like workarounds, deferred bugs, intentional smells. Don't pedantically document every file — a folder-level `README.md` covering the shared intent of multiple files is better than one readme per file.
+- **Component and test files** (e.g. `src/*.vue`, `src/*.ts`, `tests/*.spec.ts`): minimal comments. Reserve 1-2 line comments for non-obvious decisions like workarounds, deferred bugs, intentional smells. Don't pedantically document every file — a folder-level `README.md` covering the shared intent of multiple files is better than one readme per file.
 - **Standalone scripts** (e.g. `scripts/unpack.sh`, `skills/delivery/scripts/deploy.sh`): larger header comment blocks are acceptable when they serve a functional purpose — usage examples, env var list, exit codes, or the chain of trust a reader needs before opening the file. But don't write a monolithic wall of text. The patterns to follow:
     - Lead with a one-line description of what the script does, then a blank line before the longer block.
     - Group related information into labeled sections (`# Usage:`, `# Env:`, `# Exit codes:`) so a reader can scan to what they need.

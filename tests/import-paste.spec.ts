@@ -1,10 +1,11 @@
-const {
+import {
   test,
   expect,
   waitForImport,
   waitForLyrics,
   waitForAudio,
-} = require("@linebyline/test-helpers");
+} from "@linebyline/test-helpers";
+import { readFileSync } from "node:fs";
 
 test("import-plain", async ({ page, media }) => {
   await page
@@ -188,7 +189,7 @@ test("save", async ({ page, media }) => {
   const download = await downloadPromise;
   const content = await download
     .path()
-    .then((p) => require("fs").readFileSync(p, "utf-8"));
+    .then((p) => readFileSync(p, "utf-8"));
   const filename = download.suggestedFilename();
   const savedTitle = content.match(/\[ti: (.+?)\]/)?.[1];
   expect(savedTitle).toEqual(TITLE);

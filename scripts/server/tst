@@ -11,7 +11,7 @@
 #
 #### Usage: tst [playwright args...]
 ####   e.g. tst --list
-####        tst tests/foo.spec.js
+####        tst tests/foo.spec.ts
 ####        tst -g "login"
 #        tst --update-snapshots
 #
@@ -52,8 +52,8 @@ image=${TST_IMAGE:-mcr.microsoft.com/playwright:v1.61.0-noble}
 host_workspace=${TST_HOST_WS:-/home/user/GitHub/linebyline}
 
 #### Refuse to run outside a Playwright repo.
-if [ ! -f "$host_workspace/playwright.config.js" ]; then
-  echo "tst: $host_workspace/playwright.config.js not found" >&2
+if [ ! -f "$host_workspace/playwright.config.ts" ]; then
+  echo "tst: $host_workspace/playwright.config.ts not found" >&2
   echo "tst: is the working tree synced? Is TST_HOST_WS set to a real repo?" >&2
   exit 1
 fi

@@ -16,7 +16,7 @@
 # Install: `ln -s ~/GitHub/linebyline/scripts/local/tst.sh ~/.local/bin/tst`
 # Usage: tst [playwright args...]
 #   e.g. tst --list
-#        tst tests/foo.spec.js
+#        tst tests/foo.spec.ts
 #        tst -g "login"
 #        tst --update-snapshots
 

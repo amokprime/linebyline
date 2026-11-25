@@ -1,21 +1,22 @@
-const { test, expect, waitForImport } = require("@linebyline/test-helpers");
+import { test, expect, waitForImport } from "@linebyline/test-helpers";
+import type { Page } from "@playwright/test";
 
-async function lyricLinesText(page) {
+async function lyricLinesText(page: Page) {
   return page.getByLabel("Lyric lines").innerText();
 }
 
-async function triggerTimeUpdate(page) {
+async function triggerTimeUpdate(page: Page) {
   await page.evaluate(() => {
     const audio = document.querySelector("audio");
     if (audio) audio.dispatchEvent(new Event("timeupdate"));
   });
 }
 
-async function waitForAudioPlayback(page) {
+async function waitForAudioPlayback(page: Page) {
   await expect(page.locator("#time-pos")).not.toHaveText("0:00");
 }
 
-async function waitForAudioPaused(page) {
+async function waitForAudioPaused(page: Page) {
   await expect(
     page.getByRole("button", { name: "Play", exact: true }),
   ).toBeVisible();

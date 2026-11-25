@@ -1,4 +1,4 @@
-const { test, expect } = require('@linebyline/test-helpers');
+import { test, expect } from '@linebyline/test-helpers';
 
 test('link-hrefs', async ({ page }) => {
   await expect(page.getByRole('link', { name: '?' })).toHaveAttribute(

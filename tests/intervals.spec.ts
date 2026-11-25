@@ -1,12 +1,13 @@
 
-const {
+import {
   test,
   expect,
   waitForImport,
   waitForAudio,
-} = require("@linebyline/test-helpers");
+} from "@linebyline/test-helpers";
+import type { Page } from "@playwright/test";
 
-async function lyricLinesText(page) {
+async function lyricLinesText(page: Page) {
   return page.getByLabel("Lyric lines").innerText();
 }
 

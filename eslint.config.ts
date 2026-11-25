@@ -1,18 +1,24 @@
-// eslint.config.js — ESLint 9 flat config
+// eslint.config.ts — ESLint flat config
 //
 // Roadmap context (ROADMAP.md, items 2-4):
 //   - Item 3 Phase A (2026-09-06) added the Vite + Vue blocks below
 //     (sections 5-6): eslint-plugin-vue for src/**/*.vue, with
 //     @typescript-eslint/parser for <script lang="ts"> and plain .ts.
-//   - Item 4 will deepen this: full typescript-eslint ruleset and the
-//     test suite blocks move to .spec.ts (globals list below shrinks).
+//   - Item 4 (Nov 25, 2026) converted the Playwright layer to TypeScript:
+//     specs + helpers are .ts, playwright.config is .ts, and the default
+//     CommonJS .js block is gone (no .js files remain in the tree).
 
 import tsParser from "@typescript-eslint/parser";
-import js from "@eslint/js";
 import pluginVue from "eslint-plugin-vue";
 import sonarjs from "eslint-plugin-sonarjs";
 import vueParser from "vue-eslint-parser";
 import globals from "globals";
+import type { Linter } from "eslint";
+
+// eslint-plugin-sonarjs v4 types `configs` as a legacy/flat union that may be
+// undefined; at runtime `recommended` is a flat config object carrying `rules`.
+const sonarRules =
+  (sonarjs.configs?.recommended as Linter.Config | undefined)?.rules ?? {};
 
 export default [
   // ────────────────────────────────────────────────────────────
@@ -36,7 +42,7 @@ export default [
       "**/*.txt",
       "tests/*snapshots/**",
       "tests/media/**",
-      "trash/**", // Playwright outputDir from playwright.config.js
+      "trash/**", // Playwright outputDir from playwright.config.ts
 
       // Env + lock + project metadata (not source code)
       "**/.env*",
@@ -61,52 +67,15 @@ export default [
   },
 
   // ────────────────────────────────────────────────────────────
-  // 2. Default JS rules — CommonJS (matches "type": "commonjs"
-  //    in package.json). Tests and helpers all use require().
+  // 2. Playwright specs + helpers (roadmap item 4: .spec.ts since
+  //    Nov 25, 2026). Owns the full recommended rule set — with the
+  //    default CJS .js block gone, nothing else feeds these files.
   // ────────────────────────────────────────────────────────────
   {
-    files: ["**/*.js"],
+    files: ["tests/**/*.spec.ts", "tests/helpers/**/*.ts"],
     languageOptions: {
-      ecmaVersion: 2022,
-      sourceType: "commonjs",
-      globals: {
-        ...globals.node,
-        ...globals.browser, // Playwright tests run in Node but assert against DOM
-      },
-    },
-    plugins: { sonarjs },
-    rules: {
-      ...js.configs.recommended.rules,
-      ...sonarjs.configs.recommended.rules,
-
-      // Solo project, vibe-coded — cognitive complexity is a signal,
-      // not a blocker. Many current findings will auto-resolve when
-      // item 3 splits the monolith into modules.
-      "sonarjs/cognitive-complexity": "warn",
-
-      // Allow unused args prefixed with _ (common in test fixtures)
-      "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
-    },
-  },
-
-  // ────────────────────────────────────────────────────────────
-  // 3. Override: playwright.config.js is the one ESM file
-  //    (Playwright's own loader handles the import syntax despite
-  //    "type": "commonjs" in package.json)
-  // ────────────────────────────────────────────────────────────
-  {
-    files: ["playwright.config.js"],
-    languageOptions: { sourceType: "module" },
-  },
-
-  // ────────────────────────────────────────────────────────────
-  // 4. Override: Playwright spec files use ESM import syntax
-  //    (tests/accessibility.spec.js does; others use require()
-  //    via @linebyline/test-helpers, which works under either)
-  // ────────────────────────────────────────────────────────────
-  {
-    files: ["tests/**/*.spec.js", "tests/helpers/**/*.js"],
-    languageOptions: {
+      parser: tsParser,
+      ecmaVersion: "latest",
       sourceType: "module",
       globals: {
         ...globals.node,
@@ -115,11 +84,16 @@ export default [
     },
     plugins: { sonarjs },
     rules: {
+      // No js.configs.recommended spread (matches the src/** and tests/unit
+      // TS blocks): core no-undef/no-unused-vars false-positive on TS syntax;
+      // vue-tsc owns those checks for TS (TS6133 etc, _-prefix exempt).
+      ...sonarRules,
+      "sonarjs/cognitive-complexity": "warn",
+
       // ReDoS findings are "Won't Fix" per Roadmap item 5 — client-side
       // processing on user-supplied lyrics, not a real attack surface.
       "sonarjs/super-linear-regex": "off",
       "sonarjs/empty-string-repetition": "off",
-      "no-empty-pattern": "off", // ← NEW: Playwright fixture idiom
       // waitForTimeout is intentional for clipboard-paste settling + undo
       // debounce timing — see playwright-testing-SKILL.md "Common test patterns".
       "sonarjs/no-fixed-wait-in-tests": "off",
@@ -130,12 +104,11 @@ export default [
   },
 
   // ────────────────────────────────────────────────────────────
-  // 5. Vite + Vue app modules (roadmap item 3 Phase A). The flat
+  // 3. Vite + Vue app modules (roadmap item 3 Phase A). The flat
   //    recommended array carries the vue/* template+script rules for
   //    .vue files; the two blocks after it wire the parsers —
   //    vue-eslint-parser reads the template and delegates <script> to
   //    @typescript-eslint/parser. Plain .ts needs the TS parser itself.
-  //    Full typescript-eslint rules land in item 4.
   // ────────────────────────────────────────────────────────────
   ...pluginVue.configs["flat/recommended"],
 
@@ -153,7 +126,7 @@ export default [
     },
     plugins: { sonarjs },
     rules: {
-      ...sonarjs.configs.recommended.rules,
+      ...sonarRules,
       "sonarjs/cognitive-complexity": "warn",
       "sonarjs/empty-string-repetition": "off",
     },
@@ -169,7 +142,7 @@ export default [
     },
     plugins: { sonarjs },
     rules: {
-      ...sonarjs.configs.recommended.rules,
+      ...sonarRules,
       "sonarjs/cognitive-complexity": "warn",
       // super-linear-regex is NOT overridden for src/** — the Tranche 4.8
       // blanket "Won't Fix" (verbatim monolith port) ended with Tranche 6:
@@ -205,14 +178,17 @@ export default [
     },
     plugins: { sonarjs },
     rules: {
-      ...sonarjs.configs.recommended.rules,
+      ...sonarRules,
       "sonarjs/cognitive-complexity": "warn",
     },
   },
 
   {
-    // Vite/TS config files run in Node under ESM (e.g. vite.config.mts)
-    files: ["*.mts"],
+    // Root config files run in Node under ESM (vite.config.mts,
+    // playwright.config.ts, eslint.config.ts — each loaded as ESM by its
+    // tool); claiming eslint.config.ts keeps Zed's ESLint LSP from warning
+    // "File ignored because no matching configuration was supplied".
+    files: ["*.mts", "playwright.config.ts", "eslint.config.ts"],
     languageOptions: {
       parser: tsParser,
       ecmaVersion: "latest",
@@ -232,7 +208,7 @@ export default [
     },
     plugins: { sonarjs },
     rules: {
-      ...sonarjs.configs.recommended.rules,
+      ...sonarRules,
       "sonarjs/cognitive-complexity": "warn",
       // Audio currentTime + volume comparisons need exact float equality —
       // the values are deterministic in unit tests (no real audio element).

@@ -1,4 +1,4 @@
-const { test, expect, waitForImport } = require("@linebyline/test-helpers");
+import { test, expect, waitForImport } from "@linebyline/test-helpers";
 
 test("inline-paren-arrow", async ({ page, media }) => {
   await page

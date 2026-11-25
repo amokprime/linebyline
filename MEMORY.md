@@ -81,7 +81,6 @@ Do not violate.
     - the newline convention in LRC assembly
     - the underscore-prefix on auto-setup fixtures
 - The chat.z.ai platform **forces compaction every single turn**. Therefore one-shot as much as possible in the first turn. If you have questions or concerns, use the ask tool to settle them in the same turn without risking followup context loss.
-- The user fills in transcripts **manually**. They copy your output from the current turn from the web UI and draft their next prompt while you work.
 
 ## CI & repo automation
 
@@ -110,6 +109,7 @@ Per-version Accept / Won't-Fix / False-Positive decisions. Read alongside `sonar
 - Sonar gate "Coverage on New Code" (PR #11, Sep 2026): the 80%-on-new-code condition had no teeth while new code was only `.yml`/`.sh` (not coverable languages) — the modular scaffold's `src/` was the first countable JS/TS and went 0.0%, failing the gate.
     - Fixed with `-Dsonar.coverage.exclusions=src/**,vite.config.mts` in `sonarcloud.yml` (coverage measurement only — issue analysis on `src/` continues).
     - REVISIT when a coverage pipeline exists (vitest or Playwright v8 coverage, realistically Phase E or later): narrow the exclusions then; the project has never had line-coverage measurement. (Re-checked in Tranche 6, Nov 23, 2026 — still no pipeline; the exclusion stayed and the follow-up is parked in `MAYBE.md`.)
+    - Corollary (Nov 25, 2026): with `src/**`+`vite.config.mts`+`scripts/**`+`skills/**` coverage-excluded and `tests/**`+`archive/**` scan-excluded, the gate's coverable set is just the root config files — a new/renamed config file outside every exclusion (e.g. `eslint.config.ts` in the item-4 PR) re-fails the gate at 0%. Root configs join `-Dsonar.exclusions` (`playwright.config.ts`, `eslint.config.ts`) as they appear.
 - `githubactions:S8264/S8233/S6505` ×4 (deploy.yml, PR #11, Sep 2026): all fixed — workflow-level permissions split to job level (build: `contents: read`; deploy: `pages: write` + `id-token: write`), `npm ci --ignore-scripts` with the Vite build verified to work without lifecycle scripts locally.
     - Unverified until first real run: whether `configure-pages`/`upload-pages-artifact` in the build job need more than `contents: read`.
 - `S7682` explicit-return ×5 (`scripts/*.sh`, 0.37.2 export, Sep 2026): Won't Fix — see `sonarqube-workflow-SKILL.md` (Review bundle) → "Step 3: shelldre:S7682" for the snippet-caller rationale.
@@ -336,11 +336,11 @@ Per-version Accept / Won't-Fix / False-Positive decisions. Read alongside `sonar
 
 Required files for the Build Repomix bundle (so the agent can run `npm install && npm run test:unit` after patching `src/` modules):
 
-`package.json`, `package-lock.json` (if not gitignored), `eslint.config.mjs`, `vite.config.mts`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`, `tsconfig.vitest.json`, `src/**`, `tests/unit/**`, `tests/helpers/index.js`, `tests/helpers/package.json`.
+`package.json`, `package-lock.json` (if not gitignored), `eslint.config.ts`, `vite.config.mts`, `tsconfig.json`, `tsconfig.app.json`, `tsconfig.node.json`, `tsconfig.vitest.json`, `src/**`, `tests/unit/**`, `tests/helpers/index.ts`, `tests/helpers/package.json`.
 
 Gotcha: the `.gitignore` `*genius*` pattern excludes `src/utils/geniusExtractor.ts` from Repomix — the user must add a negation pattern or include it explicitly.
 
-**ESLint in-sandbox** (Sep 2026, Phase E Tranche 1 session): `eslint.config.mjs` is now included in the Build Repomix bundle. Run `./node_modules/.bin/eslint src/ --fix` (autofix) then `./node_modules/.bin/eslint src/` (gate) in-sandbox BEFORE `npm run test:unit` — this catches `sonarjs/*` rule violations early and reduces back-and-forth turns (the `deploy.sh` ESLint gate would otherwise fail on the user's machine, leaving stale `deliver.zip` + `deploy.sh` in `scratch/`). The sandbox ESLint run mirrors the `deploy.sh` gate exactly: same config, same `src/` scope, same `--fix` then gate pattern. If the sandbox ESLint passes, the `deploy.sh` ESLint gate will pass too (the only difference is the sandbox doesn't have `node_modules/.bin/eslint` until `npm install` runs — run `npm install --ignore-scripts` first, then ESLint, then Vitest).
+**ESLint in-sandbox** (Sep 2026, Phase E Tranche 1 session): `eslint.config.ts` is now included in the Build Repomix bundle. Run `./node_modules/.bin/eslint src/ --fix` (autofix) then `./node_modules/.bin/eslint src/` (gate) in-sandbox BEFORE `npm run test:unit` — this catches `sonarjs/*` rule violations early and reduces back-and-forth turns (the `deploy.sh` ESLint gate would otherwise fail on the user's machine, leaving stale `deliver.zip` + `deploy.sh` in `scratch/`). The sandbox ESLint run mirrors the `deploy.sh` gate exactly: same config, same `src/` scope, same `--fix` then gate pattern. If the sandbox ESLint passes, the `deploy.sh` ESLint gate will pass too (the only difference is the sandbox doesn't have `node_modules/.bin/eslint` until `npm install` runs — run `npm install --ignore-scripts` first, then ESLint, then Vitest).
 
 For the workflow (when to run the suite, scope of coverage) see the `playwright-testing` skill → "Sandbox-side sample tests" and `linebyline-SKILL.md` → "Post-patch verification".
 
@@ -631,3 +631,78 @@ Spec + audit list live in `ROADMAP.md` → Tranche 9 (Status: Done — **Phase E
 - **A synthetic `F5` keydown never reloads the page** (the browser UI owns F5; the page never sees a navigation) — `merge-block-reload`'s unchanged-state assertions were passing on a no-op. The protective mechanism that "blocks" reload loss (dirty state → beforeunload warning) is now pinned via `beforeUnloadPrevented(page)` after the merge.
 - **Sep 24 mutation note corrected**: the autosave IS written during the fast import cycle now (`doAutosave` on import + audio setup) — under M1 even the outcome assertions fail, not just the pins. Stale "The Vue port does NOT clear" comments fixed in `useAutosave.ts` + `autosave.test.ts` (the clear lives in App.vue's onMounted, monolith parity; `loadAutosave()` never clears).
 - **Mutation-driver verdict gotchas** (both produced false verdicts before being caught): verify the mutant reached the bundle (grep `dist/assets/*.js` for the mutated construct) before reading a green run as a pass, and parenthesize alternations in kill-check greps (`✘ .*(A|B)` — the bare `✘ .*A|B` matches the ✓ line of the second alternative).
+
+## Roadmap item 4 — TypeScript Conversion, Tranche 1 (Nov 25, 2026)
+
+Spec + file list live in `ROADMAP.md` → item 4. The pre-conversion tree was
+already all-TS in `src/` (Phase D did that); Tranche 1 converted the remaining
+Playwright layer. Session-specific findings (the unexpected-only entries):
+
+- **The old §4 "Approach" text had rotted completely** — it still described
+  converting `lrcParser.ts`-era leaf modules and flipping ESLint to
+  typescript-eslint, all of which Phase D had already delivered. Same lesson
+  as Tranche 4.9/7 ("audit the tree, not the spec"), applied at spec-writing
+  time: the tree survey (`find src -name '*.js'` → zero hits) redirected the
+  whole tranche to the Playwright layer before any code was written.
+- **`tests/helpers/package.json` MUST carry `"type": "module"`** alongside
+  `"main": "index.ts"`: node resolves `@linebyline/test-helpers` through the
+  `node_modules` symlink to the real `tests/helpers/` folder, whose own
+  package.json governs the module format — the root package's flip does NOT
+  reach through it. Without the field, Playwright's `fileIsModule()` sends
+  the TS helper through the CJS loader and node rejects the ESM syntax with
+  `ERR_REQUIRE_CYCLE_MODULE` (first `--list` run failed exactly this way).
+- **Core `no-unused-vars` (from `js.configs.recommended`) false-positives on
+  TS type-literal signatures** — it flagged the `Fixtures` type's
+  `(filename: string) => string` members as unused args. The src/ and
+  tests/unit TS blocks never spread js-recommended for exactly this reason;
+  the spec block now matches them (sonarjs + vue-tsc own unused detection,
+  `_`-prefix exempt). Also: `no-empty-pattern` was never needed for the
+  `async ({}, use)` fixture idiom (that rule targets `const {} = x`, not
+  parameter patterns) — the old comment misattributed it; dropped.
+- **Strict mode surfaced 50 real annotations**, all mechanical: local helper
+  fns needed `page: Page` params (+ `import type { Page }`), JSDoc casts →
+  `as` casts, `boundingBox()`/`__saveCapture` null-narrowing via
+  `expect(...).not.toBeNull()` + `!` or a narrowed local. `window.doSave`
+  resolved by adding `src/globals.d.ts` to `tsconfig.playwright.json`'s
+  include (the declaration lives there, not in `tests/spec-globals.d.ts`,
+  which holds only the test-injected `__doSaveCalled`/`__saveCapture`).
+- **Snapshot baselines survive a rename byte-exact** — plain `mv` of the 11
+  `.spec.js-snapshots` dirs, no regen: all 121 chromium sample tests passed
+  against the unchanged baselines (aria .yml, .txt, and font-stable .png).
+  The full 3-browser `tst` run is still the user-side gate; PNGs are
+  font-fragile per the playwright-testing skill, so triage rather than regen
+  if ubuntu-vs-fedora diffs appear.
+- **ESLint `**/*.js` default block is gone entirely** — zero `.js` files
+  remain in the tree (eslint config is `.mjs`, vite config `.mts`, specs
+  `.ts`). The spec block carries its own sonarjs spread; the
+  `playwright.config.ts` file joins the `*.mts` node-config block.
+- **deploy.sh gained `deploy_delete <rel>`** (rename counterpart / deletion
+  verb; refuses the bwrap-protected paths, idempotent) + a snapshot-dir
+  migration step; `changed_abs` filters `(deleted)` entries so lint_gate
+  never receives nonexistent paths. `scripts/server/tst-locked` allowlist
+  gained `tests/*.spec.ts` — **the Server's deployed `~/.local/bin/tst-locked`
+  copy needs a manual `tlkcp` after this deploy**, or agent-tst rejects the
+  renamed specs (noted in SSH_SETUP.md).
+- In-sandbox verification: `vue-tsc -b` clean (all 4 projects), ESLint gate
+  clean, Vitest 533/533, `vite build` green, Playwright 242 collected /
+  121 chromium sample passed across all 15 specs.
+
+## Roadmap item 4 Tranche 2 + item 5 renovation (Nov 25, 2026, evening session)
+
+Upload-sync + verification of the user's deploy, then the §5 renovation. Findings:
+
+- **The Tranche-1 deploy verified clean end-to-end**: deploy.log shows all 34 mappings, 19 deletes, 11 snapshot-dir renames, lint gate passed, Vitest 533/533. Full `tst` after the user's two fixes: 346 passed / 8 failed → all 8 resolved on scoped re-runs (6 genius-baseline misses + 2 known webkit flakes, both pre-documented). `tsta` headed 121/121. Item 4 flipped to Done.
+- **`scripts/server/tst`'s repo-check (`playwright.config.js` existence test) was the one `spec.js`/`config.js` reference my Tranche-1 sweep missed** — the sweep covered `scripts/server/tst-locked` + `tst` usage comments but not tst's own config-existence check (it lived outside the grep pattern set). The user fixed it live before I could. Lesson reinforced: a rename tranche's sweep must grep for the OLD NAME as a bare token everywhere, not just in the file-type-specific patterns (a `.js` string literal inside a bash `[[ -f ]]` test matches neither `*.spec.js` nor `playwright.config.js` greps that assume code-file contexts). The follow-up sweep in this session caught the remaining siblings: `tsta.sh` comment, `PLAYWRIGHT_SETUP.md` ×2, `SSH_SETUP.md` ×1, `playwright-testing` + `delivery` SKILL.md.
+- **The 6 genius-baseline "writing actual" failures were a Syncthing rename race, not data loss**: the `.txt` baselines are gitignore-negated (`!tests/*.spec.ts-snapshots/*genius*.txt`), they existed on the PC (verified byte-identical via the upload patch's rename hunks), but the container's `/workspace` hadn't received them when the run started. All 6 passed on immediate scoped re-runs. Operational rule for rename-heavy deploys that ride Syncthing: after `unpack.sh`, let the Syncthing rescan settle (or trigger it) before firing `tst` — the deploy.log's "sync complete" covers the PC→Server direction, not the Server→container bind-mount freshness.
+- **User moved `tests/FAILURES.md` → `archive/tests/FAILURES.md`** (pre-TS-conversion era closed). References updated: `tests/README.md`, `playwright-testing-SKILL.md` file map, `AGENTS.md` test-debugging read list.
+- **Item 5 renovated from a live SonarCloud API audit** (public API, per the sonarqube-workflow skill): 4 OPEN issues total — S6582 `App.vue:205` (the one real fix, optional chaining), S1874 `App.vue:316` (`e.returnValue`, Accept — parity with the monolith's belt-and-suspenders beforeunload), S6819 `LeftPanel.vue:160` (Accept — documented custom-slider exception), S7927 `MenuBar.vue:154` (FP — icon-only button). The old §5 text had rotted: the "548 regex DOS instances" ended with Phase D (~10 bounded `.exec()` calls on pre-compiled `_RE` constants now), `Math.random` is gone, CC warnings are zero. Drafting note: I initially wrote a "referrer is wanted" rationale for the `noreferrer` question and git-history check (`git log -S noopener`, commit 8dda071) disproved it — `noopener` was a plain S5148 rule fix with no referrer consideration. The recorded rationale is now "nothing to strip: strict-origin-when-cross-origin default + static public GitHub targets".
+- **PR strategy decided: item 4 and item 5 ship as SEPARATE PRs.** The TS conversion is ~194 files of rename-dominant churn; item 5 Tranche 1 is one line of code + three SonarCloud UI markings (which can't ride in a PR at all — a UI visit is needed regardless). TS first (fully verified), `sie` on the merge, then item 5's tiny PR with that report as baseline.
+
+## Roadmap item 4 — config-file TS conversion + stale-JS sweep (Nov 25, 2026, follow-up session)
+
+The user renamed `eslint.config.mjs` → `eslint.config.ts` (dropping the unused `@eslint/js` import) and hit 11 Zed Project Diagnostics errors. Diagnosed by reproduction, fixed, all gates green:
+
+- **The 11 = 10 tsc errors + 1 ESLint warning, all rename fallout**: as `.mjs` the config was invisible to tsc; as `.ts` it needed (1) `tsconfig.node.json` include membership, (2) the eslint config's own node block to claim it (as `.mjs` it matched `*.mts`; a `.ts` matches nothing → "File ignored because no matching configuration was supplied"), (3) typing for the five `sonarjs.configs.recommended.rules` spreads. The claiming trio is documented in `playwright-testing-SKILL.md` → "TypeScript diagnostics setup".
+- **eslint-plugin-sonarjs v4 types `configs` as a legacy/flat union that may be undefined** — 5× TS18048 + 5× TS2339 under the node project. Fixed once with a typed accessor (`const sonarRules = (sonarjs.configs?.recommended as Linter.Config | undefined)?.rules ?? {}`) + `...sonarRules` at the 5 sites; runtime verified via `--print-config` (268 sonarjs rules still load — the cast would otherwise hide a wrong runtime shape).
+- **`@eslint/js` dep removed** (the import was its only consumer; lock synced). `sonar.exclusions` gained `eslint.config.ts` — the coverage-gate corollary is recorded in the "Sonar gate Coverage on New Code" thread above.
+- **Stale-JS sweep**: 4 active comment cross-refs re-pointed to `.spec.ts` (`App.vue`, `smoke.spec.ts` ×2, `undo-redo.spec.ts`), AGENTS.md config list + 4 living ROADMAP refs updated, delivery skill's docs-before-code glob `*.js` → `*.ts`; historical tranche notes and provenance comments kept as history. Residual check: no `.js` files, no `jsconfig.json`, no `@ts-check` leftovers outside `archive/`.

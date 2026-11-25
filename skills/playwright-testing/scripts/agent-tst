@@ -12,7 +12,7 @@
 #
 # Usage: agent-tst [playwright args...]
 #   e.g. agent-tst -g title
-#        agent-tst tests/foo.spec.js
+#        agent-tst tests/foo.spec.ts
 #        agent-tst --list
 #
 # IMPORTANT — argument handling: the server's authorized_keys forces

@@ -1,11 +1,12 @@
-const {
+import {
   test,
   expect,
   waitForImport,
   beforeUnloadPrevented,
-} = require("@linebyline/test-helpers");
+} from "@linebyline/test-helpers";
+import type { Page } from "@playwright/test";
 
-function wrapParensCheckbox(page) {
+function wrapParensCheckbox(page: Page) {
   return page
     .locator(
       '[title="Wrap marked translations in parentheses"] input[type="checkbox"]',

@@ -1,9 +1,9 @@
-const {
+import {
   test,
   expect,
   waitForImport,
   waitForAudio,
-} = require("@linebyline/test-helpers");
+} from "@linebyline/test-helpers";
 
 test("play-pause-hotkey", async ({ page, media }) => {
   await page
@@ -43,7 +43,8 @@ test("shift-space-plays-from-slider-position", async ({ page, media }) => {
   await waitForImport(page);
   // Cursor is on line 0 ([00:00.00] I wish...). Drag slider to ~50%.
   const box = await page.locator("#progress-wrap").boundingBox();
-  await page.mouse.click(box.x + box.width * 0.5, box.y + box.height / 2);
+  expect(box).not.toBeNull();
+  await page.mouse.click(box!.x + box!.width * 0.5, box!.y + box!.height / 2);
   await page.waitForTimeout(100);
   // fmtTime pads seconds to 2 digits, so 6-7s is "0:06" / "0:07".
   await expect(page.locator("#time-pos")).toHaveText(/^0:0[67]$/);
@@ -63,8 +64,9 @@ test("seek-click", async ({ page, media }) => {
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
   const box = await page.locator("#progress-wrap").boundingBox();
-  async function seekAndCheck(fraction, expectedRegex) {
-    await page.mouse.click(box.x + box.width * fraction, box.y + box.height / 2);
+  expect(box).not.toBeNull();
+  async function seekAndCheck(fraction: number, expectedRegex: RegExp) {
+    await page.mouse.click(box!.x + box!.width * fraction, box!.y + box!.height / 2);
     await page.waitForTimeout(100);
     await expect(page.locator("#time-pos")).toHaveText(expectedRegex);
   }
@@ -148,9 +150,10 @@ test("seek-drag", async ({ page, media }) => {
     .setInputFiles([media("audio.mp3"), media("synced_english.lrc")]);
   await waitForImport(page);
   const box = await page.locator("#progress-wrap").boundingBox();
-  await page.mouse.move(box.x + box.width * 0.25, box.y + box.height / 2);
+  expect(box).not.toBeNull();
+  await page.mouse.move(box!.x + box!.width * 0.25, box!.y + box!.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width * 0.75, box.y + box.height / 2, { steps: 5 });
+  await page.mouse.move(box!.x + box!.width * 0.75, box!.y + box!.height / 2, { steps: 5 });
   await page.mouse.up();
   await page.waitForTimeout(100);
   await expect(page.locator("#time-pos")).toHaveText(/^0:(09|1[0123])$/);
@@ -191,11 +194,11 @@ test("focus-not-stolen", async ({ page, media }) => {
   await page.waitForTimeout(50);
   const cursorBefore = await page
     .locator(".lrc-line.cursor")
-    .evaluate((el) => Array.from(el.parentNode.children).indexOf(el));
+    .evaluate((el) => Array.from(el.parentNode!.children).indexOf(el));
   await page.keyboard.press("ArrowDown");
   const cursorAfter = await page
     .locator(".lrc-line.cursor")
-    .evaluate((el) => Array.from(el.parentNode.children).indexOf(el));
+    .evaluate((el) => Array.from(el.parentNode!.children).indexOf(el));
   expect(cursorAfter).toBe(cursorBefore + 1);
 });
 
@@ -213,10 +216,10 @@ test("focus-not-stolen-collapse-toggle", async ({ page, media }) => {
   await page.waitForTimeout(50);
   const cursorBefore = await page
     .locator(".lrc-line.cursor")
-    .evaluate((el) => Array.from(el.parentNode.children).indexOf(el));
+    .evaluate((el) => Array.from(el.parentNode!.children).indexOf(el));
   await page.keyboard.press("ArrowDown");
   const cursorAfter = await page
     .locator(".lrc-line.cursor")
-    .evaluate((el) => Array.from(el.parentNode.children).indexOf(el));
+    .evaluate((el) => Array.from(el.parentNode!.children).indexOf(el));
   expect(cursorAfter).toBe(cursorBefore + 1);
 });

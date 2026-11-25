@@ -1,4 +1,4 @@
-const { test, expect, waitForImport } = require("@linebyline/test-helpers");
+import { test, expect, waitForImport } from "@linebyline/test-helpers";
 import AxeBuilder from "@axe-core/playwright";
 
 test("axe-scan-landing", async ({ page }) => {

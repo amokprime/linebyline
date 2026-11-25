@@ -1,12 +1,11 @@
-const {
+import {
   test,
   expect,
   waitForLyrics,
-} = require("@linebyline/test-helpers");
+} from "@linebyline/test-helpers";
 
 test("persistence", async ({ page, media }) => {
-  /** @param {string} name @param {string} v @param {boolean} [soft] */
-  const exp = (name, v, soft) =>
+  const exp = (name: string, v: string, soft?: boolean) =>
     (soft ? expect.soft : expect)(
       page.getByLabel(name, { exact: true }),
     ).toHaveValue(v);

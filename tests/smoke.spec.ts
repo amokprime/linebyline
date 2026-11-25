@@ -1,5 +1,5 @@
 
-const { test, expect } = require("@linebyline/test-helpers");
+import { test, expect } from "@linebyline/test-helpers";
 
 test("title", async ({ page }) => {
   await expect(page).toHaveTitle(/LineByLine/);
@@ -19,7 +19,7 @@ test("favicon", async ({ page }) => {
 });
 
 test("landing", async ({ page }) => {
-  const errors = [];
+  const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(`Uncaught: ${e.message}`));
   page.on("console", (msg) => {
     if (msg.type() === "error") errors.push(`console.error: ${msg.text()}`);
@@ -55,7 +55,7 @@ test("button-feedback", async ({ page }) => {
 // window explicitly so the global hotkey handler can dispatch through the
 // runtime-resolved reference — allowing Playwright tests to monkeypatch
 // window.doSave on Firefox (which blocks the download event chromium/webkit
-// use). The companion test in typing-mode.spec.js (meta-save-update) only
+// use). The companion test in typing-mode.spec.ts (meta-save-update) only
 // exercises the Firefox capture path; this test verifies the exposure + hotkey
 // dispatch on ALL browsers.
 test("doSave-exposed", async ({ page }) => {
@@ -72,7 +72,7 @@ test("doSave-dispatch", async ({ page }) => {
   // Monkeypatch window.doSave to capture the call, then press the save hotkey
   // (Ctrl+' by default). The monkeypatch must fire — if the hotkey handler
   // calls the imported doSave directly (bypassing window.doSave), the capture
-  // stays empty. This is the cross-browser version of typing-mode.spec.js's
+  // stays empty. This is the cross-browser version of typing-mode.spec.ts's
   // meta-save-update Firefox-only test.
   await page.evaluate(() => {
     window.__doSaveCalled = false;
