@@ -219,6 +219,7 @@ Document Won't Fix decisions in the chat output for the user to record. Standard
 - Deferred (major refactor scope): "Deferred: function complexity requires structural redesign; out of scope for patch release. Tracked for next major version."
 - S6819 custom interaction: "Won't Fix: custom mouse/keyboard interaction model (mousedown+drag+wheel) can't use a native `<input type="range">`. See aria-accessibility skill Rule 1."
 - S7927 icon-only button: "False Positive: icon-only button whose aria-label can't contain an emoji glyph. aria-label is the correct accessible name (WCAG / aria-accessibility skill Rule 8)."
+- `window.open` noopener-only: "Won't Fix: `noreferrer` adds nothing — `strict-origin-when-cross-origin` default policy + static public GitHub targets (nothing to strip; S5148 satisfied by `noopener`)."
 - S7682 snippet-caller: "Won't Fix: function exit status is intentionally the last command's (zip); an explicit return would mask failures."
 - S6606 verbatim port: "Accept: verbatim monolith port (Tranche 1); modernization belongs to the post-Phase-E cutover pass (roadmap item 5)."
 - S8786 verbatim port: "Accept: verbatim monolith port; input bounded by `MAX_LINES=500`, simple tag-matcher regex with no nested quantifiers — linear backtracking."
@@ -246,6 +247,7 @@ False positive summary
 | Pattern | Rule | Action |
 |---|---|---|
 | `/regex/` literal flagged for String.raw | S6443 | Won't Fix — false positive |
+| `window.open` with `'noopener'` but no `noreferrer` | S5148 follow-up | Won't Fix — no referrer data worth stripping: browsers default to `strict-origin-when-cross-origin` referrer policy and the targets are static public GitHub pages; flip to `noopener,noreferrer` only if a `sie` report re-flags it |
 | Math.max(a, b) already written correctly | S4023 | Won't Fix — false positive |
 | for loop where index used | S4138 | Won't Fix — unsafe conversion |
 | Negated condition with no else | S3800 | Won't Fix — clarity |

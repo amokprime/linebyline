@@ -10,9 +10,9 @@ start: "{{ date:YYYY-MM-DD }}"
 
 
 Session setup:
-1. Clone main branch `https://github.com/amokprime/linebyline.git` → `/home/z/my-project/repo`
+1. Clone staging branch `https://github.com/amokprime/linebyline.git` → `/home/z/my-project/repo`
 2. `LINEBYLINE_ROOT=/home/z/my-project/repo bash /home/z/my-project/repo/skills/delivery/scripts/setup-sandbox.sh`
-3. If I uploaded a diff, apply it to the clone
+3. Apply my diff (if uploaded) to the clone
 4. Read `MEMORY.md` + relevant tranches of `ROADMAP.md` from the clone, then answer.
 **Attachments:**
 
