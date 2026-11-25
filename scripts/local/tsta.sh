@@ -47,7 +47,7 @@ if ! curl -s -o /dev/null -w '' http://localhost:5173/linebyline/ 2>/dev/null; t
   done
 fi
 
-# playwright.config.js targets Vite preview on :5173 unconditionally
+# playwright.config.ts targets Vite preview on :5173 unconditionally
 # (Tranche 6 removed the monolith target + its LBL_VITE_TARGET branch).
 # The config's webServer has reuseExistingServer: true locally, so it reuses.
 npx --ignore-scripts playwright test --ui "$@"

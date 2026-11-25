@@ -582,47 +582,91 @@ Each tranche ships its verification + cutover step + Vitest/Playwright specs. Tr
 
 ## 4. TypeScript Conversion
 
+### Status: Done (Tranche 1 Nov 25, 2026; Tranche 2 — user-side verification — same day)
+
 ### Why Fourth
 
-TypeScript on a single-file monolith is genuinely painful — you fight `tsc` on every global variable. On a modular codebase with proper imports/exports, it's straightforward and incremental. Also applies to the Playwright test files.
+TypeScript on a single-file monolith is genuinely painful — you fight `tsc` on every global variable. On a modular codebase with proper imports/exports, it's straightforward and incremental.
 
-### Approach
+### Current state (tree audit, Nov 25, 2026)
 
-Largely automatic since the Vite scaffold (from item 3) is already TypeScript. The conversion is about adding proper types to the extracted modules.
+The original approach text (leaf modules first, convert composables, define core interfaces) predated Phase D and had rotted: **Phase D's port WAS the `src/` conversion**. The tree today:
 
-- **Leaf modules first**: `lrcParser.ts`, `keyUtils.ts`, `pasteHandlers.ts` — these have clear input/output types
-- **Define core interfaces**: `LrcLine`, `Snapshot`, `Config`, `HotkeyConfig`, `SecondaryField`
-- **Convert composables**: `useAppState`, `useUndoRedo`, `useSync` — Vue composables use `ref()` and `computed()` which are already typed when using `<script setup lang="ts">`
-- **Convert Playwright tests**: `.spec.js` → `.spec.ts`, type the custom fixtures (the JSDoc in `helpers/index.js` gives a head start)
-- **ESLint update**: swap `@eslint/js` → `typescript-eslint`
+- `src/` is already 100% TypeScript (29 `.ts` + 21 `.vue`, zero `.js`), strict mode via `@vue/tsconfig` (`tsconfig.app.json`), gated by `vue-tsc -b` in `npm run build`. The core interfaces the old plan called for exist (`src/types.ts`, `src/config.ts`).
+- The Vitest suite (`tests/unit/**/*.test.ts`) is TypeScript in its own strict project (`tsconfig.vitest.json`, referenced from root).
+- What remains is the **Playwright layer**, still JavaScript + CommonJS:
+  - 15 × `tests/*.spec.js` (~2,260 LOC): 14 load via `require("@linebyline/test-helpers")`, one (accessibility) already uses ESM `import`.
+  - `tests/helpers/index.js` — `// @ts-check` + JSDoc typedefs + a double `/** @type */` cast for `base.extend`; the types live in comments.
+  - `playwright.config.js` — `// @ts-check`'d ESM in a `"type": "commonjs"` package (the mismatch `tsconfig.node.json`'s comment points at).
+  - `tests/jsconfig.json` — a `checkJs`/`allowJs`, `strict: false` diagnostics shim for Zed; exists only because the specs are `.js`.
+  - Root `package.json` `"type": "commonjs"` — kept "for the CJS Playwright tests until roadmap item 4" (per the tsconfig.node.json comment).
+  - `scripts/server/tst-locked` allowlists `tests/*.spec.js` literally — a renamed spec would be REJECTED by the SSH gate until the allowlist gains the `.spec.ts` form.
+  - 11 tracked snapshot dirs named `<name>.spec.js-snapshots` (144 baseline files, ~3 MB) — Playwright derives the dir name from the test file name, so a bare rename orphans every baseline.
 
-`allowJs: true` in tsconfig lets `.ts` and `.js` coexist during migration — each module converts independently, no flag-day cutover needed.
+### Tranche 1 — Convert the Playwright layer
+
+One mechanical session; zero behavior change (specs stay equivalent modulo module syntax + type annotations).
+
+1. **Helpers first**: `tests/helpers/index.js` → `index.ts`. The `CustomFixtures` JSDoc typedef becomes a real `Fixtures` type passed to `base.extend<Fixtures>(...)` (the double `@type` cast retires); `__dirname` → `fileURLToPath(import.meta.url)` (portable across CJS/ESM transpile targets and node ≥ 12 — `import.meta.dirname` would need node ≥ 20.11, unverifiable for the Server container). `tests/helpers/package.json` `main` → `index.ts`; Playwright's transform picks it up through the `node_modules/@linebyline` symlink because node resolves the real path (outside `node_modules`), so it is transpiled like any spec import. Version 2.0.0 → 3.0.0 (module-format break).
+2. **Specs**: 15 × `require(...)` destructure → `import { ... } from "@linebyline/test-helpers"`; inline `require("fs")` (2 files) hoists to `import { readFileSync } from "node:fs"`; JSDoc casts → `as` casts; `window.__doSaveCalled` / `window.__saveCapture` / `window.doSave` declared in a new `tests/spec-globals.d.ts` (`export {}` + `declare global`, same pattern as `src/globals.d.ts` — `moduleDetection: "force"` requires the `export {}`). The `workaroundPaste: _workaroundPaste` underscore rename keeps exempting the unused-binding check.
+3. **Config**: `playwright.config.js` → `playwright.config.ts`; `testMatch: "**/*.spec.js"` → `"**/*.spec.ts"`; the `@ts-check` header and the "`.js` files don't support `as const`" comment retire.
+4. **tsconfig**: new `tsconfig.playwright.json` (extends `tsconfig.app.json` — same shape as `tsconfig.vitest.json`; includes `tests/*.spec.ts` + `tests/helpers/**` + `tests/spec-globals.d.ts`; overrides `types: ["node"]` — the helpers use `node:fs`/`node:path`), referenced from root `tsconfig.json`. `vue-tsc -b` then type-checks the Playwright suite under strict, same as the unit suite. `playwright.config.ts` joins `vite.config.mts` in `tsconfig.node.json`'s include (node-env config file). `tests/jsconfig.json` deleted (superseded by the real project).
+5. **ESLint**: the spec/helper block retargets to `tests/**/*.spec.ts` + `tests/helpers/**/*.ts` with the TS parser and carries its own `js.configs.recommended` + `sonarjs.configs.recommended` spreads (it previously inherited them from the default `.js` block); the default-CJS `**/*.js` block and the `playwright.config.js` ESM override die (zero `.js` files remain); `playwright.config.ts` joins the `*.mts` node-config block.
+6. **Package type**: root `package.json` `"type": "commonjs"` → `"module"` (its reason for existing is gone; no `.js` files remain for it to govern — eslint config is `.mjs`, vite config `.mts`, everything else `.ts`/`.vue`). `tsconfig.node.json`'s comment updated.
+7. **Snapshot dirs**: `mv tests/<name>.spec.js-snapshots tests/<name>.spec.ts-snapshots` × 11 (plain `mv`, not `git mv` — deploy.sh runs under bwrap where `.git/` is read-only; git detects the renames at commit time). `.gitignore` negation `!tests/*.spec.js-snapshots/*genius*.txt` → `.spec.ts-snapshots`. Baseline bytes unchanged — **no regen expected**.
+8. **SSH gate + script comments**: `scripts/server/tst-locked` allowlist gains `tests/*.spec.ts` (tmpfs-protected → ships `deploy_manual`; the Server's deployed copy at `~/.local/bin/tst-locked` needs the same edit via `tlkdf`/`tlkcp`). Usage comments in `scripts/server/tst`, `scripts/local/tst.sh`, `skills/playwright-testing/scripts/agent-tst` updated.
+9. **deploy.sh**: new `deploy_delete <rel>` verb (the rename-heavy session needs it; refuses the bwrap-protected paths) + an idempotent snapshot-dir migration step — the 144 baselines never ride in the zip.
+10. **Verification**: `vue-tsc -b` + ESLint gate + `npm run test:unit` in-sandbox; `npx playwright test --list` (every file collects) + a chromium scoped run against `vite preview` (aria/txt snapshots must pass byte-exact; PNG diffs are font-fragile per the playwright-testing skill — triage, don't chase). User runs full `tst` (3 browsers, server container) — expect green, NOT a regen run.
+
+**Fallback if the alias breaks** (Playwright refusing to transpile the helper through the symlink): drop the `@linebyline/test-helpers` indirection; specs import `./helpers` relatively and `tests/helpers/package.json` + the symlink die. Alias preferred (skill + docs document it).
+
+**Delivered (Nov 25, 2026)** — the alias held; one addition to the plan above: `tests/helpers/package.json` also carries `"type": "module"` (without it, node loads the TS helper through the symlink as CJS and dies with `ERR_REQUIRE_CYCLE_MODULE` — see MEMORY). In-sandbox verification: `vue-tsc -b` clean across all four TS projects, ESLint gate clean, Vitest 533/533, build green, Playwright `--list` = 242 tests in 15 files, and a 121-test chromium sample across all 15 specs passed against the renamed snapshot dirs (baselines byte-exact, no regen). deploy.sh also grew the `deploy_delete` verb + the snapshot-dir migration step; the `(deleted)` entries are filtered out of the lint-gate input. Tranche 2 = the user's full `tst` (3 browsers) + `tlkcp` on the Server's tst-locked copy + CI green, then flip Status to Done.
+
+**Tranche 2 executed (Nov 25, 2026, user-side) — Status: Done.** Deploy verified from the upload package (34 mappings + 19 deletes + 11 snapshot-dir renames, lint gate passed, Vitest 533/533 in-deploy). Two user-side fixes landed after deploy: `scripts/server/tst`'s repo-check still tested for `playwright.config.js` (my miss — the one `spec.js` reference outside the Tranche-1 sweep's file list; the residual sweep in this session caught its siblings in `tsta.sh` + 3 docs + 2 skills) and the two manual `deploy_manual` copies + `tlkcp`. Full `tst`: **346 passed / 9 skipped / 8 failed → all 8 resolved** — 6 × genius-baseline "writing actual" (the `.txt` baselines rode the Syncthing rename race: they were present on the PC but hadn't reached the container when the run started; all 6 passed on immediate scoped re-runs, baselines byte-identical) + 2 × known webkit flakes (`tab-settings`, `assign-conflict-tab`, both documented + both passed on scoped re-runs). `tsta` headed: 121/121. **Item 4 is done.**
+
+**PR strategy for the pending `staging → main` PRs — ship item 4 and item 5 SEPARATELY.** The TS conversion is ~194 files of rename-dominant churn (15 spec renames + 144 snapshot baselines + 11 snapshot-dir renames + config plumbing); item 5 Tranche 1 is one line of `src/App.vue` + three SonarCloud UI markings. Bundling would bury a reviewable 1-line change inside rename noise and entangle two different CI stories (TS conversion needs the 3-browser matrix re-verified; item 5 needs only the Sonar quality-gate flip after the UI markings). Sequence: commit + PR the TS conversion first (it's fully verified; §5's one code fix sits clean on top either way since `App.vue:205` is untouched by item 4), run `sie` on that merge, then ship item 5 Tranche 1 as its own tiny PR with the fresh report as its baseline. If the user prefers one push anyway, the order still works — §5 Tranche 1 lands as a follow-up commit in the same PR — but the SonarCloud UI markings can't ride in a PR at all, so a second visit to the UI is needed regardless.
+
+### Tranche 2 — Verify + close
+
+- Full `tst` on the Server (chromium + firefox + webkit) green; the three CI workflows green on the push.
+- Skill + doc sweep lands with Tranche 1: `skills/playwright-testing/SKILL.md` (file map, TypeScript-diagnostics section), `tests/README.md`, `tests/PLAYWRIGHT_SETUP.md`.
+- Close-out: flip item 4's Status to Done; ROADMAP §2's "After TypeScript Conversion" ESLint note resolves (the "swap" landed incrementally — Phase D wired the TS parser, this tranche retargets the test blocks).
 
 ---
 
 ## 5. Security / Maintainability / CC Remediation
 
+### Status: Spec renovated Nov 25, 2026 (post-audit) — Tranche 1 pending; sized at one small session
+
 ### Why Fifth
 
-Many "won't fix" and "deferred" decisions were made because fixing them in a monolith was too risky or didn't make sense. A modular, typed codebase changes the calculus: functions that were too coupled to extract become standalone modules (CC reduction is natural), regex logic can be consolidated into bounded parsers, and library primitives replace custom accessibility implementations.
+Many "won't fix" and "deferred" decisions were made because fixing them in a monolith was too risky or didn't make sense. A modular, typed codebase changes the calculus: functions that were too coupled to extract become standalone modules, regex logic can be consolidated into bounded parsers, and library primitives replace custom accessibility implementations.
 
-### Already Done
+### Current state (live audit, Nov 25, 2026 — the pre-renovation text below had rotted)
 
-- `[x]` Delete `archive/python_abandoned` and `archive/pre-semantic/0_abandoned/Python`
-- `[x]` Add `sonar.exclusions=archive/**` to SonarQube Cloud configuration
+The "Re-Evaluate After Architecture Change" era is over: Phase D/E delivered the consolidation the old text hoped for, and the SonarCloud queue is down to **4 OPEN issues** (verified via the public API this session):
 
-### Quick Wins
+| Rule | Site | Disposition (per `sonarqube-workflow` skill) |
+|---|---|---|
+| `typescript:S6582` (MINOR) | `src/App.vue:205` — `el && el.duration ? … : null` | **Fix** — `el?.duration ? … : null` (same pattern already fixed in `useTitle.ts:39`) |
+| `typescript:S1874` (MINOR) | `src/App.vue:316` — `e.returnValue = …` in `onBeforeUnload` | **Accept** — `returnValue` is deprecated but setting it alongside `preventDefault()` is the cross-browser belt-and-suspenders the monolith shipped verbatim; removing it changes Tranche-1 parity behavior for legacy browsers. Revisit only if a browser drops `preventDefault` support |
+| `Web:S6819` (MAJOR) | `src/components/LeftPanel.vue:160` — `#progress-wrap` `role="slider"` | **Accept (documented exception)** — custom mousedown+drag+wheel interaction model can't be a native `<input type="range">`; see the skill's S6819 row + aria-accessibility Rule 1 |
+| `Web:S7927` (MAJOR) | `src/components/MenuBar.vue:154` — theme toggle | **False Positive** — icon-only button; `aria-label` is the accessible name and can't contain the emoji glyph (skill's S7927 row) |
 
-- Add `noopener,noreferrer` to any remaining `window.open` calls (verify during modular refactor — some may be replaced by Vue Router links or removed)
-- Verify `Math.random()` / Weak Cryptography findings: check if the `[by: contributor####]` feature still exists in current code. If so, replace with `crypto.randomUUID()` or remove.
-- Run a fresh CodeQL scan after the modular refactor — verify the Node.js 24 migration works
+The old "Quick Wins" resolved themselves: `window.open` calls already carry `'noopener'` (`App.vue:275,278`, the S5148 fix from Sep 2026) — `noreferrer` adds nothing on top: browsers default to `strict-origin-when-cross-origin` referrer policy and the targets are static public GitHub pages, so there is no referrer data worth stripping. `Math.random()` / the `[by: contributor####]` feature no longer exist in `src/`, and the "548 regex DOS instances" ended with Phase D — the tree now has ~10 `.exec()` calls, all on bounded, pre-compiled `_RE` constants in `lrcParser.ts` / `pasteHandlers.ts` / `geniusExtractor.ts` / `useTitle.ts` (each carrying its S8786/S6594 remediation comment inline). CC (`sonarjs/cognitive-complexity`, warn threshold) reports **zero** warnings on `src/` + `tests/`.
 
-### Re-Evaluate After Architecture Change
+CodeQL + SonarCloud + Playwright CI all run on every push (`codeql.yml`, `sonarcloud.yml`, `playwright.yml`); `sync-staging.yml` keeps `staging` mirrored. The Node 24 migration is verified live (CI green on current `main`).
 
-- **CC reduction**: Re-scan SonarQube. Many deferred S3776 issues will auto-resolve because the modular refactor naturally breaks large functions into smaller modules. Address only what remains above threshold 15.
-- **Regex "DOS" findings** (548 instances): Still "Won't Fix" in principle (client-side processing). But with modules, consider consolidating scattered `text.match(/^\[ti:\s*(.+)\]/m)` patterns into a single `parseMetadataTags()` function with bounded matching — a maintainability win and defense-in-depth improvement.
-- **WCAG compliance**: Run fresh `axe-core` scan. shadcn-vue + Radix Vue handle most accessibility automatically. Verify custom components (lyrics display, hotkey grid) still pass. The `role="slider"` Won't Fix on the progress bar — re-evaluate whether shadcn-vue `Slider` can replace the custom interaction.
-- **False positive re-evaluation**: Re-scan with CodeQL, SonarQube, Semgrep/Opengrep after architecture change. Some false positives may shift status.
+### Tranche 1 — Close the queue (one small session)
+
+1. **The one code fix**: `App.vue:205` → optional chaining. Everything else in the queue is a UI disposition already documented in the skill — record the 3 Accept/FP markings in the SonarCloud UI (Accept for S1874, S6819; False Positive for S7927) so the quality gate reflects them.
+2. **Fresh `sie` report after the push**: user runs `sie` (with `SONAR_API_KEY` + `gh auth`) and commits the clean version (`sie -c`) in `archive/`. The 4-issue baseline in this table is the comparison point.
+3. **`window.open` `noreferrer` decision**: resolve as `noopener`-only with the rationale above recorded in the skill's false-positive summary (no referrer data worth stripping; S5148 satisfied) — flip to `noopener,noreferrer` only if a future `sie` report re-flags it and the rationale doesn't hold.
+4. **axe-core**: already wired (`tests/accessibility.spec.ts` runs AxeBuilder on landing/lyrics/settings and passes) — no fresh scan needed beyond the existing suite.
+
+### Tranche 2 (conditional) — Only if the post-push report surprises
+
+Re-triage only what's new. The skill's per-rule table + false-positive summary cover every rule seen in this project's history; genuinely new rules get a row added there, not a new roadmap section. WCAG re-checks ride along with item 6 (UI Refactor), where visual changes actually happen.
 
 ---
 

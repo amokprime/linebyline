@@ -1,9 +1,9 @@
-const {
+import {
   test,
   expect,
   waitForImport,
   waitForLyrics,
-} = require("@linebyline/test-helpers");
+} from "@linebyline/test-helpers";
 
 test("key-suppress", async ({ page, media }) => {
   await page

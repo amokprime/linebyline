@@ -1,9 +1,10 @@
-const {
+import {
   test,
   expect,
   waitForImport,
   waitForLyrics,
-} = require("@linebyline/test-helpers");
+} from "@linebyline/test-helpers";
+import type { Page } from "@playwright/test";
 const META =
   "[ti: Unknown]\n[ar: Unknown]\n[al: Unknown]\n[re: amokprime.github.io/linebyline]\n";
 
@@ -122,7 +123,7 @@ test("sync-repeat", async ({ page, media }) => {
 // The per-keystroke paths stay covered by the slow-inline / slow-newlines
 // tests below. fast-newlines keeps pressSequentially because it needs real
 // Enter keydowns for handleEnterTrim.
-async function undoPastDebounce(page, expected) {
+async function undoPastDebounce(page: Page, expected: string) {
   await page.keyboard.press("Control+z");
   try {
     await expect(page.locator("#main-textarea")).toHaveValue(expected, {

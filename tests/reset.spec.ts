@@ -1,9 +1,9 @@
-const {
+import {
   test,
   expect,
   waitForImport,
   beforeUnloadPrevented,
-} = require("@linebyline/test-helpers");
+} from "@linebyline/test-helpers";
 
 // Tranche 4.5 — reset behaviors: reload, new tab, beforeunload.
 // Tranche 9 — mechanism-pinning assertions: the storage pins below observe

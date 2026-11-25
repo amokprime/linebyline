@@ -28,7 +28,7 @@ podman pull mcr.microsoft.com/playwright:v1.61.0-noble
 #
 # Usage: tst [playwright args...]
 #   e.g. tst --list
-#        tst tests/foo.spec.js
+#        tst tests/foo.spec.ts
 #        tst -g "login"
 #
 # Env:
@@ -37,8 +37,8 @@ podman pull mcr.microsoft.com/playwright:v1.61.0-noble
 set -euo pipefail
 image=${TST_IMAGE:-mcr.microsoft.com/playwright:v1.61.0-noble}
 host_workspace=${TST_HOST_WS:-/home/user/GitHub/linebyline}
-if [ ! -f "$host_workspace/playwright.config.js" ]; then
-  echo "tst: $host_workspace/playwright.config.js not found" >&2
+if [ ! -f "$host_workspace/playwright.config.ts" ]; then
+  echo "tst: $host_workspace/playwright.config.ts not found" >&2
   exit 1
 fi
 podman pull -q "$image" >/dev/null 2>&1 || true
@@ -61,7 +61,7 @@ function tst --description 'Run Playwright tests against the Vite build on the S
     notify-send "Tests done."
 end
 funcsave tst
-# Usage: tst, tst tests/fields-merge.spec.js, tst -g "title", tst -- --update-snapshots
+# Usage: tst, tst tests/fields-merge.spec.ts, tst -g "title", tst -- --update-snapshots
 ```
 
 The grep filter shows only numbered errors, Error/Expected/Received lines,
@@ -80,7 +80,7 @@ stat -c '%y' dist/index.html
 
 ### UI mode + Codegen (run on the Client PC)
 
-⚠️ Webkit is disabled for host in `playwright.config.js` because it's unstable
+⚠️ Webkit is disabled for host in `playwright.config.ts` because it's unstable
 on Linux. Use `tst` (Server, container) for full 3-browser verification including
 webkit.
 
@@ -95,8 +95,8 @@ npx playwright install-deps
    on demand (port 5173) and shuts it down on exit:
 ```fish
 function tsta --description 'Playwright UI mode against the Vite build'
-    if not test -f playwright.config.js
-        echo "tsta: not in a Playwright repo (no playwright.config.js in $PWD)"
+    if not test -f playwright.config.ts
+        echo "tsta: not in a Playwright repo (no playwright.config.ts in $PWD)"
         echo "tsta: cd into your repo first, e.g. cd ~/GitHub/linebyline"
         return 1
     end
@@ -158,7 +158,7 @@ funcsave cgn
 
 `vite preview` serves at `/linebyline/` (the `base` config for GitHub Pages
 project URLs). Both `tsta` and `cgn` build `dist/` automatically if missing;
-`playwright.config.js` targets Vite preview on :5173 unconditionally (the
+`playwright.config.ts` targets Vite preview on :5173 unconditionally (the
 Tranche 6 monolith target is gone).
 
 ### `srv` — manual testing server (MANUAL.md)
@@ -206,7 +206,7 @@ clean them at leisure.
 
 ### Notes
 
-- **`--strictPort`**: `playwright.config.js` uses `vite preview --port 5173
+- **`--strictPort`**: `playwright.config.ts` uses `vite preview --port 5173
   --strictPort` so Vite fails fast if 5173 is taken (instead of silently
   picking another port, which would break `baseURL`).
 - **Font-fragile screenshots**: the Vite build uses the same `system-ui,

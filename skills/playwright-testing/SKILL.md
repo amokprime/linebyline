@@ -1,9 +1,9 @@
 ---
 name: playwright-testing
-description: Write and maintain Playwright tests for the LineByLine app (modular Vite + Vue build in src/). Use this skill whenever writing or modifying test files (*.spec.js), when the user mentions Playwright, tests, snapshots, screenshots, axe-scan, test failures, or when making code changes that could affect existing tests. Use proactively — whenever you modify src/, check if any test expectations need updating. This skill covers snapshot strategy, test helpers, common patterns, the impact of code changes on test validity, and the TypeScript/diagnostics setup that keeps Zed Project Diagnostics clean.
+description: Write and maintain Playwright tests for the LineByLine app (modular Vite + Vue build in src/). Use this skill whenever writing or modifying test files (*.spec.ts), when the user mentions Playwright, tests, snapshots, screenshots, axe-scan, test failures, or when making code changes that could affect existing tests. Use proactively — whenever you modify src/, check if any test expectations need updating. This skill covers snapshot strategy, test helpers, common patterns, the impact of code changes on test validity, and the TypeScript/diagnostics setup that keeps Zed Project Diagnostics clean.
 ---
 
-This project uses Playwright against the Vite build only: `dist/` served by `npx vite preview --port 5173` (the config's `webServer` starts it; `use.baseURL` is `http://localhost:5173`). The pre-cutover two-target setup (`LBL_VITE_TARGET=1` vs the `docs/index.html` monolith on `:3004`) was removed in Phase E Tranche 6 — the env var no longer exists, `docs/` is deleted, and Vite is the only target. CI sets nothing special anymore; a bare `npx playwright test` targets the Vite build. The custom test helper (`tests/helpers/index.js`, imported as `@linebyline/test-helpers`) provides the app-URL resolver, fixture paths, import/tab helpers, and the clipboard-paste workaround.
+This project uses Playwright against the Vite build only: `dist/` served by `npx vite preview --port 5173` (the config's `webServer` starts it; `use.baseURL` is `http://localhost:5173`). The pre-cutover two-target setup (`LBL_VITE_TARGET=1` vs the `docs/index.html` monolith on `:3004`) was removed in Phase E Tranche 6 — the env var no longer exists, `docs/` is deleted, and Vite is the only target. CI sets nothing special anymore; a bare `npx playwright test` targets the Vite build. The custom test helper (`tests/helpers/index.ts`, imported as `@linebyline/test-helpers`) provides the app-URL resolver, fixture paths, import/tab helpers, and the clipboard-paste workaround.
 
 ---
 
@@ -13,8 +13,8 @@ File structure:
 ```
 tests/
 ├── helpers/
-│   ├── index.js          — Custom fixtures (getAppUrl, media, readMedia, importSecondary, tabUntilFocused, workaroundPaste, waitForLyrics/waitForAudio/waitForImport)
-│   └── package.json      — @linebyline/test-helpers marker (resolves the import alias)
+│   ├── index.ts          — Custom fixtures (getAppUrl, media, readMedia, importSecondary, tabUntilFocused, workaroundPaste, waitForLyrics/waitForAudio/waitForImport)
+│   └── package.json      — @linebyline/test-helpers marker (resolves the import alias; "type": "module" so Playwright loads the TS helper as ESM)
 ├── media/                 — Test fixture files (LRC, audio, mock data)
 │   ├── audio.mp3
 │   ├── synced_english.lrc
@@ -33,28 +33,28 @@ tests/
 ├── MANUAL.md              — Manual tests not automated by Playwright
 ├── PLAYWRIGHT_SETUP.md    — SSH+Syncthing test-running workflow
 ├── SSH_SETUP.md           — Server SSH setup (tst / agent-tst profiles)
-├── FAILURES.md            — Historical failure breakdowns per tranche
-├── jsconfig.json          — Keeps Zed diagnostics on .js specs in one project
-├── accessibility.spec.js  — axe-core scans (landing, lyrics, settings)
-├── fields-merge.spec.js   — Secondary field import, hide, merge
-├── import-paste.spec.js   — File import and paste (hotkey + typing modes)
-├── intervals.spec.js      — Timestamp interval/offset
-├── keyboard-nav.spec.js   — Keyboard navigation and focus
-├── key-guard.spec.js      — Hotkey restriction/conflict
-├── mark.spec.js           — Mark-as-translation, split-parens
-├── playback.spec.js       — Audio playback controls
-├── reset.spec.js          — Reload/new-tab/beforeunload behavior
-├── settings.spec.js       — Settings dialog (aria snapshot, search, reset)
-├── smoke.spec.js          — Landing page smoke test
-├── sync-adjust.spec.js    — Sync line, adjust timestamp
-├── theme-font.spec.js     — Theme cycling, font selection
-├── typing-mode.spec.js    — Typing mode keystroke behavior
-└── undo-redo.spec.js      — Undo/redo stack behavior
+├── archive/tests/FAILURES.md — Historical failure breakdowns per tranche (moved out of tests/ Nov 25, 2026)
+├── spec-globals.d.ts      — Test-injected window properties (__doSaveCalled, __saveCapture)
+├── accessibility.spec.ts  — axe-core scans (landing, lyrics, settings)
+├── fields-merge.spec.ts   — Secondary field import, hide, merge
+├── import-paste.spec.ts   — File import and paste (hotkey + typing modes)
+├── intervals.spec.ts      — Timestamp interval/offset
+├── keyboard-nav.spec.ts   — Keyboard navigation and focus
+├── key-guard.spec.ts      — Hotkey restriction/conflict
+├── mark.spec.ts           — Mark-as-translation, split-parens
+├── playback.spec.ts       — Audio playback controls
+├── reset.spec.ts          — Reload/new-tab/beforeunload behavior
+├── settings.spec.ts       — Settings dialog (aria snapshot, search, reset)
+├── smoke.spec.ts          — Landing page smoke test
+├── sync-adjust.spec.ts    — Sync line, adjust timestamp
+├── theme-font.spec.ts     — Theme cycling, font selection
+├── typing-mode.spec.ts    — Typing mode keystroke behavior
+└── undo-redo.spec.ts      — Undo/redo stack behavior
 ```
 
 (`tests/chat/` — previous AI chats about test writing — moved to `archive/tests/` in Tranche 4.6.)
 
-Custom fixtures (from helpers/index.js):
+Custom fixtures (from helpers/index.ts):
 - `getAppUrl()` — returns `/` (the vite preview root); was branchable pre-cutover
 - `media(filename)` — resolves filename to absolute path in `tests/media/`
 - `readMedia(filename)` — reads file contents as UTF-8
@@ -63,7 +63,7 @@ Custom fixtures (from helpers/index.js):
 - `waitForLyrics` / `waitForAudio` / `waitForImport` — state-wait helpers
 - `workaroundPaste` — auto-setup fixture for clipboard-paste tests (see below)
 
-All test files import from `@linebyline/test-helpers` which resolves to `helpers/index.js` via `package.json`.
+All test files import from `@linebyline/test-helpers` which resolves to `helpers/index.ts` via `package.json`.
 
 ---
 
@@ -78,7 +78,7 @@ The project uses multiple Playwright entry points that run in different OS envir
 | CI | GitHub Actions ubuntu-latest | `CI=1` | Same as `tst` but stricter (workers=1, retries=2) |
 | Sandbox sample | chat.z.ai sandbox (`/home/z/my-project/`) | (none) | Sample tests only (2–10 tests) — direct `playwright` package import in a standalone Node script against `npx vite preview --port 5173`. Cannot run the full suite (too heavy; ~540 tests, ~7 min, snapshots overwhelm context). See "Sandbox-side sample tests" below. |
 
-`playwright.config.js` uses `PW_CONTAINER` and `CI` to enable webkit (unstable on Fedora host) and tighten CI settings. Tests can gate on these env vars to skip font-fragile screenshots in UI mode (see "Font-fragile screenshots" below).
+`playwright.config.ts` uses `PW_CONTAINER` and `CI` to enable webkit (unstable on Fedora host) and tighten CI settings. Tests can gate on these env vars to skip font-fragile screenshots in UI mode (see "Font-fragile screenshots" below).
 
 ### Co-located bash scripts
 
@@ -100,7 +100,7 @@ The sandbox can run small standalone scripts (unit-level logic checks, data tran
 While the full suite is too heavy, **sample Playwright tests CAN and SHOULD be run in the sandbox** to verify source patches end-to-end before delivery — the Vitest unit suite alone does not catch `dist/` build issues. The sandbox can:
 
 - Run `npx vite preview --port 5173` (after `npm run build`) to serve the production build.
-- Run individual Playwright tests or small subsets using the `playwright` package directly (NOT the `@playwright/test` CLI, which has config issues in the sandbox — its `playwright.config.js` looks for `tests/` and snapshot fixtures that may not be present in a sparse sandbox tree). Use standalone Node scripts that import `playwright` and launch chromium against the preview URL.
+- Run individual Playwright tests or small subsets using the `playwright` package directly (NOT the `@playwright/test` CLI, which has config issues in the sandbox — its `playwright.config.ts` looks for `tests/` and snapshot fixtures that may not be present in a sparse sandbox tree). Use standalone Node scripts that import `playwright` and launch chromium against the preview URL.
 - Verify that source patches actually work end-to-end against the built `dist/` — not just against the Vitest happy-dom environment.
 
 The key lesson (Sep 2026, session 9): a Vitest timeout failure blocks `npm run build` (via `set -euo pipefail` in `deploy.sh`), causing Playwright to run against a stale `dist/` without the patched code — the test suite then reports spurious regressions that look like the patches didn't work.
@@ -130,9 +130,9 @@ If a mutation test shows the test PASSES even with the fix reverted, the test is
 
 **False negatives**: if the `sed` command breaks the source syntax, `vite build` fails and the old `dist/` is used -- the test passes against unmutated code, giving a false negative. Always check the build succeeded before running the test. Two more verdict traps (both produced false verdicts in the Tranche 9 session): grep `dist/assets/*.js` for the mutated construct to confirm the mutant actually reached the bundle (a non-matching `sed` mutates nothing and the run is vacuously green), and parenthesize alternations in kill-check greps (`✘ .*(A|B)`, not `✘ .*A|B` -- the bare form matches the ✓ line of the second alternative).
 
-**Observing event-side mechanisms (beforeunload)**: to pin "the app registers a beforeunload listener that calls preventDefault", dispatch a synthetic cancelable event and read `event.defaultPrevented` afterward -- do NOT register a test-side handler that calls `preventDefault()` itself (it observes its own side effect: the Tranche 9 M3 mutant -- deleting App.vue's listener registration -- passed the original self-observing pattern). Helper: `beforeUnloadPrevented(page)` in `tests/helpers/index.js`. Related: a synthetic `F5` keydown never reloads the page (the browser UI owns F5), so "state unchanged after F5" assertions are vacuous -- reload flows must use `page.reload()`, and no-op-keystroke tests should pin the mechanism they meant to exercise instead.
+**Observing event-side mechanisms (beforeunload)**: to pin "the app registers a beforeunload listener that calls preventDefault", dispatch a synthetic cancelable event and read `event.defaultPrevented` afterward -- do NOT register a test-side handler that calls `preventDefault()` itself (it observes its own side effect: the Tranche 9 M3 mutant -- deleting App.vue's listener registration -- passed the original self-observing pattern). Helper: `beforeUnloadPrevented(page)` in `tests/helpers/index.ts`. Related: a synthetic `F5` keydown never reloads the page (the browser UI owns F5), so "state unchanged after F5" assertions are vacuous -- reload flows must use `page.reload()`, and no-op-keystroke tests should pin the mechanism they meant to exercise instead.
 
-**`browser.newPage()` opens a fresh browser context** (fresh localStorage too), so a "new tab starts clean" test built on it passes even if the app leaks per-tab state into localStorage, which real tabs share. When the scenario is a new tab of the same browser, use `page.context().newPage()` (localStorage shared, sessionStorage per-tab) and pair the clean-state outcome with a negative storage pin (e.g. no lyric content in localStorage) plus a shared-context sanity check. See `tests/reset.spec.js` → `new-tab-starts-fresh` (Tranche 9).
+**`browser.newPage()` opens a fresh browser context** (fresh localStorage too), so a "new tab starts clean" test built on it passes even if the app leaks per-tab state into localStorage, which real tabs share. When the scenario is a new tab of the same browser, use `page.context().newPage()` (localStorage shared, sessionStorage per-tab) and pair the clean-state outcome with a negative storage pin (e.g. no lyric content in localStorage) plus a shared-context sanity check. See `tests/reset.spec.ts` → `new-tab-starts-fresh` (Tranche 9).
 
 For the canonical workflow see the `linebyline` skill -> "Code" step and "Post-patch verification".
 
@@ -173,7 +173,7 @@ Use sparingly — screenshots are fragile (depend on font rendering, DPI, theme)
 await expect(page).toHaveScreenshot("font-hotkey.png");
 ```
 
-The project sets `maxDiffPixelRatio: 0.05` (5%) in `playwright.config.js` to tolerate minor rendering variance.
+The project sets `maxDiffPixelRatio: 0.05` (5%) in `playwright.config.ts` to tolerate minor rendering variance.
 
 ### `.gitignore` interactions
 
@@ -251,9 +251,9 @@ You must proactively identify these before the user runs tests. When you modify 
 | Changed aria-label or role attributes | All tests using `getByRole()`, `getByLabel()`, aria snapshots | Update selectors and regenerate |
 | Changed default config values | Tests that rely on default hotkey assignments | Update key press sequences |
 | Changed timestamp format | Tests using `inputValue` snapshots of timestamps | Regenerate `.txt` snapshots |
-| Changed merge/secondary behavior | `fields-merge.spec.js`, `import-paste.spec.js` | Regenerate affected snapshots |
+| Changed merge/secondary behavior | `fields-merge.spec.ts`, `import-paste.spec.ts` | Regenerate affected snapshots |
 | Added new checkbox or UI toggle | Tests that snapshot the editor area | Regenerate `.aria.yml` snapshots |
-| Changed Settings panel layout | `settings.spec.js` aria snapshot | Regenerate `settings-window-1.aria.yml` |
+| Changed Settings panel layout | `settings.spec.ts` aria snapshot | Regenerate `settings-window-1.aria.yml` |
 
 After making code changes: always tell the user which test snapshots will need regeneration, and which specific snapshot files are affected.
 
@@ -372,32 +372,21 @@ tsserver doesn't understand that `page.evaluate(fn)` runs `fn` in the browser, s
 
 ## TypeScript diagnostics setup
 
-Zed Project Diagnostics (powered by tsserver) flags several classes of false positives in `.js` test files because it doesn't understand Playwright's runtime context. `tests/jsconfig.json` keeps diagnostics clean. (The old companion `tests/app-globals.d.ts` was deleted with the monolith in Phase E Tranche 6 — app functions are no longer window globals, so there was nothing left to declare; the one remaining window property, `window.doSave`, is declared for vue-tsc in `src/globals.d.ts`.)
+Roadmap item 4 (Nov 25, 2026) converted the Playwright layer to TypeScript: specs are `*.spec.ts`, the helpers are `tests/helpers/index.ts`, and the config is `playwright.config.ts`. `tests/jsconfig.json` (the old `checkJs` diagnostics shim) is deleted — the specs now belong to the strict `tsconfig.playwright.json` project (extends `tsconfig.app.json`, includes `tests/*.spec.ts` + `tests/helpers/**` + `tests/spec-globals.d.ts` + `src/globals.d.ts`, referenced from root `tsconfig.json`), so `vue-tsc -b` type-checks them exactly like the unit suite. Zed picks the project up automatically; no inferred-project fallback anymore.
 
-### `tests/jsconfig.json` — project discovery
+### `tests/helpers/package.json` — the ESM marker
 
-Without a `jsconfig.json`, tsserver creates an "inferred project" for each opened file. Inferred projects do NOT auto-discover sibling `.d.ts` files — they only include the file + its imports. The `jsconfig.json` tells tsserver "all `.js` and `.d.ts` files in `tests/` are one project":
-```json
-{
-  "compilerOptions": {
-    "target": "ES2020", "module": "commonjs",
-    "allowJs": true, "checkJs": true, "noEmit": true,
-    "skipLibCheck": true, "strict": false, "types": ["node"]
-  },
-  "include": ["**/*.js", "**/*.d.ts"]
-}
-```
-Scoped to `tests/` (not project root) to avoid affecting `playwright.config.js` (which uses ESM `import`/`export`). If a spec needs a test-injected window property, declare it in a small `tests/*.d.ts` that this include picks up.
+The helpers package must carry `"type": "module"` alongside `"main": "index.ts"`: node resolves the `@linebyline/test-helpers` import through the `node_modules` symlink to the real `tests/helpers/` folder, which has its own package.json — the root package's `"type": "module"` does NOT reach through it. Without it, Playwright loads the TS helper through the CJS loader and node rejects the ESM syntax with `ERR_REQUIRE_CYCLE_MODULE` (observed in the Tranche 1 sandbox run).
 
 ### Recurring TS diagnostic patterns and their fixes
 
 | Error | Cause | Fix |
 |---|---|---|
 | TS6133 `'workaroundPaste' is declared but its value is never read` | Auto-setup fixture has no value; destructured for side-effect | Rename to `_workaroundPaste` — underscore prefix exempts from unused check |
-| TS2304 `Cannot find name 'tsToMs'` | App function called inside `page.evaluate()` — moot post-cutover: module functions aren't reachable from the browser context; put logic-level coverage in `tests/unit/` instead (historically fixed by declaring in `tests/app-globals.d.ts`, deleted with the monolith) |
-| TS2339 `Property 'value' does not exist on type 'HTMLElement'` | `document.getElementById()` returns `HTMLElement`, `.value` needs `HTMLInputElement` | Cast: `/** @type {HTMLInputElement} */ (document.getElementById("s-search")).value` |
-| TS2339 `Property 'X' does not exist on type 'Window'` | Test-injected or app-exposed window property not declared | App globals (`window.doSave`) → `src/globals.d.ts`; test-only properties → a `tests/*.d.ts` picked up by the jsconfig include |
-| TS7044 `Parameter 'name' implicitly has an 'any' type` | Arrow function param has no type annotation | Add JSDoc: `/** @param {string} name */` before the arrow |
+| TS18047 `'box' is possibly 'null'` | `locator.boundingBox()` returns `null` per its type signature | Pin then assert: `expect(box).not.toBeNull()` + non-null access (`box!.x`) or a narrowed local |
+| TS2339 `Property 'value' does not exist on type 'HTMLElement'` | `document.getElementById()` returns `HTMLElement`, `.value` needs `HTMLInputElement` | Cast: `(document.getElementById("s-search") as HTMLInputElement).value` |
+| TS2339 `Property 'X' does not exist on type 'Window'` | Test-injected or app-exposed window property not declared | App globals (`window.doSave`) → `src/globals.d.ts`; test-only properties → `tests/spec-globals.d.ts` (`export {}` + `declare global` — `moduleDetection: "force"` requires the `export {}`) |
+| TS7006 `Parameter 'page' implicitly has an 'any' type` | Local helper function param has no type annotation | Annotate: `async function lyricLinesText(page: Page)` + `import type { Page } from "@playwright/test"` |
 | TS6133 `'orig' is declared but its value is never read` | Local variable assigned but never used | Remove it (underscore prefix only works for parameters, not locals) |
 
 ---
@@ -408,7 +397,7 @@ Import from `@linebyline/test-helpers`, not directly from `@playwright/test`. Us
 
 For any test that pastes via clipboard, add `workaroundPaste: _workaroundPaste` to the destructured args and `await page.waitForTimeout(50)` before `Control+v` — don't inline the boilerplate.
 
-If a spec exercises a new window property, declare it (app-exposed: `src/globals.d.ts`; test-injected: a `tests/*.d.ts`). Module-scoped app functions are NOT reachable from `page.evaluate()` — put logic-level tests in the Vitest suite instead.
+If a spec exercises a new window property, declare it (app-exposed: `src/globals.d.ts`; test-injected: `tests/spec-globals.d.ts`). Module-scoped app functions are NOT reachable from `page.evaluate()` — put logic-level tests in the Vitest suite instead.
 
 Don't add heavy comments to test files, especially ones that just remind a future agent of the tests' basic intended flow step by step which the user is already familiar with. Explain them in chat instead, and use plain English when changes made purely by you are grounded deeply in app code that the user would not be familiar with. Rule of thumb: 1-2 lines per comment focusing on the most critical insight and no more than 1 comment for every 10 LOC. Don't bother with multiple `//` for multiline comments — modern IDEs have word wrap.
 
@@ -419,9 +408,9 @@ Don't add heavy comments to test files, especially ones that just remind a futur
 These tests pass in `tst` (container) but may intermittently fail or need extra care:
 
 - **`toHaveScreenshot` in UI mode** — font-fragile tests (see "Font-fragile screenshots"). Either skip with the `!CI && !PW_CONTAINER` guard, normalize font with `addStyleTag`, or replace with structural assertions (`toHaveCSS`, `toBeVisible`, `toHaveValue`) which are CI-safe and don't need the skip guard.
-- **`speed-ratio`, `seek-increment`, `volume-increment`** (intervals.spec.js) — settings-save race: `Escape` doesn't guarantee settings saved before the next hotkey. Anchor with `await expect(page.getByRole("dialog")).not.toBeVisible()` after Escape (the shadcn-vue Dialog; the pre-port anchor was `#settings-overlay`'s `.open` class).
-- **`typing-debounce-1`** (intervals.spec.js, chromium) — 1ms debounce + Playwright's <1ms keypresses → all letters land in one snapshot. Add `waitForTimeout(20)` between keypresses so the debounce fires separately for each. 20ms is well above the ~16ms rAF interval and ~10ms clock-tick resolution, ensuring separate snapshots even on a contended CI runner. (5ms was sufficient locally but flaky on CI where the browser event loop is under contention.)
-- **`search-check`** (settings.spec.js, webkit) — hardcoded Tab count after search filter is fragile on webkit due to focus timing. Use `tabUntilFocused(page, "#s-replay-next")` instead of `for (let i=0; i<N; i++) Tab` — the helper guarantees focus before `Space`.
-- **`tab-settings`** (keyboard-nav.spec.js, webkit) — checkbox state not settled when asserted. Add `waitForTimeout(50)` after `Space`.
+- **`speed-ratio`, `seek-increment`, `volume-increment`** (intervals.spec.ts) — settings-save race: `Escape` doesn't guarantee settings saved before the next hotkey. Anchor with `await expect(page.getByRole("dialog")).not.toBeVisible()` after Escape (the shadcn-vue Dialog; the pre-port anchor was `#settings-overlay`'s `.open` class).
+- **`typing-debounce-1`** (intervals.spec.ts, chromium) — 1ms debounce + Playwright's <1ms keypresses → all letters land in one snapshot. Add `waitForTimeout(20)` between keypresses so the debounce fires separately for each. 20ms is well above the ~16ms rAF interval and ~10ms clock-tick resolution, ensuring separate snapshots even on a contended CI runner. (5ms was sufficient locally but flaky on CI where the browser event loop is under contention.)
+- **`search-check`** (settings.spec.ts, webkit) — hardcoded Tab count after search filter is fragile on webkit due to focus timing. Use `tabUntilFocused(page, "#s-replay-next")` instead of `for (let i=0; i<N; i++) Tab` — the helper guarantees focus before `Space`.
+- **`tab-settings`** (keyboard-nav.spec.ts, webkit) — checkbox state not settled when asserted. Add `waitForTimeout(50)` after `Space`.
 - **`tab-lyrics`** (all browsers) — `Control+4` to add secondary field races with focus. Use `tabUntilFocused` to wait for the secondary textarea before typing.
 - **Ambiguous `getByRole("textbox")` after `Control+4`** — after adding a secondary field, there are 2 textareas on the page. `getByRole("textbox")` matches both, causing strict-mode violations or wrong-element resolution. Use `getByLabel("Secondary 1 lyrics")` instead.

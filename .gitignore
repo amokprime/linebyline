@@ -36,7 +36,7 @@ npm-debug.log*
 .stignore
 *genius*
 # Genius paste snapshot baselines must be tracked (un-ignored from *genius* above)
-!tests/*.spec.js-snapshots/*genius*.txt
+!tests/*.spec.ts-snapshots/*genius*.txt
 !src/utils/geniusExtractor.ts
 !tests/unit/geniusExtractor.test.ts
 why.md

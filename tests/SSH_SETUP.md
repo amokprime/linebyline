@@ -94,7 +94,7 @@ for i in "${!args[@]}"; do
       val=${a#-g}; val=${val#--grep=}
       printf '%s' "$val" | grep -Eq '^[A-Za-z0-9_/ .-]*$' || { echo "bad pattern" >&2; exit 1; }
       clean+=("$a") ;;
-    path/to/spec/*.spec.js)      clean+=("$a") ;;   # tighten to your layout
+    path/to/spec/*.spec.ts)      clean+=("$a") ;;   # tighten to your layout
     --project=a|--project=b|--project=c) clean+=("$a") ;;
     *) echo "rejected: $a" >&2; exit 1 ;;
   esac
@@ -272,7 +272,7 @@ to the other.
 Three layers cooperate to keep `trash/` and `playwright-report/`
 small:
 
-1. **`playwright.config.js`** — `trace: "retain-on-failure"` +
+1. **`playwright.config.ts`** — `trace: "retain-on-failure"` +
    `screenshot: "only-on-failure"`. Passing tests' artifacts are
    discarded after the run; only failures persist. `video` is left
    at the default (`"off"`) — recording video for every test (the
@@ -342,7 +342,7 @@ on Fedora.
 #   tlkdf  — ssh Server diff ~/GitHub/linebyline/scripts/server/tst-locked ~/.local/bin/tst-locked
 #   tlkcp  — ssh Server cp ~/GitHub/linebyline/scripts/server/tst-locked ~/.local/bin/tst-locked
 ```
-Run `tlkdf` to check if they've drifted; run `tlkcp` to update the copy.
+Run `tlkdf` to check if they've drifted; run `tlkcp` to update the copy. (Roadmap item 4, Nov 25, 2026: the allowlist gained `tests/*.spec.ts` alongside `.spec.js` — run `tlkcp` once after that deploy, or the gate rejects the renamed specs.)
 
 **Why `tst` IS a symlink but `tst-locked` is NOT.** `tst` is the podman runner — not security-sensitive (the `tst-locked` gate sits in front of it, filtering all args). If a malicious agent replaces `scripts/server/tst` via Syncthing, the worst they can do is run a different Playwright invocation (still arg-allowlisted by `tst-locked`). `tst-locked` is the gate itself — if it's replaced, the agent controls what the restricted key can run. The copy ensures the gate can't be silently swapped.
 

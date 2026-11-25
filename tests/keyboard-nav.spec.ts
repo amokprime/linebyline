@@ -1,4 +1,4 @@
-const { test, expect, tabUntilFocused, waitForImport } = require("@linebyline/test-helpers");
+import { test, expect, tabUntilFocused, waitForImport } from "@linebyline/test-helpers";
 
 test("tab-font", async ({ page }) => {
   await tabUntilFocused(page, "#font-select");

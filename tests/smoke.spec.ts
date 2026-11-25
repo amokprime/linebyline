@@ -1,5 +1,5 @@
 
-const { test, expect } = require("@linebyline/test-helpers");
+import { test, expect } from "@linebyline/test-helpers";
 
 test("title", async ({ page }) => {
   await expect(page).toHaveTitle(/LineByLine/);
@@ -19,7 +19,7 @@ test("favicon", async ({ page }) => {
 });
 
 test("landing", async ({ page }) => {
-  const errors = [];
+  const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(`Uncaught: ${e.message}`));
   page.on("console", (msg) => {
     if (msg.type() === "error") errors.push(`console.error: ${msg.text()}`);

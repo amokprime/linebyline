@@ -27,7 +27,7 @@
 # Allowed forms (from SSH_ORIGINAL_COMMAND):
 #   --list
 #   -g <grep-pattern>  |  -g<patt>  |  --grep=<patt>   (strict pattern)
-#   tests/<name>.spec.js / tests/<sub>/<name>.spec.js  (one or more)
+#   tests/<name>.spec.ts / tests/<sub>/<name>.spec.ts  (one or more)
 #   --project=chromium|firefox|webkit                   (zero or more)
 set -euo pipefail
 
@@ -74,7 +74,7 @@ for i in "${!args[@]}"; do
       fi
       clean+=("--grep=$val")
       ;;
-    tests/*.spec.js)
+    tests/*.spec.js|tests/*.spec.ts)
       clean+=("$a")
       ;;
     *)

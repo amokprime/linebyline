@@ -1,5 +1,6 @@
 
-const { test, expect, waitForLyrics, waitForImport } = require("@linebyline/test-helpers");
+import { test, expect, waitForLyrics, waitForImport } from "@linebyline/test-helpers";
+import { readFileSync } from "node:fs";
 
 test("controls-disabled", async ({ page, media }) => {
   await page
@@ -56,7 +57,7 @@ test("meta-save-update", async ({ page, browserName }) => {
     await page.evaluate(() => {
       window.__saveCapture = null;
       window.doSave = function () {
-        const text = /** @type {HTMLInputElement} */ (document.getElementById("main-textarea")).value;
+        const text = (document.getElementById("main-textarea") as HTMLInputElement).value;
         const tiMatch = text.match(/^\[ti:\s*(.+)\]/m);
         const ti = tiMatch ? tiMatch[1].trim() : "";
         let stem = "lyrics";
@@ -66,7 +67,9 @@ test("meta-save-update", async ({ page, browserName }) => {
       };
     });
     await page.keyboard.press("Control+'");
-    const { text, filename } = await page.evaluate(() => window.__saveCapture);
+    const captured = await page.evaluate(() => window.__saveCapture);
+    expect(captured).not.toBeNull();
+    const { text, filename } = captured!;
     expect(text).toMatch(META);
     expect(filename).toBe("TestTitle.lrc");
   } else {
@@ -75,7 +78,7 @@ test("meta-save-update", async ({ page, browserName }) => {
     const download = await downloadPromise;
     const content = await download
       .path()
-      .then((p) => require("fs").readFileSync(p, "utf-8"));
+      .then((p) => readFileSync(p, "utf-8"));
     const filename = download.suggestedFilename();
     expect(content).toMatch(META);
     expect(filename).toBe("TestTitle.lrc");
