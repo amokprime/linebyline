@@ -352,7 +352,7 @@ onMounted(() => {
   window.addEventListener('beforeunload', onBeforeUnload)
   // Phase E Tranche 3: expose doSave on window so the global hotkey handler
   // can dispatch through the runtime-resolved reference. This lets Playwright's
-  // Firefox test (typing-mode.spec.js meta-save-update) monkeypatch window.doSave
+  // Firefox test (typing-mode.spec.ts meta-save-update) monkeypatch window.doSave
   // to capture the save output — Firefox blocks the download event that
   // chromium/webkit use. The monolith exposed doSave implicitly (top-level
   // function declaration); the Vue port must expose it explicitly. The hotkey

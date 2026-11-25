@@ -1,4 +1,4 @@
-// eslint.config.js — ESLint 9 flat config
+// eslint.config.ts — ESLint flat config
 //
 // Roadmap context (ROADMAP.md, items 2-4):
 //   - Item 3 Phase A (2026-09-06) added the Vite + Vue blocks below
@@ -9,11 +9,16 @@
 //     CommonJS .js block is gone (no .js files remain in the tree).
 
 import tsParser from "@typescript-eslint/parser";
-import js from "@eslint/js";
 import pluginVue from "eslint-plugin-vue";
 import sonarjs from "eslint-plugin-sonarjs";
 import vueParser from "vue-eslint-parser";
 import globals from "globals";
+import type { Linter } from "eslint";
+
+// eslint-plugin-sonarjs v4 types `configs` as a legacy/flat union that may be
+// undefined; at runtime `recommended` is a flat config object carrying `rules`.
+const sonarRules =
+  (sonarjs.configs?.recommended as Linter.Config | undefined)?.rules ?? {};
 
 export default [
   // ────────────────────────────────────────────────────────────
@@ -82,7 +87,7 @@ export default [
       // No js.configs.recommended spread (matches the src/** and tests/unit
       // TS blocks): core no-undef/no-unused-vars false-positive on TS syntax;
       // vue-tsc owns those checks for TS (TS6133 etc, _-prefix exempt).
-      ...sonarjs.configs.recommended.rules,
+      ...sonarRules,
       "sonarjs/cognitive-complexity": "warn",
 
       // ReDoS findings are "Won't Fix" per Roadmap item 5 — client-side
@@ -121,7 +126,7 @@ export default [
     },
     plugins: { sonarjs },
     rules: {
-      ...sonarjs.configs.recommended.rules,
+      ...sonarRules,
       "sonarjs/cognitive-complexity": "warn",
       "sonarjs/empty-string-repetition": "off",
     },
@@ -137,7 +142,7 @@ export default [
     },
     plugins: { sonarjs },
     rules: {
-      ...sonarjs.configs.recommended.rules,
+      ...sonarRules,
       "sonarjs/cognitive-complexity": "warn",
       // super-linear-regex is NOT overridden for src/** — the Tranche 4.8
       // blanket "Won't Fix" (verbatim monolith port) ended with Tranche 6:
@@ -173,15 +178,17 @@ export default [
     },
     plugins: { sonarjs },
     rules: {
-      ...sonarjs.configs.recommended.rules,
+      ...sonarRules,
       "sonarjs/cognitive-complexity": "warn",
     },
   },
 
   {
-    // Vite/TS config files run in Node under ESM (vite.config.mts,
-    // playwright.config.ts — both loaded as ESM by their tools)
-    files: ["*.mts", "playwright.config.ts"],
+    // Root config files run in Node under ESM (vite.config.mts,
+    // playwright.config.ts, eslint.config.ts — each loaded as ESM by its
+    // tool); claiming eslint.config.ts keeps Zed's ESLint LSP from warning
+    // "File ignored because no matching configuration was supplied".
+    files: ["*.mts", "playwright.config.ts", "eslint.config.ts"],
     languageOptions: {
       parser: tsParser,
       ecmaVersion: "latest",
@@ -201,7 +208,7 @@ export default [
     },
     plugins: { sonarjs },
     rules: {
-      ...sonarjs.configs.recommended.rules,
+      ...sonarRules,
       "sonarjs/cognitive-complexity": "warn",
       // Audio currentTime + volume comparisons need exact float equality —
       // the values are deterministic in unit tests (no real audio element).

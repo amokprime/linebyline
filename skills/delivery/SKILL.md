@@ -23,7 +23,7 @@ File visibility — the user can only see files inside `/home/z/my-project/downl
 Input handling
 
 - Stop immediately to request any missing uploads. Don't infer their contents — if the user refers to a file you haven't seen, ask for it.
-- Read docs and manifests (i.e. `*.md`, `package.json`, `pyproject.toml`) before code (i.e. `*.html`, `*.js`, `*.py`). Documentation describes intent; code is the implementation.
+- Read docs and manifests (i.e. `*.md`, `package.json`, `pyproject.toml`) before code (i.e. `*.html`, `*.ts`, `*.py`). Documentation describes intent; code is the implementation.
 - Follow obsidian-style links like `![[filename.png]]` (embed) or `[[filename]]` (non-embed) in the same-level 'attachments' subfolder.
 
 Output format

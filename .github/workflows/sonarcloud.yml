@@ -49,7 +49,7 @@ jobs:
             -Dsonar.projectKey=amokprime_linebyline
             -Dsonar.organization=amokprime
             -Dsonar.scm.provider=git
-            -Dsonar.exclusions=archive/**,tests/**,playwright.config.js
+            -Dsonar.exclusions=archive/**,tests/**,playwright.config.ts,eslint.config.ts
             -Dsonar.coverage.exclusions=src/**,vite.config.mts,scripts/**,skills/**
 
       # The scan alone exits 0 regardless of the quality gate; this step is what

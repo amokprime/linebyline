@@ -26,7 +26,6 @@
   },
   "homepage": "https://github.com/amokprime/linebyline#readme",
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
     "@linebyline/test-helpers": "file:./tests/helpers",
     "@playwright/test": "^1.61.0",
     "@tailwindcss/vite": "^4.1.17",

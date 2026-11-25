@@ -6,9 +6,8 @@
     "types": ["node"],
     "skipLibCheck": true,
 
-    /* Bundler mode — Vite always bundles vite.config.ts as ESM regardless
-       of the package.json "type": "commonjs" (kept for the CJS Playwright
-       tests until roadmap item 4), so type-check it as ESM too. */
+    /* Bundler mode — the root config files (vite.config.mts,
+       playwright.config.ts, eslint.config.ts) all load as ESM. */
     "module": "esnext",
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
@@ -22,5 +21,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.mts", "playwright.config.ts"]
+  "include": ["vite.config.mts", "playwright.config.ts", "eslint.config.ts"]
 }

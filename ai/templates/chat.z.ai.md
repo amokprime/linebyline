@@ -1,5 +1,5 @@
 ---
-model: GLM-5.3
+model: GLM-5.3-Flash
 provider: https://chat.z.ai
 start: "{{ date:YYYY-MM-DD }}"
 ---

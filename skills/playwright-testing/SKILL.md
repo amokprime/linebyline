@@ -374,6 +374,8 @@ tsserver doesn't understand that `page.evaluate(fn)` runs `fn` in the browser, s
 
 Roadmap item 4 (Nov 25, 2026) converted the Playwright layer to TypeScript: specs are `*.spec.ts`, the helpers are `tests/helpers/index.ts`, and the config is `playwright.config.ts`. `tests/jsconfig.json` (the old `checkJs` diagnostics shim) is deleted — the specs now belong to the strict `tsconfig.playwright.json` project (extends `tsconfig.app.json`, includes `tests/*.spec.ts` + `tests/helpers/**` + `tests/spec-globals.d.ts` + `src/globals.d.ts`, referenced from root `tsconfig.json`), so `vue-tsc -b` type-checks them exactly like the unit suite. Zed picks the project up automatically; no inferred-project fallback anymore.
 
+A root config file that is TypeScript must be claimed in two places, or Zed Project Diagnostics flags it: `tsconfig.node.json`'s `include` (else the TS LSP reports project-membership/resolution errors) and `eslint.config.ts`'s node-config `files` block (else ESLint warns "File ignored because no matching configuration was supplied" — the pre-rename `.mjs` matched `*.mts`, a renamed `.ts` does not). Plugin typing comes third: `eslint-plugin-sonarjs` v4 types `configs` as a legacy/flat union that may be undefined, so each `sonarjs.configs.recommended.rules` spread raised TS18048+TS2339 once the file was type-checked — the config defines one typed accessor (`sonarRules`) spread at each site instead.
+
 ### `tests/helpers/package.json` — the ESM marker
 
 The helpers package must carry `"type": "module"` alongside `"main": "index.ts"`: node resolves the `@linebyline/test-helpers` import through the `node_modules` symlink to the real `tests/helpers/` folder, which has its own package.json — the root package's `"type": "module"` does NOT reach through it. Without it, Playwright loads the TS helper through the CJS loader and node rejects the ESM syntax with `ERR_REQUIRE_CYCLE_MODULE` (observed in the Tranche 1 sandbox run).
@@ -388,6 +390,7 @@ The helpers package must carry `"type": "module"` alongside `"main": "index.ts"`
 | TS2339 `Property 'X' does not exist on type 'Window'` | Test-injected or app-exposed window property not declared | App globals (`window.doSave`) → `src/globals.d.ts`; test-only properties → `tests/spec-globals.d.ts` (`export {}` + `declare global` — `moduleDetection: "force"` requires the `export {}`) |
 | TS7006 `Parameter 'page' implicitly has an 'any' type` | Local helper function param has no type annotation | Annotate: `async function lyricLinesText(page: Page)` + `import type { Page } from "@playwright/test"` |
 | TS6133 `'orig' is declared but its value is never read` | Local variable assigned but never used | Remove it (underscore prefix only works for parameters, not locals) |
+| TS18048 + TS2339 on `sonarjs.configs.recommended.rules` (×5 in `eslint.config.ts`) | eslint-plugin-sonarjs v4 types `configs` as a legacy/flat union that may be undefined — `.rules` doesn't exist on the array member | Typed accessor at config top: `const sonarRules = (sonarjs.configs?.recommended as Linter.Config \| undefined)?.rules ?? {}`, then `...sonarRules` per site (runtime shape verified via `--print-config`: 268 sonarjs rules still load) |
 
 ---
 

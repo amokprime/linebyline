@@ -203,7 +203,7 @@ test("typing-debounce-fast-newlines", async ({ page }) => {
   // dispatches all characters in one API call with minimal inter-character
   // delay, keeping the gap well under 150ms. \n is dispatched as Enter
   // (e.key === "Enter"), so handleEnterTrim fires normally.
-  // Same root cause as intervals.spec.js:typing-debounce-1 (MEMORY.md → Sep 2026).
+  // Same root cause as intervals.spec.ts:typing-debounce-1 (MEMORY.md → Sep 2026).
   await page.locator("#main-textarea").pressSequentially("a\nb\nc");
   await page.waitForTimeout(250);
   await page.keyboard.press("Control+z");
