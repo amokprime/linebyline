@@ -30,6 +30,7 @@ Things that may surprise a fresh session:
 - A `-c` / `--clean` run drops the Why/How subsections silently (no placeholder). If the user mentions they ran `sie -c`, the Why/How blocks are intentionally absent — don't ask the user to re-run.
 - The default output filename is `issues.md`, auto-incrementing to `issues1.md`, `issues2.md`, etc. The user may rename the file before uploading.
 - A legacy `sonar-export` zip (per-issue JSON folders with `L1234.json` files plus shared `why.md`/`how.md` per rule) is the OLD format. `sie` replaced it. If the user uploads the old format, Step 2 of this skill still applies to the per-instance triage, but ask the user to re-run `sie` if possible — the Markdown report is the canonical input going forward.
+- **`sie pr` (PR scope) reports new-code / changed-line findings only** (observed Nov 25, 2026 on PR #14: "No open issues found" while the main-branch queue still held 4 OPEN). A clean `sie pr` does NOT mean the project queue is closed — untouched-line dispositions and pre-existing findings never appear in PR scope. Closure is proven by a plain main-branch `sie` (or the live API), not `sie pr`. The reverse holds too: before a fix merges, the main-branch view still shows the old finding (main's last analysis predates the fix) — expected, not a failed push.
 
 What the report does NOT include:
 
