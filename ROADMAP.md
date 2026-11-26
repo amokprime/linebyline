@@ -639,7 +639,7 @@ One mechanical session; zero behavior change (specs stay equivalent modulo modul
 
 ## 5. Security / Maintainability / CC Remediation
 
-### Status: Tranche 1 delivered (Nov 25, 2026, evening session) — post-push `sie` report + UI markings pending
+### Status: Done (Nov 25, 2026) — Tranche 1 closed the queue: PR #14 merged (`c4a4b99`), the 3 UI dispositions recorded (Accept S1874/S6819, FP S7927), main-branch `sie` reports 0 OPEN. Tranche 2 never fired. Next: item 6 (UI Refactor).
 
 ### Why Fifth
 
@@ -647,7 +647,7 @@ Many "won't fix" and "deferred" decisions were made because fixing them in a mon
 
 ### Current state (live audit, Nov 25, 2026 — the pre-renovation text below had rotted)
 
-The "Re-Evaluate After Architecture Change" era is over: Phase D/E delivered the consolidation the old text hoped for, and the SonarCloud queue is down to **4 OPEN issues** (verified via the public API this session):
+The "Re-Evaluate After Architecture Change" era is over: Phase D/E delivered the consolidation the old text hoped for, and the SonarCloud queue was down to **4 OPEN issues** at the pre-Tranche-1 audit (verified via the public API). The table below records each disposition — all four are now closed (S6582 fixed by PR #14; the other three marked in the UI):
 
 | Rule                       | Site                                                                  | Disposition (per `sonarqube-workflow` skill)                                                                                                                                                                                                                                             |
 | -------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -662,8 +662,8 @@ CodeQL + SonarCloud + Playwright CI all run on every push (`codeql.yml`, `sonarc
 
 ### Tranche 1 — Close the queue (one small session)
 
-1. **The one code fix**: `App.vue:205` → optional chaining (`el?.duration ? Math.floor(el.duration * 1000) : null` — delivered Nov 25, 2026). Everything else in the queue is a UI disposition already documented in the skill — record the 3 Accept/FP markings in the SonarCloud UI (Accept for S1874, S6819; False Positive for S7927) so the quality gate reflects them.
-2. **Fresh `sie` report after the push**: user runs `sie` (with `SONAR_API_KEY` + `gh auth`) and commits the clean version (`sie -c`) in `archive/`. The 4-issue baseline in this table is the comparison point.
+1. **The one code fix**: `App.vue:205` → optional chaining (`el?.duration ? Math.floor(el.duration * 1000) : null` — delivered Nov 25, 2026). Everything else in the queue is a UI disposition already documented in the skill — record the 3 Accept/FP markings in the SonarCloud UI (Accept for S1874, S6819; False Positive for S7927) so the quality gate reflects them. **Done**: markings recorded — the live API shows S1874 → WONTFIX, S6819 → WONTFIX, S7927 → FALSE-POSITIVE.
+2. **Fresh `sie` report after the push**: user runs `sie` (with `SONAR_API_KEY` + `gh auth`) and commits the clean version (`sie -c`) in `archive/`. The 4-issue baseline in this table is the comparison point. **Done**: PR #14 merged into `main` as `c4a4b99` (staging synced to `c9fb444` by the CI bot); a PR-scoped `sie pr` showed 0 issues on the new code, and the post-merge main-branch `sie` reports **0 OPEN** (SonarCloud: 0, CodeQL: 0) — the queue is closed. One report artifact is worth committing in `archive/` when convenient: the pre-marking `issues.md` snapshot (3 issues, 2026-11-25 23:47 UTC) documents the dispositions' before-state.
 3. **`window.open` `noreferrer` decision**: resolved as `noopener`-only — rationale recorded in the skill's false-positive summary (no referrer data worth stripping; S5148 satisfied) — flip to `noopener,noreferrer` only if a future `sie` report re-flags it and the rationale doesn't hold.
 4. **axe-core**: already wired (`tests/accessibility.spec.ts` runs AxeBuilder on landing/lyrics/settings and passes) — no fresh scan needed beyond the existing suite.
 
